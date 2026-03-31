@@ -1,5 +1,5 @@
 "use client"
-import { BlockTitle, List, ListInput, Page, Block, Button, Preloader } from "konsta/react";
+import { BlockTitle, List, ListInput, Page, Block, Button, Preloader, Navbar } from "konsta/react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,6 +28,10 @@ export default function LoginPage() {
         background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
         
     }}>
+
+<Navbar right={<p className="min-w-18 text-center">Skip</p>}
+ />   
+
          <Image src="/login-card.png" fill objectFit="contain" alt="Logo" />
         <Block className="mb-auto flex items-center gap-2 mb-0">
             <Image src="/vercel.svg" width={24} height={24} alt="Vercel Logo" />
