@@ -1,4 +1,7 @@
 @import 'tailwindcss';
 /* import Konsta UI theme */
 @import 'konsta/react/theme.css';
-
+/* 
+.bg-md-light-surface-variant {
+  background-color: transparent;
+} */
