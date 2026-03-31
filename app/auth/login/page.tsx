@@ -3,6 +3,7 @@ import { BlockTitle, List, ListInput, Page, Block, Button, Preloader } from "kon
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ROUTE_PATH } from "@/utils/contants";
 
 export default function LoginPage() {
     const [mobile, setMobile] = useState("");
@@ -33,6 +34,10 @@ export default function LoginPage() {
             <p className="text-lg">Brand Name</p>
             
         </Block>
+
+        <Block>
+            <h2 className="text-4xl font-bold"><span className="text-primary">Let's Grow together,</span> <br /> as always {";)"}</h2>
+        </Block>
        
         <BlockTitle className="mt-auto z-10">Login</BlockTitle>
         <Block className="mb-0"> 
@@ -40,7 +45,7 @@ export default function LoginPage() {
                 Donec et nulla auctor massa pharetra adipiscing ut sit amet sem.
             </p>
         </Block>
-        <List strongIos insetIos className="mb-0">
+        <List strongIos insetIos>
             {!showOtp ? (
                 <ListInput
                     label="Mobile Number"
@@ -85,7 +90,7 @@ export default function LoginPage() {
             )}
         </Block>
         <Block className="my-0 text-center mb-4">
-           <p>Don't have an account? <Link href={"/auth/signup"} className="text-blue-600">Create Account</Link></p>
+           <p>Don't have an account? <Link href={ROUTE_PATH.CREATE_ACCOUNT} className="text-blue-600">Create Account</Link></p>
         </Block>
     </Page>;
 }
