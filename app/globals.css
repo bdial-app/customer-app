@@ -5,3 +5,8 @@
 .bg-md-light-surface-variant {
   background-color: transparent;
 } */
+  @theme {
+    --color-primary: #d4af37 !important;
+     --color-brand-primary: #d4af37 !important;
+     --color-black: #646464 !important;
+}

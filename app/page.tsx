@@ -1,65 +1,159 @@
+"use client"
+import { Block, Navbar, Searchbar, Button, Card, Page, List, ListItem, Fab, Tabbar, ToolbarPane, TabbarLink, Icon } from "konsta/react";
+import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { IonIcon } from "@ionic/react";
+import { chatbubbles, heartOutline, heartSharp, homeOutline, person } from 'ionicons/icons';
+import { ROUTE_PATH } from "@/utils/contants";
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const banners = [
+    {
+      id: 1,
+      title: "Special Offer",
+      subtitle: "Get 20% off on all services",
+      image: "/banner1.jpg"
+    },
+    {
+      id: 2,
+      title: "New Providers",
+      subtitle: "Join our growing network",
+      image: "/banner2.jpg"
+    },
+    {
+      id: 3,
+      title: "Premium Services",
+      subtitle: "Experience the best quality",
+      image: "/banner3.jpg"
+    }
+  ];
+
+  const [activeTab, setActiveTab] = useState('tab-1');
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <Page style={{
+      background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
+    }}>
+      <Navbar
+        medium
+        centerTitle={false}
+        className="text-left"
+        title={"Welcome, Anonymous!"}
+        titleClassName="mb-2!"
+        subtitle="Discover amazing services"
+      />
+
+      <Block className="mt-4 mb-0!">
+        <Searchbar
+          placeholder="Search services or providers..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          clearButton
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </Block>
+
+      <Block>
+
+        <div className="overflow-x-auto -mx-4 px-4">
+          <div className="flex gap-0" style={{ width: 'max-content' }}>
+            {banners.map((banner) => (
+              <Card
+                key={banner.id}
+                className="w-80 flex-shrink-0 rounded-lg"
+                style={{
+                  backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${banner.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  minHeight: '180px'
+                }}
+
+              >
+                <div className="text-white p-4 flex flex-col justify-end h-full">
+                  <h3 className="text-xl font-bold mb-1">{banner.title}</h3>
+                  <p className="text-sm opacity-90">{banner.subtitle}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </Block>
+
+      <Navbar
+        centerTitle={false}
+        className="text-left"
+        title="Featured Services"
+        titleClassName="text-slate-600"
+        subtitle="Discover amazing services"
+        rightClassName="bg-transparent shadow-none"
+        right={<Link href={ROUTE_PATH.ALL_SERVICES}><Button small clear>See All</Button></Link>}
+      />
+
+      <List strongIos outlineIos className="mt-4" >
+        <ListItem
+          className="material:border-b material:border-b-slate-300"
+          link
+          title="Clothing"
+          after="View"
+          subtitle="Rida, Burqa and other garments"
+          text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sagittis tellus ut turpis condimentum, ut dignissim lacus tincidunt. Cras dolor metus, ultrices condimentum sodales sit amet, pharetra sodales eros. Phasellus vel felis tellus. Mauris rutrum ligula nec dapibus feugiat. In vel dui laoreet, commodo augue id, pulvinar lacus."
+          media={
+            <img
+              className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
+              src="https://i.pinimg.com/originals/fc/6a/be/fc6abe6990d4faab93760ac471745a6d.jpg"
+              width="80"
+              alt="demo"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          }
+        />
+      </List>
+
+       <Tabbar
+        icons={true}
+        labels={true}
+        className="left-0 bottom-0 fixed"
+      >
+        <ToolbarPane>
+          <TabbarLink
+            active={activeTab === 'tab-1'}
+            onClick={() => setActiveTab('tab-1')}
+            icon={
+                <Icon
+                  ios={<IonIcon className="w-6 h-6" icon={homeOutline} />}
+                  material={<IonIcon className="w-6 h-6" icon={homeOutline} />}
+                />
+            }
+            label={'Home'}
+          />
+          <TabbarLink
+            active={activeTab === 'tab-2'}
+            onClick={() => setActiveTab('tab-2')}
+            icon={
+                <Icon
+                  ios={<IonIcon className="w-6 h-6" icon={chatbubbles} />}
+                  material={<IonIcon className="w-6 h-6" icon={chatbubbles} />}
+                />
+            }
+            label={'Chats'}
+          />
+          <TabbarLink
+            active={activeTab === 'tab-3'}
+            onClick={() => setActiveTab('tab-3')}
+            icon={
+                <Icon
+                  ios={<IonIcon className="w-6 h-6" icon={person} />}
+                  material={<IonIcon className="w-6 h-6" icon={person} />}
+                />
+            }
+            label={'Profile'}
+          />
+        </ToolbarPane>
+      </Tabbar>
+
+      {/* Floating Icon */}
+       {/* <Fab className="fixed right-safe-8 bottom-safe-24 z-20" icon={<IonIcon icon={chatbubbles} />} /> */}
+    </Page>
   );
 }
