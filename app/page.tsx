@@ -70,7 +70,7 @@ export default function Home() {
       background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
     }}>
       <Block className="mb-0!">
-        <p>Brand Name</p>
+        <p className="font-medium">Bohri Connect</p>
       </Block>
 
       <Block className="mt--4 mb-0!">
@@ -91,6 +91,8 @@ export default function Home() {
       />
 
       <ProviderList providerList={providers} />
+
+      <div className="h-24"></div>
       <BottomBar />
 
       {/* Floating Icon */}
