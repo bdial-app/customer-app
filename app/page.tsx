@@ -1,52 +1,79 @@
 "use client"
-import { Block, Navbar, Searchbar, Button, Card, Page, List, ListItem, Fab, Tabbar, ToolbarPane, TabbarLink, Icon } from "konsta/react";
+import { Block, Searchbar, Page } from "konsta/react";
 import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { IonIcon } from "@ionic/react";
-import { chatbubbles, heartOutline, heartSharp, homeOutline, person } from 'ionicons/icons';
 import { ROUTE_PATH } from "@/utils/contants";
+import BottomBar from "./components/bottom-bar";
+import ServicesList from "./components/service-list";
+import SectionHeader from "./components/section-header";
+import ProviderList from "./components/provider-list";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const banners = [
+  const providers: any = [
     {
       id: 1,
-      title: "Special Offer",
-      subtitle: "Get 20% off on all services",
-      image: "/banner1.jpg"
+      name: "Ahmed's Tailoring Shop",
+      service: "Clothing",
+      rating: 4.8,
+      reviews: 127,
+      price: "₹500-2000",
+      location: "Downtown, 2.5 km",
+      phone: "+91 98765 43210",
+      description: "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience.",
+      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+      verified: true
     },
     {
       id: 2,
-      title: "New Providers",
-      subtitle: "Join our growing network",
-      image: "/banner2.jpg"
+      name: "Fashion House",
+      service: "Clothing",
+      rating: 4.5,
+      reviews: 89,
+      price: "₹800-3000",
+      location: "City Center, 3.2 km",
+      phone: "+91 98765 43211",
+      description: "Premium clothing services with custom designs and alterations.",
+      image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400",
+      verified: true
     },
     {
       id: 3,
-      title: "Premium Services",
-      subtitle: "Experience the best quality",
-      image: "/banner3.jpg"
+      name: "Stitch Perfect",
+      service: "Clothing",
+      rating: 4.6,
+      reviews: 203,
+      price: "₹600-2500",
+      location: "West End, 1.8 km",
+      phone: "+91 98765 43212",
+      description: "Professional stitching and alteration services for all types of garments.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+      verified: false
+    },
+    {
+      id: 4,
+      name: "Royal Tailors",
+      service: "Clothing",
+      rating: 4.9,
+      reviews: 156,
+      price: "₹1000-5000",
+      location: "Old Town, 4.1 km",
+      phone: "+91 98765 43213",
+      description: "Luxury tailoring services for special occasions and traditional wear.",
+      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400",
+      verified: true
     }
   ];
-
-  const [activeTab, setActiveTab] = useState('tab-1');
 
   return (
     <Page style={{
       background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
     }}>
-      <Navbar
-        medium
-        centerTitle={false}
-        className="text-left"
-        title={"Welcome, Anonymous!"}
-        titleClassName="mb-2!"
-        subtitle="Discover amazing services"
-      />
+      <Block className="mb-0!">
+        <p>Brand Name</p>
+      </Block>
 
-      <Block className="mt-4 mb-0!">
+      <Block className="mt--4 mb-0!">
         <Searchbar
           placeholder="Search services or providers..."
           value={searchQuery}
@@ -55,105 +82,21 @@ export default function Home() {
         />
       </Block>
 
-      <Block>
-
-        <div className="overflow-x-auto -mx-4 px-4">
-          <div className="flex gap-0" style={{ width: 'max-content' }}>
-            {banners.map((banner) => (
-              <Card
-                key={banner.id}
-                className="w-80 flex-shrink-0 rounded-lg"
-                style={{
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${banner.image})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  minHeight: '180px'
-                }}
-
-              >
-                <div className="text-white p-4 flex flex-col justify-end h-full">
-                  <h3 className="text-xl font-bold mb-1">{banner.title}</h3>
-                  <p className="text-sm opacity-90">{banner.subtitle}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </Block>
-
-      <Navbar
-        centerTitle={false}
-        className="text-left"
+      <ServicesList />
+      <SectionHeader
         title="Featured Services"
-        titleClassName="text-slate-600"
         subtitle="Discover amazing services"
-        rightClassName="bg-transparent shadow-none"
-        right={<Link href={ROUTE_PATH.ALL_SERVICES}><Button small clear>See All</Button></Link>}
+        navigateTo={ROUTE_PATH.ALL_SERVICES}
+        navigateToText="See All"
       />
 
-      <List strongIos outlineIos className="mt-4" >
-        <ListItem
-          className="material:border-b material:border-b-slate-300"
-          link
-          title="Clothing"
-          after="View"
-          subtitle="Rida, Burqa and other garments"
-          text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sagittis tellus ut turpis condimentum, ut dignissim lacus tincidunt. Cras dolor metus, ultrices condimentum sodales sit amet, pharetra sodales eros. Phasellus vel felis tellus. Mauris rutrum ligula nec dapibus feugiat. In vel dui laoreet, commodo augue id, pulvinar lacus."
-          media={
-            <img
-              className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
-              src="https://i.pinimg.com/originals/fc/6a/be/fc6abe6990d4faab93760ac471745a6d.jpg"
-              width="80"
-              alt="demo"
-            />
-          }
-        />
-      </List>
-
-       <Tabbar
-        icons={true}
-        labels={true}
-        className="left-0 bottom-0 fixed"
-      >
-        <ToolbarPane>
-          <TabbarLink
-            active={activeTab === 'tab-1'}
-            onClick={() => setActiveTab('tab-1')}
-            icon={
-                <Icon
-                  ios={<IonIcon className="w-6 h-6" icon={homeOutline} />}
-                  material={<IonIcon className="w-6 h-6" icon={homeOutline} />}
-                />
-            }
-            label={'Home'}
-          />
-          <TabbarLink
-            active={activeTab === 'tab-2'}
-            onClick={() => setActiveTab('tab-2')}
-            icon={
-                <Icon
-                  ios={<IonIcon className="w-6 h-6" icon={chatbubbles} />}
-                  material={<IonIcon className="w-6 h-6" icon={chatbubbles} />}
-                />
-            }
-            label={'Chats'}
-          />
-          <TabbarLink
-            active={activeTab === 'tab-3'}
-            onClick={() => setActiveTab('tab-3')}
-            icon={
-                <Icon
-                  ios={<IonIcon className="w-6 h-6" icon={person} />}
-                  material={<IonIcon className="w-6 h-6" icon={person} />}
-                />
-            }
-            label={'Profile'}
-          />
-        </ToolbarPane>
-      </Tabbar>
+      <ProviderList providerList={providers} />
+      <BottomBar />
 
       {/* Floating Icon */}
-       {/* <Fab className="fixed right-safe-8 bottom-safe-24 z-20" icon={<IonIcon icon={chatbubbles} />} /> */}
+      {/* <Fab className="fixed right-safe-8 bottom-safe-24 z-20" icon={<IonIcon icon={chatbubbles} />} /> */}
     </Page>
   );
 }
+
+

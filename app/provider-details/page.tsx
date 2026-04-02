@@ -1,5 +1,5 @@
 "use client"
-import { Block, Navbar, Button, Page, Sheet, List, ListInput } from "konsta/react";
+import { Block, Navbar, Button, Page, Sheet, List, ListInput, SegmentedButton, Segmented } from "konsta/react";
 import { useState } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
@@ -154,89 +154,80 @@ export default function ProviderDetailsPage() {
             <IonIcon icon={shareSocial} className="w-5 h-5" />
           </Button>
         }
-      />
-
-      {/* Sub Navbar */}
-      <Navbar
-        large={false}
-        subnavbar
-        className="bg-white dark:bg-gray-800"
-        innerClassName="overflow-x-auto"
-      >
-        <div className="flex gap-6 px-4">
+        subnavbarClassName="px-0 block"
+        subnavbar={
+      <div className="overflow-x-auto py-2">
+        <div className="flex justify-between gap-3 px-0">
           <Button
             clear
-            className={`font-medium ${activeTab === "overviews" ? "text-primary" : "text-gray-500"}`}
+            className={`text-sm ${activeTab === "overviews" ? "text-primary" : "text-gray-500"}`}
             onClick={() => setActiveTab("overviews")}
           >
             Overviews
           </Button>
           <Button
             clear
-            className={`font-medium ${activeTab === "reviews" ? "text-primary" : "text-gray-500"}`}
+            className={`text-sm ${activeTab === "reviews" ? "text-primary" : "text-gray-500"}`}
             onClick={() => setActiveTab("reviews")}
           >
             Reviews
           </Button>
           <Button
             clear
-            className={`font-medium ${activeTab === "services" ? "text-primary" : "text-gray-500"}`}
+            className={`text-sm ${activeTab === "services" ? "text-primary" : "text-gray-500"}`}
             onClick={() => setActiveTab("services")}
           >
             Services
           </Button>
           <Button
             clear
-            className={`font-medium ${activeTab === "photos" ? "text-primary" : "text-gray-500"}`}
+            className={`text-sm ${activeTab === "photos" ? "text-primary" : "text-gray-500"}`}
             onClick={() => setActiveTab("photos")}
           >
             Photos
           </Button>
         </div>
-      </Navbar>
+      </div>}
+      />
+
+      {/* Sub Navbar */}
 
       {/* Tab Content */}
       {activeTab === "overviews" && (
         <>
           {/* Bento Grid Layout - Only show on Overviews tab */}
           <Block className="mt-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2">
               {/* Large Image - 50% width */}
-              <Link href={ROUTE_PATH.GALLERY}>
-                <div className="col-span-1 row-span-2 rounded-lg overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
-                  <img
-                    src={provider.image}
-                    alt={provider.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </Link>
+              <div className="col-span-1 row-span-2 overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+                <img
+                  src={provider.image}
+                  alt={provider.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
               {/* Right Column with 2 images */}
-              <Link href={ROUTE_PATH.GALLERY}>
-                <div className="col-span-1 row-span-1 rounded-lg overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
-                  <img
-                    src={galleryImages[0]}
-                    alt="Gallery 1"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </Link>
+              <div className="col-span-1 row-span-1 overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+                <img
+                  src={galleryImages[0]}
+                  alt="Gallery 1"
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-              <Link href={ROUTE_PATH.GALLERY}>
-                <div className="col-span-1 row-span-1 rounded-lg overflow-hidden shadow-md bg-gray-200 relative cursor-pointer hover:opacity-90 transition-opacity">
-                  <img
-                    src={galleryImages[1]}
-                    alt="Gallery 2"
-                    className="w-full h-full object-cover opacity-75"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm">
-                      +{galleryImages.length - 2} more
-                    </span>
-                  </div>
+              <div className="col-span-2 max-h-36 row-span-1 overflow-hidden shadow-md bg-gray-200 relative cursor-pointer hover:opacity-90 transition-opacity">
+                <img
+                  src={galleryImages[0]}
+                  alt="Gallery 2"
+                  className="w-full h-full object-cover opacity-75"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm">
+                    +{galleryImages.length - 2} more
+                  </span>
                 </div>
-              </Link>
+              </div>
             </div>
           </Block>
 
@@ -381,7 +372,7 @@ export default function ProviderDetailsPage() {
                 </div>
               </Button>
             </Block>
-            
+
             <div className="space-y-4">
               {reviews.map((review) => (
                 <div key={review.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
@@ -451,10 +442,10 @@ export default function ProviderDetailsPage() {
         className="pb-safe rounded-3xl"
       >
         <Page className="static">
-          <Navbar title="Make a Review"  leftClassName="w-11" left={<Button clear onClick={() => setSheetOpened(false)}>
-              <IonIcon icon={arrowBack} className="w-5 h-5" />
-            </Button>} />
-          
+          <Navbar title="Make a Review" leftClassName="w-11" left={<Button clear onClick={() => setSheetOpened(false)}>
+            <IonIcon icon={arrowBack} className="w-5 h-5" />
+          </Button>} />
+
 
           <List strongIos insetIos>
             <div className="p-4">
@@ -486,33 +477,33 @@ export default function ProviderDetailsPage() {
               inputClassName="!h-28 resize-none"
             />
           </List>
-           <Block>
-          <div className="flex gap-3">
-            <Button
-              clear
-              className="flex-1"
-              onClick={() => setSheetOpened(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              large
-              rounded
-              className="flex-1"
-              onClick={() => {
-                // Handle review submission
-                console.log('Submitting review:', reviewData);
-                setSheetOpened(false);
-                // Reset form
-                setReviewData({ rating: 5, comment: "" });
-              }}
-              disabled={!reviewData.comment.trim()}
-            >
-              Submit Review
-            </Button>
-          </div>
-            </Block>     
-          </Page>
+          <Block>
+            <div className="flex gap-3">
+              <Button
+                clear
+                className="flex-1"
+                onClick={() => setSheetOpened(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                large
+                rounded
+                className="flex-1"
+                onClick={() => {
+                  // Handle review submission
+                  console.log('Submitting review:', reviewData);
+                  setSheetOpened(false);
+                  // Reset form
+                  setReviewData({ rating: 5, comment: "" });
+                }}
+                disabled={!reviewData.comment.trim()}
+              >
+                Submit Review
+              </Button>
+            </div>
+          </Block>
+        </Page>
       </Sheet>
     </Page>
   );
