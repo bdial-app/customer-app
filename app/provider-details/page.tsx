@@ -1,10 +1,12 @@
 "use client"
 import { Block, Navbar, Button, Page, Sheet, List, ListInput, SegmentedButton, Segmented } from "konsta/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, star, call, chatbubble, location, shareSocial } from "ionicons/icons";
+import { useRouter } from 'next/navigation';
+import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 
 interface ProviderDetails {
   id: number;
@@ -33,6 +35,26 @@ interface Review {
 }
 
 export default function ProviderDetailsPage() {
+
+  const router = useRouter();
+
+  const photoGalleryRef = useRef<PhotoGalleryRef>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Check lightbox state periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (photoGalleryRef.current) {
+        const isOpen = photoGalleryRef.current.isLightboxOpen();
+        if (isOpen !== isLightboxOpen) {
+          setIsLightboxOpen(isOpen);
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isLightboxOpen]);
+
   const [activeTab, setActiveTab] = useState("overviews");
   const [sheetOpened, setSheetOpened] = useState(false);
   const [reviewData, setReviewData] = useState({
@@ -138,15 +160,18 @@ export default function ProviderDetailsPage() {
       background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
     }}>
       <Navbar
+        style={{
+          display: isLightboxOpen ? "none" : "block"
+        }}
         centerTitle={false}
-        title="Provider Details"
+        title={provider.name}
         titleClassName="ml-2"
         innerClassName="justify-start"
         leftClassName="w-11"
-        left={
-          <Link href={ROUTE_PATH.SERVICE_PROVIDERS}>
+          left={
+          <a onClick={() => router.back()}>
             <IonIcon icon={arrowBack} />
-          </Link>
+          </a>
         }
         rightClassName="w-11"
         right={
@@ -174,10 +199,10 @@ export default function ProviderDetailsPage() {
           </Button>
           <Button
             clear
-            className={`text-sm ${activeTab === "services" ? "text-primary" : "text-gray-500"}`}
-            onClick={() => setActiveTab("services")}
+            className={`text-sm ${activeTab === "products" ? "text-primary" : "text-gray-500"}`}
+            onClick={() => setActiveTab("products")}
           >
-            Services
+            Products
           </Button>
           <Button
             clear
@@ -286,9 +311,9 @@ export default function ProviderDetailsPage() {
               <h3 className="font-semibold mb-2">Address</h3>
               <p className="text-gray-700 text-sm">{provider.address}</p>
             </div>
-
+            <div className="h-20"></div>
             {/* CTA Buttons */}
-            <div className="flex gap-3 left-0 sticky bottom-6 w-full mt-auto">
+            <Block className="my-0! flex gap-3 left-0 fixed bottom-6 w-full mt-auto">
               <Button
                 large
                 rounded
@@ -320,7 +345,7 @@ export default function ProviderDetailsPage() {
                   <span>Call</span>
                 </div>
               </Button>
-            </div>
+            </Block>
           </Block>
         </>
       )}
@@ -411,27 +436,105 @@ export default function ProviderDetailsPage() {
         </>
       )}
 
-      {activeTab === "services" && (
-        <Block className="mt-8 text-center">
-          <div className="py-16">
-            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <IonIcon icon={chatbubble} className="w-8 h-8 text-gray-400" />
+      {activeTab === "products" && (
+        <>
+          {/* Products Grid */}
+          <Block className="mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                {
+                  id: "123e4567-e89b-12d3-a456-426614174000",
+                  name: "Premium Suit - Custom Tailored",
+                  description: "Expertly crafted premium suit with high-quality fabric",
+                  price: 5000,
+                  currency: "INR",
+                  photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+                  display_order: 1,
+                  is_active: true
+                },
+                {
+                  id: "223e4567-e89b-12d3-a456-426614174001",
+                  name: "Business Shirt",
+                  description: "Professional business shirt with premium fabric",
+                  price: 1200,
+                  currency: "INR",
+                  photo_url: "https://images.unsplash.com/photo-1596755098206-66d6dc2b2876?w=400",
+                  display_order: 2,
+                  is_active: true
+                },
+                {
+                  id: "323e4567-e89b-12d3-a456-426614174002",
+                  name: "Traditional Kurta",
+                  description: "Traditional kurta with modern design elements",
+                  price: 1800,
+                  currency: "INR",
+                  photo_url: "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400",
+                  display_order: 3,
+                  is_active: true
+                },
+                {
+                  id: "424e4567-e89b-12d3-a456-426614174003",
+                  name: "Formal Trousers",
+                  description: "Well-fitted formal trousers for office wear",
+                  price: 1500,
+                  currency: "INR",
+                  photo_url: "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400",
+                  display_order: 4,
+                  is_active: true
+                },
+                {
+                  id: "525e4567-e89b-12d3-a456-426614174004",
+                  name: "Casual Shirt",
+                  description: "Comfortable casual shirt for everyday wear",
+                  price: 800,
+                  currency: "INR",
+                  photo_url: "https://images.unsplash.com/photo-1521572163474-6864f9a17a77?w=400",
+                  display_order: 5,
+                  is_active: true
+                },
+                {
+                  id: "626e4567-e89b-12d3-a456-426614174005",
+                  name: "Designer Blazer",
+                  description: "Stylish designer blazer for special occasions",
+                  price: 3500,
+                  currency: "INR",
+                  photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+                  display_order: 6,
+                  is_active: true
+                }
+              ].map((product) => (
+                <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
+                  <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
+                    <img
+                      src={product.photo_url}
+                      alt={product.name}
+                      className="w-full h-40 object-cover"
+                    />
+                    <div className="p-3">
+                      <h4 className="font-medium text-sm mb-1 line-clamp-1">{product.name}</h4>
+                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+                      <div className="text-primary font-semibold">
+                        {product.currency} {product.price.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">No Services Listed</h3>
-            <p className="text-gray-500">This provider hasn't added their services yet</p>
-          </div>
-        </Block>
+          </Block>
+        </>
       )}
 
       {activeTab === "photos" && (
         <Block className="mt-8 text-center">
-          <div className="py-16">
+          {/* <div className="py-16">
             <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
               <IonIcon icon={shareSocial} className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-600 mb-2">No Photos Yet</h3>
             <p className="text-gray-500">This provider hasn't uploaded photos</p>
-          </div>
+          </div> */}
+          <PhotoGallary ref={photoGalleryRef} />
         </Block>
       )}
 

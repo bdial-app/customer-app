@@ -1,14 +1,21 @@
 "use client"
-import { Block, Searchbar, Page } from "konsta/react";
+import { Block, Searchbar, Page, ListInput, List } from "konsta/react";
 import { useState } from "react";
 import { ROUTE_PATH } from "@/utils/contants";
 import BottomBar from "./components/bottom-bar";
 import ServicesList from "./components/service-list";
 import SectionHeader from "./components/section-header";
 import ProviderList from "./components/provider-list";
+import { IonIcon } from "@ionic/react";
+import { search } from "ionicons/icons";
+import { useRouter } from "next/navigation";
+
+
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const router = useRouter();
 
   const providers: any = [
     {
@@ -72,15 +79,16 @@ export default function Home() {
       <Block className="mb-0!">
         <p className="font-medium">Bohri Connect</p>
       </Block>
+       <List strongIos insetIos>
+        
 
-      <Block className="mt--4 mb-0!">
-        <Searchbar
+      <ListInput
+      onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
+          type="text"
           placeholder="Search services or providers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          clearButton
+          media={<IonIcon icon={search} />}
         />
-      </Block>
+       </List>
 
       <ServicesList />
       <SectionHeader
@@ -91,8 +99,8 @@ export default function Home() {
       />
 
       <ProviderList providerList={providers} />
+      <div className="h-20"></div>
 
-      <div className="h-24"></div>
       <BottomBar />
 
       {/* Floating Icon */}

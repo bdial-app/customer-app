@@ -1,70 +1,70 @@
 "use client"
 import { Block, Navbar, Searchbar, Button, Card, Page, List, ListItem } from "konsta/react";
 import { useState } from "react";
-import Link from "next/link";
-import { ROUTE_PATH } from "@/utils/contants";
 import { IonIcon } from "@ionic/react";
 import { arrowBack } from "ionicons/icons";
+import ProviderList from "../components/provider-list";
+import { useRouter } from 'next/navigation';
 
 export default function AllServicesPage() {
+  const router = useRouter();
+  
   const [searchQuery, setSearchQuery] = useState("");
 
-  const allServices = [
+ const providers: any = [
     {
       id: 1,
-      title: "Clothing",
-      subtitle: "Rida, Burqa and other garments",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sagittis tellus ut turpis condimentum, ut dignissim lacus tincidunt.",
-      image: "https://i.pinimg.com/originals/fc/6a/be/fc6abe6990d4faab93760ac471745a6d.jpg",
-      category: "Fashion"
+      name: "Ahmed's Tailoring Shop",
+      service: "Clothing",
+      rating: 4.8,
+      reviews: 127,
+      price: "₹500-2000",
+      location: "Downtown, 2.5 km",
+      phone: "+91 98765 43210",
+      description: "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience.",
+      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+      verified: true
     },
     {
       id: 2,
-      title: "Home Services",
-      subtitle: "Cleaning & Repair",
-      description: "Professional home cleaning and repair services at your fingertips.",
-      image: "https://images.unsplash.com/photo-1581578261546-f7d6d0b5b4d6?w=400",
-      category: "Home"
+      name: "Fashion House",
+      service: "Clothing",
+      rating: 4.5,
+      reviews: 89,
+      price: "₹800-3000",
+      location: "City Center, 3.2 km",
+      phone: "+91 98765 43211",
+      description: "Premium clothing services with custom designs and alterations.",
+      image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400",
+      verified: true
     },
     {
       id: 3,
-      title: "Transport",
-      subtitle: "Ride & Delivery",
-      description: "Quick and reliable transportation services for all your needs.",
-      image: "https://images.unsplash.com/photo-1449965408869-e09346510d6b?w=400",
-      category: "Transport"
+      name: "Stitch Perfect",
+      service: "Clothing",
+      rating: 4.6,
+      reviews: 203,
+      price: "₹600-2500",
+      location: "West End, 1.8 km",
+      phone: "+91 98765 43212",
+      description: "Professional stitching and alteration services for all types of garments.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+      verified: false
     },
     {
       id: 4,
-      title: "Food & Dining",
-      subtitle: "Order & Reserve",
-      description: "Best food delivery and restaurant reservation services.",
-      image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400",
-      category: "Food"
-    },
-    {
-      id: 5,
-      title: "Health & Fitness",
-      subtitle: "Gyms & Trainers",
-      description: "Personal fitness training and gym memberships.",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f08b8d66?w=400",
-      category: "Health"
-    },
-    {
-      id: 6,
-      title: "Beauty & Wellness",
-      subtitle: "Spa & Salon",
-      description: "Pamper yourself with our premium beauty and wellness services.",
-      image: "https://images.unsplash.com/photo-1560749614-612495a177a5?w=400",
-      category: "Beauty"
+      name: "Royal Tailors",
+      service: "Clothing",
+      rating: 4.9,
+      reviews: 156,
+      price: "₹1000-5000",
+      location: "Old Town, 4.1 km",
+      phone: "+91 98765 43213",
+      description: "Luxury tailoring services for special occasions and traditional wear.",
+      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400",
+      verified: true
     }
   ];
-
-  const filteredServices = allServices.filter(service =>
-    service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <Page style={{
@@ -77,9 +77,9 @@ export default function AllServicesPage() {
         innerClassName="justify-start"
         leftClassName="w-11"
         left={
-          <Link href={ROUTE_PATH.HOME || "/"}>
+          <a onClick={() => router.back()}>
             <IonIcon icon={arrowBack} />
-          </Link>
+          </a>
         }
       />
 
@@ -95,12 +95,12 @@ export default function AllServicesPage() {
       <Block>
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            {filteredServices.length} services found
+            {providers.length} services found
           </p>
         </div>
       </Block>
 
-      <List strongIos outlineIos className="mt-4">
+      {/* <List strongIos outlineIos className="mt-4">
         {filteredServices.map((service) => (
           <Link key={service.id} href={ROUTE_PATH.SERVICE_PROVIDERS}>
             <ListItem
@@ -121,9 +121,10 @@ export default function AllServicesPage() {
             />
           </Link>
         ))}
-      </List>
+      </List> */}
+      <ProviderList providerList={providers} />
 
-      {filteredServices.length === 0 && (
+      {providers.length === 0 && (
         <Block className="text-center py-8">
           <p className="text-gray-500">No services found matching your search.</p>
           <Button clear onClick={() => setSearchQuery("")}>

@@ -5,5 +5,6 @@ export const ROUTE_PATH = {
     SERVICE_PROVIDERS: "/service-providers",
     PROVIDER_DETAILS: "/provider-details",
     GALLERY: "/gallery",
+    PRODUCT_DETAILS: "/product-details",
     HOME: "/",
 };
