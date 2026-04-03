@@ -1,8 +1,22 @@
-"use client"
+"use client";
 import { useState, useCallback } from "react";
-import { Button, List, ListItem, Sheet, Toolbar, ToolbarPane, Link } from "konsta/react";
+import {
+  Button,
+  List,
+  ListItem,
+  Sheet,
+  Toolbar,
+  ToolbarPane,
+  Link,
+  Navbar,
+} from "konsta/react";
 import { IonIcon } from "@ionic/react";
-import { close, chevronDown, chevronForward, checkmarkCircle } from "ionicons/icons";
+import {
+  close,
+  chevronDown,
+  chevronForward,
+  checkmarkCircle,
+} from "ionicons/icons";
 import { Category, CATEGORIES, getChildIds } from "../data/categories";
 
 interface FilterSheetProps {
@@ -14,9 +28,18 @@ interface FilterSheetProps {
 
 type ParentState = "none" | "some" | "all";
 
-const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetProps) => {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [tempFilters, setTempFilters] = useState<Set<string>>(new Set(selectedFilters));
+const FilterSheet = ({
+  opened,
+  selectedFilters,
+  onClose,
+  onApply,
+}: FilterSheetProps) => {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+  const [tempFilters, setTempFilters] = useState<Set<string>>(
+    new Set(selectedFilters),
+  );
 
   // Sync temp filters when sheet opens
   const handleOpen = useCallback(() => {
@@ -79,7 +102,7 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
       if (selectedCount === childIds.length) return "all";
       return "some";
     },
-    [tempFilters]
+    [tempFilters],
   );
 
   return (
@@ -90,36 +113,11 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
       style={{ maxHeight: "85vh" }}
     >
       {/* Header */}
-      <Toolbar top className="justify-between ios:pt-4">
-        <ToolbarPane>
-          <Link onClick={resetFilters}>
-            <span style={{ color: "#007AFF", fontSize: "15px" }}>Reset</span>
-          </Link>
-        </ToolbarPane>
-        <ToolbarPane>
-          <span className="font-semibold text-base">Filters</span>
-        </ToolbarPane>
-        <ToolbarPane>
-          <Link iconOnly onClick={onClose}>
-            <div
-              style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "50%",
-                background: "rgba(120,120,128,0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <IonIcon icon={close} style={{ fontSize: "18px", color: "#8e8e93" }} />
-            </div>
-          </Link>
-        </ToolbarPane>
-      </Toolbar>
-
       {/* Scrollable Category List */}
-      <div className="overflow-auto ios:mt-2" style={{ maxHeight: "calc(85vh - 140px)" }}>
+      <div
+        className="overflow-auto ios:mt-2"
+        style={{ maxHeight: "calc(85vh - 140px)" }}
+      >
         {CATEGORIES.map((category) => {
           const isExpanded = expandedCategories.has(category.id);
           const parentState = getParentState(category);
@@ -133,7 +131,9 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
                   title={
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl">{category.icon}</span>
-                      <span className="font-medium text-[15px]">{category.name}</span>
+                      <span className="font-medium text-[15px]">
+                        {category.name}
+                      </span>
                     </div>
                   }
                   after={
@@ -142,7 +142,10 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
                         <span
                           className="text-[12px] font-medium px-1.5 py-0.5 rounded-full"
                           style={{
-                            background: parentState === "all" ? "rgba(0,122,255,0.12)" : "rgba(0,122,255,0.08)",
+                            background:
+                              parentState === "all"
+                                ? "rgba(0,122,255,0.12)"
+                                : "rgba(0,122,255,0.08)",
                             color: "#007AFF",
                           }}
                         >
@@ -168,7 +171,9 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
               {/* Children — collapsible */}
               <div
                 style={{
-                  maxHeight: isExpanded ? `${(category.children?.length ?? 0) * 56 + 20}px` : "0px",
+                  maxHeight: isExpanded
+                    ? `${(category.children?.length ?? 0) * 56 + 20}px`
+                    : "0px",
                   overflow: "hidden",
                   transition: "max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
@@ -178,7 +183,10 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
                   <ListItem
                     className="cursor-pointer"
                     title={
-                      <span className="text-[14px] font-medium" style={{ color: "#007AFF" }}>
+                      <span
+                        className="text-[14px] font-medium"
+                        style={{ color: "#007AFF" }}
+                      >
                         {parentState === "all" ? "Deselect All" : "Select All"}
                       </span>
                     }
@@ -203,8 +211,11 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
                             style={{
                               fontSize: "22px",
                               color: isSelected ? "#007AFF" : "#D1D1D6",
-                              transition: "color 0.2s ease, transform 0.15s ease",
-                              transform: isSelected ? "scale(1)" : "scale(0.85)",
+                              transition:
+                                "color 0.2s ease, transform 0.15s ease",
+                              transform: isSelected
+                                ? "scale(1)"
+                                : "scale(0.85)",
                             }}
                           />
                         }
@@ -221,8 +232,15 @@ const FilterSheet = ({ opened, selectedFilters, onClose, onApply }: FilterSheetP
 
       {/* Apply Button */}
       <div className="px-4 pb-4 pt-2">
-        <Button large rounded onClick={() => onApply(tempFilters)} className="font-semibold">
-          {tempFilters.size > 0 ? `Apply Filters (${tempFilters.size})` : "Show All Results"}
+        <Button
+          large
+          rounded
+          onClick={() => onApply(tempFilters)}
+          className="font-semibold"
+        >
+          {tempFilters.size > 0
+            ? `Apply Filters (${tempFilters.size})`
+            : "Show All Results"}
         </Button>
       </div>
     </Sheet>
