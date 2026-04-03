@@ -221,8 +221,8 @@ export default function ProviderDetailsPage() {
       {activeTab === "overviews" && (
         <>
           {/* Bento Grid Layout - Only show on Overviews tab */}
-          <Block className="mt-4">
-            <div className="grid grid-cols-2">
+          <Block className="mt-4" onClick={() => setActiveTab("photos")}>
+            <div className="grid grid-cols-2" >
               {/* Large Image - 50% width */}
               <div className="col-span-1 row-span-2 overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
                 <img

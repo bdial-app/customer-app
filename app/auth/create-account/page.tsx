@@ -56,23 +56,23 @@ export default function CreateAccountPage() {
         console.log('Creating account with:', { mobile, userDetails });
     };
 
-    const isFormValid = userDetails.name.trim() !== '' && 
-                       userDetails.city.trim() !== '' && 
-                       userDetails.pincode.trim() !== '';
+    const isFormValid = userDetails.name.trim() !== '' &&
+        userDetails.city.trim() !== '' &&
+        userDetails.pincode.trim() !== '';
 
     return (
         <Page className="flex flex-col justify-end" style={{
             background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
         }}>
-            <Navbar right={<p className="min-w-18 text-center">Skip</p>}
- />   
+            <Navbar right={<p className="min-w-18 text-center"><Link href={ROUTE_PATH.HOME}>Skip</Link></p>}
+            />
             <Image src="/login-card.png" fill objectFit="contain" alt="Logo" />
-            
+
             <Block className="mb-auto flex items-center gap-2 mb-0">
                 <Image src="/vercel.svg" width={24} height={24} alt="Vercel Logo" />
                 <p className="text-lg">Brand Name</p>
             </Block>
-            
+
             <BlockTitle className="mt-auto z-10">Create Account</BlockTitle>
             <Block className="mb-0">
                 <p>
@@ -120,7 +120,7 @@ export default function CreateAccountPage() {
                             value={userDetails.name}
                             onChange={(e) => setUserDetails(prev => ({ ...prev, name: e.target.value }))}
                         />
-                        
+
                         <div className="px-4 py-2">
                             <label className="block text-sm font-medium mb-2">Gender</label>
                             <div className="flex gap-2">

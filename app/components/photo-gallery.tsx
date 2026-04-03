@@ -243,7 +243,9 @@ const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
       <div className="min-h-screen bg-transparent">
 
         {/* ── 3-column square grid ── */}
-        <div className="grid grid-cols-3 gap-0.5 dark:bg-black">
+        <div className="grid grid-cols-3 gap-0.5 dark:bg-black" style={{
+          marginTop: -32
+        }} >
           {IMAGES.map((img, idx) => (
             <button
               key={img.id}

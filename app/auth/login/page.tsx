@@ -26,25 +26,25 @@ export default function LoginPage() {
 
     return <Page className="flex flex-col justify-end" style={{
         background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
-        
+
     }}>
 
-<Navbar right={<p className="min-w-18 text-center">Skip</p>}
- />   
+        <Navbar right={<p className="min-w-18 text-center"><Link href={ROUTE_PATH.HOME}>Skip</Link></p>}
+        />
 
-         <Image src="/login-card.png" fill objectFit="contain" alt="Logo" />
+        <Image src="/login-card.png" fill objectFit="contain" alt="Logo" />
         <Block className="mb-auto flex items-center gap-2 mb-0">
             <Image src="/vercel.svg" width={24} height={24} alt="Vercel Logo" />
             <p className="text-lg">Brand Name</p>
-            
+
         </Block>
 
         <Block>
             <h2 className="text-4xl font-bold"><span className="text-primary">Let's Grow together,</span> <br /> as always {";)"}</h2>
         </Block>
-       
+
         <BlockTitle className="mt-auto z-10">Login</BlockTitle>
-        <Block className="mb-0"> 
+        <Block className="mb-0">
             <p>
                 Donec et nulla auctor massa pharetra adipiscing ut sit amet sem.
             </p>
@@ -94,7 +94,7 @@ export default function LoginPage() {
             )}
         </Block>
         <Block className="my-0 text-center mb-4">
-           <p>Don't have an account? <Link href={ROUTE_PATH.CREATE_ACCOUNT} className="text-blue-600">Create Account</Link></p>
+            <p>Don't have an account? <Link href={ROUTE_PATH.CREATE_ACCOUNT} className="text-blue-600">Create Account</Link></p>
         </Block>
     </Page>;
 }

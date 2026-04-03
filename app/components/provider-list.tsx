@@ -11,13 +11,19 @@ const ProviderList = ({ providerList }: { providerList: any[] }) =>
           className="material:border-b material:border-b-slate-300"
           link
           title={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span>{provider.name}</span>
-              {/* {provider.verified && (
-                  <span className="absolute- left-[-8em] top-4 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                    ✓ Verified
-                  </span>
-                )} */}
+              {provider.womenLed && (
+                <span
+                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold leading-none"
+                  style={{
+                    background: 'linear-gradient(135deg, #F0E6FF, #FFE6F0)',
+                    color: '#9B59B6',
+                  }}
+                >
+                  ♀ Women-Led
+                </span>
+              )}
             </div>
           }
           subtitle={

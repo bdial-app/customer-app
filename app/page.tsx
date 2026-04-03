@@ -1,5 +1,5 @@
 "use client"
-import { Block, Searchbar, Page, ListInput, List } from "konsta/react";
+import { Block, Searchbar, Page, ListInput, List, Navbar } from "konsta/react";
 import { useState } from "react";
 import { ROUTE_PATH } from "@/utils/contants";
 import BottomBar from "./components/bottom-bar";
@@ -76,19 +76,16 @@ export default function Home() {
     <Page style={{
       background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
     }}>
-      <Block className="mb-0!">
-        <p className="font-medium">Bohri Connect</p>
-      </Block>
-       <List strongIos insetIos>
-        
+      <Navbar centerTitle={false} title='Bohri Connect' className="mb-0!" />
+      <List strongIos insetIos className="mt-4!">
 
-      <ListInput
-      onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
+        <ListInput
+          onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
           type="text"
           placeholder="Search services or providers..."
           media={<IonIcon icon={search} />}
         />
-       </List>
+      </List>
 
       <ServicesList />
       <SectionHeader
