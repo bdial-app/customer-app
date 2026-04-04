@@ -133,33 +133,13 @@ const ProviderOnboardingPage = () => {
     }
   };
 
-  const isStep1Valid =
+  const isStep1Valid = Boolean(
     details.brand_name.trim() &&
     details.city.trim() &&
-    details.contact_number.trim();
-
-  const isStep2Valid = details.aadhaar_doc_url.trim();
-
-  const StepIndicator = () => (
-    <div className="px-4 py-4">
-      <Segmented strong rounded>
-        <SegmentedButton
-          active={currentStep === 1}
-          onClick={() => setCurrentStep(1)}
-          disabled={isSubmitting}
-        >
-          1. Details
-        </SegmentedButton>
-        <SegmentedButton
-          active={currentStep === 2}
-          onClick={() => isStep1Valid && setCurrentStep(2)}
-          disabled={!isStep1Valid || isSubmitting}
-        >
-          2. Documents
-        </SegmentedButton>
-      </Segmented>
-    </div>
+    details.contact_number.trim()
   );
+
+  const isStep2Valid = Boolean(details.aadhaar_doc_url.trim());
 
   return (
     <Page>
@@ -173,7 +153,12 @@ const ProviderOnboardingPage = () => {
         }
       />
 
-      <StepIndicator />
+      <StepIndicator
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+        isSubmitting={isSubmitting}
+        isStep1Valid={isStep1Valid}
+      />
 
       <div className="overflow-y-auto max-h-[calc(100vh-220px)] pb-32">
         {currentStep === 1 ? (
@@ -263,16 +248,12 @@ const ProviderOnboardingPage = () => {
               <TimePicker
                 label="Open Time"
                 value={details.open_time}
-                onChange={(val) =>
-                  setDetails({ ...details, open_time: val })
-                }
+                onChange={(val) => setDetails({ ...details, open_time: val })}
               />
               <TimePicker
                 label="Close Time"
                 value={details.close_time}
-                onChange={(val) =>
-                  setDetails({ ...details, close_time: val })
-                }
+                onChange={(val) => setDetails({ ...details, close_time: val })}
               />
             </List>
           </>
@@ -292,21 +273,22 @@ const ProviderOnboardingPage = () => {
               }
             />
 
-            <FilePickerCard
+            {/* COMMENTED FOR FUTURE USE_ DONT REMOVE - ARBAJ */}
+            {/* <FilePickerCard
               label="iJamat Card (Optional)"
               info="Capture or upload photo"
               value={details.ijamat_doc_url}
               onChange={(e) =>
                 setDetails({ ...details, ijamat_doc_url: e.target.value })
               }
-            />
+            /> */}
 
-            <div className="mx-8 border-b border-slate-100 my-2" />
+            {/* <div className="mx-8 border-b border-slate-100 my-2" /> */}
 
-            <BlockTitle className="!text-slate-400 !text-xs !uppercase !tracking-widest !font-bold mt-4">
+            {/* <BlockTitle className="!text-slate-400 !text-xs !uppercase !tracking-widest !font-bold mt-4">
               Additional Information
-            </BlockTitle>
-            <List strongIos insetIos className="!mt-0">
+            </BlockTitle> */}
+            {/* <List strongIos insetIos className="!mt-0">
               <ListInput
                 label="iJamat Number (Optional)"
                 type="text"
@@ -325,7 +307,7 @@ const ProviderOnboardingPage = () => {
                   setDetails({ ...details, ijamat_expiry: e.target.value })
                 }
               />
-            </List>
+            </List> */}
 
             <Block className="text-xs text-slate-500 pb-4">
               <p>
@@ -343,6 +325,8 @@ const ProviderOnboardingPage = () => {
           {currentStep === 1 ? (
             <>
               <Button
+                large
+                rounded
                 clear
                 className="flex-1"
                 onClick={handleBack}
@@ -353,7 +337,6 @@ const ProviderOnboardingPage = () => {
               <Button
                 large
                 rounded
-                className="flex-1 font-bold shadow-lg shadow-indigo-100"
                 onClick={handleNext}
                 disabled={!isStep1Valid || isSubmitting}
               >
@@ -363,6 +346,8 @@ const ProviderOnboardingPage = () => {
           ) : (
             <>
               <Button
+                large
+                rounded
                 clear
                 className="flex-1"
                 onClick={handleBack}
@@ -373,7 +358,7 @@ const ProviderOnboardingPage = () => {
               <Button
                 large
                 rounded
-                className="flex-1 font-bold shadow-lg shadow-indigo-100"
+                className="flex-1"
                 onClick={handleSubmit}
                 disabled={!isStep2Valid || isSubmitting}
               >
@@ -388,3 +373,34 @@ const ProviderOnboardingPage = () => {
 };
 
 export default ProviderOnboardingPage;
+
+const StepIndicator = ({
+  currentStep,
+  setCurrentStep,
+  isSubmitting,
+  isStep1Valid,
+}: {
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  isSubmitting: boolean;
+  isStep1Valid: boolean;
+}) => (
+  <div className="px-4 py-4">
+    <Segmented strong rounded>
+      <SegmentedButton
+        active={currentStep === 1}
+        onClick={() => setCurrentStep(1)}
+        disabled={isSubmitting}
+      >
+        1. Details
+      </SegmentedButton>
+      <SegmentedButton
+        active={currentStep === 2}
+        onClick={() => isStep1Valid && setCurrentStep(2)}
+        disabled={!isStep1Valid || isSubmitting}
+      >
+        2. Documents
+      </SegmentedButton>
+    </Segmented>
+  </div>
+);

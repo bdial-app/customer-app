@@ -21,7 +21,7 @@ function useDrum(
   items: string[],
   initIdx: number,
   circular: boolean,
-  onChange: (idx: number) => void
+  onChange: (idx: number) => void,
 ) {
   const s = useRef<{
     idx: number;
@@ -66,30 +66,33 @@ function useDrum(
     });
   };
 
-  const animTo = useCallback((tf: number) => {
-    if (s.current.raf) cancelAnimationFrame(s.current.raf);
-    const ti = clamp(tf);
-    const m = trackRef.current?.style.transform.match(/-?[\d.]+/);
-    const sp = m ? parseFloat(m[0]) : getOff(s.current.idx);
-    const ep = getOff(ti);
-    let start: number | null = null;
-    const frame = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / 200, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      const cur = sp + (ep - sp) * ease;
-      applyPx(cur);
-      updateCls((CY - cur) / ITEM_H - PAD);
-      if (p < 1) s.current.raf = requestAnimationFrame(frame);
-      else {
-        s.current.idx = ti;
-        applyPx(ep);
-        updateCls(ti);
-        onChange(ti);
-      }
-    };
-    s.current.raf = requestAnimationFrame(frame);
-  }, [items.length, circular, onChange]);
+  const animTo = useCallback(
+    (tf: number) => {
+      if (s.current.raf) cancelAnimationFrame(s.current.raf);
+      const ti = clamp(tf);
+      const m = trackRef.current?.style.transform.match(/-?[\d.]+/);
+      const sp = m ? parseFloat(m[0]) : getOff(s.current.idx);
+      const ep = getOff(ti);
+      let start: number | null = null;
+      const frame = (ts: number) => {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / 200, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        const cur = sp + (ep - sp) * ease;
+        applyPx(cur);
+        updateCls((CY - cur) / ITEM_H - PAD);
+        if (p < 1) s.current.raf = requestAnimationFrame(frame);
+        else {
+          s.current.idx = ti;
+          applyPx(ep);
+          updateCls(ti);
+          onChange(ti);
+        }
+      };
+      s.current.raf = requestAnimationFrame(frame);
+    },
+    [items.length, circular, onChange],
+  );
 
   useEffect(() => {
     applyPx(getOff(initIdx));
@@ -116,7 +119,7 @@ function useDrum(
       if (!s.current.drag) return;
       const y = py(e),
         now = Date.now(),
-        dt = (now - s.current.lt) || 1;
+        dt = now - s.current.lt || 1;
       s.current.vy = ((y - s.current.ly) / dt) * 16;
       s.current.ly = y;
       s.current.lt = now;
@@ -166,7 +169,13 @@ interface DrumColumnProps {
   width?: number;
 }
 
-function DrumColumn({ items, initIdx, circular, onChange, width = 80 }: DrumColumnProps) {
+function DrumColumn({
+  items,
+  initIdx,
+  circular,
+  onChange,
+  width = 80,
+}: DrumColumnProps) {
   const colRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   useDrum(colRef, trackRef, items, initIdx, circular, onChange);
@@ -215,7 +224,11 @@ interface TimePickerProps {
   onChange: (val: string) => void;
 }
 
-export default function TimePicker({ label, value, onChange }: TimePickerProps) {
+export default function TimePicker({
+  label,
+  value,
+  onChange,
+}: TimePickerProps) {
   const [open, setOpen] = useState(false);
   const [portalPosition, setPortalPosition] = useState({ top: 0, right: 0 });
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -235,24 +248,54 @@ export default function TimePicker({ label, value, onChange }: TimePickerProps) 
   const [committed, setCommitted] = useState(parseTime(value));
   const pending = useRef(parseTime(value));
 
-  const timeStr = (s: { h: number; m: number; ap: number }) => 
+  const timeStr = (s: { h: number; m: number; ap: number }) =>
     `${HOURS[s.h]}:${MINS[s.m]} ${AMPMS[s.ap]}`;
 
   const handleOpen = () => {
     pending.current = { ...committed };
-    
+
     // Calculate portal position
     if (anchorRef.current) {
       const rect = anchorRef.current.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-      
-      setPortalPosition({
-        top: rect.bottom + scrollTop + 4,
-        right: window.innerWidth - rect.right - scrollLeft + 16
-      });
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const scrollLeft =
+        window.pageXOffset || document.documentElement.scrollLeft;
+
+      // Dropdown dimensions
+      const dropdownHeight = 300; // Approximate height including buttons
+      const dropdownWidth = 240;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      let top = rect.bottom + scrollTop + 4;
+      let right = viewportWidth - rect.right - scrollLeft + 16;
+
+      // Check if dropdown goes off bottom of viewport
+      if (rect.bottom + dropdownHeight > viewportHeight) {
+        // Position above the anchor instead
+        top = rect.top + scrollTop - dropdownHeight - 4;
+
+        // If still off-screen at top, position at top with minimum margin
+        if (top < scrollTop + 10) {
+          top = scrollTop + 10;
+        }
+      }
+
+      // Check if dropdown goes off right side of viewport
+      if (rect.right + dropdownWidth > viewportWidth) {
+        // Position relative to right edge with margin
+        right = 16;
+      }
+
+      // Ensure minimum distance from right edge
+      if (right < 16) {
+        right = 16;
+      }
+
+      setPortalPosition({ top, right });
     }
-    
+
     setOpen(true);
   };
   const handleCancel = () => setOpen(false);
@@ -269,7 +312,19 @@ export default function TimePicker({ label, value, onChange }: TimePickerProps) 
         setOpen(false);
     };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    // Recalculate position on window resize
+    const resizeHandler = () => {
+      if (open && anchorRef.current) {
+        handleOpen();
+      }
+    };
+    window.addEventListener("resize", resizeHandler);
+
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      window.removeEventListener("resize", resizeHandler);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -284,20 +339,22 @@ export default function TimePicker({ label, value, onChange }: TimePickerProps) 
       `}</style>
 
       {/* List Item Style Toggle */}
-      <div 
+      <div
         className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 last:border-b-0 active:bg-slate-50 transition-colors"
         onClick={() => (open ? setOpen(false) : handleOpen())}
         ref={anchorRef}
       >
         <div className="flex flex-col gap-0.5">
-          <span className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wider">{label}</span>
-          <span className="text-sm font-medium text-slate-800">{value || "Select Time"}</span>
+          {/* <span className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wider">{label}</span> */}
+          <span className="text-sm text-slate-600">{label}</span>
         </div>
-        
+
         {/* iOS style time pill */}
-        <div 
-          className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-            open ? "bg-indigo-500 text-white shadow-md shadow-indigo-100 scale-105" : "bg-slate-100 text-slate-700"
+        <div
+          className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+            open
+              ? "bg-[#0a84ff29] !text-[#0a84ff] shadow-md shadow-indigo-100 scale-105"
+              : "bg-slate-100 text-slate-800"
           }`}
         >
           {timeStr(committed)}
@@ -305,152 +362,158 @@ export default function TimePicker({ label, value, onChange }: TimePickerProps) 
       </div>
 
       {/* Portal-rendered dropdown */}
-      {open && createPortal(
-        <div
-          style={{
-            position: "fixed",
-            top: portalPosition.top,
-            right: portalPosition.right,
-            width: 240,
-            zIndex: 1000,
-            borderRadius: 16,
-            overflow: "hidden",
-            transform: "scaleY(1)",
-            transformOrigin: "top right",
-            opacity: 1,
-            pointerEvents: "all",
-            transition: "opacity 0.18s ease, transform 0.18s ease",
-            background: "rgba(255,255,255,0.72)",
-            backdropFilter: "blur(40px) saturate(1.9)",
-            WebkitBackdropFilter: "blur(40px) saturate(1.9)",
-            border: "0.5px solid rgba(255,255,255,0.5)",
-            boxShadow: "0 12px 32px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)",
-          }}
-        >
-          {/* Drums */}
+      {open &&
+        createPortal(
           <div
             style={{
-              position: "relative",
-              display: "flex",
-              height: DRUM_H,
+              position: "fixed",
+              top: portalPosition.top,
+              right: portalPosition.right,
+              width: 240,
+              zIndex: 1000,
+              borderRadius: 16,
               overflow: "hidden",
-              justifyContent: "center",
+              transform: "scaleY(1)",
+              transformOrigin: "top right",
+              opacity: 1,
+              pointerEvents: "all",
+              transition: "opacity 0.18s ease, transform 0.18s ease",
+              background: "rgba(255,255,255,0.72)",
+              backdropFilter: "blur(40px) saturate(1.9)",
+              WebkitBackdropFilter: "blur(40px) saturate(1.9)",
+              border: "0.5px solid rgba(255,255,255,0.5)",
+              boxShadow:
+                "0 12px 32px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)",
+              maxHeight: "90vh", // Prevent from exceeding viewport height
+              overflowY: "auto", // Allow scrolling if content is too tall
             }}
           >
-            {/* Selection line */}
+            {/* Drums */}
             <div
               style={{
-                position: "absolute",
-                left: 4,
-                right: 4,
-                pointerEvents: "none",
-                zIndex: 4,
-                top: DRUM_H / 2 - ITEM_H / 2,
-                height: ITEM_H,
-                background: "rgba(0,0,0,0.03)",
-                borderRadius: 8,
-                borderTop: "0.5px solid rgba(0,0,0,0.05)",
-                borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+                position: "relative",
+                display: "flex",
+                height: DRUM_H,
+                overflow: "hidden",
+                justifyContent: "center",
               }}
-            />
-            
-            {/* Fade top */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 60,
-                pointerEvents: "none",
-                zIndex: 3,
-                background: "linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, transparent 100%)",
-              }}
-            />
-            {/* Fade bottom */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 60,
-                pointerEvents: "none",
-                zIndex: 3,
-                background: "linear-gradient(to top, rgba(255,255,255,0.85) 0%, transparent 100%)",
-              }}
-            />
-
-            <DrumColumn
-              items={HOURS}
-              initIdx={committed.h}
-              circular={true}
-              onChange={(i) => (pending.current.h = i)}
-              width={70}
-            />
-            <DrumColumn
-              items={MINS}
-              initIdx={committed.m}
-              circular={true}
-              onChange={(i) => (pending.current.m = i)}
-              width={70}
-            />
-            <DrumColumn
-              items={AMPMS}
-              initIdx={committed.ap}
-              circular={false}
-              onChange={(i) => (pending.current.ap = i)}
-              width={70}
-            />
-          </div>
-
-          {/* Cancel / Done */}
-          <div
-            style={{
-              display: "flex",
-              borderTop: "0.5px solid rgba(0,0,0,0.08)",
-              padding: "8px",
-              gap: "8px",
-            }}
-          >
-            <Button
-              clear
-              onClick={handleCancel}
-               style={{
-                    flex: 1,
-                    padding: "13px 0",
-                    fontSize: 16,
-                    fontWeight: 400,
-                    color: "rgba(0,0,0,0.45)",
-                    background: "transparent",
-                    border: "none",
-                    borderRight: "0.5px solid rgba(0,0,0,0.12)",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
             >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDone}
-               style={{
-                    flex: 1,
-                    padding: "13px 0",
-                    fontSize: 16,
-                    fontWeight: 500,
-                    color: "#0A84FF",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
+              {/* Selection line */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 4,
+                  right: 4,
+                  pointerEvents: "none",
+                  zIndex: 4,
+                  top: DRUM_H / 2 - ITEM_H / 2,
+                  height: ITEM_H,
+                  background: "rgba(0,0,0,0.03)",
+                  borderRadius: 8,
+                  borderTop: "0.5px solid rgba(0,0,0,0.05)",
+                  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+                }}
+              />
+
+              {/* Fade top */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 60,
+                  pointerEvents: "none",
+                  zIndex: 3,
+                  background:
+                    "linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, transparent 100%)",
+                }}
+              />
+              {/* Fade bottom */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 60,
+                  pointerEvents: "none",
+                  zIndex: 3,
+                  background:
+                    "linear-gradient(to top, rgba(255,255,255,0.85) 0%, transparent 100%)",
+                }}
+              />
+
+              <DrumColumn
+                items={HOURS}
+                initIdx={committed.h}
+                circular={true}
+                onChange={(i) => (pending.current.h = i)}
+                width={70}
+              />
+              <DrumColumn
+                items={MINS}
+                initIdx={committed.m}
+                circular={true}
+                onChange={(i) => (pending.current.m = i)}
+                width={70}
+              />
+              <DrumColumn
+                items={AMPMS}
+                initIdx={committed.ap}
+                circular={false}
+                onChange={(i) => (pending.current.ap = i)}
+                width={70}
+              />
+            </div>
+
+            {/* Cancel / Done */}
+            <div
+              style={{
+                display: "flex",
+                borderTop: "0.5px solid rgba(0,0,0,0.08)",
+                padding: "8px",
+                gap: "8px",
+              }}
             >
-              Done
-            </Button>
-          </div>
-        </div>,
-        document.body
-      )}
+              <Button
+                clear
+                onClick={handleCancel}
+                style={{
+                  flex: 1,
+                  padding: "13px 0",
+                  fontSize: 16,
+                  fontWeight: 400,
+                  color: "rgba(0,0,0,0.45)",
+                  background: "transparent",
+                  border: "none",
+                  borderRight: "0.5px solid rgba(0,0,0,0.12)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDone}
+                style={{
+                  flex: 1,
+                  padding: "13px 0",
+                  fontSize: 16,
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                Done
+              </Button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
