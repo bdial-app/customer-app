@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import PhotoGallary, { PhotoGalleryRef } from "./photo-gallery";
 import {
   Block,
   BlockTitle,
@@ -16,6 +17,7 @@ import {
   ActionsGroup,
   ActionsLabel,
   ActionsButton,
+  Fab,
 } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -148,6 +150,10 @@ const ProviderHome = () => {
   const [productSheetOpen, setProductSheetOpen] = useState(false);
   const [deleteActionSheetOpen, setDeleteActionSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Photos State
+  const photoGalleryRef = useRef<PhotoGalleryRef>(null);
+  const [providerPhotos, setProviderPhotos] = useState<any[]>([1]); // Mock data: [1] means has photos. [] means empty.
 
   const [tempProduct, setTempProduct] = useState<Product>({
     id: "",
@@ -477,12 +483,12 @@ const ProviderHome = () => {
       {/* REVIEWS TAB */}
       {activeTab === "reviews" && (
         <div className="animate-in fade-in duration-300">
-          <BlockTitle>Customer Reviews</BlockTitle>
+          {/* <BlockTitle>Customer Reviews</BlockTitle> */}
           <Block className="space-y-4">
             {reviews.map((r) => (
               <div
                 key={r.id}
-                className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
               >
                 <div className="flex justify-between items-center mb-2">
                   <div className="font-semibold">{r.name}</div>
@@ -575,16 +581,6 @@ const ProviderHome = () => {
       {/* PRODUCTS TAB */}
       {activeTab === "products" && (
         <div className="animate-in fade-in duration-300">
-          <div className="flex items-center justify-between px-4 mt-6 ">
-            <BlockTitle className="!mt-0 !mb-0">Products</BlockTitle>
-            <Button clear small inline rounded onClick={handleAddProduct}>
-              <div className="flex items-center gap-1">
-                <IonIcon icon={addOutline} />
-                <span>Add</span>
-              </div>
-            </Button>
-          </div>
-
           <List strongIos outlineIos className="!mx-0">
             {products.map((p) => (
               <ListItem
@@ -618,6 +614,15 @@ const ProviderHome = () => {
               </div>
             )}
           </List>
+
+          <div className="h-40"></div>
+
+          <Fab
+            className="fixed right-6 bottom-safe-28 z-20"
+            icon={<IonIcon icon={addOutline} />}
+            text="Add Product"
+            textPosition="after"
+          />
 
           <Sheet
             opened={productSheetOpen}
@@ -773,23 +778,28 @@ const ProviderHome = () => {
       {/* PHOTOS TAB */}
       {activeTab === "photos" && (
         <div className="animate-in fade-in duration-300">
-          <BlockTitle>Photo Gallery</BlockTitle>
-          <Block className="text-center py-12">
-            <div className="text-slate-400 mb-4 inline-block">
-              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                <IonIcon
-                  icon={mapOutline}
-                  className="text-4xl text-slate-400"
-                />
+          {providerPhotos.length === 0 ? (
+            <Block className="text-center py-12">
+              <div className="text-slate-400 mb-4 inline-block">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                  <IonIcon
+                    icon={mapOutline}
+                    className="text-4xl text-slate-400"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="text-slate-600 font-semibold text-lg">
-              Coming Soon
-            </div>
-            <div className="text-slate-500 text-sm mt-2 max-w-xs mx-auto">
-              Photo gallery management will be available in a future update.
-            </div>
-          </Block>
+              <div className="text-slate-600 font-semibold text-lg">
+                Coming Soon
+              </div>
+              <div className="text-slate-500 text-sm mt-2 max-w-xs mx-auto">
+                Photo gallery management will be available in a future update.
+              </div>
+            </Block>
+          ) : (
+            <Block className="mt-8 text-center pt-8">
+              <PhotoGallary ref={photoGalleryRef} />
+            </Block>
+          )}
         </div>
       )}
     </div>
