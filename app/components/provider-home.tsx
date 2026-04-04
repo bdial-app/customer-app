@@ -800,6 +800,13 @@ const ProviderHome = () => {
               <PhotoGallary ref={photoGalleryRef} />
             </Block>
           )}
+
+          <Fab
+            className="fixed right-6 bottom-safe-28 z-20"
+            icon={<IonIcon icon={addOutline} />}
+            text="Add Photo"
+            textPosition="after"
+          />
         </div>
       )}
     </div>
