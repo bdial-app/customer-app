@@ -26,6 +26,8 @@ export default function Home() {
         return "Messages";
       case "profile":
         return "My Profile";
+      case "analytics":
+        return "Analytics";
       default:
         return "Bohri Connect";
     }
@@ -50,9 +52,8 @@ export default function Home() {
         className="mb-0!"
       />
 
-      {activeTab === "home" && (
-        userMode === "customer" ? <UserHome /> : <ProviderHome />
-      )}
+      {activeTab === "home" &&
+        (userMode === "customer" ? <UserHome /> : <ProviderHome />)}
 
       {activeTab === "chats" && (
         <MessagesContent onChatClick={(name) => setActiveChat(name)} />

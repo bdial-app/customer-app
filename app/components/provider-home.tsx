@@ -667,7 +667,7 @@ const ProviderHome = () => {
                       }
                     }}
                   />
-                  <div className="w-32 h-32 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-500 relative transition-all active:scale-95">
+                  <div className="w-64 h-64 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-500 relative transition-all active:scale-95">
                     {tempProduct.photo_url ? (
                       <img
                         src={tempProduct.photo_url}
@@ -686,7 +686,14 @@ const ProviderHome = () => {
                       </>
                     )}
                     {tempProduct.photo_url && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-100 backdrop-blur-[2px]">
+                      <div
+                        className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-100"
+                        style={{
+                          backdropFilter: !tempProduct.photo_url
+                            ? "blur(2px)"
+                            : "none",
+                        }}
+                      >
                         <span className="text-white text-xs font-semibold px-3 py-1 border border-white/50 rounded-full">
                           Change
                         </span>

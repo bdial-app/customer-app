@@ -88,7 +88,7 @@ const ProfileContent = () => {
           outline
           className="flex gap-4 justify-between items-center bg-white"
         >
-          <div className="min-w-[240px]">
+          <div className="">
             <div className="text-slate-900 font-semibold">Provider mode</div>
             <div className="text-xs text-slate-500 font-medium">
               {userMode === "provider"
@@ -96,12 +96,14 @@ const ProfileContent = () => {
                 : "Switch to manage your listings and services"}
             </div>
           </div>
-          <Toggle
-            component="label"
-            checked={userMode === "provider"}
-            onChange={toggleMode}
-            className="konsta-color-primary"
-          />
+          <div className="min-w-16">
+            <Toggle
+              component="label"
+              checked={userMode === "provider"}
+              onChange={toggleMode}
+              className="konsta-color-primary"
+            />
+          </div>
         </Block>
       )}
 

@@ -1,7 +1,12 @@
 import { IonIcon } from "@ionic/react";
-import { chatbubbles, homeOutline, person } from "ionicons/icons";
+import {
+  analyticsOutline,
+  chatbubbles,
+  homeOutline,
+  person,
+} from "ionicons/icons";
 import { Icon, Tabbar, TabbarLink, ToolbarPane } from "konsta/react";
-import { useState } from "react";
+import { useAppContext } from "../context/AppContext";
 
 interface BottomBarProps {
   activeTab: string;
@@ -9,6 +14,7 @@ interface BottomBarProps {
 }
 
 const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
+  const { userMode } = useAppContext();
   return (
     <Tabbar icons={true} labels={true} className="left-0 bottom-0 fixed">
       <ToolbarPane>
@@ -23,6 +29,21 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
           }
           label={"Home"}
         />
+        {userMode === "provider" && (
+          <TabbarLink
+            active={activeTab === "analytics"}
+            onClick={() => setActiveTab("analytics")}
+            icon={
+              <Icon
+                ios={<IonIcon className="w-6 h-6" icon={analyticsOutline} />}
+                material={
+                  <IonIcon className="w-6 h-6" icon={analyticsOutline} />
+                }
+              />
+            }
+            label={"Analytics"}
+          />
+        )}
         <TabbarLink
           active={activeTab === "chats"}
           onClick={() => setActiveTab("chats")}

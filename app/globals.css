@@ -12,3 +12,15 @@
      --color-brand-primary: #d4af37 !important;
      --color-black: #646464 !important;
 }
+
+/* In your CSS file */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}

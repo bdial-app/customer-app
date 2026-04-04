@@ -5,7 +5,7 @@ import ServicesList from "./service-list";
 import SectionHeader from "./section-header";
 import ProviderList from "./provider-list";
 import { IonIcon } from "@ionic/react";
-import { search } from "ionicons/icons";
+import { filter, search } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 
 const UserHome = () => {
@@ -75,13 +75,16 @@ const UserHome = () => {
 
   return (
     <>
-      <List strongIos insetIos className="mt-4!">
+      <List strongIos insetIos className="mt-4! relative">
         <ListInput
           onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
           type="text"
           placeholder="Search services or providers..."
           media={<IonIcon icon={search} />}
         />
+        <button className="absolute top-3 right-4 text-slate-600">
+          <IonIcon icon={filter} />
+        </button>
       </List>
 
       <ServicesList />
