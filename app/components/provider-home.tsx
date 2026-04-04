@@ -777,9 +777,9 @@ const ProviderHome = () => {
 
       {/* PHOTOS TAB */}
       {activeTab === "photos" && (
-        <div className="animate-in fade-in duration-300">
+        <div className="animate-in fade-in duration-300 relative">
           {providerPhotos.length === 0 ? (
-            <Block className="text-center py-12">
+            <Block className="text-center">
               <div className="text-slate-400 mb-4 inline-block">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto shadow-sm">
                   <IonIcon
@@ -796,7 +796,7 @@ const ProviderHome = () => {
               </div>
             </Block>
           ) : (
-            <Block className="mt-8 text-center pt-8">
+            <Block className="mt-8 text-center pt-8 !px-0">
               <PhotoGallary ref={photoGalleryRef} />
             </Block>
           )}

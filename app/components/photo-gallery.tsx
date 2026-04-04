@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, FC, useImperativeHandle, forwardRef } from "react";
+import { createPortal } from "react-dom";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -271,7 +272,7 @@ const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
         </div>
 
         {/* ── Lightbox ── */}
-        {lightbox !== null && (
+        {lightbox !== null && typeof document !== "undefined" && createPortal(
           <div className="lb-open fixed inset-0 z-50 flex flex-col bg-black dark:bg-black overflow-hidden">
 
             {/* iOS nav bar */}
@@ -423,7 +424,8 @@ const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
               </ToolBtn>
             </div>
 
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </>
