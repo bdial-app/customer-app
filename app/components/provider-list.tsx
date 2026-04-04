@@ -1,15 +1,14 @@
-import { ROUTE_PATH } from "@/utils/contants"
-import { IonIcon } from "@ionic/react"
-import { location, star } from "ionicons/icons"
-import { Link, List, ListItem } from "konsta/react"
+import { ROUTE_PATH } from "@/utils/contants";
+import { IonIcon } from "@ionic/react";
+import { location, star } from "ionicons/icons";
+import { Link, List, ListItem } from "konsta/react";
 
-const ProviderList = ({ providerList }: { providerList: any[] }) =>
+const ProviderList = ({ providerList }: { providerList: any[] }) => (
   <List strongIos outlineIos className="mt-4">
     {providerList.map((provider: any) => (
       <Link key={provider.id} href={ROUTE_PATH.PROVIDER_DETAILS}>
         <ListItem
           className="material:border-b material:border-b-slate-300"
-          link
           title={
             <div className="flex items-center gap-2 flex-wrap">
               <span>{provider.name}</span>
@@ -17,8 +16,8 @@ const ProviderList = ({ providerList }: { providerList: any[] }) =>
                 <span
                   className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold leading-none"
                   style={{
-                    background: 'linear-gradient(135deg, #F0E6FF, #FFE6F0)',
-                    color: '#9B59B6',
+                    background: "linear-gradient(135deg, #F0E6FF, #FFE6F0)",
+                    color: "#9B59B6",
                   }}
                 >
                   ♀ Women-Led
@@ -31,17 +30,21 @@ const ProviderList = ({ providerList }: { providerList: any[] }) =>
               <div className="flex items-center gap-1">
                 <IonIcon icon={star} className="w-4 h-4 text-yellow-500" />
                 <span className="text-sm font-medium">{provider.rating}</span>
-                <span className="text-sm text-gray-500">({provider.reviews})</span>
+                <span className="text-sm text-gray-500">
+                  ({provider.reviews})
+                </span>
               </div>
               <div className="flex items-center gap-1 text-gray-600">
-                  <IonIcon icon={location} className="w-4 h-4" />
-                  <span className="text-sm">{provider.location}</span>
-                </div>
+                <IonIcon icon={location} className="w-4 h-4" />
+                <span className="text-sm">{provider.location}</span>
+              </div>
             </div>
           }
           text={
             <div className="flex flex-col mt-2">
-              <p className="line-clamp-1 overflow-hidden text-ellipsis">{provider.description}</p>
+              <p className="line-clamp-1 overflow-hidden text-ellipsis">
+                {provider.description}
+              </p>
               {/* <div className="flex gap-2 mt-2">
                 <Button outline className="p-0 min-w-0">
                   <IonIcon icon={chatbubble} className="w-4 h-4" /> <span className="ml-2">Chat</span>
@@ -64,6 +67,6 @@ const ProviderList = ({ providerList }: { providerList: any[] }) =>
       </Link>
     ))}
   </List>
+);
 
-
-export default ProviderList
+export default ProviderList;

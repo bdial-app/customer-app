@@ -13,7 +13,11 @@ import {
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
-import { IonIcon } from "@ionic/react";
+import { IonIcon as IonIconInner } from "@ionic/react";
+import dynamic from "next/dynamic";
+const IonIcon = dynamic(() => Promise.resolve(IonIconInner), {
+  ssr: false,
+});
 import {
   arrowBack,
   star,
@@ -193,9 +197,9 @@ export default function ProviderDetailsPage() {
         innerClassName="justify-start"
         leftClassName="w-11"
         left={
-          <a onClick={() => router.back()}>
-            <IonIcon icon={arrowBack} />
-          </a>
+          <Button clear onClick={() => router.back()}>
+            <IonIcon icon={arrowBack} className="w-5 h-5" />
+          </Button>
         }
         rightClassName="w-11"
         right={
@@ -461,11 +465,11 @@ export default function ProviderDetailsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
+                      {[1, 2, 3, 4, 5].map((s) => (
                         <IonIcon
-                          key={star}
+                          key={s}
                           icon="star"
-                          className={`w-3 h-3 ${star <= review.rating ? "text-yellow-500" : "text-gray-300"}`}
+                          className={`w-3 h-3 ${s <= review.rating ? "text-yellow-500" : "text-gray-300"}`}
                         />
                       ))}
                     </div>
@@ -588,7 +592,7 @@ export default function ProviderDetailsPage() {
         <Block className="mt-8 text-center">
           {/* <div className="py-16">
             <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <IonIcon icon={shareSocial} className="w-8 h-8 text-gray-400" />
+              {mounted && <IonIcon icon={shareSocial} className="w-8 h-8 text-gray-400" />}
             </div>
             <h3 className="text-lg font-semibold text-gray-600 mb-2">No Photos Yet</h3>
             <p className="text-gray-500">This provider hasn't uploaded photos</p>
@@ -617,24 +621,24 @@ export default function ProviderDetailsPage() {
           <List strongIos insetIos>
             <div className="p-4">
               <label className="block text-sm font-medium mb-3">Rating</label>
-              <div className="flex gap-2 justify-center mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Button
-                    key={star}
-                    clear
-                    onClick={() =>
-                      setReviewData((prev) => ({ ...prev, rating: star }))
-                    }
-                    className="p-1"
-                  >
-                    <IonIcon
-                      icon="star"
-                      style={{ fontSize: "32px" }}
-                      className={`${star <= reviewData.rating ? "text-yellow-500" : "text-gray-300"}`}
-                    />
-                  </Button>
-                ))}
-              </div>
+                    <div className="flex gap-2 justify-center mb-4">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Button
+                          key={s}
+                          clear
+                          onClick={() =>
+                            setReviewData((prev) => ({ ...prev, rating: s }))
+                          }
+                          className="p-1"
+                        >
+                          <IonIcon
+                            icon="star"
+                            style={{ fontSize: "32px" }}
+                            className={`${s <= reviewData.rating ? "text-yellow-500" : "text-gray-300"}`}
+                          />
+                        </Button>
+                      ))}
+                    </div>
             </div>
 
             <ListInput
