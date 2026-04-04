@@ -29,7 +29,7 @@ import {
   repeatOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
-import ProviderOnboarding from "./provider-onboarding";
+import { useRouter } from "next/navigation";
 
 interface UserProfile {
   mobile_number: string;
@@ -44,8 +44,8 @@ interface UserProfile {
 const ProfileContent = () => {
   const { providerStatus, userMode, setProviderStatus, toggleMode } =
     useAppContext();
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     mobile_number: "+91 8975048440",
     name: "Arbaj Ansari",
@@ -72,7 +72,7 @@ const ProfileContent = () => {
   };
 
   const handleApply = () => {
-    setIsApplying(true);
+    router.push("/provider-onboarding");
   };
 
   const handleSimulateApproval = () => {
@@ -81,10 +81,6 @@ const ProfileContent = () => {
 
   return (
     <>
-      <ProviderOnboarding
-        opened={isApplying}
-        onClose={() => setIsApplying(false)}
-      />
       {providerStatus === "approved" && (
         <Block
           strong
