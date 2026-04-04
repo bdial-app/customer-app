@@ -1,11 +1,28 @@
-"use client"
-import { Block, Navbar, Button, Page, Sheet, List, ListInput, SegmentedButton, Segmented } from "konsta/react";
+"use client";
+import {
+  Block,
+  Navbar,
+  Button,
+  Page,
+  Sheet,
+  List,
+  ListInput,
+  SegmentedButton,
+  Segmented,
+} from "konsta/react";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import { IonIcon } from "@ionic/react";
-import { arrowBack, star, call, chatbubble, location, shareSocial } from "ionicons/icons";
-import { useRouter } from 'next/navigation';
+import {
+  arrowBack,
+  star,
+  call,
+  chatbubble,
+  location,
+  shareSocial,
+} from "ionicons/icons";
+import { useRouter } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 
 interface ProviderDetails {
@@ -35,7 +52,6 @@ interface Review {
 }
 
 export default function ProviderDetailsPage() {
-
   const router = useRouter();
 
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
@@ -59,7 +75,7 @@ export default function ProviderDetailsPage() {
   const [sheetOpened, setSheetOpened] = useState(false);
   const [reviewData, setReviewData] = useState({
     rating: 5,
-    comment: ""
+    comment: "",
   });
 
   // Mock data - this would come from API based on provider ID
@@ -72,19 +88,20 @@ export default function ProviderDetailsPage() {
     price: "₹500-2000",
     location: "Downtown, 2.5 km",
     phone: "+91 98765 43210",
-    description: "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience providing high-quality tailoring services for all occasions.",
+    description:
+      "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience providing high-quality tailoring services for all occasions.",
     image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
     verified: true,
     address: "123 Fashion Street, Downtown, City - 400001",
     experience: "10+ Years",
-    availability: "Mon-Sat: 9AM-8PM"
+    availability: "Mon-Sat: 9AM-8PM",
   };
 
   const handleShare = async () => {
     const shareData = {
       title: provider.name,
       text: `Check out ${provider.name} - ${provider.service}\nRating: ${provider.rating}⭐\n${provider.description}\nAddress: ${provider.address}`,
-      url: window.location.href
+      url: window.location.href,
     };
 
     try {
@@ -94,10 +111,10 @@ export default function ProviderDetailsPage() {
         // Fallback for browsers that don't support Web Share API
         const textToCopy = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
         await navigator.clipboard.writeText(textToCopy);
-        alert('Provider details copied to clipboard!');
+        alert("Provider details copied to clipboard!");
       }
     } catch (err) {
-      console.error('Error sharing:', err);
+      console.error("Error sharing:", err);
     }
   };
 
@@ -108,41 +125,46 @@ export default function ProviderDetailsPage() {
       name: "Sarah Johnson",
       rating: 5,
       date: "2 days ago",
-      comment: "Excellent work! Ahmed did an amazing job with my wedding dress. The fit was perfect and the quality exceeded my expectations. Highly recommended!",
-      verified: true
+      comment:
+        "Excellent work! Ahmed did an amazing job with my wedding dress. The fit was perfect and the quality exceeded my expectations. Highly recommended!",
+      verified: true,
     },
     {
       id: 2,
       name: "Mohammed Ali",
       rating: 4,
       date: "1 week ago",
-      comment: "Good service and reasonable prices. Got my traditional kurta stitched here and it turned out well. Slight delay in delivery but overall satisfied.",
-      verified: true
+      comment:
+        "Good service and reasonable prices. Got my traditional kurta stitched here and it turned out well. Slight delay in delivery but overall satisfied.",
+      verified: true,
     },
     {
       id: 3,
       name: "Fatima Khan",
       rating: 5,
       date: "2 weeks ago",
-      comment: "Ahmed is a master tailor! He recreated a vintage design for me exactly as I wanted. Attention to detail is incredible. Will definitely come back.",
-      verified: false
+      comment:
+        "Ahmed is a master tailor! He recreated a vintage design for me exactly as I wanted. Attention to detail is incredible. Will definitely come back.",
+      verified: false,
     },
     {
       id: 4,
       name: "Raj Patel",
       rating: 4,
       date: "3 weeks ago",
-      comment: "Professional work and timely delivery. The alterations on my suit were done perfectly. Prices are a bit higher than local shops but worth the quality.",
-      verified: true
+      comment:
+        "Professional work and timely delivery. The alterations on my suit were done perfectly. Prices are a bit higher than local shops but worth the quality.",
+      verified: true,
     },
     {
       id: 5,
       name: "Aisha Begum",
       rating: 5,
       date: "1 month ago",
-      comment: "I've been coming here for years and never disappointed. Ahmed's work with traditional wear is exceptional. He understands cultural preferences perfectly.",
-      verified: true
-    }
+      comment:
+        "I've been coming here for years and never disappointed. Ahmed's work with traditional wear is exceptional. He understands cultural preferences perfectly.",
+      verified: true,
+    },
   ];
 
   // Gallery images for bento grid
@@ -152,23 +174,25 @@ export default function ProviderDetailsPage() {
     "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400",
     "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
     "https://images.unsplash.com/photo-1560749614-612495a177a5?w=400",
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400"
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400",
   ];
 
   return (
-    <Page style={{
-      background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
-    }}>
+    <Page
+      style={{
+        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
+      }}
+    >
       <Navbar
         style={{
-          display: isLightboxOpen ? "none" : "block"
+          display: isLightboxOpen ? "none" : "block",
         }}
         centerTitle={false}
         title={provider.name}
         titleClassName="ml-2"
         innerClassName="justify-start"
         leftClassName="w-11"
-          left={
+        left={
           <a onClick={() => router.back()}>
             <IonIcon icon={arrowBack} />
           </a>
@@ -181,38 +205,39 @@ export default function ProviderDetailsPage() {
         }
         subnavbarClassName="px-0 block"
         subnavbar={
-      <div className="overflow-x-auto py-2">
-        <div className="flex justify-between gap-3 px-0">
-          <Button
-            clear
-            className={`text-sm ${activeTab === "overviews" ? "text-primary" : "text-gray-500"}`}
-            onClick={() => setActiveTab("overviews")}
-          >
-            Overviews
-          </Button>
-          <Button
-            clear
-            className={`text-sm ${activeTab === "reviews" ? "text-primary" : "text-gray-500"}`}
-            onClick={() => setActiveTab("reviews")}
-          >
-            Reviews
-          </Button>
-          <Button
-            clear
-            className={`text-sm ${activeTab === "products" ? "text-primary" : "text-gray-500"}`}
-            onClick={() => setActiveTab("products")}
-          >
-            Products
-          </Button>
-          <Button
-            clear
-            className={`text-sm ${activeTab === "photos" ? "text-primary" : "text-gray-500"}`}
-            onClick={() => setActiveTab("photos")}
-          >
-            Photos
-          </Button>
-        </div>
-      </div>}
+          <div className="overflow-x-auto py-2">
+            <div className="flex justify-between gap-3 px-0">
+              <Button
+                clear
+                className={`text-sm ${activeTab === "overviews" ? "text-primary" : "text-gray-500"}`}
+                onClick={() => setActiveTab("overviews")}
+              >
+                Overviews
+              </Button>
+              <Button
+                clear
+                className={`text-sm ${activeTab === "reviews" ? "text-primary" : "text-gray-500"}`}
+                onClick={() => setActiveTab("reviews")}
+              >
+                Reviews
+              </Button>
+              <Button
+                clear
+                className={`text-sm ${activeTab === "products" ? "text-primary" : "text-gray-500"}`}
+                onClick={() => setActiveTab("products")}
+              >
+                Products
+              </Button>
+              <Button
+                clear
+                className={`text-sm ${activeTab === "photos" ? "text-primary" : "text-gray-500"}`}
+                onClick={() => setActiveTab("photos")}
+              >
+                Photos
+              </Button>
+            </div>
+          </div>
+        }
       />
 
       {/* Sub Navbar */}
@@ -222,7 +247,7 @@ export default function ProviderDetailsPage() {
         <>
           {/* Bento Grid Layout - Only show on Overviews tab */}
           <Block className="mt-4" onClick={() => setActiveTab("photos")}>
-            <div className="grid grid-cols-2" >
+            <div className="grid grid-cols-2">
               {/* Large Image - 50% width */}
               <div className="col-span-1 row-span-2 overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
                 <img
@@ -271,7 +296,9 @@ export default function ProviderDetailsPage() {
                 <p className="text-gray-600 text-sm">{provider.service}</p>
               </div>
               <div className="">
-                <div className="font-semibold text-primary text-lg">{provider.price}</div>
+                <div className="font-semibold text-primary text-lg">
+                  {provider.price}
+                </div>
               </div>
             </div>
 
@@ -280,7 +307,9 @@ export default function ProviderDetailsPage() {
               <div className="flex items-center gap-1">
                 <IonIcon icon={star} className="w-4 h-4 text-yellow-500" />
                 <span className="font-medium">{provider.rating}</span>
-                <span className="text-gray-500 text-sm">({provider.reviews} reviews)</span>
+                <span className="text-gray-500 text-sm">
+                  ({provider.reviews} reviews)
+                </span>
               </div>
               <div className="flex items-center gap-1 text-gray-600">
                 <IonIcon icon={location} className="w-4 h-4" />
@@ -303,7 +332,9 @@ export default function ProviderDetailsPage() {
             {/* Description */}
             <div className="mb-4">
               <h3 className="font-semibold mb-2">About</h3>
-              <p className="text-gray-700 text-sm leading-relaxed">{provider.description}</p>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                {provider.description}
+              </p>
             </div>
 
             {/* Address */}
@@ -321,7 +352,7 @@ export default function ProviderDetailsPage() {
                 className="flex-1 bg-white dark:bg-gray-800"
                 onClick={() => {
                   // Handle messaging
-                  console.log('Message provider');
+                  console.log("Message provider");
                 }}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -336,7 +367,7 @@ export default function ProviderDetailsPage() {
                 className="flex-1"
                 onClick={() => {
                   // Handle calling
-                  console.log('Call provider');
+                  console.log("Call provider");
                   window.open(`tel:${provider.phone}`);
                 }}
               >
@@ -358,7 +389,9 @@ export default function ProviderDetailsPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">{provider.rating}</div>
+                    <div className="text-3xl font-bold text-primary">
+                      {provider.rating}
+                    </div>
                     <div className="text-sm text-gray-500">out of 5</div>
                   </div>
                   <div>
@@ -367,16 +400,20 @@ export default function ProviderDetailsPage() {
                         <IonIcon
                           key={star}
                           icon="star"
-                          className={`w-4 h-4 ${star <= Math.floor(provider.rating) ? 'text-yellow-500' : 'text-gray-300'}`}
+                          className={`w-4 h-4 ${star <= Math.floor(provider.rating) ? "text-yellow-500" : "text-gray-300"}`}
                         />
                       ))}
                     </div>
-                    <div className="text-sm text-gray-600">{provider.reviews} reviews</div>
+                    <div className="text-sm text-gray-600">
+                      {provider.reviews} reviews
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Verified</div>
-                  <div className="font-semibold text-green-600">{reviews.filter(r => r.verified).length} reviews</div>
+                  <div className="font-semibold text-green-600">
+                    {reviews.filter((r) => r.verified).length} reviews
+                  </div>
                 </div>
               </div>
             </div>
@@ -400,7 +437,10 @@ export default function ProviderDetailsPage() {
 
             <div className="space-y-4">
               {reviews.map((review) => (
-                <div key={review.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                <div
+                  key={review.id}
+                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+                >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
@@ -415,7 +455,9 @@ export default function ProviderDetailsPage() {
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">{review.date}</div>
+                        <div className="text-sm text-gray-500">
+                          {review.date}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -423,12 +465,14 @@ export default function ProviderDetailsPage() {
                         <IonIcon
                           key={star}
                           icon="star"
-                          className={`w-3 h-3 ${star <= review.rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                          className={`w-3 h-3 ${star <= review.rating ? "text-yellow-500" : "text-gray-300"}`}
                         />
                       ))}
                     </div>
                   </div>
-                  <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {review.comment}
+                  </p>
                 </div>
               ))}
             </div>
@@ -445,22 +489,26 @@ export default function ProviderDetailsPage() {
                 {
                   id: "123e4567-e89b-12d3-a456-426614174000",
                   name: "Premium Suit - Custom Tailored",
-                  description: "Expertly crafted premium suit with high-quality fabric",
+                  description:
+                    "Expertly crafted premium suit with high-quality fabric",
                   price: 5000,
                   currency: "INR",
-                  photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+                  photo_url:
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
                   display_order: 1,
-                  is_active: true
+                  is_active: true,
                 },
                 {
                   id: "223e4567-e89b-12d3-a456-426614174001",
                   name: "Business Shirt",
-                  description: "Professional business shirt with premium fabric",
+                  description:
+                    "Professional business shirt with premium fabric",
                   price: 1200,
                   currency: "INR",
-                  photo_url: "https://images.unsplash.com/photo-1596755098206-66d6dc2b2876?w=400",
+                  photo_url:
+                    "https://images.unsplash.com/photo-1596755098206-66d6dc2b2876?w=400",
                   display_order: 2,
-                  is_active: true
+                  is_active: true,
                 },
                 {
                   id: "323e4567-e89b-12d3-a456-426614174002",
@@ -468,9 +516,10 @@ export default function ProviderDetailsPage() {
                   description: "Traditional kurta with modern design elements",
                   price: 1800,
                   currency: "INR",
-                  photo_url: "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400",
+                  photo_url:
+                    "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400",
                   display_order: 3,
-                  is_active: true
+                  is_active: true,
                 },
                 {
                   id: "424e4567-e89b-12d3-a456-426614174003",
@@ -478,9 +527,10 @@ export default function ProviderDetailsPage() {
                   description: "Well-fitted formal trousers for office wear",
                   price: 1500,
                   currency: "INR",
-                  photo_url: "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400",
+                  photo_url:
+                    "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400",
                   display_order: 4,
-                  is_active: true
+                  is_active: true,
                 },
                 {
                   id: "525e4567-e89b-12d3-a456-426614174004",
@@ -488,9 +538,10 @@ export default function ProviderDetailsPage() {
                   description: "Comfortable casual shirt for everyday wear",
                   price: 800,
                   currency: "INR",
-                  photo_url: "https://images.unsplash.com/photo-1521572163474-6864f9a17a77?w=400",
+                  photo_url:
+                    "https://images.unsplash.com/photo-1521572163474-6864f9a17a77?w=400",
                   display_order: 5,
-                  is_active: true
+                  is_active: true,
                 },
                 {
                   id: "626e4567-e89b-12d3-a456-426614174005",
@@ -498,12 +549,16 @@ export default function ProviderDetailsPage() {
                   description: "Stylish designer blazer for special occasions",
                   price: 3500,
                   currency: "INR",
-                  photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+                  photo_url:
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
                   display_order: 6,
-                  is_active: true
-                }
+                  is_active: true,
+                },
               ].map((product) => (
-                <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
+                <Link
+                  key={product.id}
+                  href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}
+                >
                   <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
                     <img
                       src={product.photo_url}
@@ -511,8 +566,12 @@ export default function ProviderDetailsPage() {
                       className="w-full h-40 object-cover"
                     />
                     <div className="p-3">
-                      <h4 className="font-medium text-sm mb-1 line-clamp-1">{product.name}</h4>
-                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+                      <h4 className="font-medium text-sm mb-1 line-clamp-1">
+                        {product.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+                        {product.description}
+                      </p>
                       <div className="text-primary font-semibold">
                         {product.currency} {product.price.toLocaleString()}
                       </div>
@@ -545,10 +604,15 @@ export default function ProviderDetailsPage() {
         className="pb-safe rounded-3xl"
       >
         <Page className="static">
-          <Navbar title="Make a Review" leftClassName="w-11" left={<Button clear onClick={() => setSheetOpened(false)}>
-            <IonIcon icon={arrowBack} className="w-5 h-5" />
-          </Button>} />
-
+          <Navbar
+            title="Make a Review"
+            leftClassName="w-11"
+            left={
+              <Button clear onClick={() => setSheetOpened(false)}>
+                <IonIcon icon={arrowBack} className="w-5 h-5" />
+              </Button>
+            }
+          />
 
           <List strongIos insetIos>
             <div className="p-4">
@@ -558,13 +622,15 @@ export default function ProviderDetailsPage() {
                   <Button
                     key={star}
                     clear
-                    onClick={() => setReviewData(prev => ({ ...prev, rating: star }))}
+                    onClick={() =>
+                      setReviewData((prev) => ({ ...prev, rating: star }))
+                    }
                     className="p-1"
                   >
                     <IonIcon
                       icon="star"
-                      style={{ fontSize: '32px' }}
-                      className={`${star <= reviewData.rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                      style={{ fontSize: "32px" }}
+                      className={`${star <= reviewData.rating ? "text-yellow-500" : "text-gray-300"}`}
                     />
                   </Button>
                 ))}
@@ -576,7 +642,9 @@ export default function ProviderDetailsPage() {
               type="textarea"
               placeholder="Share your experience with this provider..."
               value={reviewData.comment}
-              onChange={(e) => setReviewData(prev => ({ ...prev, comment: e.target.value }))}
+              onChange={(e) =>
+                setReviewData((prev) => ({ ...prev, comment: e.target.value }))
+              }
               inputClassName="!h-28 resize-none"
             />
           </List>
@@ -595,7 +663,7 @@ export default function ProviderDetailsPage() {
                 className="flex-1"
                 onClick={() => {
                   // Handle review submission
-                  console.log('Submitting review:', reviewData);
+                  console.log("Submitting review:", reviewData);
                   setSheetOpened(false);
                   // Reset form
                   setReviewData({ rating: 5, comment: "" });

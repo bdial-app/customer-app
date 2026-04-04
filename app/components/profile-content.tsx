@@ -22,7 +22,14 @@ import {
   createOutline,
   saveOutline,
   closeOutline,
+  starOutline,
+  checkmarkCircleOutline,
+  timeOutline,
+  alertCircleOutline,
+  repeatOutline,
 } from "ionicons/icons";
+import { useAppContext } from "../context/AppContext";
+import ProviderOnboarding from "./provider-onboarding";
 
 interface UserProfile {
   mobile_number: string;
@@ -35,7 +42,10 @@ interface UserProfile {
 }
 
 const ProfileContent = () => {
+  const { providerStatus, userMode, setProviderStatus, toggleMode } =
+    useAppContext();
   const [isEditing, setIsEditing] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     mobile_number: "+91 8975048440",
     name: "Arbaj Ansari",
@@ -61,49 +71,118 @@ const ProfileContent = () => {
     setIsEditing(false);
   };
 
-  const toggleRole = () => {
-    setProfile((prev) => ({
-      ...prev,
-      role: prev.role === "customer" ? "provider" : "customer",
-    }));
+  const handleApply = () => {
+    setIsApplying(true);
+  };
+
+  const handleSimulateApproval = () => {
+    setProviderStatus("approved");
   };
 
   return (
     <>
-      <Block>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-            <IonIcon icon={personOutline} className="text-3xl" />
+      <ProviderOnboarding
+        opened={isApplying}
+        onClose={() => setIsApplying(false)}
+      />
+      {providerStatus === "approved" && (
+        <Block
+          strong
+          inset
+          outline
+          className="flex gap-4 justify-between items-center bg-white"
+        >
+          <div className="min-w-[240px]">
+            <div className="text-slate-900 font-semibold">Provider mode</div>
+            <div className="text-xs text-slate-500 font-medium">
+              {userMode === "provider"
+                ? "You are currently managing your business"
+                : "Switch to manage your listings and services"}
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{profile.name}</h1>
-            <p className="text-slate-500 text-sm font-medium">
-              {profile.mobile_number}
-            </p>
+          <Toggle
+            component="label"
+            checked={userMode === "provider"}
+            onChange={toggleMode}
+            className="konsta-color-primary"
+          />
+        </Block>
+      )}
+
+      {providerStatus === "not_applied" && (
+        <Block
+          strong
+          inset
+          outline
+          className="bg-linear-to-br from-slate-200 to-purple-200 border-0 flex gap-4 p-0!"
+        >
+          <img src="/" className="w-32" />
+          <div className="w-52 p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div>
+                <div className="font-bold text-lg">Become a Provider</div>
+                <div className="text-xs">
+                  Start offering your services on Bohri Connect
+                </div>
+              </div>
+            </div>
+            <Button small rounded className="w-fit px-4" onClick={handleApply}>
+              Apply Now
+            </Button>
           </div>
-        </div>
-      </Block>
-      <Block
-        strong
-        inset
-        outline
-        className="flex gap-4 justify-between items-center"
-      >
-        <div className="min-w-[240px]">
-          <div className="text-slate-900">Provider mode</div>
-          <div className="text-xs text-slate-500 font-medium">
-            {profile.role === "provider"
-              ? "You act as a provider"
-              : "You act as a customer"}
+        </Block>
+      )}
+
+      {providerStatus === "pending" && (
+        <Block strong inset outline className="bg-amber-50 border-amber-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+              <IonIcon icon={timeOutline} className="text-2xl" />
+            </div>
+            <div>
+              <div className="font-bold text-amber-900">
+                Verification Pending
+              </div>
+              <div className="text-amber-700 text-xs text-pretty">
+                Your application is currently being reviewed by our team. This
+                usually takes 24-48 hours.
+              </div>
+            </div>
           </div>
-        </div>
-        <Toggle
-          component="label"
-          checked={profile.role === "provider"}
-          onChange={toggleRole}
-          className="konsta-color-primary"
-        />
-      </Block>
+          <Button
+            clear
+            small
+            className="text-amber-600 font-semibold"
+            onClick={handleSimulateApproval}
+          >
+            (Simulation) Fast Track Approval
+          </Button>
+        </Block>
+      )}
+
+      {providerStatus === "rejected" && (
+        <Block strong inset outline className="bg-red-50 border-red-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-red-100 rounded-lg text-red-600">
+              <IonIcon icon={alertCircleOutline} className="text-2xl" />
+            </div>
+            <div>
+              <div className="font-bold text-red-900">Application Rejected</div>
+              <div className="text-red-700 text-xs">
+                Please review your documents and try again.
+              </div>
+            </div>
+          </div>
+          <Button
+            outline
+            rounded
+            className="text-red-600 border-red-600 font-bold"
+            onClick={() => setProviderStatus("not_applied")}
+          >
+            Retry Application
+          </Button>
+        </Block>
+      )}
 
       <BlockTitle className="flex items-center justify-between">
         <span>Personal Information</span>
