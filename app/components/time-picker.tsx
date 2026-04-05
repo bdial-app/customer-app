@@ -232,15 +232,18 @@ export default function TimePicker({
   const [open, setOpen] = useState(false);
   const [portalPosition, setPortalPosition] = useState({ top: 0, right: 0 });
   const anchorRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Parse "09:30 AM" into {h: 8, m: 30, ap: 0}
+  // Fix: use parseInt with isNaN checks instead of falsy || fallbacks
   const parseTime = (str: string) => {
-    if (!str) return { h: 8, m: 0, ap: 0 }; // Default 9:00 AM
+    if (!str) return { h: 8, m: 0, ap: 0 };
     const [time, ampm] = str.split(" ");
-    const [h, m] = time.split(":").map(Number);
+    const [hStr, mStr] = time.split(":");
+    const h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
     return {
-      h: (h || 9) - 1,
-      m: m || 0,
+      h: isNaN(h) ? 8 : h - 1,
+      m: isNaN(m) ? 0 : m,
       ap: ampm === "PM" ? 1 : 0,
     };
   };
@@ -251,74 +254,55 @@ export default function TimePicker({
   const timeStr = (s: { h: number; m: number; ap: number }) =>
     `${HOURS[s.h]}:${MINS[s.m]} ${AMPMS[s.ap]}`;
 
-  const handleOpen = () => {
-    pending.current = { ...committed };
+  const calcPosition = () => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    const dropdownHeight = 300;
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
 
-    // Calculate portal position
-    if (anchorRef.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      const scrollTop =
-        window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft =
-        window.pageXOffset || document.documentElement.scrollLeft;
+    let top = rect.bottom + 4;
+    let right = viewportWidth - rect.right + 16;
 
-      // Dropdown dimensions
-      const dropdownHeight = 300; // Approximate height including buttons
-      const dropdownWidth = 240;
-      const viewportHeight = window.innerHeight;
-      const viewportWidth = window.innerWidth;
-
-      let top = rect.bottom + scrollTop + 4;
-      let right = viewportWidth - rect.right - scrollLeft + 16;
-
-      // Check if dropdown goes off bottom of viewport
-      if (rect.bottom + dropdownHeight > viewportHeight) {
-        // Position above the anchor instead
-        top = rect.top + scrollTop - dropdownHeight - 4;
-
-        // If still off-screen at top, position at top with minimum margin
-        if (top < scrollTop + 10) {
-          top = scrollTop + 10;
-        }
-      }
-
-      // Check if dropdown goes off right side of viewport
-      if (rect.right + dropdownWidth > viewportWidth) {
-        // Position relative to right edge with margin
-        right = 16;
-      }
-
-      // Ensure minimum distance from right edge
-      if (right < 16) {
-        right = 16;
-      }
-
-      setPortalPosition({ top, right });
+    if (rect.bottom + dropdownHeight > viewportHeight) {
+      top = rect.top - dropdownHeight - 4;
+      if (top < 10) top = 10;
     }
 
+    if (right < 16) right = 16;
+
+    setPortalPosition({ top, right });
+  };
+
+  const handleOpen = () => {
+    pending.current = { ...committed };
+    calcPosition();
     setOpen(true);
   };
+
   const handleCancel = () => setOpen(false);
+
+  // Fix: snapshot pending.current before setting state
   const handleDone = () => {
-    setCommitted({ ...pending.current });
-    onChange(timeStr(pending.current));
+    const next = { ...pending.current };
+    setCommitted(next);
+    onChange(timeStr(next));
     setOpen(false);
   };
 
+  // Fix: check both anchor and dropdown refs so dragging inside
+  // the portal doesn't trigger the outside-click close
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (anchorRef.current && !anchorRef.current.contains(e.target as Node))
-        setOpen(false);
+      const target = e.target as Node;
+      const inAnchor = anchorRef.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (!inAnchor && !inDropdown) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
 
-    // Recalculate position on window resize
-    const resizeHandler = () => {
-      if (open && anchorRef.current) {
-        handleOpen();
-      }
-    };
+    const resizeHandler = () => calcPosition();
     window.addEventListener("resize", resizeHandler);
 
     return () => {
@@ -345,7 +329,6 @@ export default function TimePicker({
         ref={anchorRef}
       >
         <div className="flex flex-col gap-0.5">
-          {/* <span className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wider">{label}</span> */}
           <span className="text-sm text-slate-600">{label}</span>
         </div>
 
@@ -365,6 +348,7 @@ export default function TimePicker({
       {open &&
         createPortal(
           <div
+            ref={dropdownRef}
             style={{
               position: "fixed",
               top: portalPosition.top,
@@ -373,9 +357,7 @@ export default function TimePicker({
               zIndex: 1000,
               borderRadius: 16,
               overflow: "hidden",
-              transform: "scaleY(1)",
               transformOrigin: "top right",
-              opacity: 1,
               pointerEvents: "all",
               transition: "opacity 0.18s ease, transform 0.18s ease",
               background: "rgba(255,255,255,0.72)",
@@ -384,8 +366,8 @@ export default function TimePicker({
               border: "0.5px solid rgba(255,255,255,0.5)",
               boxShadow:
                 "0 12px 32px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)",
-              maxHeight: "90vh", // Prevent from exceeding viewport height
-              overflowY: "auto", // Allow scrolling if content is too tall
+              maxHeight: "90vh",
+              overflowY: "auto",
             }}
           >
             {/* Drums */}
