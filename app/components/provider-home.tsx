@@ -35,6 +35,24 @@ import {
   trashOutline,
   cameraOutline,
 } from "ionicons/icons";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import { FormikInput } from "./formik-input";
+
+const overviewSchema = Yup.object({
+  name: Yup.string().required("Required"),
+  service: Yup.string().required("Required"),
+  description: Yup.string().required("Required"),
+  phone: Yup.string().required("Required"),
+  address: Yup.string().required("Required"),
+  experience: Yup.string().required("Required"),
+});
+
+const productSchema = Yup.object({
+  name: Yup.string().required("Required"),
+  price: Yup.string().required("Required"),
+  description: Yup.string(),
+});
 
 interface ProviderDetails {
   name: string;
@@ -76,7 +94,6 @@ const ProviderHome = () => {
     address: "123 Fashion Street, Downtown, City - 400001",
     experience: "10+ Years",
   });
-  const [tempDetails, setTempDetails] = useState<ProviderDetails>(details);
 
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
   const [detailsSheetContent, setDetailsSheetContent] = useState({
@@ -155,48 +172,18 @@ const ProviderHome = () => {
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
   const [providerPhotos, setProviderPhotos] = useState<any[]>([1]); // Mock data: [1] means has photos. [] means empty.
 
-  const [tempProduct, setTempProduct] = useState<Product>({
-    id: "",
-    name: "",
-    description: "",
-    price: "",
-    photo_url: "",
-  });
-
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setTempProduct({
-      id: "",
-      name: "",
-      description: "",
-      price: "",
-      photo_url: "",
-    });
     setProductSheetOpen(true);
   };
 
   const handleEditProduct = (p: Product) => {
     setEditingProduct(p);
-    setTempProduct({ ...p });
     setProductSheetOpen(true);
   };
 
   const handleDeleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const handleSaveProduct = () => {
-    if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editingProduct.id ? tempProduct : p)),
-      );
-    } else {
-      setProducts((prev) => [
-        ...prev,
-        { ...tempProduct, id: Date.now().toString() },
-      ]);
-    }
-    setProductSheetOpen(false);
   };
 
   return (
@@ -245,10 +232,7 @@ const ProviderHome = () => {
                 small
                 inline
                 rounded
-                onClick={() => {
-                  setIsEditing(true);
-                  setTempDetails({ ...details });
-                }}
+                onClick={() => setIsEditing(true)}
               >
                 Update
               </Button>
@@ -257,96 +241,83 @@ const ProviderHome = () => {
 
           <List strongIos insetIos>
             {isEditing ? (
-              <>
-                <ListInput
-                  label="Name"
-                  type="text"
-                  placeholder="Business Name"
-                  value={tempDetails.name}
-                  onChange={(e) =>
-                    setTempDetails({ ...tempDetails, name: e.target.value })
-                  }
-                  media={<IonIcon icon={personOutline} />}
-                />
-                <ListInput
-                  label="Service"
-                  type="text"
-                  placeholder="e.g. Tailoring"
-                  value={tempDetails.service}
-                  onChange={(e) =>
-                    setTempDetails({ ...tempDetails, service: e.target.value })
-                  }
-                  media={<IonIcon icon={businessOutline} />}
-                />
-                <ListInput
-                  label="Description"
-                  type="textarea"
-                  placeholder="Brief description..."
-                  value={tempDetails.description}
-                  onChange={(e) =>
-                    setTempDetails({
-                      ...tempDetails,
-                      description: e.target.value,
-                    })
-                  }
-                  inputClassName="!h-24 resize-none"
-                />
-                <ListInput
-                  label="Phone"
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={tempDetails.phone}
-                  onChange={(e) =>
-                    setTempDetails({ ...tempDetails, phone: e.target.value })
-                  }
-                  media={<IonIcon icon={callOutline} />}
-                />
-                <ListInput
-                  label="Address"
-                  type="text"
-                  placeholder="Your Address"
-                  value={tempDetails.address}
-                  onChange={(e) =>
-                    setTempDetails({ ...tempDetails, address: e.target.value })
-                  }
-                  media={<IonIcon icon={locationOutline} />}
-                />
-                <ListInput
-                  label="Experience"
-                  type="text"
-                  placeholder="e.g. 5 Years"
-                  value={tempDetails.experience}
-                  onChange={(e) =>
-                    setTempDetails({
-                      ...tempDetails,
-                      experience: e.target.value,
-                    })
-                  }
-                  media={<IonIcon icon={mapOutline} />}
-                />
-                <Block className="grid grid-cols-2 gap-4 mt-4">
-                  <Button
-                    outline
-                    rounded
-                    large
-                    onClick={() => setIsEditing(false)}
-                    className="font-bold border-2"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    rounded
-                    large
-                    onClick={() => {
-                      setDetails({ ...tempDetails });
-                      setIsEditing(false);
-                    }}
-                    className="font-bold"
-                  >
-                    Save
-                  </Button>
-                </Block>
-              </>
+              <Formik
+                initialValues={details}
+                validationSchema={overviewSchema}
+                onSubmit={(values) => {
+                  setDetails(values);
+                  setIsEditing(false);
+                }}
+              >
+                {({ isValid, dirty }) => (
+                  <Form className="contents">
+                    <FormikInput
+                      name="name"
+                      label="Name"
+                      type="text"
+                      placeholder="Business Name"
+                      media={<IonIcon icon={personOutline} />}
+                    />
+                    <FormikInput
+                      name="service"
+                      label="Service"
+                      type="text"
+                      placeholder="e.g. Tailoring"
+                      media={<IonIcon icon={businessOutline} />}
+                    />
+                    <FormikInput
+                      name="description"
+                      label="Description"
+                      type="textarea"
+                      placeholder="Brief description..."
+                      inputClassName="!h-24 resize-none"
+                      media={<IonIcon icon={documentTextOutline} />}
+                    />
+                    <FormikInput
+                      name="phone"
+                      label="Phone"
+                      type="tel"
+                      placeholder="Phone Number"
+                      media={<IonIcon icon={callOutline} />}
+                    />
+                    <FormikInput
+                      name="address"
+                      label="Address"
+                      type="text"
+                      placeholder="Your Address"
+                      media={<IonIcon icon={locationOutline} />}
+                    />
+                    <FormikInput
+                      name="experience"
+                      label="Experience"
+                      type="text"
+                      placeholder="e.g. 5 Years"
+                      media={<IonIcon icon={mapOutline} />}
+                    />
+                    <Block className="grid grid-cols-2 gap-4 mt-4">
+                      <Button
+                        outline
+                        rounded
+                        large
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        className="font-bold border-2"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        rounded
+                        large
+                        type="submit"
+                        className="font-bold"
+                        disabled={!isValid || !dirty}
+                      >
+                        Save
+                      </Button>
+                    </Block>
+                  </Form>
+                )}
+              </Formik>
             ) : (
               <>
                 <ListItem
@@ -653,100 +624,117 @@ const ProviderHome = () => {
                 }
               />
               <div className="overflow-y-auto pb-4">
-                <label className="block mt-6 mb-4 text-center cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setTempProduct({
-                          ...tempProduct,
-                          photo_url: URL.createObjectURL(file),
-                        });
-                      }
-                    }}
-                  />
-                  <div className="w-64 h-64 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-500 relative transition-all active:scale-95">
-                    {tempProduct.photo_url ? (
-                      <img
-                        src={tempProduct.photo_url}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <>
-                        <IonIcon
-                          icon={cameraOutline}
-                          className="text-3xl mb-1 text-indigo-400"
-                        />
-                        <span className="text-xs font-semibold text-slate-500">
-                          Upload Photo
-                        </span>
-                      </>
-                    )}
-                    {tempProduct.photo_url && (
-                      <div
-                        className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-100"
-                        style={{
-                          backdropFilter: !tempProduct.photo_url
-                            ? "blur(2px)"
-                            : "none",
-                        }}
-                      >
-                        <span className="text-white text-xs font-semibold px-3 py-1 border border-white/50 rounded-full">
-                          Change
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </label>
-                <List strongIos insetIos className="!mt-0">
-                  <ListInput
-                    label="Name"
-                    type="text"
-                    placeholder="Product/Service Name"
-                    value={tempProduct.name}
-                    onChange={(e) =>
-                      setTempProduct({ ...tempProduct, name: e.target.value })
+                <Formik
+                  initialValues={
+                    editingProduct || {
+                      id: "",
+                      name: "",
+                      description: "",
+                      price: "",
+                      photo_url: "",
                     }
-                  />
-                  <ListInput
-                    label="Price"
-                    type="text"
-                    placeholder="e.g. $100"
-                    value={tempProduct.price}
-                    onChange={(e) =>
-                      setTempProduct({ ...tempProduct, price: e.target.value })
+                  }
+                  validationSchema={productSchema}
+                  enableReinitialize
+                  onSubmit={(values) => {
+                    if (editingProduct) {
+                      setProducts((prev) =>
+                        prev.map((p) => (p.id === editingProduct.id ? values as Product : p))
+                      );
+                    } else {
+                      setProducts((prev) => [
+                        ...prev,
+                        { ...(values as Product), id: Date.now().toString() },
+                      ]);
                     }
-                  />
-
-                  <ListInput
-                    label="Description"
-                    type="textarea"
-                    placeholder="Detailed description..."
-                    value={tempProduct.description}
-                    onChange={(e) =>
-                      setTempProduct({
-                        ...tempProduct,
-                        description: e.target.value,
-                      })
-                    }
-                    inputClassName="!h-32 min-h-[6rem] py-2 resize-none"
-                  />
-                </List>
-              </div>
-              <Block className="mt-auto">
-                <Button
-                  large
-                  rounded
-                  onClick={handleSaveProduct}
-                  disabled={!tempProduct.name || !tempProduct.price}
+                    setProductSheetOpen(false);
+                  }}
                 >
-                  {editingProduct ? "Save Changes" : "Add Product"}
-                </Button>
-              </Block>
+                  {({ values, setFieldValue, isValid, dirty }) => (
+                    <Form className="contents">
+                      <label className="block mt-6 mb-4 text-center cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setFieldValue("photo_url", URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                        <div className="w-64 h-64 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-500 relative transition-all active:scale-95">
+                          {values.photo_url ? (
+                            <img
+                              src={values.photo_url}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <IonIcon
+                                icon={cameraOutline}
+                                className="text-3xl mb-1 text-indigo-400"
+                              />
+                              <span className="text-xs font-semibold text-slate-500">
+                                Upload Photo
+                              </span>
+                            </>
+                          )}
+                          {values.photo_url && (
+                            <div
+                              className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-100"
+                              style={{
+                                backdropFilter: !values.photo_url
+                                  ? "blur(2px)"
+                                  : "none",
+                              }}
+                            >
+                              <span className="text-white text-xs font-semibold px-3 py-1 border border-white/50 rounded-full">
+                                Change
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                      <List strongIos insetIos className="!mt-0">
+                        <FormikInput
+                          name="name"
+                          label="Name"
+                          type="text"
+                          placeholder="Product/Service Name"
+                        />
+                        <FormikInput
+                          name="price"
+                          label="Price"
+                          type="text"
+                          placeholder="e.g. $100"
+                        />
+
+                        <FormikInput
+                          name="description"
+                          label="Description"
+                          type="textarea"
+                          placeholder="Detailed description..."
+                          inputClassName="!h-32 min-h-[6rem] py-2 resize-none"
+                          media={<IonIcon icon={documentTextOutline} />}
+                        />
+                      </List>
+                      <Block className="mt-auto">
+                        <Button
+                          large
+                          rounded
+                          type="submit"
+                          disabled={!isValid || (!dirty && !values.photo_url)}
+                        >
+                          {editingProduct ? "Save Changes" : "Add Product"}
+                        </Button>
+                      </Block>
+                    </Form>
+                  )}
+                </Formik>
+              </div>
             </Page>
           </Sheet>
 

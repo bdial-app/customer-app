@@ -11,6 +11,7 @@ interface FormikInputProps {
   formatValue?: (value: string) => string;
   media?: React.ReactNode | string;
   children?: React.ReactNode;
+  inputClassName?: string;
 }
 
 export const FormikInput: React.FC<FormikInputProps> = ({
@@ -22,6 +23,7 @@ export const FormikInput: React.FC<FormikInputProps> = ({
   formatValue,
   media = null,
   children,
+  inputClassName,
 }) => {
   const [field, meta, helpers] = useField(name);
 
@@ -48,6 +50,7 @@ export const FormikInput: React.FC<FormikInputProps> = ({
       onBlur={field.onBlur}
       name={field.name}
       error={showError ? meta.error : ""}
+      inputClassName={inputClassName}
     >
       {children}
     </ListInput>
