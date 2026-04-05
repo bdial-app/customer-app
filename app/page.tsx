@@ -21,7 +21,7 @@ export default function Home() {
   const getPageTitle = () => {
     switch (activeTab) {
       case "home":
-        return userMode === "customer" ? "Bohri Connect" : "Provider Dashboard";
+        return userMode === "customer" ? "Bohri Connect" : "Home";
       case "chats":
         return "Messages";
       case "profile":

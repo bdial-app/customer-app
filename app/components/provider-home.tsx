@@ -81,7 +81,7 @@ interface Product {
 }
 
 const ProviderHome = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("details");
 
   // Overview State
   const [isEditing, setIsEditing] = useState(false);
@@ -192,20 +192,6 @@ const ProviderHome = () => {
         <Segmented rounded strong>
           <SegmentedButton
             className="!text-xs"
-            active={activeTab === "overview"}
-            onClick={() => setActiveTab("overview")}
-          >
-            Overview
-          </SegmentedButton>
-          <SegmentedButton
-            className="!text-xs"
-            active={activeTab === "reviews"}
-            onClick={() => setActiveTab("reviews")}
-          >
-            Reviews
-          </SegmentedButton>
-          <SegmentedButton
-            className="!text-xs"
             active={activeTab === "products"}
             onClick={() => setActiveTab("products")}
           >
@@ -218,11 +204,25 @@ const ProviderHome = () => {
           >
             Photos
           </SegmentedButton>
+          <SegmentedButton
+            className="!text-xs"
+            active={activeTab === "details"}
+            onClick={() => setActiveTab("details")}
+          >
+            Details
+          </SegmentedButton>
+          <SegmentedButton
+            className="!text-xs"
+            active={activeTab === "reviews"}
+            onClick={() => setActiveTab("reviews")}
+          >
+            Reviews
+          </SegmentedButton>
         </Segmented>
       </Block>
 
       {/* OVERVIEW TAB */}
-      {activeTab === "overview" && (
+      {activeTab === "details" && (
         <div className="animate-in fade-in duration-300">
           <BlockTitle className="flex items-center justify-between">
             <span>Provider Information</span>
@@ -639,7 +639,9 @@ const ProviderHome = () => {
                   onSubmit={(values) => {
                     if (editingProduct) {
                       setProducts((prev) =>
-                        prev.map((p) => (p.id === editingProduct.id ? values as Product : p))
+                        prev.map((p) =>
+                          p.id === editingProduct.id ? (values as Product) : p,
+                        ),
                       );
                     } else {
                       setProducts((prev) => [
@@ -660,7 +662,10 @@ const ProviderHome = () => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              setFieldValue("photo_url", URL.createObjectURL(file));
+                              setFieldValue(
+                                "photo_url",
+                                URL.createObjectURL(file),
+                              );
                             }
                           }}
                         />
