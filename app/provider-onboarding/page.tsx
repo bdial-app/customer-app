@@ -337,6 +337,7 @@ const ProviderOnboardingPage = () => {
               <Button
                 large
                 rounded
+                className="flex-1"
                 onClick={handleNext}
                 disabled={!isStep1Valid || isSubmitting}
               >
@@ -362,7 +363,7 @@ const ProviderOnboardingPage = () => {
                 onClick={handleSubmit}
                 disabled={!isStep2Valid || isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Submit Application"}
+                {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </>
           )}

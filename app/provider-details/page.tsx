@@ -480,6 +480,7 @@ export default function ProviderDetailsPage() {
                 </div>
               ))}
             </div>
+            <div className="h-40"></div>
           </Block>
         </>
       )}
@@ -621,24 +622,24 @@ export default function ProviderDetailsPage() {
           <List strongIos insetIos>
             <div className="p-4">
               <label className="block text-sm font-medium mb-3">Rating</label>
-                    <div className="flex gap-2 justify-center mb-4">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Button
-                          key={s}
-                          clear
-                          onClick={() =>
-                            setReviewData((prev) => ({ ...prev, rating: s }))
-                          }
-                          className="p-1"
-                        >
-                          <IonIcon
-                            icon="star"
-                            style={{ fontSize: "32px" }}
-                            className={`${s <= reviewData.rating ? "text-yellow-500" : "text-gray-300"}`}
-                          />
-                        </Button>
-                      ))}
-                    </div>
+              <div className="flex justify-center gap-4 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Button
+                    rounded
+                    key={s}
+                    clear
+                    onClick={() =>
+                      setReviewData((prev) => ({ ...prev, rating: s }))
+                    }
+                    className="!p-0 !w-fit"
+                  >
+                    <IonIcon
+                      icon={star}
+                      className={`min-w-8 max-w-8 h-8 ${s <= reviewData.rating ? "text-yellow-500" : "text-gray-300"}`}
+                    />
+                  </Button>
+                ))}
+              </div>
             </div>
 
             <ListInput
@@ -656,6 +657,8 @@ export default function ProviderDetailsPage() {
             <div className="flex gap-3">
               <Button
                 clear
+                large
+                rounded
                 className="flex-1"
                 onClick={() => setSheetOpened(false)}
               >

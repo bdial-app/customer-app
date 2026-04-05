@@ -622,6 +622,7 @@ const ProviderHome = () => {
             icon={<IonIcon icon={addOutline} />}
             text="Add Product"
             textPosition="after"
+            onClick={handleAddProduct}
           />
 
           <Sheet
