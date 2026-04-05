@@ -1,216 +1,280 @@
-"use client"
-import { BlockTitle, List, ListInput, Page, Block, Button, Preloader, Navbar } from "konsta/react";
+"use client";
+import {
+  BlockTitle,
+  List,
+  ListInput,
+  Page,
+  Block,
+  Button,
+  Preloader,
+  Navbar,
+} from "konsta/react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 
-type CreateAccountStep = 'mobile' | 'otp' | 'details';
+import { Formik, Form, useFormikContext } from "formik";
+import * as Yup from "yup";
+import { FormikInput } from "@/app/components/formik-input";
 
-interface UserDetails {
-    name: string;
-    gender: 'male' | 'female' | 'other';
-    city: string;
-    area: string;
-    pincode: string;
-}
+type CreateAccountStep = "mobile" | "otp" | "details";
+
+const validationSchemas = {
+  mobile: Yup.object({
+    mobile: Yup.string()
+      .matches(/^\d{10}$/, "Please enter valid 10 digit mobile number")
+      .required("Required"),
+  }),
+  otp: Yup.object({
+    otp: Yup.string()
+      .matches(/^\d{4}$/, "Please enter 4 digit OTP")
+      .required("Required"),
+  }),
+  details: Yup.object({
+    name: Yup.string()
+      .min(3, "Must be at least 3 characters")
+      .required("Full name is required"),
+    city: Yup.string().required("City is required"),
+    pincode: Yup.string()
+      .matches(/^\d{6}$/, "Please enter valid 6 digit pincode")
+      .required("Required"),
+    area: Yup.string(),
+    gender: Yup.string(),
+  }),
+};
+
+const GenderSelector = () => {
+  const { values, setFieldValue } = useFormikContext<any>();
+  return (
+    <div className="px-4 py-2">
+      <label className="block text-xs text-gray-500 mb-2">Gender</label>
+      <div className="flex gap-2">
+        {["male", "female", "other"].map((g) => (
+          <Button
+            key={g}
+            rounded
+            outline={values.gender !== g}
+            onClick={() => setFieldValue("gender", g)}
+            className="flex-1"
+            type="button"
+          >
+            {g.charAt(0).toUpperCase() + g.slice(1)}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function CreateAccountPage() {
-    const [currentStep, setCurrentStep] = useState<CreateAccountStep>('mobile');
-    const [mobile, setMobile] = useState("");
-    const [otp, setOtp] = useState("");
-    const [userDetails, setUserDetails] = useState<UserDetails>({
-        name: '',
-        gender: 'male',
-        city: '',
-        area: '',
-        pincode: ''
-    });
+  const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
 
-    const mobileRegex = /^\d{10}$/;
-    const isMobileValid = mobileRegex.test(mobile);
+  const handleBack = (setFieldValue: any) => {
+    if (currentStep === "otp") {
+      setCurrentStep("mobile");
+      setFieldValue("otp", "");
+    } else if (currentStep === "details") {
+      setCurrentStep("otp");
+    }
+  };
 
-    const handleMobileSubmit = () => {
-        if (isMobileValid) {
-            setCurrentStep('otp');
+  const handleNext = async (validateForm: any, setTouched: any) => {
+    const errors = await validateForm();
+    if (Object.keys(errors).length === 0) {
+      if (currentStep === "mobile") setCurrentStep("otp");
+      else if (currentStep === "otp") setCurrentStep("details");
+    } else {
+      // Mark all fields touched
+      const touchedFields = Object.keys(errors).reduce((acc, current) => {
+        acc[current] = true;
+        return acc;
+      }, {} as any);
+      setTouched(touchedFields);
+    }
+  };
+
+  return (
+    <Page
+      className="flex flex-col justify-end"
+      style={{
+        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
+      }}
+    >
+      <Navbar
+        right={
+          <p className="min-w-18 text-center">
+            <Link href={ROUTE_PATH.HOME}>Skip</Link>
+          </p>
         }
-    };
+      />
+      <Image src="/login-card.png" fill objectFit="contain" alt="Logo" />
 
-    const handleOtpSubmit = () => {
-        if (otp.length === 4) {
-            setCurrentStep('details');
-        }
-    };
+      <Block className="mb-auto flex items-center gap-2 mb-0">
+        <Image src="/vercel.svg" width={24} height={24} alt="Vercel Logo" />
+        <p className="text-lg">Brand Name</p>
+      </Block>
 
-    const handleBack = () => {
-        if (currentStep === 'otp') {
-            setCurrentStep('mobile');
-            setOtp("");
-        } else if (currentStep === 'details') {
-            setCurrentStep('otp');
-        }
-    };
+      <BlockTitle className="mt-auto z-10">Create Account</BlockTitle>
+      <Block className="mb-0">
+        <p>
+          {currentStep === "mobile" &&
+            "Enter your mobile number to get started"}
+          {currentStep === "otp" &&
+            "We've sent a verification code to your mobile"}
+          {currentStep === "details" && "Tell us a bit about yourself"}
+        </p>
+      </Block>
 
-    const handleDetailsSubmit = () => {
-        // TODO: API call to create account
-        console.log('Creating account with:', { mobile, userDetails });
-    };
-
-    const isFormValid = userDetails.name.trim() !== '' &&
-        userDetails.city.trim() !== '' &&
-        userDetails.pincode.trim() !== '';
-
-    return (
-        <Page className="flex flex-col justify-end" style={{
-            background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
-        }}>
-            <Navbar right={<p className="min-w-18 text-center"><Link href={ROUTE_PATH.HOME}>Skip</Link></p>}
-            />
-            <Image src="/login-card.png" fill objectFit="contain" alt="Logo" />
-
-            <Block className="mb-auto flex items-center gap-2 mb-0">
-                <Image src="/vercel.svg" width={24} height={24} alt="Vercel Logo" />
-                <p className="text-lg">Brand Name</p>
-            </Block>
-
-            <BlockTitle className="mt-auto z-10">Create Account</BlockTitle>
-            <Block className="mb-0">
-                <p>
-                    {currentStep === 'mobile' && "Enter your mobile number to get started"}
-                    {currentStep === 'otp' && "We've sent a verification code to your mobile"}
-                    {currentStep === 'details' && "Tell us a bit about yourself"}
-                </p>
-            </Block>
-
+      <Formik
+        initialValues={{
+          mobile: "",
+          otp: "",
+          name: "",
+          gender: "male",
+          city: "",
+          area: "",
+          pincode: "",
+        }}
+        validationSchema={validationSchemas[currentStep]}
+        onSubmit={(values) => {
+          console.log("Creating account with:", values);
+        }}
+      >
+        {({ isValid, validateForm, setTouched, setFieldValue, dirty }) => (
+          <Form className="contents">
             <List strongIos insetIos>
-                {currentStep === 'mobile' && (
-                    <ListInput
-                        label="Mobile Number"
-                        type="tel"
-                        placeholder="10 digit mobile number"
-                        info="Enter 10 digit mobile number"
-                        value={mobile}
-                        error={
-                            mobile && !isMobileValid ? 'Please enter valid 10 digit mobile number' : ''
-                        }
-                        onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    />
-                )}
+              {currentStep === "mobile" && (
+                <FormikInput
+                  media={"+91"}
+                  name="mobile"
+                  label="Mobile Number"
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  info="Enter 10 digit mobile number"
+                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 10)}
+                />
+              )}
 
-                {currentStep === 'otp' && (
-                    <ListInput
-                        label="OTP"
-                        type="tel"
-                        placeholder="4 digit OTP"
-                        info="Enter 4 digit OTP sent to your mobile"
-                        value={otp}
-                        error={
-                            otp && otp.length !== 4 ? 'Please enter 4 digit OTP' : ''
-                        }
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    />
-                )}
+              {currentStep === "otp" && (
+                <FormikInput
+                  name="otp"
+                  label="OTP"
+                  type="tel"
+                  placeholder="e.g. 1234"
+                  info="Enter 4 digit OTP sent to your mobile"
+                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 4)}
+                />
+              )}
 
-                {currentStep === 'details' && (
-                    <>
-                        <ListInput
-                            label="Full Name"
-                            type="text"
-                            placeholder="Enter your full name"
-                            value={userDetails.name}
-                            onChange={(e) => setUserDetails(prev => ({ ...prev, name: e.target.value }))}
-                        />
+              {currentStep === "details" && (
+                <>
+                  <FormikInput
+                    name="name"
+                    label="Full Name"
+                    type="text"
+                    placeholder="e.g. John Doe"
+                  />
 
-                        <div className="px-4 py-2">
-                            <label className="block text-sm font-medium mb-2">Gender</label>
-                            <div className="flex gap-2">
-                                <Button
-                                    rounded
-                                    outline={userDetails.gender !== 'male'}
-                                    onClick={() => setUserDetails(prev => ({ ...prev, gender: 'male' }))}
-                                    className="flex-1"
-                                >
-                                    Male
-                                </Button>
-                                <Button
-                                    rounded
-                                    outline={userDetails.gender !== 'female'}
-                                    onClick={() => setUserDetails(prev => ({ ...prev, gender: 'female' }))}
-                                    className="flex-1"
-                                >
-                                    Female
-                                </Button>
-                                <Button
-                                    rounded
-                                    outline={userDetails.gender !== 'other'}
-                                    onClick={() => setUserDetails(prev => ({ ...prev, gender: 'other' }))}
-                                    className="flex-1"
-                                >
-                                    Other
-                                </Button>
-                            </div>
-                        </div>
+                  <GenderSelector />
 
-                        <ListInput
-                            label="City"
-                            type="text"
-                            placeholder="Enter your city"
-                            value={userDetails.city}
-                            onChange={(e) => setUserDetails(prev => ({ ...prev, city: e.target.value }))}
-                        />
+                  <FormikInput
+                    name="city"
+                    label="City"
+                    type="text"
+                    placeholder="e.g. Mumbai"
+                  />
 
-                        <ListInput
-                            label="Area"
-                            type="text"
-                            placeholder="Enter your area (optional)"
-                            value={userDetails.area}
-                            onChange={(e) => setUserDetails(prev => ({ ...prev, area: e.target.value }))}
-                        />
+                  <FormikInput
+                    name="area"
+                    label="Area"
+                    type="text"
+                    placeholder="e.g. Andheri West"
+                  />
 
-                        <ListInput
-                            label="Pincode"
-                            type="text"
-                            placeholder="Enter your pincode"
-                            value={userDetails.pincode}
-                            onChange={(e) => setUserDetails(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
-                        />
-                    </>
-                )}
+                  <FormikInput
+                    name="pincode"
+                    label="Pincode"
+                    type="text"
+                    placeholder="e.g. 400058"
+                    formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
+                  />
+                </>
+              )}
             </List>
 
             <Block>
-                {currentStep === 'mobile' && (
-                    <Button large rounded onClick={handleMobileSubmit} disabled={!isMobileValid}>
-                        Get OTP
-                    </Button>
-                )}
+              {currentStep === "mobile" && (
+                <Button
+                  large
+                  rounded
+                  onClick={() => handleNext(validateForm, setTouched)}
+                  disabled={!isValid || !dirty}
+                  type="button"
+                >
+                  Get OTP
+                </Button>
+              )}
 
-                {currentStep === 'otp' && (
-                    <div className="flex gap-2">
-                        <Button rounded clear onClick={handleBack} className="flex-1">
-                            Back
-                        </Button>
-                        <Button large rounded disabled={otp.length !== 4} className="flex-1" onClick={handleOtpSubmit}>
-                            Verify OTP
-                        </Button>
-                    </div>
-                )}
+              {currentStep === "otp" && (
+                <div className="flex gap-2">
+                  <Button
+                    rounded
+                    clear
+                    onClick={() => handleBack(setFieldValue)}
+                    className="flex-1"
+                    type="button"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    large
+                    rounded
+                    disabled={!isValid || !dirty}
+                    className="flex-1"
+                    onClick={() => handleNext(validateForm, setTouched)}
+                    type="button"
+                  >
+                    Verify OTP
+                  </Button>
+                </div>
+              )}
 
-                {currentStep === 'details' && (
-                    <div className="flex gap-2">
-                        <Button rounded clear onClick={handleBack} className="flex-1">
-                            Back
-                        </Button>
-                        <Button large rounded disabled={!isFormValid} className="flex-1" onClick={handleDetailsSubmit}>
-                            Create Account
-                        </Button>
-                    </div>
-                )}
+              {currentStep === "details" && (
+                <div className="flex gap-2">
+                  <Button
+                    rounded
+                    clear
+                    onClick={() => handleBack(setFieldValue)}
+                    className="flex-1"
+                    type="button"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    large
+                    rounded
+                    disabled={!isValid || !dirty}
+                    className="flex-1"
+                    type="submit"
+                  >
+                    Create Account
+                  </Button>
+                </div>
+              )}
             </Block>
 
             <Block className="my-0 text-center mb-4">
-                <p>Already have an account? <Link href={ROUTE_PATH.LOGIN} className="text-blue-600">Login</Link></p>
+              <p>
+                Already have an account?{" "}
+                <Link href={ROUTE_PATH.LOGIN} className="text-blue-600">
+                  Login
+                </Link>
+              </p>
             </Block>
-        </Page>
-    );
+          </Form>
+        )}
+      </Formik>
+    </Page>
+  );
 }

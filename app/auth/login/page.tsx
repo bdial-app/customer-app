@@ -5,24 +5,46 @@ import Image from "next/image";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import { FormikInput } from "@/app/components/formik-input";
+
+type LoginStep = "mobile" | "otp";
+
+const validationSchemas = {
+  mobile: Yup.object({
+    mobile: Yup.string()
+      .matches(/^\d{10}$/, "Please enter valid 10 digit mobile number")
+      .required("Required"),
+  }),
+  otp: Yup.object({
+    otp: Yup.string()
+      .matches(/^\d{4}$/, "Please enter 4 digit OTP")
+      .required("Required"),
+  }),
+};
+
 export default function LoginPage() {
-    const [mobile, setMobile] = useState("");
-    const [otp, setOtp] = useState("");
-    const [showOtp, setShowOtp] = useState(false);
+  const [currentStep, setCurrentStep] = useState<LoginStep>("mobile");
 
-    const mobileRegex = /^\d{10}$/;
-    const isMobileValid = mobileRegex.test(mobile);
+  const handleBack = (setFieldValue: any) => {
+    setCurrentStep("mobile");
+    setFieldValue("otp", "");
+  };
 
-    const handleMobileSubmit = () => {
-        if (isMobileValid) {
-            setShowOtp(true);
-        }
-    };
-
-    const handleBack = () => {
-        setShowOtp(false);
-        setOtp("");
-    };
+  const handleNext = async (validateForm: any, setTouched: any) => {
+    const errors = await validateForm();
+    if (Object.keys(errors).length === 0) {
+      if (currentStep === "mobile") setCurrentStep("otp");
+    } else {
+      // Mark all fields touched
+      const touchedFields = Object.keys(errors).reduce((acc, current) => {
+        acc[current] = true;
+        return acc;
+      }, {} as any);
+      setTouched(touchedFields);
+    }
+  };
 
     return <Page className="flex flex-col justify-end" style={{
         background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
@@ -49,52 +71,85 @@ export default function LoginPage() {
                 Donec et nulla auctor massa pharetra adipiscing ut sit amet sem.
             </p>
         </Block>
-        <List strongIos insetIos>
-            {!showOtp ? (
-                <ListInput
-                    label="Mobile Number"
-                    type="tel"
-                    placeholder="10 digit mobile number"
-                    info="Enter 10 digit mobile number"
-                    value={mobile}
-                    error={
-                        mobile && !isMobileValid ? 'Please enter valid 10 digit mobile number' : ''
-                    }
-                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                />
-            ) : (
-                <ListInput
-                    label="OTP"
-                    type="tel"
-                    placeholder="4 digit OTP"
-                    info="Enter 4 digit OTP"
-                    value={otp}
-                    error={
-                        otp && otp.length !== 4 ? 'Please enter 4 digit OTP' : ''
-                    }
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                />
+        <Formik
+            initialValues={{
+                mobile: "",
+                otp: "",
+            }}
+            validationSchema={validationSchemas[currentStep]}
+            onSubmit={(values) => {
+                console.log("Logging in with:", values);
+            }}
+        >
+            {({ isValid, validateForm, setTouched, setFieldValue, dirty }) => (
+                <Form className="contents">
+                    <List strongIos insetIos>
+                        {currentStep === "mobile" && (
+                            <FormikInput
+                                media="+91"
+                                name="mobile"
+                                label="Mobile Number"
+                                type="tel"
+                                placeholder="e.g. 9876543210"
+                                info="Enter 10 digit mobile number"
+                                formatValue={(val) => val.replace(/\D/g, "").slice(0, 10)}
+                            />
+                        )}
+
+                        {currentStep === "otp" && (
+                            <FormikInput
+                                name="otp"
+                                label="OTP"
+                                type="tel"
+                                placeholder="e.g. 1234"
+                                info="Enter 4 digit OTP sent to your mobile"
+                                formatValue={(val) => val.replace(/\D/g, "").slice(0, 4)}
+                            />
+                        )}
+                    </List>
+
+                    <Block>
+                        {currentStep === "mobile" && (
+                            <Button
+                                large
+                                rounded
+                                onClick={() => handleNext(validateForm, setTouched)}
+                                disabled={!isValid || !dirty}
+                                type="button"
+                            >
+                                Get OTP
+                            </Button>
+                        )}
+
+                        {currentStep === "otp" && (
+                            <div className="flex gap-2">
+                                <Button
+                                    rounded
+                                    clear
+                                    onClick={() => handleBack(setFieldValue)}
+                                    className="flex-1"
+                                    type="button"
+                                >
+                                    Back
+                                </Button>
+                                <Button
+                                    large
+                                    rounded
+                                    disabled={!isValid || !dirty}
+                                    className="flex-1"
+                                    type="submit"
+                                >
+                                    Verify OTP
+                                </Button>
+                            </div>
+                        )}
+                    </Block>
+
+                    <Block className="my-0 text-center mb-4">
+                        <p>Don't have an account? <Link href={ROUTE_PATH.CREATE_ACCOUNT} className="text-blue-600">Create Account</Link></p>
+                    </Block>
+                </Form>
             )}
-        </List>
-        <Block>
-            {!showOtp ? (
-                <Button large rounded onClick={handleMobileSubmit} disabled={!isMobileValid}>
-                    {/* {0 && <Preloader className="w-4 h-4 mr-4" />} */}
-                    Get OTP
-                </Button>
-            ) : (
-                <div className="flex gap-2">
-                    <Button rounded clear onClick={handleBack} className="flex-1">
-                        Back
-                    </Button>
-                    <Button large rounded disabled={otp.length !== 4} className="flex-1">
-                        Verify OTP
-                    </Button>
-                </div>
-            )}
-        </Block>
-        <Block className="my-0 text-center mb-4">
-            <p>Don't have an account? <Link href={ROUTE_PATH.CREATE_ACCOUNT} className="text-blue-600">Create Account</Link></p>
-        </Block>
+        </Formik>
     </Page>;
 }
