@@ -30,6 +30,9 @@ import {
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useRouter } from "next/navigation";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import { FormikInput } from "./formik-input";
 
 interface UserProfile {
   mobile_number: string;
@@ -40,6 +43,20 @@ interface UserProfile {
   area: string;
   pincode: string;
 }
+
+const validationSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(3, "Must be at least 3 characters")
+    .required("Required"),
+  gender: Yup.string()
+    .oneOf(["male", "female", "other"], "Invalid Gender")
+    .required("Required"),
+  city: Yup.string().required("Required"),
+  area: Yup.string(),
+  pincode: Yup.string()
+    .matches(/^\d{6}$/, "Must be 6 digits")
+    .required("Required"),
+});
 
 const ProfileContent = () => {
   const { providerStatus, userMode, setProviderStatus, toggleMode } =
@@ -55,15 +72,13 @@ const ProfileContent = () => {
     area: "Yerawada",
     pincode: "411006",
   });
-  const [tempProfile, setTempProfile] = useState<UserProfile>(profile);
 
   const handleUpdate = () => {
     setIsEditing(true);
-    setTempProfile({ ...profile });
   };
 
-  const handleSave = () => {
-    setProfile({ ...tempProfile });
+  const handleSave = (values: UserProfile) => {
+    setProfile(values);
     setIsEditing(false);
   };
 
@@ -191,69 +206,82 @@ const ProfileContent = () => {
         )}
       </BlockTitle>
 
-      <List strongIos insetIos>
-        {isEditing ? (
-          <>
-            <ListInput
-              label="Name"
-              type="text"
-              placeholder="Your name"
-              value={tempProfile.name}
-              onChange={(e) =>
-                setTempProfile({ ...tempProfile, name: e.target.value })
-              }
-              media={<IonIcon icon={personOutline} />}
-            />
-            <ListInput
-              label="Gender"
-              type="select"
-              dropdown
-              value={tempProfile.gender}
-              onChange={(e) =>
-                setTempProfile({
-                  ...tempProfile,
-                  gender: e.target.value as any,
-                })
-              }
-              media={<IonIcon icon={maleOutline} />}
-            >
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </ListInput>
-            <ListInput
-              label="City"
-              type="text"
-              placeholder="City name"
-              value={tempProfile.city}
-              onChange={(e) =>
-                setTempProfile({ ...tempProfile, city: e.target.value })
-              }
-              media={<IonIcon icon={businessOutline} />}
-            />
-            <ListInput
-              label="Area"
-              type="text"
-              placeholder="Locality area"
-              value={tempProfile.area}
-              onChange={(e) =>
-                setTempProfile({ ...tempProfile, area: e.target.value })
-              }
-              media={<IonIcon icon={locationOutline} />}
-            />
-            <ListInput
-              label="Pincode"
-              type="text"
-              placeholder="Area pincode"
-              value={tempProfile.pincode}
-              onChange={(e) =>
-                setTempProfile({ ...tempProfile, pincode: e.target.value })
-              }
-              media={<IonIcon icon={mapOutline} />}
-            />
-          </>
-        ) : (
-          <>
+      {isEditing ? (
+        <Formik
+          initialValues={profile}
+          validationSchema={validationSchema}
+          onSubmit={handleSave}
+        >
+          {({ isValid, dirty }) => (
+            <Form className="contents">
+              <List strongIos insetIos>
+                <FormikInput
+                  name="name"
+                  label="Name"
+                  type="text"
+                  placeholder="Your name"
+                  media={<IonIcon icon={personOutline} />}
+                />
+                <FormikInput
+                  name="gender"
+                  label="Gender"
+                  type="select"
+                  media={<IonIcon icon={maleOutline} />}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </FormikInput>
+                <FormikInput
+                  name="city"
+                  label="City"
+                  type="text"
+                  placeholder="City name"
+                  media={<IonIcon icon={businessOutline} />}
+                />
+                <FormikInput
+                  name="area"
+                  label="Area"
+                  type="text"
+                  placeholder="Locality area"
+                  media={<IonIcon icon={locationOutline} />}
+                />
+                <FormikInput
+                  name="pincode"
+                  label="Pincode"
+                  type="text"
+                  placeholder="Area pincode"
+                  media={<IonIcon icon={mapOutline} />}
+                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
+                />
+              </List>
+
+              <Block className="grid grid-cols-2 gap-4">
+                <Button
+                  outline
+                  rounded
+                  large
+                  onClick={handleCancel}
+                  className="font-bold border-2"
+                  type="button"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  rounded
+                  large
+                  type="submit"
+                  className="font-bold"
+                  disabled={!isValid || !dirty}
+                >
+                  Save Changes
+                </Button>
+              </Block>
+            </Form>
+          )}
+        </Formik>
+      ) : (
+        <List strongIos insetIos>
             <ListItem
               title="Name"
               titleWrapClassName="text-sm"
@@ -302,25 +330,7 @@ const ProfileContent = () => {
               after={<span className="text-slate-800">{profile.pincode}</span>}
               media={<IonIcon icon={mapOutline} className="text-slate-400" />}
             />
-          </>
-        )}
-      </List>
-
-      {isEditing && (
-        <Block className="grid grid-cols-2 gap-4">
-          <Button
-            outline
-            rounded
-            large
-            onClick={handleCancel}
-            className="font-bold border-2"
-          >
-            Cancel
-          </Button>
-          <Button rounded large onClick={handleSave} className="font-bold">
-            Save Changes
-          </Button>
-        </Block>
+        </List>
       )}
 
       {!isEditing && (
