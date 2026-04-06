@@ -192,6 +192,13 @@ const ProviderHome = () => {
         <Segmented rounded strong>
           <SegmentedButton
             className="!text-xs"
+            active={activeTab === "details"}
+            onClick={() => setActiveTab("details")}
+          >
+            Details
+          </SegmentedButton>
+          <SegmentedButton
+            className="!text-xs"
             active={activeTab === "products"}
             onClick={() => setActiveTab("products")}
           >
@@ -204,13 +211,7 @@ const ProviderHome = () => {
           >
             Photos
           </SegmentedButton>
-          <SegmentedButton
-            className="!text-xs"
-            active={activeTab === "details"}
-            onClick={() => setActiveTab("details")}
-          >
-            Details
-          </SegmentedButton>
+
           <SegmentedButton
             className="!text-xs"
             active={activeTab === "reviews"}
