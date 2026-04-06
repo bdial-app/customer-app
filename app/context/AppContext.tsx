@@ -20,8 +20,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [providerStatus, setProviderStatus] =
-    useState<ProviderStatus>("not_applied");
-  const [userMode, setUserMode] = useState<UserMode>("customer");
+    useState<ProviderStatus>("approved");
+  const [userMode, setUserMode] = useState<UserMode>("provider");
 
   const toggleMode = () => {
     if (providerStatus === "approved") {

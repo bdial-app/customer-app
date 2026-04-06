@@ -10,6 +10,7 @@ import MessagesContent from "./components/messages-content";
 import MessagesPage from "./components/messages-page";
 import UserHome from "./components/user-home";
 import ProviderHome from "./components/provider-home";
+import AnalyticsContent from "./components/analytics-content";
 import { useAppContext } from "./context/AppContext";
 
 export default function Home() {
@@ -60,6 +61,8 @@ export default function Home() {
       )}
 
       {activeTab === "profile" && <ProfileContent />}
+
+      {activeTab === "analytics" && <AnalyticsContent />}
 
       <div className="h-20"></div>
 
