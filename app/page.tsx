@@ -12,6 +12,7 @@ import UserHome from "./components/user-home";
 import ProviderHome from "./components/provider-home";
 import AnalyticsContent from "./components/analytics-content";
 import { useAppContext } from "./context/AppContext";
+import GeoLocation from "./components/geo-location";
 
 export default function Home() {
   const router = useRouter();
@@ -46,12 +47,15 @@ export default function Home() {
         background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
       }}
     >
-      <Navbar
-        centerTitle={false}
-        large={activeTab !== "home"}
-        title={getPageTitle()}
-        className="mb-0!"
-      />
+      {activeTab !== "home" && (
+        <Navbar
+          centerTitle={false}
+          large={activeTab !== "home"}
+          title={getPageTitle()}
+          className="mb-0!"
+        />
+      )}
+      {activeTab === "home" && userMode === "customer" && <GeoLocation />}
 
       {activeTab === "home" &&
         (userMode === "customer" ? <UserHome /> : <ProviderHome />)}
