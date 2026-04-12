@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   Page,
   Navbar,
@@ -24,14 +24,104 @@ import {
   ellipsisHorizontalCircleOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { GoogleMap, useLoadScript } from "@react-google-maps/api";
+
+// Custom Advanced Marker Component to replace deprecated google.maps.Marker
+const AdvancedMarker = ({
+  position,
+  map,
+}: {
+  position: google.maps.LatLngLiteral;
+  map: google.maps.Map | null;
+}) => {
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Create the Advanced Marker
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      map,
+      position,
+    });
+    
+    markerRef.current = marker;
+
+    return () => {
+      if (markerRef.current) {
+        markerRef.current.map = null;
+      }
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.position = position;
+    }
+  }, [position]);
+
+  return null;
+};
+
+const containerStyle = {
+  width: "100%",
+  height: "100%",
+};
+
+const defaultCenter = {
+  lat: 18.5204, // Pune
+  lng: 73.8567,
+};
 
 const AddLocationPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedType, setSelectedType] = useState("Home");
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  const libraries: ("marker" | "places")[] = useMemo(() => ["marker"], []);
+
+  // Google Maps Logic
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: "AIzaSyAcciwPVPALEtOh_vhFyELCyMMxFOtf384",
+    libraries,
+  });
+
+  const [marker, setMarker] = useState(defaultCenter);
+  const [address, setAddress] = useState("");
+
+  // Reverse geocode
+  const getAddress = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyAcciwPVPALEtOh_vhFyELCyMMxFOtf384`,
+      );
+      const data = await res.json();
+      const formattedAddress =
+        data.results[0]?.formatted_address || "No address found";
+      setAddress(formattedAddress);
+      setSearchQuery(formattedAddress);
+    } catch (error) {
+      console.error("Error fetching address:", error);
+    }
+  };
+
+  // On map click
+  const handleClick = useCallback((e: any) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+
+    setMarker({ lat, lng });
+    getAddress(lat, lng);
+  }, []);
+
+  const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
+    setMap(mapInstance);
+  }, []);
 
   const mockLocations = [
+    // ... (rest)
     { title: "Camp, Pune", area: "Maharashtra, India" },
     { title: "MG Road, Pune", area: "Maharashtra, India" },
     { title: "Koregaon Park, Pune", area: "Maharashtra, India" },
@@ -63,27 +153,30 @@ const AddLocationPage = () => {
         {/* Hide Map and Form when searching */}
         {!isFocused && (
           <div className="flex-1 relative w-full h-80 bg-slate-200 overflow-hidden flex items-center justify-center transition-opacity duration-300">
-            {/* Mock Map Background */}
-            <div
-              className="absolute inset-0 opacity-40"
-              style={{
-                backgroundImage:
-                  "radial-gradient(#94a3b8 1px, transparent 1px)",
-                backgroundSize: "20px 20px",
-              }}
-            ></div>
-
-            {/* Centered Pin */}
-            <div className="relative z-10 flex flex-col items-center">
-              <IonIcon
-                icon={pin}
-                className="text-5xl text-red-500 drop-shadow-lg animate-bounce"
-              />
-              <div className="w-4 h-1 bg-black/20 rounded-full blur-[2px] mt-1"></div>
-            </div>
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={containerStyle}
+                center={marker}
+                zoom={15}
+                onLoad={onMapLoad}
+                onClick={handleClick}
+                options={{
+                  disableDefaultUI: true,
+                  zoomControl: false,
+                  mapId: "DEMO_MAP_ID",
+                }}
+              >
+                <AdvancedMarker map={map} position={marker} />
+              </GoogleMap>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-slate-400 text-sm">Loading Map...</div>
+              </div>
+            )}
 
             {/* Floating "Locate Me" Button */}
-            <button className="absolute bottom-4 w-12 h-12 grid place-content-center right-4 bg-white p-3 rounded-full shadow-lg active:scale-95 transition-transform">
+            <button className="absolute bottom-4 w-12 h-12 grid place-content-center right-4 bg-white p-3 rounded-full shadow-lg active:scale-95 transition-transform z-10">
               <IonIcon
                 icon={locateOutline}
                 className="text-2xl text-blue-500"
