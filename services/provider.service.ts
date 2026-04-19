@@ -29,3 +29,8 @@ export const getNearbyProviders = async (
   const { data } = await apiClient.get(PROVIDER_URLS.NEARBY, { params });
   return data;
 };
+
+export const getProviderById = async (id: string): Promise<any> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.BY_ID(id));
+  return data;
+};

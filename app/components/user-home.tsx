@@ -125,7 +125,7 @@ const UserHome = () => {
 
       <ServicesList />
 
-      <Block strong inset outline className="!p-0 !mb-2">
+      <Block strong inset outline className="!p-0 !mb-2 bg-yellow-100">
         <SectionHeader
           title="Get Ridha Tailors"
           subtitle="Discover amazing services!"

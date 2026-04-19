@@ -2,20 +2,28 @@ import { Block } from "konsta/react";
 import { useTopLevelCategories } from "@/hooks/useCategories";
 
 // Icon mapping source (from previous mock)
-const iconMapping: Record<string, string> = {
-  "Bohri Ridha & Burka Tailoring": "https://cdn-icons-png.flaticon.com/512/6165/6165574.png",
-  "Tuition & Classes": "https://cdn-icons-png.flaticon.com/512/2921/2921822.png",
-  "Beauty & Mehandi": "https://cdn-icons-png.flaticon.com/512/3534/3534069.png",
-  "Jewellery & Accessories": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-  "Others": "https://cdn-icons-png.flaticon.com/512/1046/1046857.png",
-};
 
-const defaultIcon = "https://cdn-icons-png.flaticon.com/512/1046/1046857.png";
+const defaultIcon =
+  "https://static.vecteezy.com/system/resources/thumbnails/043/274/699/small/clothes-donation-illustration-png.png";
 
 // Bento layout: [colSpan, rowSpan] per item index
 const bentoPattern: [number, number][] = [
-  [2, 2], [1, 1], [1, 1], [1, 1], [1, 1], [2, 1], [1, 1], [1, 2],
-  [1, 1], [1, 1], [2, 1], [1, 1], [1, 1], [1, 1], [1, 2], [1, 1],
+  [2, 2],
+  [1, 1],
+  [1, 1],
+  [1, 1],
+  [1, 1],
+  [2, 1],
+  [1, 1],
+  [1, 2],
+  [1, 1],
+  [1, 1],
+  [2, 1],
+  [1, 1],
+  [1, 1],
+  [1, 1],
+  [1, 2],
+  [1, 1],
 ];
 
 const gradients = [
@@ -41,9 +49,12 @@ const ServicesList = ({ className }: { className?: string }) => {
       <Block className={`mb-0! !px-0 ${className ?? ""}`}>
         <div className="overflow-x-auto no-scrollbar pb-1 px-4">
           <div className="flex gap-2 h-[168px]">
-             {[1,2,3,4,5].map(i => (
-               <div key={i} className="w-20 h-full rounded-xl bg-slate-100 animate-pulse shrink-0" />
-             ))}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="w-20 h-full rounded-xl bg-slate-100 animate-pulse shrink-0"
+              />
+            ))}
           </div>
         </div>
       </Block>
@@ -65,7 +76,7 @@ const ServicesList = ({ className }: { className?: string }) => {
             const [colSpan, rowSpan] = bentoPattern[i % bentoPattern.length];
             const gradient = gradients[i % gradients.length];
             const isLarge = colSpan === 2 && rowSpan === 2;
-            const icon = iconMapping[category.name] || defaultIcon;
+            const icon = defaultIcon;
 
             return (
               <div
@@ -75,10 +86,11 @@ const ServicesList = ({ className }: { className?: string }) => {
                   gridColumn: `span ${colSpan}`,
                   gridRow: `span ${rowSpan}`,
                   background: `url(${icon}) no-repeat 115% -15% / ${isLarge ? "60%" : "55%"}, ${gradient}`,
+                  backgroundSize: "cover",
                 }}
               >
                 <p
-                  className={`absolute bottom-2 left-2.5 font-semibold leading-tight text-white drop-shadow-sm ${
+                  className={`absolute bg-gradient-to-t from-black/80 to-black/0 p-2 bottom-0 left-0 w-full font-semibold leading-tight text-white drop-shadow-sm ${
                     isLarge ? "text-sm" : "text-xs"
                   }`}
                 >

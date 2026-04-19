@@ -27,4 +27,5 @@ export const SAVED_LOCATION_URLS = {
 
 export const PROVIDER_URLS = {
   NEARBY: "/providers/nearby",
+  BY_ID: (id: string) => `/providers/${id}`,
 };

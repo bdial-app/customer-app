@@ -18,7 +18,7 @@ const ProviderList = ({
   };
 
   return (
-    <Block className="!px-0 !mb-0">
+    <Block className="!px-0 !mb-2">
       <div
         className={`pl-4 pr-4 no-scrollbar ${
           sliderMode
