@@ -30,8 +30,9 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
 
   // Fetch address metadata to keep providers in sync with the current location
   const { data: addressData } = useReverseGeocode(
-    user?.latitude,
-    user?.longitude,
+    user?.latitude && user?.longitude
+      ? { lat: user.latitude, lng: user.longitude }
+      : null,
   );
 
   const {

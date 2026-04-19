@@ -48,13 +48,27 @@ const ServicesList = ({ className }: { className?: string }) => {
     return (
       <Block className={`mb-0! !px-0 ${className ?? ""}`}>
         <div className="overflow-x-auto no-scrollbar pb-1 px-4">
-          <div className="flex gap-2 h-[168px]">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="w-20 h-full rounded-xl bg-slate-100 animate-pulse shrink-0"
-              />
-            ))}
+          <div
+            className="grid gap-2 w-max"
+            style={{
+              gridTemplateRows: "repeat(2, 80px)",
+              gridAutoFlow: "column dense",
+              gridAutoColumns: "80px",
+            }}
+          >
+            {[...Array(10)].map((_, i) => {
+              const [colSpan, rowSpan] = bentoPattern[i % bentoPattern.length];
+              return (
+                <div
+                  key={i}
+                  className="rounded-xl bg-slate-100 animate-pulse"
+                  style={{
+                    gridColumn: `span ${colSpan}`,
+                    gridRow: `span ${rowSpan}`,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       </Block>
