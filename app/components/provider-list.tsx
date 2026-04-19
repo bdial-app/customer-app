@@ -31,7 +31,7 @@ const ProviderList = ({
             key={provider.id}
             onClick={() => handleNavigate(provider.id)}
             className={`cursor-pointer bg-white rounded-md relative flex flex-col ${
-              sliderMode ? "max-w-[160px] shrink-0" : ""
+              sliderMode ? "w-[130px] shrink-0" : ""
             }`}
           >
             {/* Image with its own overflow-hidden for rounded corners */}

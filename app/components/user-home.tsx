@@ -1,5 +1,5 @@
 "use client";
-import { List, ListInput } from "konsta/react";
+import { Block, List, ListInput } from "konsta/react";
 import { ROUTE_PATH } from "@/utils/contants";
 import ServicesList from "./service-list";
 import SectionHeader from "./section-header";
@@ -119,13 +119,16 @@ const UserHome = () => {
       </List>
 
       <ServicesList />
-      <SectionHeader
-        title="Get Ridha Tailors"
-        subtitle="Discover amazing services!"
-        navigateTo={ROUTE_PATH.ALL_SERVICES}
-        navigateToText="See All"
-      />
-      <ProviderList providerList={providers} sliderMode />
+
+      <Block strong inset outline className="!p-0 !mb-2">
+        <SectionHeader
+          title="Get Ridha Tailors"
+          subtitle="Discover amazing services!"
+          navigateTo={ROUTE_PATH.ALL_SERVICES}
+          navigateToText="See All"
+        />
+        <ProviderList providerList={providers} sliderMode />
+      </Block>
 
       <SectionHeader
         title="Get AC Repairing quickly!"
@@ -133,8 +136,17 @@ const UserHome = () => {
         navigateTo={ROUTE_PATH.ALL_SERVICES}
         navigateToText="See All"
       />
-
       <ProviderList providerList={providers} sliderMode />
+
+      <Block strong inset outline className="!p-0 !mb-2">
+        <SectionHeader
+          title="Get Ridha Tailors"
+          subtitle="Discover amazing services!"
+          navigateTo={ROUTE_PATH.ALL_SERVICES}
+          navigateToText="See All"
+        />
+        <ProviderList providerList={providers} sliderMode />
+      </Block>
     </>
   );
 };
