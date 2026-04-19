@@ -20,14 +20,13 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const { userMode } = useAppContext();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    const skipped = localStorage.getItem("skippedAuth") === "true";
-    if (!user && !skipped) {
+    if (!user && !hasSkippedAuth) {
       router.push("/auth/login");
     }
-  }, [user, router]);
+  }, [user, hasSkippedAuth, router]);
 
   const handleTabChange = (tab: string) => {
     if (!user && (tab === "chats" || tab === "profile")) {

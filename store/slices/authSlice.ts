@@ -4,6 +4,7 @@ import { AuthResponse } from "@/services/auth.service";
 interface AuthState {
   user: AuthResponse["user"] | null;
   token: string | null;
+  hasSkippedAuth: boolean;
 }
 
 const getInitialUser = () => {
@@ -25,9 +26,17 @@ const getInitialToken = () => {
   return null;
 };
 
+const getInitialSkipped = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("skippedAuth") === "true";
+  }
+  return false;
+};
+
 const initialState: AuthState = {
   user: getInitialUser(),
   token: getInitialToken(),
+  hasSkippedAuth: getInitialSkipped(),
 };
 
 const authSlice = createSlice({
@@ -49,12 +58,23 @@ const authSlice = createSlice({
       state.token = action.payload;
       localStorage.setItem("token", state.token);
     },
+    setSkippedAuth(state, action: PayloadAction<boolean>) {
+      state.hasSkippedAuth = action.payload;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("skippedAuth", String(action.payload));
+      }
+    },
     clearUser(state) {
       state.user = null;
       state.token = null;
+      state.hasSkippedAuth = false;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("skippedAuth");
+      }
     },
   },
 });
 
-export const { setUser, setProfile, setToken, clearUser } = authSlice.actions;
+export const { setUser, setProfile, setToken, clearUser, setSkippedAuth } =
+  authSlice.actions;
 export default authSlice.reducer;

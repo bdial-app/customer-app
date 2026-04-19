@@ -20,6 +20,8 @@ import { FormikInput } from "@/app/components/formik-input";
 import { useSendOtp, useVerifyOtp } from "@/hooks/useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
 import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/hooks/useAppStore";
+import { setSkippedAuth } from "@/store/slices/authSlice";
 
 type LoginStep = "mobile" | "otp";
 
@@ -38,6 +40,7 @@ const validationSchemas = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { notify } = useNotification();
   const [currentStep, setCurrentStep] = useState<LoginStep>("mobile");
 
@@ -114,7 +117,10 @@ export default function LoginPage() {
       <Navbar
         right={
           <p className="min-w-18 text-center">
-            <Link href={ROUTE_PATH.HOME} onClick={() => localStorage.setItem('skippedAuth', 'true')}>
+            <Link
+              href={ROUTE_PATH.HOME}
+              onClick={() => dispatch(setSkippedAuth(true))}
+            >
               Skip
             </Link>
           </p>
@@ -190,6 +196,7 @@ export default function LoginPage() {
                   onClick={() => handleNext(validateForm, setTouched, values)}
                   disabled={!isValid || !dirty || isLoading}
                   type="button"
+                  className="!text-black"
                 >
                   {isLoading ? <Preloader className="w-5 h-5" /> : "Get OTP"}
                 </Button>
@@ -198,6 +205,7 @@ export default function LoginPage() {
               {currentStep === "otp" && (
                 <div className="flex gap-2">
                   <Button
+                    large
                     rounded
                     clear
                     onClick={() => handleBack(setFieldValue)}
@@ -211,7 +219,7 @@ export default function LoginPage() {
                     large
                     rounded
                     disabled={!isValid || !dirty || isLoading}
-                    className="flex-1"
+                    className="flex-1 !text-black"
                     type="button"
                     onClick={() => handleNext(validateForm, setTouched, values)}
                   >

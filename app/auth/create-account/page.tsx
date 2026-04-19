@@ -15,6 +15,8 @@ import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
 import { useCreateAccount } from "@/hooks/useCreateAccount";
+import { useAppDispatch } from "@/hooks/useAppStore";
+import { setSkippedAuth } from "@/store/slices/authSlice";
 
 const validationSchemas = {
   mobile: Yup.object({
@@ -64,6 +66,7 @@ const GenderSelector = () => {
 };
 
 export default function CreateAccountPage() {
+  const dispatch = useAppDispatch();
   const {
     currentStep,
     isLoading,
@@ -85,7 +88,12 @@ export default function CreateAccountPage() {
       <Navbar
         right={
           <p className="min-w-18 text-center">
-            <Link href={ROUTE_PATH.HOME}>Skip</Link>
+            <Link
+              href={ROUTE_PATH.HOME}
+              onClick={() => dispatch(setSkippedAuth(true))}
+            >
+              Skip
+            </Link>
           </p>
         }
       />
@@ -211,6 +219,7 @@ export default function CreateAccountPage() {
                   <Button
                     rounded
                     clear
+                    large
                     onClick={() => handleBack(setFieldValue)}
                     className="flex-1"
                     type="button"
@@ -238,17 +247,32 @@ export default function CreateAccountPage() {
               {currentStep === "details" && (
                 <div className="flex flex-col gap-4">
                   {/* Location Status Indicator */}
-                  <div className={`p-3 rounded-lg border flex items-center justify-between ${location ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div
+                    className={`p-3 rounded-lg border flex items-center justify-between ${location ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
+                  >
                     <div className="flex flex-col">
-                      <span className={`text-xs font-bold ${location ? 'text-green-700' : 'text-red-700'}`}>
-                        {location ? '✓ Geolocation Secured' : '✗ Location Required'}
+                      <span
+                        className={`text-xs font-bold ${location ? "text-green-700" : "text-red-700"}`}
+                      >
+                        {location
+                          ? "✓ Geolocation Secured"
+                          : "✗ Location Required"}
                       </span>
                       <span className="text-[10px] text-slate-500">
-                        {location ? 'Your coordinates have been pinned.' : 'Please allow location access to continue.'}
+                        {location
+                          ? "Your coordinates have been pinned."
+                          : "Please allow location access to continue."}
                       </span>
                     </div>
                     {!location && (
-                      <Button small outline rounded className="w-fit text-[10px] h-7" onClick={requestLocation} type="button">
+                      <Button
+                        small
+                        outline
+                        rounded
+                        className="w-fit text-[10px] h-7"
+                        onClick={requestLocation}
+                        type="button"
+                      >
                         Retry
                       </Button>
                     )}
