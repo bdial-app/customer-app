@@ -20,22 +20,23 @@ export const useVerifyOtp = () =>
     mutationFn: (payload: VerifyOtpPayload) => verifyOtp(payload),
     onSuccess: (data) => {
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.accessToken);
+        // Handle both 'accessToken' and 'token' field names from the backend
+        const jwt = data.accessToken ?? data.token;
+        if (jwt) localStorage.setItem("token", jwt);
       }
     },
   });
 
-export const useCreateAccount = () => {
+export const useCreateAccountMutation = () => {
   const dispatch = useAppDispatch();
   return useMutation({
     mutationFn: (payload: CreateAccountPayload) => createAccount(payload),
-    onSuccess: (data) => {
-      // Persist token in localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.token);
-      }
-      // Store user details in Redux
-      dispatch(setUser(data));
+    onSuccess: (user) => {
+      // Token was already saved after verifyOtp; just sync the profile to Redux
+      const token = typeof window !== "undefined"
+        ? (localStorage.getItem("token") ?? "")
+        : "";
+      dispatch(setUser({ token, user }));
     },
   });
 };

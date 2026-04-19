@@ -8,19 +8,13 @@ import {
   Preloader,
   Navbar,
 } from "konsta/react";
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
-
 import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
-import { useSendOtp, useVerifyOtp, useCreateAccount } from "@/hooks/useAuth";
-import { useNotification } from "@/app/context/NotificationContext";
-
-type CreateAccountStep = "mobile" | "otp" | "details";
+import { useCreateAccount } from "@/hooks/useCreateAccount";
 
 const validationSchemas = {
   mobile: Yup.object({
@@ -70,95 +64,21 @@ const GenderSelector = () => {
 };
 
 export default function CreateAccountPage() {
-  const router = useRouter();
-  const { notify } = useNotification();
-  const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
-
-  const sendOtpMutation = useSendOtp();
-  const verifyOtpMutation = useVerifyOtp();
-  const createAccountMutation = useCreateAccount();
-
-  const isLoading =
-    sendOtpMutation.isPending ||
-    verifyOtpMutation.isPending ||
-    createAccountMutation.isPending;
-
-  const handleBack = (setFieldValue: any) => {
-    if (currentStep === "otp") {
-      setCurrentStep("mobile");
-      setFieldValue("otp", "");
-    } else if (currentStep === "details") {
-      setCurrentStep("otp");
-    }
-  };
-
-  const handleNext = async (
-    validateForm: any,
-    setTouched: any,
-    values: any,
-  ) => {
-    setApiError(null);
-    const errors = await validateForm();
-    if (Object.keys(errors).length > 0) {
-      const touchedFields = Object.keys(errors).reduce((acc, key) => {
-        acc[key] = true;
-        return acc;
-      }, {} as any);
-      setTouched(touchedFields);
-      return;
-    }
-
-    try {
-      if (currentStep === "mobile") {
-        await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
-        notify({
-          title: "OTP Sent",
-          subtitle: "OTP sent to your mobile number!",
-        });
-        setCurrentStep("otp");
-      } else if (currentStep === "otp") {
-        await verifyOtpMutation.mutateAsync({
-          mobileNumber: values.mobile,
-          otp: values.otp,
-        });
-        setCurrentStep("details");
-      }
-    } catch (err: any) {
-      notify({
-        title: "Error",
-        subtitle:
-          err?.response?.data?.message ?? "Something went wrong. Please retry.",
-      });
-    }
-  };
-
-  const handleSubmit = async (values: any) => {
-    try {
-      await createAccountMutation.mutateAsync({
-        mobile: values.mobile,
-        otp: values.otp,
-        name: values.name,
-        gender: values.gender,
-        city: values.city,
-        area: values.area,
-        pincode: values.pincode,
-      });
-      router.push(ROUTE_PATH.HOME);
-    } catch (err: any) {
-      notify({
-        title: "Error",
-        subtitle:
-          err?.response?.data?.message ?? "Account creation failed. Try again.",
-      });
-    }
-  };
+  const {
+    currentStep,
+    isLoading,
+    resendCooldown,
+    initialValues,
+    handleBack,
+    handleNext,
+    handleResendOtp,
+    handleSubmit,
+  } = useCreateAccount();
 
   return (
     <Page
       className="flex flex-col justify-end"
-      style={{
-        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
-      }}
+      style={{ background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)" }}
     >
       <Navbar
         right={
@@ -186,15 +106,7 @@ export default function CreateAccountPage() {
       </Block>
 
       <Formik
-        initialValues={{
-          mobile: "",
-          otp: "",
-          name: "",
-          gender: "male",
-          city: "",
-          area: "",
-          pincode: "",
-        }}
+        initialValues={initialValues}
         validationSchema={validationSchemas[currentStep]}
         onSubmit={handleSubmit}
       >
@@ -221,14 +133,30 @@ export default function CreateAccountPage() {
               )}
 
               {currentStep === "otp" && (
-                <FormikInput
-                  name="otp"
-                  label="OTP"
-                  type="tel"
-                  placeholder="e.g. 1234"
-                  info="Enter 4 digit OTP sent to your mobile"
-                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
-                />
+                <>
+                  <FormikInput
+                    name="otp"
+                    label="OTP"
+                    type="tel"
+                    placeholder="e.g. 123456"
+                    info="Enter 6 digit OTP sent to your mobile"
+                    formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
+                  />
+                  <div className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleResendOtp(values.mobile, setFieldValue)
+                      }
+                      disabled={resendCooldown > 0 || isLoading}
+                      className="text-sm text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {resendCooldown > 0
+                        ? `Resend OTP in ${resendCooldown}s`
+                        : "Resend OTP"}
+                    </button>
+                  </div>
+                </>
               )}
 
               {currentStep === "details" && (

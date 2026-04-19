@@ -67,39 +67,80 @@ const services = [
   },
 ];
 
+// Bento layout: [colSpan, rowSpan] per item index (wraps for extra items)
+const bentoPattern: [number, number][] = [
+  [2, 2], // 0 — large hero
+  [1, 1], // 1
+  [1, 1], // 2
+  [1, 1], // 3
+  [1, 1], // 4
+  [2, 1], // 5 — wide
+  [1, 1], // 6
+  [1, 2], // 7 — tall
+  [1, 1], // 8
+  [1, 1], // 9
+  [2, 1], // 10 — wide
+  [1, 1], // 11
+  [1, 1], // 12
+  [1, 1], // 13
+  [1, 2], // 14 — tall
+  [1, 1], // 15
+];
+
+const gradients = [
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", // violet-indigo
+  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", // pink-red
+  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", // sky-cyan
+  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", // green-teal
+  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", // pink-yellow
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", // purple-pink
+  "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)", // peach-purple
+  "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)", // lavender-sky
+  "linear-gradient(135deg, #f6d365 0%, #fda085 100%)", // gold-peach
+  "linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)", // mint-lemon
+  "linear-gradient(135deg, #ff9a9e 0%, #a18cd1 100%)", // rose-lavender
+  "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)", // green-blue
+];
+
 const ServicesList = ({ className }: { className?: string }) => {
-  const rows = 2;
-  const cols = Math.ceil(services.length / rows);
-
   return (
-    <Block
-      className={`flex mb-0! flex-row gap-2 no-scrollbar overflow-auto ${className}`}
-    >
-      {Array.from({ length: cols }).map((_, colIndex) => (
-        <div key={colIndex} className="flex flex-col gap-2">
-          {Array.from({ length: rows }).map((_, rowIndex) => {
-            const index = colIndex * rows + rowIndex;
-
-            if (index >= services.length) return null;
-
-            const service = services[index];
+    <Block className={`mb-0! !px-0 ${className ?? ""}`}>
+      <div className="overflow-x-auto no-scrollbar pb-1 px-4 ">
+        <div
+          className="grid gap-2 w-max"
+          style={{
+            gridTemplateRows: "repeat(2, 80px)",
+            gridAutoFlow: "column dense",
+            gridAutoColumns: "80px",
+          }}
+        >
+          {services.map((service, i) => {
+            const [colSpan, rowSpan] = bentoPattern[i % bentoPattern.length];
+            const gradient = gradients[i % gradients.length];
+            const isLarge = colSpan === 2 && rowSpan === 2;
 
             return (
               <div
-                key={rowIndex}
-                className="bg-slate-200 min-w-20 h-20 flex flex-col items-center justify-center rounded-lg p-1"
+                key={service.name}
+                className="rounded-xl relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                style={{
+                  gridColumn: `span ${colSpan}`,
+                  gridRow: `span ${rowSpan}`,
+                  background: `url(${service.icon}) no-repeat 115% -15% / ${isLarge ? "60%" : "55%"}, ${gradient}`,
+                }}
               >
-                <img
-                  src={service.icon}
-                  alt={service.name}
-                  className="w-10 h-10"
-                />
-                <p className="text-xs text-center mt-1">{service.name}</p>
+                <p
+                  className={`absolute bottom-2 left-2.5 font-semibold leading-tight text-white drop-shadow-sm ${
+                    isLarge ? "text-sm" : "text-xs"
+                  }`}
+                >
+                  {service.name}
+                </p>
               </div>
             );
           })}
         </div>
-      ))}
+      </div>
     </Block>
   );
 };

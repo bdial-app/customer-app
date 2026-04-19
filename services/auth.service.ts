@@ -1,5 +1,6 @@
 import apiClient from "@/utils/axios";
 import { AUTH_URLS } from "@/utils/urls";
+import { UserProfile } from "@/services/user.service";
 
 export interface SendOtpPayload {
   mobileNumber: string;
@@ -40,16 +41,16 @@ export const sendOtp = async (payload: SendOtpPayload): Promise<void> => {
 
 // Step 2 — verify OTP
 export const verifyOtp = async (
-  payload: VerifyOtpPayload
-): Promise<{ accessToken: string }> => {
+  payload: VerifyOtpPayload,
+): Promise<{ accessToken?: string; token?: string }> => {
   const { data } = await apiClient.post(AUTH_URLS.VERIFY_OTP, payload);
   return data;
 };
 
-// Step 3 — create account (final step)
+// Step 3 — complete profile (PATCH /users/me with mobile + otp for identity)
 export const createAccount = async (
-  payload: CreateAccountPayload
-): Promise<AuthResponse> => {
-  const { data } = await apiClient.post(AUTH_URLS.REGISTER, payload);
+  payload: CreateAccountPayload,
+): Promise<UserProfile> => {
+  const { data } = await apiClient.patch(AUTH_URLS.REGISTER, payload);
   return data;
 };

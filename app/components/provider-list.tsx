@@ -21,29 +21,49 @@ const ProviderList = ({
       >
         {providerList.map((provider: any) => (
           <div
-            className={`bg-white rounded-md overflow-hidden${sliderMode ? " min-w-[160px] shrink-0" : ""}`}
+            className={`rebg-white rounded-md relative${sliderMode ? " max-w-[160px] shrink-0" : ""}`}
           >
-            <img
-              src={provider.image}
-              alt={provider.name}
-              className="w-full h-40"
-            />
-            <div className="p-2">
-              <div className="flex items-center gap-2">
-                {/* <img
-                  src={provider.image}
-                  alt={provider.name}
-                  className="w-10 h-10 rounded-full"
-                /> */}
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium line-clamp-2">
-                    {provider.name}
+            {/* Image with its own overflow-hidden for rounded corners */}
+            <div className="overflow-hidden rounded-t-md">
+              <img
+                src={provider.image}
+                alt={provider.name}
+                className="w-full h-40 object-cover"
+              />
+            </div>
+
+            {/* Women-Led chip — absolute top-right over image, not clipped */}
+            {provider.womenLed && (
+              <span
+                className="absolute top-2 right-2 z-10 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none shadow-sm"
+                style={{
+                  background: "linear-gradient(135deg, #F0E6FF, #FFE6F0)",
+                  color: "#9B59B6",
+                }}
+              >
+                ♀ Women-Led
+              </span>
+            )}
+
+            <div className="p-2 flex flex-col gap-1">
+              <span className="text-sm font-medium line-clamp-1">
+                {provider.name}
+              </span>
+
+              {/* Star rating */}
+              {provider.rating && (
+                <div className="flex items-center gap-1">
+                  <IonIcon icon={star} className="w-3 h-3 text-yellow-400" />
+                  <span className="text-xs font-medium text-gray-700">
+                    {provider.rating}
                   </span>
-                  <span className="text-sm text-gray-500 line-clamp-1">
-                    {provider.service}
-                  </span>
+                  {provider.reviews && (
+                    <span className="text-xs text-gray-400">
+                      ({provider.reviews})
+                    </span>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         ))}
@@ -112,6 +132,7 @@ const ProviderList = ({
           />
         </Link>
       ))}
+      <div className="h-40"></div>
     </List>
   );
 
