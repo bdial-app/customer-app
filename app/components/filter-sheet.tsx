@@ -114,7 +114,6 @@ const FilterSheet = ({
       className="pb-safe"
       opened={opened}
       onBackdropClick={onClose}
-      onOpen={handleOpen}
       style={{ maxHeight: "85vh" }}
     >
       {/* Header */}

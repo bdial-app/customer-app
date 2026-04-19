@@ -26,6 +26,7 @@ const FilterChips = ({
   return (
     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-4 pb-2">
       <div className="flex gap-2 shrink-0">
+        {selectedFilters.size > 0 && <div className="h-4"></div>}
         {Array.from(selectedFilters).map((filterId) => (
           <button
             key={filterId}

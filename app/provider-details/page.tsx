@@ -26,8 +26,9 @@ import {
   location,
   shareSocial,
 } from "ionicons/icons";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
+import { useProviderById } from "@/hooks/useProvider";
 
 interface ProviderDetails {
   id: number;
@@ -57,9 +58,31 @@ interface Review {
 
 export default function ProviderDetailsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
+
+  const { data: fetchedProvider, isLoading, isError } = useProviderById(id);
 
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Map API response to expected UI structure
+  const provider = fetchedProvider
+    ? {
+        ...fetchedProvider,
+        name: fetchedProvider.brandName,
+        service: fetchedProvider.description?.split(",")[0] || "Services",
+        rating: 4.8, // Mock for now
+        reviews: 127, // Mock for now
+        price: "₹500-2000", // Mock for now
+        image:
+          fetchedProvider.profilePhotoUrl ||
+          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+        experience: "10+ Years", // Mock for now
+        availability: `${fetchedProvider.openTime?.slice(0, 5)} - ${fetchedProvider.closeTime?.slice(0, 5)}`,
+        phone: fetchedProvider.contactNumber,
+      }
+    : null;
 
   // Check lightbox state periodically
   useEffect(() => {
@@ -82,24 +105,24 @@ export default function ProviderDetailsPage() {
     comment: "",
   });
 
-  // Mock data - this would come from API based on provider ID
-  const provider: ProviderDetails = {
-    id: 1,
-    name: "Ahmed's Tailoring Shop",
-    service: "Clothing",
-    rating: 4.8,
-    reviews: 127,
-    price: "₹500-2000",
-    location: "Downtown, 2.5 km",
-    phone: "+91 98765 43210",
-    description:
-      "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience providing high-quality tailoring services for all occasions.",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
-    verified: true,
-    address: "123 Fashion Street, Downtown, City - 400001",
-    experience: "10+ Years",
-    availability: "Mon-Sat: 9AM-8PM",
-  };
+  if (isLoading) {
+    return (
+      <Page className="flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </Page>
+    );
+  }
+
+  if (isError || !provider) {
+    return (
+      <Page className="flex flex-col items-center justify-center p-6 text-center">
+        <div className="text-red-500 mb-4 text-lg font-semibold">
+          Failed to load provider details
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </Page>
+    );
+  }
 
   const handleShare = async () => {
     const shareData = {
@@ -213,28 +236,28 @@ export default function ProviderDetailsPage() {
             <div className="flex justify-between gap-3 px-0">
               <Button
                 clear
-                className={`text-sm ${activeTab === "overviews" ? "text-primary" : "text-gray-500"}`}
+                className={`text-sm ${activeTab === "overviews" ? "!text-yellow-600" : "text-gray-500"}`}
                 onClick={() => setActiveTab("overviews")}
               >
                 Overviews
               </Button>
               <Button
                 clear
-                className={`text-sm ${activeTab === "reviews" ? "text-primary" : "text-gray-500"}`}
+                className={`text-sm ${activeTab === "reviews" ? "!text-yellow-600" : "text-gray-500"}`}
                 onClick={() => setActiveTab("reviews")}
               >
                 Reviews
               </Button>
               <Button
                 clear
-                className={`text-sm ${activeTab === "products" ? "text-primary" : "text-gray-500"}`}
+                className={`text-sm ${activeTab === "products" ? "!text-yellow-600" : "text-gray-500"}`}
                 onClick={() => setActiveTab("products")}
               >
                 Products
               </Button>
               <Button
                 clear
-                className={`text-sm ${activeTab === "photos" ? "text-primary" : "text-gray-500"}`}
+                className={`text-sm ${activeTab === "photos" ? "!text-yellow-600" : "text-gray-500"}`}
                 onClick={() => setActiveTab("photos")}
               >
                 Photos
@@ -346,6 +369,27 @@ export default function ProviderDetailsPage() {
               <h3 className="font-semibold mb-2">Address</h3>
               <p className="text-gray-700 text-sm">{provider.address}</p>
             </div>
+
+            {/* Business Owner Info */}
+            {fetchedProvider?.user && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">Business Owner</h3>
+                <div className="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {fetchedProvider.user.name?.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800">
+                      {fetchedProvider.user.name}
+                    </h4>
+                    <p className="text-sm text-slate-500">
+                      {fetchedProvider.user.mobileNumber}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="h-20"></div>
             {/* CTA Buttons */}
             <Block className="my-0! flex gap-3 left-0 fixed bottom-6 w-full mt-auto">

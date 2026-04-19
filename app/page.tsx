@@ -60,7 +60,7 @@ export default function Home() {
   return (
     <Page
       style={{
-        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
+        background: "radial-gradient(at 0% 10%, #ffd68f, #ef52ff3d)",
       }}
     >
       {activeTab !== "home" && (
