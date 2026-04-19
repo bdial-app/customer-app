@@ -11,6 +11,9 @@ export const useCreateAccount = () => {
   const { notify } = useNotification();
   const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startCooldown = useCallback(() => {
@@ -27,7 +30,53 @@ export const useCreateAccount = () => {
     }, 1000);
   }, []);
 
-  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      notify({
+        title: "Geolocation Error",
+        subtitle: "Your browser does not support geolocation.",
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        notify({
+          title: "Location Secured",
+          subtitle: "We've accurately pinned your location.",
+        });
+      },
+      (error) => {
+        let message = "Please enable location to complete registration.";
+        if (error.code === error.PERMISSION_DENIED) {
+          message =
+            "Location access denied. Please enable it in browser settings and try again.";
+        }
+        notify({
+          title: "Location Required",
+          subtitle: message,
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, [notify]);
+
+  useEffect(
+    () => () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (currentStep === "details" && !location) {
+      requestLocation();
+    }
+  }, [currentStep, location, requestLocation]);
 
   const sendOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
@@ -66,15 +115,28 @@ export const useCreateAccount = () => {
     try {
       if (currentStep === "mobile") {
         await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
-        notify({ title: "OTP Sent", subtitle: "OTP sent to your mobile number!" });
+        notify({
+          title: "OTP Sent",
+          subtitle: "OTP sent to your mobile number!",
+        });
         startCooldown();
         setCurrentStep("otp");
       } else if (currentStep === "otp") {
-        await verifyOtpMutation.mutateAsync({
+        const res = await verifyOtpMutation.mutateAsync({
           mobileNumber: values.mobile,
           otp: values.otp,
         });
-        setCurrentStep("details");
+
+        // If user already has a name, they are already registered - direct home
+        if (res.user && res.user.name) {
+          router.push(ROUTE_PATH.HOME);
+          notify({
+            title: "Welcome Back",
+            subtitle: `Logged in as ${res.user.name}`,
+          });
+        } else {
+          setCurrentStep("details");
+        }
       }
     } catch (err: any) {
       notify({
@@ -86,15 +148,25 @@ export const useCreateAccount = () => {
   };
 
   const handleSubmit = async (values: any) => {
+    if (!location) {
+      notify({
+        title: "Location Required",
+        subtitle:
+          "We need your geolocation to complete registration. Please allow access.",
+      });
+      requestLocation();
+      return;
+    }
+
     try {
       await createAccountMutation.mutateAsync({
-        mobile: values.mobile,
-        otp: values.otp,
         name: values.name,
         gender: values.gender,
         city: values.city,
         area: values.area,
         pincode: values.pincode,
+        latitude: location.lat,
+        longitude: location.lng,
       });
       router.push(ROUTE_PATH.HOME);
     } catch (err: any) {
@@ -114,7 +186,10 @@ export const useCreateAccount = () => {
     try {
       await sendOtpMutation.mutateAsync({ mobileNumber: mobile });
       setFieldValue("otp", "");
-      notify({ title: "OTP Sent", subtitle: "OTP resent to your mobile number!" });
+      notify({
+        title: "OTP Sent",
+        subtitle: "OTP resent to your mobile number!",
+      });
       startCooldown();
     } catch (err: any) {
       notify({
@@ -135,5 +210,16 @@ export const useCreateAccount = () => {
     pincode: "",
   };
 
-  return { currentStep, isLoading, resendCooldown, initialValues, handleBack, handleNext, handleResendOtp, handleSubmit };
+  return {
+    currentStep,
+    isLoading,
+    resendCooldown,
+    location,
+    requestLocation,
+    initialValues,
+    handleBack,
+    handleNext,
+    handleResendOtp,
+    handleSubmit,
+  };
 };

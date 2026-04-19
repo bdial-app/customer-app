@@ -12,13 +12,13 @@ export interface VerifyOtpPayload {
 }
 
 export interface CreateAccountPayload {
-  mobile: string;
-  otp: string;
   name: string;
   gender: string;
   city: string;
   area?: string;
   pincode: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface AuthResponse {
@@ -26,7 +26,7 @@ export interface AuthResponse {
   user: {
     id: string;
     name: string;
-    mobile: string;
+    mobileNumber: string;
     gender: string;
     city: string;
     area?: string;
@@ -42,7 +42,7 @@ export const sendOtp = async (payload: SendOtpPayload): Promise<void> => {
 // Step 2 — verify OTP
 export const verifyOtp = async (
   payload: VerifyOtpPayload,
-): Promise<{ accessToken?: string; token?: string }> => {
+): Promise<AuthResponse> => {
   const { data } = await apiClient.post(AUTH_URLS.VERIFY_OTP, payload);
   return data;
 };

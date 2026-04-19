@@ -7,6 +7,8 @@ export interface UpdateUserPayload {
   city?: string;
   area?: string;
   pincode?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface UserProfile {
@@ -17,6 +19,8 @@ export interface UserProfile {
   city: string;
   area?: string;
   pincode: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export const updateUser = async (

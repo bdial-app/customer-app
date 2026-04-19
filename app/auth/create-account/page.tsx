@@ -68,6 +68,8 @@ export default function CreateAccountPage() {
     currentStep,
     isLoading,
     resendCooldown,
+    location,
+    requestLocation,
     initialValues,
     handleBack,
     handleNext,
@@ -234,30 +236,49 @@ export default function CreateAccountPage() {
               )}
 
               {currentStep === "details" && (
-                <div className="flex gap-2">
-                  <Button
-                    rounded
-                    clear
-                    onClick={() => handleBack(setFieldValue)}
-                    className="flex-1"
-                    type="button"
-                    disabled={isLoading}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    large
-                    rounded
-                    disabled={!isValid || !dirty || isLoading}
-                    className="flex-1"
-                    type="submit"
-                  >
-                    {isLoading ? (
-                      <Preloader className="w-5 h-5" />
-                    ) : (
-                      "Create Account"
+                <div className="flex flex-col gap-4">
+                  {/* Location Status Indicator */}
+                  <div className={`p-3 rounded-lg border flex items-center justify-between ${location ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="flex flex-col">
+                      <span className={`text-xs font-bold ${location ? 'text-green-700' : 'text-red-700'}`}>
+                        {location ? '✓ Geolocation Secured' : '✗ Location Required'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        {location ? 'Your coordinates have been pinned.' : 'Please allow location access to continue.'}
+                      </span>
+                    </div>
+                    {!location && (
+                      <Button small outline rounded className="w-fit text-[10px] h-7" onClick={requestLocation} type="button">
+                        Retry
+                      </Button>
                     )}
-                  </Button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      rounded
+                      clear
+                      onClick={() => handleBack(setFieldValue)}
+                      className="flex-1"
+                      type="button"
+                      disabled={isLoading}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      large
+                      rounded
+                      disabled={!isValid || !dirty || isLoading || !location}
+                      className="flex-1"
+                      type="submit"
+                    >
+                      {isLoading ? (
+                        <Preloader className="w-5 h-5" />
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </Block>
