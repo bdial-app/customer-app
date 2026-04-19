@@ -7,9 +7,8 @@ import {
   Button,
   Preloader,
   Navbar,
-  Notification,
 } from "konsta/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +18,7 @@ import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
 import { useSendOtp, useVerifyOtp, useCreateAccount } from "@/hooks/useAuth";
+import { useNotification } from "@/app/context/NotificationContext";
 
 type CreateAccountStep = "mobile" | "otp" | "details";
 
@@ -71,33 +71,8 @@ const GenderSelector = () => {
 
 export default function CreateAccountPage() {
   const router = useRouter();
+  const { notify } = useNotification();
   const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [successOpen, setSuccessOpen] = useState(false);
-
-  // Auto-dismiss error toast after 3s
-  useEffect(() => {
-    if (!apiError) return;
-    setToastOpen(true);
-    const t = setTimeout(() => {
-      setToastOpen(false);
-      setApiError(null);
-    }, 3000);
-    return () => clearTimeout(t);
-  }, [apiError]);
-
-  // Auto-dismiss success notification after 3s
-  useEffect(() => {
-    if (!successMsg) return;
-    setSuccessOpen(true);
-    const t = setTimeout(() => {
-      setSuccessOpen(false);
-      setSuccessMsg(null);
-    }, 3000);
-    return () => clearTimeout(t);
-  }, [successMsg]);
 
   const sendOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
@@ -109,7 +84,6 @@ export default function CreateAccountPage() {
     createAccountMutation.isPending;
 
   const handleBack = (setFieldValue: any) => {
-    setApiError(null);
     if (currentStep === "otp") {
       setCurrentStep("mobile");
       setFieldValue("otp", "");
@@ -137,7 +111,10 @@ export default function CreateAccountPage() {
     try {
       if (currentStep === "mobile") {
         await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
-        setSuccessMsg("OTP sent to your mobile number!");
+        notify({
+          title: "OTP Sent",
+          subtitle: "OTP sent to your mobile number!",
+        });
         setCurrentStep("otp");
       } else if (currentStep === "otp") {
         await verifyOtpMutation.mutateAsync({
@@ -147,17 +124,15 @@ export default function CreateAccountPage() {
         setCurrentStep("details");
       }
     } catch (err: any) {
-      setApiError(
-        Array.isArray(err?.response?.data?.message)
-          ? err?.response?.data?.message?.[0]
-          : (err?.response?.data?.message ??
-              "Something went wrong. Please retry."),
-      );
+      notify({
+        title: "Error",
+        subtitle:
+          err?.response?.data?.message ?? "Something went wrong. Please retry.",
+      });
     }
   };
 
   const handleSubmit = async (values: any) => {
-    setApiError(null);
     try {
       await createAccountMutation.mutateAsync({
         mobile: values.mobile,
@@ -170,12 +145,11 @@ export default function CreateAccountPage() {
       });
       router.push(ROUTE_PATH.HOME);
     } catch (err: any) {
-      setApiError(
-        Array.isArray(err?.response?.data?.message)
-          ? err?.response?.data?.message?.[0]
-          : (err?.response?.data?.message ??
-              "Account creation failed. Try again."),
-      );
+      notify({
+        title: "Error",
+        subtitle:
+          err?.response?.data?.message ?? "Account creation failed. Try again.",
+      });
     }
   };
 
@@ -288,28 +262,6 @@ export default function CreateAccountPage() {
                 </>
               )}
             </List>
-
-            <Notification
-              opened={successOpen}
-              title="OTP Sent"
-              subtitle={successMsg ?? ""}
-              button
-              onClick={() => {
-                setSuccessOpen(false);
-                setSuccessMsg(null);
-              }}
-            />
-
-            <Notification
-              opened={toastOpen}
-              title="Error"
-              subtitle={apiError ?? ""}
-              button
-              onClick={() => {
-                setToastOpen(false);
-                setApiError(null);
-              }}
-            />
 
             <Block>
               {currentStep === "mobile" && (
