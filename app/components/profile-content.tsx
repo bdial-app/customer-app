@@ -10,6 +10,10 @@ import {
   BlockTitle,
   Block,
   Button,
+  Actions,
+  ActionsGroup,
+  ActionsLabel,
+  ActionsButton,
 } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -33,9 +37,15 @@ import { useRouter } from "next/navigation";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "./formik-input";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { setProfile as setReduxProfile, clearUser } from "@/store/slices/authSlice";
+import { useUpdateUser } from "@/hooks/useUser";
+import { useNotification } from "../context/NotificationContext";
+import { Preloader } from "konsta/react";
+import { useDispatch } from "react-redux";
 
 interface UserProfile {
-  mobile_number: string;
+  mobileNumber: string;
   name: string;
   gender: "male" | "female" | "other";
   role: "customer" | "provider";
@@ -62,24 +72,50 @@ const ProfileContent = () => {
   const { providerStatus, userMode, setProviderStatus, toggleMode } =
     useAppContext();
   const router = useRouter();
+  const user = useAppSelector((state) => state.auth.user as any);
+  const updateUserMutation = useUpdateUser();
+  const { notify } = useNotification();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>({
-    mobile_number: "+91 8975048440",
-    name: "Arbaj Ansari",
-    gender: "male",
-    role: "customer",
-    city: "Pune",
-    area: "Yerawada",
-    pincode: "411006",
-  });
+  const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
+
+  const [profile, setProfile] = useState<any>(user || {});
+
+  console.log({ user });
+
+  // Sync state if user changes externally
+  if (user && user.id !== profile.id) {
+    setProfile(user);
+  }
 
   const handleUpdate = () => {
     setIsEditing(true);
   };
 
-  const handleSave = (values: UserProfile) => {
-    setProfile(values);
-    setIsEditing(false);
+  const dispatch = useDispatch();
+
+  const handleSave = async (values: any) => {
+    try {
+      await updateUserMutation.mutateAsync({
+        name: values.name,
+        gender: values.gender,
+        city: values.city,
+        area: values.area,
+        pincode: values.pincode,
+      });
+      dispatch(setReduxProfile({ ...user, ...values }));
+      setProfile({ ...user, ...values });
+
+      notify({
+        title: "Profile Updated",
+        subtitle: "Your information was successfully updated.",
+      });
+      setIsEditing(false);
+    } catch (err: any) {
+      notify({
+        title: "Update Failed",
+        subtitle: err?.response?.data?.message || "Something went wrong.",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -208,7 +244,14 @@ const ProfileContent = () => {
 
       {isEditing ? (
         <Formik
-          initialValues={profile}
+          enableReinitialize={true}
+          initialValues={{
+            name: profile.name || "",
+            gender: profile.gender || "male",
+            city: profile.city || "",
+            area: profile.area || "",
+            pincode: profile.pincode || "",
+          }}
           validationSchema={validationSchema}
           onSubmit={handleSave}
         >
@@ -272,9 +315,13 @@ const ProfileContent = () => {
                   large
                   type="submit"
                   className="font-bold"
-                  disabled={!isValid || !dirty}
+                  disabled={!isValid || !dirty || updateUserMutation.isPending}
                 >
-                  Save Changes
+                  {updateUserMutation.isPending ? (
+                    <Preloader className="w-5 h-5" />
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
               </Block>
             </Form>
@@ -282,54 +329,52 @@ const ProfileContent = () => {
         </Formik>
       ) : (
         <List strongIos insetIos>
-            <ListItem
-              title="Name"
-              titleWrapClassName="text-sm"
-              after={<span className="text-slate-800">{profile.name}</span>}
-              media={
-                <IonIcon icon={personOutline} className="text-slate-400" />
-              }
-            />
-            <ListItem
-              titleWrapClassName="text-sm"
-              title="Mobile"
-              after={
-                <span className="text-slate-800">{profile.mobile_number}</span>
-              }
-              media={<IonIcon icon={callOutline} className="text-slate-400" />}
-            />
-            <ListItem
-              title="Gender"
-              titleWrapClassName="text-sm"
-              after={
-                <span className="text-slate-800 capitalize">
-                  {profile.gender}
-                </span>
-              }
-              media={<IonIcon icon={maleOutline} className="text-slate-400" />}
-            />
-            <ListItem
-              title="City"
-              titleWrapClassName="text-sm"
-              after={<span className="text-slate-800">{profile.city}</span>}
-              media={
-                <IonIcon icon={businessOutline} className="text-slate-400" />
-              }
-            />
-            <ListItem
-              title="Area"
-              titleWrapClassName="text-sm"
-              after={<span className="text-slate-800">{profile.area}</span>}
-              media={
-                <IonIcon icon={locationOutline} className="text-slate-400" />
-              }
-            />
-            <ListItem
-              title="Pincode"
-              titleWrapClassName="text-sm"
-              after={<span className="text-slate-800">{profile.pincode}</span>}
-              media={<IonIcon icon={mapOutline} className="text-slate-400" />}
-            />
+          <ListItem
+            title="Name"
+            titleWrapClassName="text-sm"
+            after={<span className="text-slate-800">{profile.name}</span>}
+            media={<IonIcon icon={personOutline} className="text-slate-400" />}
+          />
+          <ListItem
+            titleWrapClassName="text-sm"
+            title="Mobile"
+            after={
+              <span className="text-slate-800">{profile.mobileNumber}</span>
+            }
+            media={<IonIcon icon={callOutline} className="text-slate-400" />}
+          />
+          <ListItem
+            title="Gender"
+            titleWrapClassName="text-sm"
+            after={
+              <span className="text-slate-800 capitalize">
+                {profile.gender}
+              </span>
+            }
+            media={<IonIcon icon={maleOutline} className="text-slate-400" />}
+          />
+          <ListItem
+            title="City"
+            titleWrapClassName="text-sm"
+            after={<span className="text-slate-800">{profile.city}</span>}
+            media={
+              <IonIcon icon={businessOutline} className="text-slate-400" />
+            }
+          />
+          <ListItem
+            title="Area"
+            titleWrapClassName="text-sm"
+            after={<span className="text-slate-800">{profile.area}</span>}
+            media={
+              <IonIcon icon={locationOutline} className="text-slate-400" />
+            }
+          />
+          <ListItem
+            title="Pincode"
+            titleWrapClassName="text-sm"
+            after={<span className="text-slate-800">{profile.pincode}</span>}
+            media={<IonIcon icon={mapOutline} className="text-slate-400" />}
+          />
         </List>
       )}
 
@@ -339,12 +384,41 @@ const ProfileContent = () => {
             outline
             rounded
             large
+            onClick={() => setLogoutActionSheetOpen(true)}
             className="font-bold text-red-500 border-red-500/20 bg-red-50/50 pt-2 pb-2"
           >
             Logout
           </Button>
         </Block>
       )}
+
+      <Actions
+        opened={logoutActionSheetOpen}
+        onBackdropClick={() => setLogoutActionSheetOpen(false)}
+      >
+        <ActionsGroup>
+          <ActionsLabel>
+            Are you sure you want to log out?
+          </ActionsLabel>
+          <ActionsButton
+            onClick={() => {
+              localStorage.removeItem("user");
+              localStorage.removeItem("token");
+              dispatch(clearUser());
+              setLogoutActionSheetOpen(false);
+              router.push("/auth/login");
+            }}
+            className="text-red-500 font-semibold"
+          >
+            Log Out
+          </ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton onClick={() => setLogoutActionSheetOpen(false)} bold>
+            Cancel
+          </ActionsButton>
+        </ActionsGroup>
+      </Actions>
     </>
   );
 };

@@ -2,23 +2,21 @@
 import {
   BlockTitle,
   List,
-  ListInput,
   Page,
   Block,
   Button,
   Preloader,
   Navbar,
 } from "konsta/react";
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
-
 import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
-
-type CreateAccountStep = "mobile" | "otp" | "details";
+import { useCreateAccount } from "@/hooks/useCreateAccount";
+import { useAppDispatch } from "@/hooks/useAppStore";
+import { setSkippedAuth } from "@/store/slices/authSlice";
 
 const validationSchemas = {
   mobile: Yup.object({
@@ -28,7 +26,7 @@ const validationSchemas = {
   }),
   otp: Yup.object({
     otp: Yup.string()
-      .matches(/^\d{4}$/, "Please enter 4 digit OTP")
+      .matches(/^\d{6}$/, "Please enter 6 digit OTP")
       .required("Required"),
   }),
   details: Yup.object({
@@ -68,43 +66,34 @@ const GenderSelector = () => {
 };
 
 export default function CreateAccountPage() {
-  const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
-
-  const handleBack = (setFieldValue: any) => {
-    if (currentStep === "otp") {
-      setCurrentStep("mobile");
-      setFieldValue("otp", "");
-    } else if (currentStep === "details") {
-      setCurrentStep("otp");
-    }
-  };
-
-  const handleNext = async (validateForm: any, setTouched: any) => {
-    const errors = await validateForm();
-    if (Object.keys(errors).length === 0) {
-      if (currentStep === "mobile") setCurrentStep("otp");
-      else if (currentStep === "otp") setCurrentStep("details");
-    } else {
-      // Mark all fields touched
-      const touchedFields = Object.keys(errors).reduce((acc, current) => {
-        acc[current] = true;
-        return acc;
-      }, {} as any);
-      setTouched(touchedFields);
-    }
-  };
+  const dispatch = useAppDispatch();
+  const {
+    currentStep,
+    isLoading,
+    resendCooldown,
+    location,
+    requestLocation,
+    initialValues,
+    handleBack,
+    handleNext,
+    handleResendOtp,
+    handleSubmit,
+  } = useCreateAccount();
 
   return (
     <Page
       className="flex flex-col justify-end"
-      style={{
-        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
-      }}
+      style={{ background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)" }}
     >
       <Navbar
         right={
           <p className="min-w-18 text-center">
-            <Link href={ROUTE_PATH.HOME}>Skip</Link>
+            <Link
+              href={ROUTE_PATH.HOME}
+              onClick={() => dispatch(setSkippedAuth(true))}
+            >
+              Skip
+            </Link>
           </p>
         }
       />
@@ -127,21 +116,18 @@ export default function CreateAccountPage() {
       </Block>
 
       <Formik
-        initialValues={{
-          mobile: "",
-          otp: "",
-          name: "",
-          gender: "male",
-          city: "",
-          area: "",
-          pincode: "",
-        }}
+        initialValues={initialValues}
         validationSchema={validationSchemas[currentStep]}
-        onSubmit={(values) => {
-          console.log("Creating account with:", values);
-        }}
+        onSubmit={handleSubmit}
       >
-        {({ isValid, validateForm, setTouched, setFieldValue, dirty }) => (
+        {({
+          isValid,
+          validateForm,
+          setTouched,
+          setFieldValue,
+          dirty,
+          values,
+        }) => (
           <Form className="contents">
             <List strongIos insetIos>
               {currentStep === "mobile" && (
@@ -157,14 +143,30 @@ export default function CreateAccountPage() {
               )}
 
               {currentStep === "otp" && (
-                <FormikInput
-                  name="otp"
-                  label="OTP"
-                  type="tel"
-                  placeholder="e.g. 1234"
-                  info="Enter 4 digit OTP sent to your mobile"
-                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 4)}
-                />
+                <>
+                  <FormikInput
+                    name="otp"
+                    label="OTP"
+                    type="tel"
+                    placeholder="e.g. 123456"
+                    info="Enter 6 digit OTP sent to your mobile"
+                    formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
+                  />
+                  <div className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleResendOtp(values.mobile, setFieldValue)
+                      }
+                      disabled={resendCooldown > 0 || isLoading}
+                      className="text-sm text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {resendCooldown > 0
+                        ? `Resend OTP in ${resendCooldown}s`
+                        : "Resend OTP"}
+                    </button>
+                  </div>
+                </>
               )}
 
               {currentStep === "details" && (
@@ -175,23 +177,19 @@ export default function CreateAccountPage() {
                     type="text"
                     placeholder="e.g. John Doe"
                   />
-
                   <GenderSelector />
-
                   <FormikInput
                     name="city"
                     label="City"
                     type="text"
                     placeholder="e.g. Mumbai"
                   />
-
                   <FormikInput
                     name="area"
                     label="Area"
                     type="text"
                     placeholder="e.g. Andheri West"
                   />
-
                   <FormikInput
                     name="pincode"
                     label="Pincode"
@@ -208,11 +206,11 @@ export default function CreateAccountPage() {
                 <Button
                   large
                   rounded
-                  onClick={() => handleNext(validateForm, setTouched)}
-                  disabled={!isValid || !dirty}
+                  onClick={() => handleNext(validateForm, setTouched, values)}
+                  disabled={!isValid || !dirty || isLoading}
                   type="button"
                 >
-                  Get OTP
+                  {isLoading ? <Preloader className="w-5 h-5" /> : "Get OTP"}
                 </Button>
               )}
 
@@ -221,45 +219,90 @@ export default function CreateAccountPage() {
                   <Button
                     rounded
                     clear
+                    large
                     onClick={() => handleBack(setFieldValue)}
                     className="flex-1"
                     type="button"
+                    disabled={isLoading}
                   >
                     Back
                   </Button>
                   <Button
                     large
                     rounded
-                    disabled={!isValid || !dirty}
+                    disabled={!isValid || !dirty || isLoading}
                     className="flex-1"
-                    onClick={() => handleNext(validateForm, setTouched)}
+                    onClick={() => handleNext(validateForm, setTouched, values)}
                     type="button"
                   >
-                    Verify OTP
+                    {isLoading ? (
+                      <Preloader className="w-5 h-5" />
+                    ) : (
+                      "Verify OTP"
+                    )}
                   </Button>
                 </div>
               )}
 
               {currentStep === "details" && (
-                <div className="flex gap-2">
-                  <Button
-                    rounded
-                    clear
-                    onClick={() => handleBack(setFieldValue)}
-                    className="flex-1"
-                    type="button"
+                <div className="flex flex-col gap-4">
+                  {/* Location Status Indicator */}
+                  <div
+                    className={`p-3 rounded-lg border flex items-center justify-between ${location ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
                   >
-                    Back
-                  </Button>
-                  <Button
-                    large
-                    rounded
-                    disabled={!isValid || !dirty}
-                    className="flex-1"
-                    type="submit"
-                  >
-                    Create Account
-                  </Button>
+                    <div className="flex flex-col">
+                      <span
+                        className={`text-xs font-bold ${location ? "text-green-700" : "text-red-700"}`}
+                      >
+                        {location
+                          ? "✓ Geolocation Secured"
+                          : "✗ Location Required"}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        {location
+                          ? "Your coordinates have been pinned."
+                          : "Please allow location access to continue."}
+                      </span>
+                    </div>
+                    {!location && (
+                      <Button
+                        small
+                        outline
+                        rounded
+                        className="w-fit text-[10px] h-7"
+                        onClick={requestLocation}
+                        type="button"
+                      >
+                        Retry
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      rounded
+                      clear
+                      onClick={() => handleBack(setFieldValue)}
+                      className="flex-1"
+                      type="button"
+                      disabled={isLoading}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      large
+                      rounded
+                      disabled={!isValid || !dirty || isLoading || !location}
+                      className="flex-1"
+                      type="submit"
+                    >
+                      {isLoading ? (
+                        <Preloader className="w-5 h-5" />
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </Block>

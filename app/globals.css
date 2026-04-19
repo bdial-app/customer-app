@@ -8,9 +8,13 @@
   background-color: transparent;
 } */
   @theme {
-    --color-primary: #d4af37 !important;
-     --color-brand-primary: #d4af37 !important;
+    --color-primary: #F8CB45 !important;
+     --color-brand-primary: #F8CB45 !important;
      --color-black: #646464 !important;
+}
+
+.k-button{
+  @apply !text-black
 }
 
 /* In your CSS file */

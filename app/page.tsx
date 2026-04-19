@@ -2,7 +2,7 @@
 import { IonIcon } from "@ionic/react";
 import { search } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Page, Navbar } from "konsta/react";
 import BottomBar from "./components/bottom-bar";
 import ProfileContent from "./components/profile-content";
@@ -13,12 +13,28 @@ import ProviderHome from "./components/provider-home";
 import AnalyticsContent from "./components/analytics-content";
 import { useAppContext } from "./context/AppContext";
 import GeoLocation from "./components/geo-location";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 export default function Home() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const { userMode } = useAppContext();
+  const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!user && !hasSkippedAuth) {
+      router.push("/auth/login");
+    }
+  }, [user, hasSkippedAuth, router]);
+
+  const handleTabChange = (tab: string) => {
+    if (!user && (tab === "chats" || tab === "profile")) {
+      router.push("/auth/login");
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   const getPageTitle = () => {
     switch (activeTab) {
@@ -70,7 +86,7 @@ export default function Home() {
 
       <div className="h-20"></div>
 
-      <BottomBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
     </Page>
   );
 }
