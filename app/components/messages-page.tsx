@@ -13,8 +13,9 @@ import {
   Icon,
   ToolbarPane,
 } from "konsta/react";
-import { CameraFill, ArrowUpCircleFill } from "framework7-icons/react";
+import { arrowBack, arrowUpCircle, camera, search } from "ionicons/icons";
 import { MdCameraAlt, MdSend } from "react-icons/md";
+import { IonIcon } from "@ionic/react";
 
 interface MessagesPageProps {
   onBack: () => void;
@@ -187,7 +188,8 @@ export default function MessagesPage({
             >
               <Icon
                 ios={
-                  <ArrowUpCircleFill
+                  <IonIcon
+                    icon={arrowUpCircle}
                     className={`w-7 h-7${isClickable ? " text-primary" : ""}`}
                   />
                 }
