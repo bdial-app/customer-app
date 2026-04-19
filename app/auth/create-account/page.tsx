@@ -2,21 +2,23 @@
 import {
   BlockTitle,
   List,
-  ListInput,
   Page,
   Block,
   Button,
   Preloader,
   Navbar,
+  Notification,
 } from "konsta/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 
 import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
+import { useSendOtp, useVerifyOtp, useCreateAccount } from "@/hooks/useAuth";
 
 type CreateAccountStep = "mobile" | "otp" | "details";
 
@@ -28,7 +30,7 @@ const validationSchemas = {
   }),
   otp: Yup.object({
     otp: Yup.string()
-      .matches(/^\d{4}$/, "Please enter 4 digit OTP")
+      .matches(/^\d{6}$/, "Please enter 6 digit OTP")
       .required("Required"),
   }),
   details: Yup.object({
@@ -68,9 +70,46 @@ const GenderSelector = () => {
 };
 
 export default function CreateAccountPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
+
+  // Auto-dismiss error toast after 3s
+  useEffect(() => {
+    if (!apiError) return;
+    setToastOpen(true);
+    const t = setTimeout(() => {
+      setToastOpen(false);
+      setApiError(null);
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [apiError]);
+
+  // Auto-dismiss success notification after 3s
+  useEffect(() => {
+    if (!successMsg) return;
+    setSuccessOpen(true);
+    const t = setTimeout(() => {
+      setSuccessOpen(false);
+      setSuccessMsg(null);
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [successMsg]);
+
+  const sendOtpMutation = useSendOtp();
+  const verifyOtpMutation = useVerifyOtp();
+  const createAccountMutation = useCreateAccount();
+
+  const isLoading =
+    sendOtpMutation.isPending ||
+    verifyOtpMutation.isPending ||
+    createAccountMutation.isPending;
 
   const handleBack = (setFieldValue: any) => {
+    setApiError(null);
     if (currentStep === "otp") {
       setCurrentStep("mobile");
       setFieldValue("otp", "");
@@ -79,18 +118,64 @@ export default function CreateAccountPage() {
     }
   };
 
-  const handleNext = async (validateForm: any, setTouched: any) => {
+  const handleNext = async (
+    validateForm: any,
+    setTouched: any,
+    values: any,
+  ) => {
+    setApiError(null);
     const errors = await validateForm();
-    if (Object.keys(errors).length === 0) {
-      if (currentStep === "mobile") setCurrentStep("otp");
-      else if (currentStep === "otp") setCurrentStep("details");
-    } else {
-      // Mark all fields touched
-      const touchedFields = Object.keys(errors).reduce((acc, current) => {
-        acc[current] = true;
+    if (Object.keys(errors).length > 0) {
+      const touchedFields = Object.keys(errors).reduce((acc, key) => {
+        acc[key] = true;
         return acc;
       }, {} as any);
       setTouched(touchedFields);
+      return;
+    }
+
+    try {
+      if (currentStep === "mobile") {
+        await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
+        setSuccessMsg("OTP sent to your mobile number!");
+        setCurrentStep("otp");
+      } else if (currentStep === "otp") {
+        await verifyOtpMutation.mutateAsync({
+          mobileNumber: values.mobile,
+          otp: values.otp,
+        });
+        setCurrentStep("details");
+      }
+    } catch (err: any) {
+      setApiError(
+        Array.isArray(err?.response?.data?.message)
+          ? err?.response?.data?.message?.[0]
+          : (err?.response?.data?.message ??
+              "Something went wrong. Please retry."),
+      );
+    }
+  };
+
+  const handleSubmit = async (values: any) => {
+    setApiError(null);
+    try {
+      await createAccountMutation.mutateAsync({
+        mobile: values.mobile,
+        otp: values.otp,
+        name: values.name,
+        gender: values.gender,
+        city: values.city,
+        area: values.area,
+        pincode: values.pincode,
+      });
+      router.push(ROUTE_PATH.HOME);
+    } catch (err: any) {
+      setApiError(
+        Array.isArray(err?.response?.data?.message)
+          ? err?.response?.data?.message?.[0]
+          : (err?.response?.data?.message ??
+              "Account creation failed. Try again."),
+      );
     }
   };
 
@@ -137,11 +222,16 @@ export default function CreateAccountPage() {
           pincode: "",
         }}
         validationSchema={validationSchemas[currentStep]}
-        onSubmit={(values) => {
-          console.log("Creating account with:", values);
-        }}
+        onSubmit={handleSubmit}
       >
-        {({ isValid, validateForm, setTouched, setFieldValue, dirty }) => (
+        {({
+          isValid,
+          validateForm,
+          setTouched,
+          setFieldValue,
+          dirty,
+          values,
+        }) => (
           <Form className="contents">
             <List strongIos insetIos>
               {currentStep === "mobile" && (
@@ -163,7 +253,7 @@ export default function CreateAccountPage() {
                   type="tel"
                   placeholder="e.g. 1234"
                   info="Enter 4 digit OTP sent to your mobile"
-                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 4)}
+                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
                 />
               )}
 
@@ -175,23 +265,19 @@ export default function CreateAccountPage() {
                     type="text"
                     placeholder="e.g. John Doe"
                   />
-
                   <GenderSelector />
-
                   <FormikInput
                     name="city"
                     label="City"
                     type="text"
                     placeholder="e.g. Mumbai"
                   />
-
                   <FormikInput
                     name="area"
                     label="Area"
                     type="text"
                     placeholder="e.g. Andheri West"
                   />
-
                   <FormikInput
                     name="pincode"
                     label="Pincode"
@@ -203,16 +289,38 @@ export default function CreateAccountPage() {
               )}
             </List>
 
+            <Notification
+              opened={successOpen}
+              title="OTP Sent"
+              subtitle={successMsg ?? ""}
+              button
+              onClick={() => {
+                setSuccessOpen(false);
+                setSuccessMsg(null);
+              }}
+            />
+
+            <Notification
+              opened={toastOpen}
+              title="Error"
+              subtitle={apiError ?? ""}
+              button
+              onClick={() => {
+                setToastOpen(false);
+                setApiError(null);
+              }}
+            />
+
             <Block>
               {currentStep === "mobile" && (
                 <Button
                   large
                   rounded
-                  onClick={() => handleNext(validateForm, setTouched)}
-                  disabled={!isValid || !dirty}
+                  onClick={() => handleNext(validateForm, setTouched, values)}
+                  disabled={!isValid || !dirty || isLoading}
                   type="button"
                 >
-                  Get OTP
+                  {isLoading ? <Preloader className="w-5 h-5" /> : "Get OTP"}
                 </Button>
               )}
 
@@ -224,18 +332,23 @@ export default function CreateAccountPage() {
                     onClick={() => handleBack(setFieldValue)}
                     className="flex-1"
                     type="button"
+                    disabled={isLoading}
                   >
                     Back
                   </Button>
                   <Button
                     large
                     rounded
-                    disabled={!isValid || !dirty}
+                    disabled={!isValid || !dirty || isLoading}
                     className="flex-1"
-                    onClick={() => handleNext(validateForm, setTouched)}
+                    onClick={() => handleNext(validateForm, setTouched, values)}
                     type="button"
                   >
-                    Verify OTP
+                    {isLoading ? (
+                      <Preloader className="w-5 h-5" />
+                    ) : (
+                      "Verify OTP"
+                    )}
                   </Button>
                 </div>
               )}
@@ -248,17 +361,22 @@ export default function CreateAccountPage() {
                     onClick={() => handleBack(setFieldValue)}
                     className="flex-1"
                     type="button"
+                    disabled={isLoading}
                   >
                     Back
                   </Button>
                   <Button
                     large
                     rounded
-                    disabled={!isValid || !dirty}
+                    disabled={!isValid || !dirty || isLoading}
                     className="flex-1"
                     type="submit"
                   >
-                    Create Account
+                    {isLoading ? (
+                      <Preloader className="w-5 h-5" />
+                    ) : (
+                      "Create Account"
+                    )}
                   </Button>
                 </div>
               )}
