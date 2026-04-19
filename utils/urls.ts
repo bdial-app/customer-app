@@ -7,3 +7,10 @@ export const AUTH_URLS = {
 export const USER_URLS = {
   ME: "/users/me",
 };
+
+export const CATEGORY_URLS = {
+  LIST: "/categories",
+  TOP_LEVEL: "/categories/top-level",
+  BY_ID: (id: string) => `/categories/${id}`,
+  SUB_CATEGORIES: (id: string) => `/categories/${id}/sub-categories`,
+};

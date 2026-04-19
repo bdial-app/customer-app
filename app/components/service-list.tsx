@@ -1,108 +1,55 @@
 import { Block } from "konsta/react";
+import { useTopLevelCategories } from "@/hooks/useCategories";
 
-const services = [
-  {
-    name: "Clothes",
-    icon: "https://cdn-icons-png.flaticon.com/512/6165/6165574.png",
-  },
-  {
-    name: "Repairing",
-    icon: "https://cdn-icons-png.flaticon.com/512/2921/2921822.png",
-  },
-  {
-    name: "Transport",
-    icon: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-  },
-  {
-    name: "Mehandi",
-    icon: "https://cdn-icons-png.flaticon.com/512/3534/3534069.png",
-  },
-  {
-    name: "Cleaning",
-    icon: "https://cdn-icons-png.flaticon.com/512/995/995053.png",
-  },
-  {
-    name: "Plumbing",
-    icon: "https://cdn-icons-png.flaticon.com/512/1685/1685462.png",
-  },
-  {
-    name: "Electrician",
-    icon: "https://cdn-icons-png.flaticon.com/512/1046/1046857.png",
-  },
-  {
-    name: "Painting",
-    icon: "https://cdn-icons-png.flaticon.com/512/1822/1822559.png",
-  },
-  {
-    name: "Cooking",
-    icon: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
-  },
-  {
-    name: "Gardening",
-    icon: "https://cdn-icons-png.flaticon.com/512/2909/2909767.png",
-  },
-  {
-    name: "Laundry",
-    icon: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
-  },
-  {
-    name: "Car Wash",
-    icon: "https://cdn-icons-png.flaticon.com/512/743/743131.png",
-  },
-  {
-    name: "Salon",
-    icon: "https://cdn-icons-png.flaticon.com/512/1940/1940922.png",
-  },
-  {
-    name: "Makeup",
-    icon: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-  },
-  {
-    name: "Delivery",
-    icon: "https://cdn-icons-png.flaticon.com/512/1046/1046850.png",
-  },
-  {
-    name: "Shifting",
-    icon: "https://cdn-icons-png.flaticon.com/512/679/679720.png",
-  },
-];
+// Icon mapping source (from previous mock)
+const iconMapping: Record<string, string> = {
+  "Bohri Ridha & Burka Tailoring": "https://cdn-icons-png.flaticon.com/512/6165/6165574.png",
+  "Tuition & Classes": "https://cdn-icons-png.flaticon.com/512/2921/2921822.png",
+  "Beauty & Mehandi": "https://cdn-icons-png.flaticon.com/512/3534/3534069.png",
+  "Jewellery & Accessories": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+  "Others": "https://cdn-icons-png.flaticon.com/512/1046/1046857.png",
+};
 
-// Bento layout: [colSpan, rowSpan] per item index (wraps for extra items)
+const defaultIcon = "https://cdn-icons-png.flaticon.com/512/1046/1046857.png";
+
+// Bento layout: [colSpan, rowSpan] per item index
 const bentoPattern: [number, number][] = [
-  [2, 2], // 0 — large hero
-  [1, 1], // 1
-  [1, 1], // 2
-  [1, 1], // 3
-  [1, 1], // 4
-  [2, 1], // 5 — wide
-  [1, 1], // 6
-  [1, 2], // 7 — tall
-  [1, 1], // 8
-  [1, 1], // 9
-  [2, 1], // 10 — wide
-  [1, 1], // 11
-  [1, 1], // 12
-  [1, 1], // 13
-  [1, 2], // 14 — tall
-  [1, 1], // 15
+  [2, 2], [1, 1], [1, 1], [1, 1], [1, 1], [2, 1], [1, 1], [1, 2],
+  [1, 1], [1, 1], [2, 1], [1, 1], [1, 1], [1, 1], [1, 2], [1, 1],
 ];
 
 const gradients = [
-  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", // violet-indigo
-  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", // pink-red
-  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", // sky-cyan
-  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", // green-teal
-  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", // pink-yellow
-  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", // purple-pink
-  "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)", // peach-purple
-  "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)", // lavender-sky
-  "linear-gradient(135deg, #f6d365 0%, #fda085 100%)", // gold-peach
-  "linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)", // mint-lemon
-  "linear-gradient(135deg, #ff9a9e 0%, #a18cd1 100%)", // rose-lavender
-  "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)", // green-blue
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)",
+  "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)",
+  "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
+  "linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)",
+  "linear-gradient(135deg, #ff9a9e 0%, #a18cd1 100%)",
+  "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
 ];
 
 const ServicesList = ({ className }: { className?: string }) => {
+  const { data: categories = [], isLoading } = useTopLevelCategories();
+
+  if (isLoading && categories.length === 0) {
+    return (
+      <Block className={`mb-0! !px-0 ${className ?? ""}`}>
+        <div className="overflow-x-auto no-scrollbar pb-1 px-4">
+          <div className="flex gap-2 h-[168px]">
+             {[1,2,3,4,5].map(i => (
+               <div key={i} className="w-20 h-full rounded-xl bg-slate-100 animate-pulse shrink-0" />
+             ))}
+          </div>
+        </div>
+      </Block>
+    );
+  }
+
   return (
     <Block className={`mb-0! !px-0 ${className ?? ""}`}>
       <div className="overflow-x-auto no-scrollbar pb-1 px-4 ">
@@ -114,19 +61,20 @@ const ServicesList = ({ className }: { className?: string }) => {
             gridAutoColumns: "80px",
           }}
         >
-          {services.map((service, i) => {
+          {categories.map((category, i) => {
             const [colSpan, rowSpan] = bentoPattern[i % bentoPattern.length];
             const gradient = gradients[i % gradients.length];
             const isLarge = colSpan === 2 && rowSpan === 2;
+            const icon = iconMapping[category.name] || defaultIcon;
 
             return (
               <div
-                key={service.name}
+                key={category.id}
                 className="rounded-xl relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
                 style={{
                   gridColumn: `span ${colSpan}`,
                   gridRow: `span ${rowSpan}`,
-                  background: `url(${service.icon}) no-repeat 115% -15% / ${isLarge ? "60%" : "55%"}, ${gradient}`,
+                  background: `url(${icon}) no-repeat 115% -15% / ${isLarge ? "60%" : "55%"}, ${gradient}`,
                 }}
               >
                 <p
@@ -134,7 +82,7 @@ const ServicesList = ({ className }: { className?: string }) => {
                     isLarge ? "text-sm" : "text-xs"
                   }`}
                 >
-                  {service.name}
+                  {category.name}
                 </p>
               </div>
             );
