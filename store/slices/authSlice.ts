@@ -6,9 +6,28 @@ interface AuthState {
   token: string | null;
 }
 
+const getInitialUser = () => {
+  if (typeof window !== "undefined") {
+    try {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+};
+
+const getInitialToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("token");
+  }
+  return null;
+};
+
 const initialState: AuthState = {
-  user: null,
-  token: null,
+  user: getInitialUser(),
+  token: getInitialToken(),
 };
 
 const authSlice = createSlice({
@@ -23,10 +42,12 @@ const authSlice = createSlice({
     // Sets only the user profile — usually after PATCH /users/me
     setProfile(state, action: PayloadAction<AuthResponse["user"]>) {
       state.user = action.payload;
+      localStorage.setItem("user", JSON.stringify(state.user));
     },
     // Sets only the token
     setToken(state, action: PayloadAction<string>) {
       state.token = action.payload;
+      localStorage.setItem("token", state.token);
     },
     clearUser(state) {
       state.user = null;
