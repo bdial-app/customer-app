@@ -24,3 +24,7 @@ export const SAVED_LOCATION_URLS = {
   LIST: "/saved-locations",
   CREATE: "/saved-locations",
 };
+
+export const PROVIDER_URLS = {
+  NEARBY: "/providers/nearby",
+};

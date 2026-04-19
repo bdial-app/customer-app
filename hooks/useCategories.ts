@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTopLevelCategories, getAllCategories } from "@/services/category.service";
+import {
+  getTopLevelCategories,
+  getAllCategories,
+} from "@/services/category.service";
 
 export const useTopLevelCategories = () => {
   return useQuery({

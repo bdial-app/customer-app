@@ -1,5 +1,4 @@
-"use client";
-import { Block, List, ListInput } from "konsta/react";
+import { Block, List, ListInput, Sheet } from "konsta/react";
 import { ROUTE_PATH } from "@/utils/contants";
 import ServicesList from "./service-list";
 import SectionHeader from "./section-header";
@@ -7,9 +6,12 @@ import ProviderList from "./provider-list";
 import { IonIcon } from "@ionic/react";
 import { filter, search } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import AllServicesContent from "./all-services-content";
 
 const UserHome = () => {
   const router = useRouter();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const providers: any = [
     {
@@ -107,8 +109,11 @@ const UserHome = () => {
   return (
     <>
       <List strongIos insetIos className="mt-4! relative">
+        <div
+          className="absolute inset-0 bg-transparent z-10 cursor-pointer"
+          onClick={() => setIsSheetOpen(true)}
+        ></div>
         <ListInput
-          onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
           type="text"
           placeholder="Search services or providers..."
           media={<IonIcon icon={search} />}
@@ -147,8 +152,42 @@ const UserHome = () => {
         />
         <ProviderList providerList={providers} sliderMode />
       </Block>
+
+      <Sheet
+        className="pb-safe h-[90%]"
+        opened={isSheetOpen}
+        onBackdropClick={() => setIsSheetOpen(false)}
+      >
+        <div className="flex flex-col h-full bg-slate-50">
+          <Toolbar
+            title="Search Services"
+            onClick={() => setIsSheetOpen(false)}
+          />
+          <div className="flex-1 overflow-y-auto">
+            <AllServicesContent isSheet />
+          </div>
+        </div>
+      </Sheet>
     </>
   );
 };
+
+const Toolbar = ({
+  title,
+  onClick,
+}: {
+  title: string;
+  onClick: () => void;
+}) => (
+  <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100">
+    <div className="text-lg font-bold text-slate-800">{title}</div>
+    <button
+      onClick={onClick}
+      className="text-blue-500 font-semibold active:opacity-50 transition-opacity"
+    >
+      Done
+    </button>
+  </div>
+);
 
 export default UserHome;
