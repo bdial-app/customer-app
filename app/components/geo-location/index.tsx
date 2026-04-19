@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAppSelector } from "@/hooks/useAppStore";
 import AddressBarNavigation from "./address-bar-navigation";
 import {
   Block,
@@ -37,7 +38,13 @@ const GeoLocation = () => {
     setSearchQuery(e.target.value);
   };
 
+  const user = useAppSelector((state) => state.auth.user as any);
+
   const handleAddAddress = () => {
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
     router.push("/add-location");
   };
 

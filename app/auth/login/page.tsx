@@ -114,7 +114,9 @@ export default function LoginPage() {
       <Navbar
         right={
           <p className="min-w-18 text-center">
-            <Link href={ROUTE_PATH.HOME}>Skip</Link>
+            <Link href={ROUTE_PATH.HOME} onClick={() => localStorage.setItem('skippedAuth', 'true')}>
+              Skip
+            </Link>
           </p>
         }
       />
