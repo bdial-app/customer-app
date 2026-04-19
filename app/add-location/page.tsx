@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import {
   Page,
   Navbar,
@@ -25,6 +31,14 @@ import {
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { GoogleMap, useLoadScript } from "@react-google-maps/api";
+import { useSearchGeocode } from "@/hooks/useGeocode";
+import {
+  SearchGeocodeResult,
+  reverseGeocode,
+  ReverseGeocodeResponse,
+} from "@/services/geocode.service";
+import AddressBarNavigation from "../components/geo-location/address-bar-navigation";
+import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
 
 // Custom Advanced Marker Component to replace deprecated google.maps.Marker
 const AdvancedMarker = ({
@@ -34,7 +48,9 @@ const AdvancedMarker = ({
   position: google.maps.LatLngLiteral;
   map: google.maps.Map | null;
 }) => {
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!map) return;
@@ -44,7 +60,7 @@ const AdvancedMarker = ({
       map,
       position,
     });
-    
+
     markerRef.current = marker;
 
     return () => {
@@ -90,22 +106,76 @@ const AddLocationPage = () => {
 
   const [marker, setMarker] = useState(defaultCenter);
   const [address, setAddress] = useState("");
+  const [locationLabel, setLocationLabel] = useState("");
+  const [fullLocation, setFullLocation] = useState<ReverseGeocodeResponse | null>(
+    null,
+  );
+  const [isReverseLoading, setIsReverseLoading] = useState(false);
+
+  const createSavedLocationMutation = useCreateSavedLocation();
+
+  // Search Hook
+  const { data: searchResults, isLoading: isSearchLoading } =
+    useSearchGeocode(searchQuery);
 
   // Reverse geocode
   const getAddress = async (lat: number, lng: number) => {
     try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyAcciwPVPALEtOh_vhFyELCyMMxFOtf384`,
-      );
-      const data = await res.json();
-      const formattedAddress =
-        data.results[0]?.formatted_address || "No address found";
-      setAddress(formattedAddress);
-      setSearchQuery(formattedAddress);
+      setIsReverseLoading(true);
+      const data = await reverseGeocode({ lat, lng });
+      setAddress(data.fullAddress);
+      setLocationLabel(data.label);
+      setFullLocation(data);
     } catch (error) {
       console.error("Error fetching address:", error);
+    } finally {
+      setIsReverseLoading(false);
     }
   };
+
+  const handleSelectLocation = async (loc: SearchGeocodeResult) => {
+    const { lat, lng } = loc;
+    const newPos = { lat, lng };
+    setMarker(newPos);
+    setIsFocused(false);
+    setSearchQuery("");
+
+    if (map) {
+      map.panTo(newPos);
+      map.setZoom(16);
+    }
+
+    // Get full details (city, area, label, fullAddress, placeId)
+    await getAddress(lat, lng);
+  };
+
+  const handleSaveAddress = async () => {
+    if (!fullLocation) return;
+
+    const payload = {
+      title: selectedType.toLowerCase(),
+      label: fullLocation.label,
+      latitude: marker.lat,
+      longitude: marker.lng,
+      city: fullLocation.city,
+      area: fullLocation.area,
+      fullAddress: fullLocation.fullAddress,
+      placeId: fullLocation.placeId,
+    };
+
+    createSavedLocationMutation.mutate(payload, {
+      onSuccess: () => {
+        router.push("/");
+      },
+    });
+  };
+
+  // On mount, get current location
+  useEffect(() => {
+    handleLocateMe();
+  }, []);
+
+  // Update marker and center map during mount if needed, but handleLocateMe already does this.
 
   // On map click
   const handleClick = useCallback((e: any) => {
@@ -136,13 +206,33 @@ const AddLocationPage = () => {
     router.back();
   };
 
+  const handleLocateMe = () => {
+    if (typeof window === "undefined" || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newPos = { lat: latitude, lng: longitude };
+        setMarker(newPos);
+        getAddress(latitude, longitude);
+        if (map) {
+          map.panTo(newPos);
+          map.setZoom(16);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+      },
+    );
+  };
+
   return (
     <Page className="flex flex-col h-full">
       <Navbar
         title={isFocused ? "Search Location" : "Add Address"}
         left={
           <button onClick={handleBack} className="link">
-            <IonIcon icon={arrowBack} className="text-2xl" />
+            {/* <IonIcon icon={arrowBack} className="text-2xl" /> */}
           </button>
         }
         leftClassName="w-11"
@@ -163,7 +253,7 @@ const AddLocationPage = () => {
                 options={{
                   disableDefaultUI: true,
                   zoomControl: false,
-                  mapId: "DEMO_MAP_ID",
+                  mapId: "3d186cf47c01e972b8b1486d",
                 }}
               >
                 <AdvancedMarker map={map} position={marker} />
@@ -176,7 +266,10 @@ const AddLocationPage = () => {
             )}
 
             {/* Floating "Locate Me" Button */}
-            <button className="absolute bottom-4 w-12 h-12 grid place-content-center right-4 bg-white p-3 rounded-full shadow-lg active:scale-95 transition-transform z-10">
+            <button
+              onClick={handleLocateMe}
+              className="absolute bottom-4 w-12 h-12 grid place-content-center right-4 bg-white p-3 rounded-full shadow-lg active:scale-95 transition-transform z-10"
+            >
               <IonIcon
                 icon={locateOutline}
                 className="text-2xl text-blue-500"
@@ -207,6 +300,18 @@ const AddLocationPage = () => {
                 setSearchQuery("");
               }}
             />
+
+            {!isFocused && address && (
+              <div className="mt-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                <AddressBarNavigation
+                  title={locationLabel || "Selected Location"}
+                  address={address}
+                  isLoading={isReverseLoading}
+                  hideIcon
+                  hideChevron
+                />
+              </div>
+            )}
           </Block>
 
           {!isFocused ? (
@@ -221,12 +326,12 @@ const AddLocationPage = () => {
                       ? "bg-blue-500 text-white shadow-md shadow-blue-200"
                       : "bg-slate-100 text-slate-600 border border-slate-200"
                   }`}
-                  media={
-                    <IonIcon
-                      icon={home}
-                      className={`w-8 ${selectedType === "Home" ? "text-white" : "text-slate-400"}`}
-                    />
-                  }
+                  // media={
+                  //   <IonIcon
+                  //     icon={home}
+                  //     className={`w-8 ${selectedType === "Home" ? "text-white" : "text-slate-400"}`}
+                  //   />
+                  // }
                   onClick={() => setSelectedType("Home")}
                 >
                   Home
@@ -237,12 +342,12 @@ const AddLocationPage = () => {
                       ? "bg-blue-500 text-white shadow-md shadow-blue-200"
                       : "bg-slate-100 text-slate-600 border border-slate-200"
                   }`}
-                  media={
-                    <IonIcon
-                      icon={business}
-                      className={`w-8 ${selectedType === "Office" ? "text-white" : "text-slate-400"}`}
-                    />
-                  }
+                  // media={
+                  //   <IonIcon
+                  //     icon={business}
+                  //     className={`w-8 ${selectedType === "Office" ? "text-white" : "text-slate-400"}`}
+                  //   />
+                  // }
                   onClick={() => setSelectedType("Office")}
                 >
                   Office
@@ -253,12 +358,12 @@ const AddLocationPage = () => {
                       ? "bg-blue-500 text-white shadow-md shadow-blue-200"
                       : "bg-slate-100 text-slate-600 border border-slate-200"
                   }`}
-                  media={
-                    <IonIcon
-                      icon={ellipsisHorizontalCircleOutline}
-                      className={`w-8 ${selectedType === "Other" ? "text-white" : "text-slate-400"}`}
-                    />
-                  }
+                  // media={
+                  //   <IonIcon
+                  //     icon={ellipsisHorizontalCircleOutline}
+                  //     className={`w-8 ${selectedType === "Other" ? "text-white" : "text-slate-400"}`}
+                  //   />
+                  // }
                   onClick={() => setSelectedType("Other")}
                 >
                   Other
@@ -266,37 +371,55 @@ const AddLocationPage = () => {
               </Block>
 
               <Block className="mt-8">
-                <Button large rounded onClick={handleBack}>
-                  Save Address
+                <Button
+                  large
+                  rounded
+                  onClick={handleSaveAddress}
+                  disabled={!address || createSavedLocationMutation.isPending}
+                >
+                  {createSavedLocationMutation.isPending
+                    ? "Saving..."
+                    : "Save Address"}
                 </Button>
               </Block>
             </div>
           ) : (
-            <List strong inset className="mt-0">
-              {mockLocations
-                .filter((l) =>
-                  l.title.toLowerCase().includes(searchQuery.toLowerCase()),
-                )
-                .map((loc, i) => (
-                  <ListItem
-                    key={i}
-                    title={loc.title}
-                    text={loc.area}
-                    link
-                    onClick={() => {
-                      setSearchQuery(loc.title);
-                      setIsFocused(false);
-                    }}
+            <>
+              {searchResults && searchResults.length > 0 ? (
+                <List strong inset className="mt-0">
+                  {searchResults.map((loc) => (
+                    <ListItem
+                      key={loc.placeId}
+                      link
+                      title={loc.mainText}
+                      text={loc.secondaryText}
+                      onClick={() => handleSelectLocation(loc)}
+                    />
+                  ))}
+                </List>
+              ) : searchQuery.length >= 3 && !isSearchLoading ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500 gap-2">
+                  <IonIcon
+                    icon={search}
+                    className="text-4xl text-slate-300 mb-2"
                   />
-                ))}
-              {mockLocations.filter((l) =>
-                l.title.toLowerCase().includes(searchQuery.toLowerCase()),
-              ).length === 0 && (
-                <div className="p-8 text-center text-slate-500">
-                  No regions found for "{searchQuery}"
+                  <div className="text-lg font-semibold text-slate-800">
+                    No results found
+                  </div>
+                  <div className="text-sm">
+                    We couldn't find anything matching "{searchQuery}"
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-slate-500 text-sm">
+                  {isSearchLoading
+                    ? "Searching..."
+                    : searchQuery.length < 3
+                      ? "Type at least 3 characters to search..."
+                      : "No results found"}
                 </div>
               )}
-            </List>
+            </>
           )}
         </div>
       </div>

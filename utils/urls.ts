@@ -14,3 +14,13 @@ export const CATEGORY_URLS = {
   BY_ID: (id: string) => `/categories/${id}`,
   SUB_CATEGORIES: (id: string) => `/categories/${id}/sub-categories`,
 };
+
+export const GEOCODE_URLS = {
+  REVERSE: "/geocode/reverse",
+  SEARCH: "/geocode/search",
+};
+
+export const SAVED_LOCATION_URLS = {
+  LIST: "/saved-locations",
+  CREATE: "/saved-locations",
+};
