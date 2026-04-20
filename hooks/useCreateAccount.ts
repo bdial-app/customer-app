@@ -114,11 +114,20 @@ export const useCreateAccount = () => {
 
     try {
       if (currentStep === "mobile") {
-        await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
-        notify({
-          title: "OTP Sent",
-          subtitle: "OTP sent to your mobile number!",
-        });
+        await sendOtpMutation.mutateAsync(
+          {
+            mobileNumber: values.mobile,
+          },
+          {
+            onSuccess(data) {
+              const otp = data?.data?.otp || data?.otp;
+              notify({
+                title: "OTP Sent " + (otp || ""),
+                subtitle: "OTP sent to your mobile number!",
+              });
+            },
+          },
+        );
         startCooldown();
         setCurrentStep("otp");
       } else if (currentStep === "otp") {

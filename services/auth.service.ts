@@ -35,8 +35,9 @@ export interface AuthResponse {
 }
 
 // Step 1 — send OTP to mobile
-export const sendOtp = async (payload: SendOtpPayload): Promise<void> => {
-  await apiClient.post(AUTH_URLS.SEND_OTP, payload);
+export const sendOtp = async (payload: SendOtpPayload): Promise<any> => {
+  const { data } = await apiClient.post(AUTH_URLS.SEND_OTP, payload);
+  return data;
 };
 
 // Step 2 — verify OTP
