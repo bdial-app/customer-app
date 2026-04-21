@@ -27,5 +27,10 @@ export const SAVED_LOCATION_URLS = {
 
 export const PROVIDER_URLS = {
   NEARBY: "/providers/nearby",
+  FEATURED: "/providers/featured",
   BY_ID: (id: string) => `/providers/${id}`,
+  BECOME_PROVIDER: "/providers/become-provider",
+  MY_STATUS: "/providers/my-status",
+  SEND_OTP: "/providers/send-otp",
+  VERIFY_OTP: "/providers/verify-otp",
 };

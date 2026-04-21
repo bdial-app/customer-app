@@ -1,8 +1,8 @@
+"use client";
 import { IonIcon } from "@ionic/react";
-import { Button } from "konsta/react";
-import Image from "next/image";
+import { locationSharp, chevronDown } from "ionicons/icons";
+import { motion } from "framer-motion";
 import React from "react";
-import { BiChevronRight } from "react-icons/bi";
 
 const AddressBarNavigation = ({
   title,
@@ -18,32 +18,41 @@ const AddressBarNavigation = ({
   hideChevron?: boolean;
 }) => {
   return (
-    <div className={`flex items-center ${hideIcon ? "" : "gap-4"}`}>
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+    >
       {!hideIcon && (
-        <Image src="/vercel.svg" alt="Location" width={32} height={32} />
+        <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center shrink-0">
+          <IonIcon icon={locationSharp} className="text-amber-400 text-base" />
+        </div>
       )}
 
-      <div className="flex-1 flex gap-2 items-center px-3 py-1 bg-slate-700/5 hover:bg-slate-700/15 active:bg-slate-700/10 rounded-lg cursor-pointer overflow-hidden">
-        <div className="flex flex-col gap-0 flex-1 min-w-0 py-0.5">
-          {isLoading ? (
-            <div className="flex flex-col gap-2">
-              <div className="h-5 w-24 bg-slate-200 animate-pulse rounded"></div>
-              <div className="h-3 w-40 bg-slate-100 animate-pulse rounded mt-1"></div>
-            </div>
-          ) : (
-            <>
-              <div className="title text-lg font-medium truncate leading-tight">
+      <div className="flex-1 min-w-0">
+        {isLoading ? (
+          <div className="flex flex-col gap-1.5">
+            <div className="h-4 w-24 bg-white/10 animate-pulse rounded-md" />
+            <div className="h-3 w-36 bg-white/5 animate-pulse rounded-md" />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-1">
+              <span className="text-[13px] font-bold text-white truncate leading-tight">
                 {title}
-              </div>
-              <div className="address text-sm text-slate-600 truncate">
-                {address}
-              </div>
-            </>
-          )}
-        </div>
-        {!hideChevron && <BiChevronRight className="text-2xl flex-shrink-0" />}
+              </span>
+              {!hideChevron && (
+                <IonIcon icon={chevronDown} className="text-xs text-white/50" />
+              )}
+            </div>
+            <p className="text-[11px] text-white/50 truncate mt-0.5 leading-tight">
+              {address}
+            </p>
+          </>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

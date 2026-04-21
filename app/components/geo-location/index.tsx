@@ -32,6 +32,7 @@ import {
   laptopOutline,
   location,
   navigateCircleOutline,
+  notificationsOutline,
   search,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
@@ -190,13 +191,25 @@ const GeoLocation = () => {
 
   return (
     <>
-      <Block onClick={() => setOpen(true)}>
-        <AddressBarNavigation
-          title={addressData?.label || "Azam Campus"}
-          address={addressData?.fullAddress || "Gulistan-e-Jauhar, Camp"}
-          isLoading={isAddressLoading}
-        />
-      </Block>
+      <div
+        onClick={() => setOpen(true)}
+        className="sticky top-0 z-40 px-4 py-2 cursor-pointer"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top), 8px)",
+          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <AddressBarNavigation
+            title={addressData?.label || "Azam Campus"}
+            address={addressData?.fullAddress || "Gulistan-e-Jauhar, Camp"}
+            isLoading={isAddressLoading}
+          />
+          <div className="shrink-0 ml-3 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+            <IonIcon icon={notificationsOutline} className="text-white/80 text-lg" />
+          </div>
+        </div>
+      </div>
       <Sheet opened={open} onBackdropClick={() => setOpen(false)}>
         <Page
           className={`relative !rounded-3xl transition-all duration-300 ${

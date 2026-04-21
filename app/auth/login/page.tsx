@@ -63,12 +63,9 @@ export default function LoginPage() {
     if (Object.keys(errors).length === 0) {
       try {
         if (currentStep === "mobile") {
-          const res: any = await sendOtpMutation.mutateAsync({
-            mobileNumber: values.mobile,
-          });
-          const otp = res?.data?.otp || res?.otp;
+          await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
           notify({
-            title: "OTP Sent " + (otp || ""),
+            title: "OTP Sent",
             subtitle: "OTP sent to your mobile number!",
           });
           setCurrentStep("otp");

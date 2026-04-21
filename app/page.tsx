@@ -1,6 +1,4 @@
 "use client";
-import { IonIcon } from "@ionic/react";
-import { search } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Page, Navbar } from "konsta/react";
@@ -11,6 +9,8 @@ import MessagesPage from "./components/messages-page";
 import UserHome from "./components/user-home";
 import ProviderHome from "./components/provider-home";
 import AnalyticsContent from "./components/analytics-content";
+import ExploreContent from "./components/explore-content";
+import OrdersContent from "./components/orders-content";
 import { useAppContext } from "./context/AppContext";
 import GeoLocation from "./components/geo-location";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -28,8 +28,13 @@ export default function Home() {
     }
   }, [user, hasSkippedAuth, router]);
 
+  // When provider/customer mode changes, go to home tab
+  useEffect(() => {
+    setActiveTab("home");
+  }, [userMode]);
+
   const handleTabChange = (tab: string) => {
-    if (!user && (tab === "chats" || tab === "profile")) {
+    if (!user && (tab === "chats" || tab === "profile" || tab === "orders")) {
       router.push("/auth/login");
       return;
     }
@@ -40,6 +45,10 @@ export default function Home() {
     switch (activeTab) {
       case "home":
         return userMode === "customer" ? "Bohri Connect" : "Home";
+      case "explore":
+        return "Explore";
+      case "orders":
+        return "My Orders";
       case "chats":
         return "Messages";
       case "profile":
@@ -59,22 +68,34 @@ export default function Home() {
 
   return (
     <Page
+      className="!overflow-x-hidden"
       style={{
-        background: "radial-gradient(at 0% 10%, #ffd68f, #ef52ff3d)",
+        background:
+          activeTab === "home" && userMode === "customer"
+            ? "#FAFAFA"
+            : "#FAFAFA",
       }}
     >
+      {/* Modern header for non-home tabs */}
       {activeTab !== "home" && (
-        <Navbar
-          centerTitle={false}
-          large={activeTab !== "home"}
-          title={getPageTitle()}
-          className="mb-0!"
-        />
+        <div
+          className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100/60"
+          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        >
+          <div className="px-4 py-3">
+            <h1 className="text-xl font-bold text-slate-800">{getPageTitle()}</h1>
+          </div>
+        </div>
       )}
+
       {activeTab === "home" && userMode === "customer" && <GeoLocation />}
 
       {activeTab === "home" &&
         (userMode === "customer" ? <UserHome /> : <ProviderHome />)}
+
+      {activeTab === "explore" && <ExploreContent />}
+
+      {activeTab === "orders" && <OrdersContent />}
 
       {activeTab === "chats" && (
         <MessagesContent onChatClick={(name) => setActiveChat(name)} />
@@ -84,7 +105,8 @@ export default function Home() {
 
       {activeTab === "analytics" && <AnalyticsContent />}
 
-      <div className="h-20"></div>
+      {/* Spacer for floating bottom bar */}
+      <div className="h-24"></div>
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
     </Page>

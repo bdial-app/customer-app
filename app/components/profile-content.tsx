@@ -1,8 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Page,
-  Navbar,
   List,
   ListItem,
   ListInput,
@@ -31,7 +29,22 @@ import {
   timeOutline,
   alertCircleOutline,
   repeatOutline,
+  chevronForward,
+  shieldCheckmarkOutline,
+  documentTextOutline,
+  informationCircleOutline,
+  helpCircleOutline,
+  mailOutline,
+  logOutOutline,
+  trashOutline,
+  moonOutline,
+  notificationsOutline,
+  lockClosedOutline,
+  heartOutline,
+  shareOutline,
+  bugOutline,
 } from "ionicons/icons";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
 import { useRouter } from "next/navigation";
 import { Formik, Form } from "formik";
@@ -43,6 +56,7 @@ import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
+import { getMyProviderStatus } from "@/services/provider.service";
 
 interface UserProfile {
   mobileNumber: string;
@@ -68,8 +82,184 @@ const validationSchema = Yup.object().shape({
     .required("Required"),
 });
 
+const APP_VERSION = "1.0.0";
+
+// ─── Reusable Menu Row ──────────────────────────────────────────────
+const MenuRow = ({
+  icon,
+  iconColor = "text-slate-500",
+  iconBg = "bg-slate-100",
+  label,
+  sublabel,
+  trailing,
+  danger,
+  onClick,
+}: {
+  icon: string;
+  iconColor?: string;
+  iconBg?: string;
+  label: string;
+  sublabel?: string;
+  trailing?: React.ReactNode;
+  danger?: boolean;
+  onClick?: () => void;
+}) => (
+  <motion.div
+    whileTap={{ scale: 0.98, backgroundColor: "#f8fafc" }}
+    onClick={onClick}
+    className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 transition-colors"
+  >
+    <div
+      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
+    >
+      <IonIcon icon={icon} className={`text-lg ${iconColor}`} />
+    </div>
+    <div className="flex-1 min-w-0">
+      <span
+        className={`text-sm font-medium ${danger ? "text-red-500" : "text-slate-800"}`}
+      >
+        {label}
+      </span>
+      {sublabel && (
+        <p className="text-[11px] text-slate-400 mt-0.5">{sublabel}</p>
+      )}
+    </div>
+    {trailing ?? (
+      <IonIcon icon={chevronForward} className="text-slate-300 text-sm" />
+    )}
+  </motion.div>
+);
+
+// ─── Section Wrapper ────────────────────────────────────────────────
+const MenuSection = ({
+  title,
+  children,
+}: {
+  title?: string;
+  children: React.ReactNode;
+}) => (
+  <div className="mb-2">
+    {title && (
+      <div className="px-4 pt-4 pb-1">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          {title}
+        </span>
+      </div>
+    )}
+    <div className="mx-4 bg-white rounded-2xl overflow-hidden border border-slate-100 divide-y divide-slate-50">
+      {children}
+    </div>
+  </div>
+);
+
+// ─── Full-Screen Slide Page ─────────────────────────────────────────
+const SlidePage = ({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <AnimatePresence>
+    {open && (
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed inset-0 z-[100] bg-white overflow-y-auto"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div
+          className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100"
+          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        >
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={onClose}
+              className="text-blue-500 font-semibold text-sm active:opacity-50"
+            >
+              ← Back
+            </button>
+            <h2 className="text-base font-bold text-slate-800">{title}</h2>
+            <div className="w-12" />
+          </div>
+        </div>
+        <div className="px-5 py-5">{children}</div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+// ─── Delete Account Confirmation ────────────────────────────────────
+const DeleteAccountSheet = ({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+}) => (
+  <AnimatePresence>
+    {open && (
+      <>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] bg-black/40"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed bottom-0 left-0 right-0 z-[201] bg-white rounded-t-3xl"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
+        >
+          <div className="flex flex-col items-center px-6 pt-6 pb-4">
+            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
+              <IonIcon icon={trashOutline} className="text-3xl text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">
+              Delete Account?
+            </h3>
+            <p className="text-sm text-slate-500 text-center leading-relaxed mb-6">
+              This action is permanent and cannot be undone. All your data,
+              bookings, saved locations, and preferences will be permanently
+              deleted.
+            </p>
+            <button
+              onClick={onConfirm}
+              disabled={isDeleting}
+              className="w-full py-3.5 rounded-xl bg-red-500 text-white font-bold text-sm active:bg-red-600 disabled:opacity-50 transition-colors mb-3"
+            >
+              {isDeleting ? "Deleting..." : "Yes, Delete My Account"}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm active:bg-slate-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </motion.div>
+      </>
+    )}
+  </AnimatePresence>
+);
+
+// ─── Main Profile Content ───────────────────────────────────────────
 const ProfileContent = () => {
-  const { providerStatus, userMode, setProviderStatus, toggleMode } =
+  const { providerStatus, userMode, setProviderStatus, toggleMode, resetProviderState } =
     useAppContext();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user as any);
@@ -77,19 +267,36 @@ const ProfileContent = () => {
   const { notify } = useNotification();
   const [isEditing, setIsEditing] = useState(false);
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
+  const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Slide-page states
+  const [activePage, setActivePage] = useState<
+    "about" | "terms" | "privacy" | "help" | "editProfile" | null
+  >(null);
 
   const [profile, setProfile] = useState<any>(user || {});
-
-  console.log({ user });
 
   // Sync state if user changes externally
   if (user && user.id !== profile.id) {
     setProfile(user);
   }
 
-  const handleUpdate = () => {
-    setIsEditing(true);
-  };
+  // Fetch real provider status on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    getMyProviderStatus()
+      .then((result) => {
+        if (!cancelled) {
+          setProviderStatus(result.providerStatus as any);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, setProviderStatus]);
 
   const dispatch = useDispatch();
 
@@ -104,12 +311,11 @@ const ProfileContent = () => {
       });
       dispatch(setReduxProfile({ ...user, ...values }));
       setProfile({ ...user, ...values });
-
       notify({
         title: "Profile Updated",
         subtitle: "Your information was successfully updated.",
       });
-      setIsEditing(false);
+      setActivePage(null);
     } catch (err: any) {
       notify({
         title: "Update Failed",
@@ -118,36 +324,101 @@ const ProfileContent = () => {
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-  };
-
   const handleApply = () => {
     router.push("/provider-onboarding");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    dispatch(clearUser());
+    resetProviderState();
+    setLogoutActionSheetOpen(false);
+    router.push("/auth/login");
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      // TODO: Call actual delete account API when available
+      // await deleteMyAccount();
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      dispatch(clearUser());
+      resetProviderState();
+      setDeleteSheetOpen(false);
+      router.push("/auth/login");
+      notify({ title: "Account Deleted", subtitle: "Your account has been removed." });
+    } catch {
+      notify({ title: "Error", subtitle: "Failed to delete account. Please try again." });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSimulateApproval = () => {
     setProviderStatus("approved");
   };
 
+  // ─── Avatar + Header ──────────────────────────────────────────
+  const initials = profile.name
+    ? profile.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "BC";
+
   return (
     <>
-      {providerStatus === "approved" && (
-        <Block
-          strong
-          inset
-          outline
-          className="flex gap-4 justify-between items-center bg-white"
-        >
-          <div className="">
-            <div className="text-slate-900 font-semibold">Provider mode</div>
-            <div className="text-xs text-slate-500 font-medium">
-              {userMode === "provider"
-                ? "You are currently managing your business"
-                : "Switch to manage your listings and services"}
-            </div>
+      {/* Profile Header Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mx-4 mt-4 mb-3 bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-sm">
+            <span className="text-lg font-bold text-white">{initials}</span>
           </div>
-          <div className="min-w-16">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base font-bold text-slate-800 truncate">
+              {profile.name || "User"}
+            </h2>
+            <p className="text-xs text-slate-500 truncate">
+              {profile.mobileNumber || "No phone"}
+            </p>
+            {profile.city && (
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {profile.area ? `${profile.area}, ` : ""}
+                {profile.city}
+              </p>
+            )}
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setActivePage("editProfile")}
+            className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center"
+          >
+            <IonIcon icon={createOutline} className="text-amber-600 text-lg" />
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* Provider Status Cards */}
+      {providerStatus === "approved" && (
+        <div className="mx-4 mb-3">
+          <div className="bg-white rounded-2xl p-4 border border-slate-100 flex gap-4 justify-between items-center">
+            <div>
+              <div className="text-sm font-bold text-slate-800">Provider Mode</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                {userMode === "provider"
+                  ? "Managing your business"
+                  : "Switch to manage listings"}
+              </div>
+            </div>
             <Toggle
               component="label"
               checked={userMode === "provider"}
@@ -155,94 +426,213 @@ const ProfileContent = () => {
               className="konsta-color-primary"
             />
           </div>
-        </Block>
+        </div>
       )}
 
       {providerStatus === "not_applied" && (
-        <Block
-          strong
-          inset
-          outline
-          className="bg-linear-to-br from-slate-200 to-purple-200 border-0 flex gap-4 p-0!"
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-4 mb-3"
         >
-          <img src="/" className="w-32" />
-          <div className="w-52 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div>
-                <div className="font-bold text-lg">Become a Provider</div>
-                <div className="text-xs">
-                  Start offering your services on Bohri Connect
-                </div>
-              </div>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
+            <div className="relative z-10">
+              <h3 className="text-white font-bold text-sm">Become a Provider</h3>
+              <p className="text-white/70 text-xs mt-0.5 mb-3">
+                Start offering your services on Bohri Connect
+              </p>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleApply}
+                className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-bold border border-white/30"
+              >
+                Apply Now →
+              </motion.button>
             </div>
-            <Button small rounded className="w-fit px-4" onClick={handleApply}>
-              Apply Now
-            </Button>
+            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
+            <div className="absolute -right-2 -bottom-6 w-20 h-20 rounded-full bg-white/5" />
           </div>
-        </Block>
+        </motion.div>
       )}
 
       {providerStatus === "pending" && (
-        <Block strong inset outline className="bg-amber-50 border-amber-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-              <IonIcon icon={timeOutline} className="text-2xl" />
-            </div>
-            <div>
-              <div className="font-bold text-amber-900">
-                Verification Pending
+        <div className="mx-4 mb-3">
+          <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 rounded-xl">
+                <IonIcon icon={timeOutline} className="text-xl text-amber-600" />
               </div>
-              <div className="text-amber-700 text-xs text-pretty">
-                Your application is currently being reviewed by our team. This
-                usually takes 24-48 hours.
+              <div className="flex-1">
+                <div className="font-bold text-sm text-amber-900">Verification Pending</div>
+                <div className="text-amber-700 text-xs mt-0.5">
+                  Under review. Usually takes 24-48 hours.
+                </div>
               </div>
             </div>
           </div>
-          <Button
-            clear
-            small
-            className="text-amber-600 font-semibold"
-            onClick={handleSimulateApproval}
-          >
-            (Simulation) Fast Track Approval
-          </Button>
-        </Block>
+        </div>
       )}
 
       {providerStatus === "rejected" && (
-        <Block strong inset outline className="bg-red-50 border-red-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-red-100 rounded-lg text-red-600">
-              <IonIcon icon={alertCircleOutline} className="text-2xl" />
-            </div>
-            <div>
-              <div className="font-bold text-red-900">Application Rejected</div>
-              <div className="text-red-700 text-xs">
-                Please review your documents and try again.
+        <div className="mx-4 mb-3">
+          <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-red-100 rounded-xl">
+                <IonIcon icon={alertCircleOutline} className="text-xl text-red-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-sm text-red-900">Application Rejected</div>
+                <div className="text-red-700 text-xs mt-0.5">
+                  Please review your documents and try again.
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setProviderStatus("not_applied")}
+                  className="mt-2 text-xs font-bold text-red-600 underline"
+                >
+                  Retry Application
+                </motion.button>
               </div>
             </div>
           </div>
-          <Button
-            outline
-            rounded
-            className="text-red-600 border-red-600 font-bold"
-            onClick={() => setProviderStatus("not_applied")}
-          >
-            Retry Application
-          </Button>
-        </Block>
+        </div>
       )}
 
-      <BlockTitle className="flex items-center justify-between">
-        <span>Personal Information</span>
-        {!isEditing && (
-          <Button clear small inline rounded onClick={handleUpdate}>
-            Update Information
-          </Button>
-        )}
-      </BlockTitle>
+      {/* ── Account Section ──────────────────────────────────── */}
+      <MenuSection title="Account">
+        <MenuRow
+          icon={personOutline}
+          iconColor="text-blue-500"
+          iconBg="bg-blue-50"
+          label="Edit Profile"
+          sublabel="Name, gender, location"
+          onClick={() => setActivePage("editProfile")}
+        />
+        <MenuRow
+          icon={locationOutline}
+          iconColor="text-green-500"
+          iconBg="bg-green-50"
+          label="Saved Addresses"
+          sublabel="Home, office, and more"
+          onClick={() => router.push("/add-location")}
+        />
+        <MenuRow
+          icon={heartOutline}
+          iconColor="text-pink-500"
+          iconBg="bg-pink-50"
+          label="Saved Providers"
+          sublabel="Your favourites"
+        />
+      </MenuSection>
 
-      {isEditing ? (
+      {/* ── Preferences Section ──────────────────────────────── */}
+      <MenuSection title="Preferences">
+        <MenuRow
+          icon={notificationsOutline}
+          iconColor="text-amber-500"
+          iconBg="bg-amber-50"
+          label="Notifications"
+          sublabel="Push & in-app alerts"
+          trailing={
+            <Toggle
+              component="label"
+              checked={true}
+              onChange={() => {}}
+              className="konsta-color-primary"
+            />
+          }
+        />
+      </MenuSection>
+
+      {/* ── Support Section ──────────────────────────────────── */}
+      <MenuSection title="Support">
+        <MenuRow
+          icon={helpCircleOutline}
+          iconColor="text-indigo-500"
+          iconBg="bg-indigo-50"
+          label="Help & FAQ"
+          onClick={() => setActivePage("help")}
+        />
+        <MenuRow
+          icon={mailOutline}
+          iconColor="text-cyan-500"
+          iconBg="bg-cyan-50"
+          label="Contact Us"
+          sublabel="support@bohriconnect.com"
+        />
+        <MenuRow
+          icon={bugOutline}
+          iconColor="text-orange-500"
+          iconBg="bg-orange-50"
+          label="Report a Bug"
+        />
+      </MenuSection>
+
+      {/* ── Legal Section ────────────────────────────────────── */}
+      <MenuSection title="Legal">
+        <MenuRow
+          icon={informationCircleOutline}
+          iconColor="text-blue-500"
+          iconBg="bg-blue-50"
+          label="About Us"
+          onClick={() => setActivePage("about")}
+        />
+        <MenuRow
+          icon={documentTextOutline}
+          iconColor="text-slate-500"
+          iconBg="bg-slate-100"
+          label="Terms & Conditions"
+          onClick={() => setActivePage("terms")}
+        />
+        <MenuRow
+          icon={shieldCheckmarkOutline}
+          iconColor="text-green-500"
+          iconBg="bg-green-50"
+          label="Privacy Policy"
+          onClick={() => setActivePage("privacy")}
+        />
+      </MenuSection>
+
+      {/* ── Danger Zone ──────────────────────────────────────── */}
+      <MenuSection title="">
+        <MenuRow
+          icon={logOutOutline}
+          iconColor="text-orange-500"
+          iconBg="bg-orange-50"
+          label="Log Out"
+          onClick={() => setLogoutActionSheetOpen(true)}
+          trailing={null}
+        />
+        <MenuRow
+          icon={trashOutline}
+          iconColor="text-red-500"
+          iconBg="bg-red-50"
+          label="Delete Account"
+          sublabel="Permanently remove your data"
+          danger
+          onClick={() => setDeleteSheetOpen(true)}
+          trailing={null}
+        />
+      </MenuSection>
+
+      {/* App Version */}
+      <div className="text-center py-6">
+        <p className="text-[11px] text-slate-300 font-medium">
+          Bohri Connect v{APP_VERSION}
+        </p>
+        <p className="text-[10px] text-slate-300 mt-0.5">
+          Made with ♥ in India
+        </p>
+      </div>
+
+      {/* ── Slide Pages ──────────────────────────────────────── */}
+
+      {/* Edit Profile Page */}
+      <SlidePage
+        open={activePage === "editProfile"}
+        onClose={() => setActivePage(null)}
+        title="Edit Profile"
+      >
         <Formik
           enableReinitialize={true}
           initialValues={{
@@ -298,116 +688,323 @@ const ProfileContent = () => {
                   formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
                 />
               </List>
-
-              <Block className="grid grid-cols-2 gap-4">
-                <Button
-                  outline
-                  rounded
-                  large
-                  onClick={handleCancel}
-                  className="font-bold border-2"
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <button
                   type="button"
+                  onClick={() => setActivePage(null)}
+                  className="py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm active:bg-slate-200"
                 >
                   Cancel
-                </Button>
-                <Button
-                  rounded
-                  large
+                </button>
+                <button
                   type="submit"
-                  className="font-bold"
                   disabled={!isValid || !dirty || updateUserMutation.isPending}
+                  className="py-3 rounded-xl bg-amber-500 text-white font-bold text-sm active:bg-amber-600 disabled:opacity-50"
                 >
-                  {updateUserMutation.isPending ? (
-                    <Preloader className="w-5 h-5" />
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
-              </Block>
+                  {updateUserMutation.isPending ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
             </Form>
           )}
         </Formik>
-      ) : (
-        <List strongIos insetIos>
-          <ListItem
-            title="Name"
-            titleWrapClassName="text-sm"
-            after={<span className="text-slate-800">{profile.name}</span>}
-            media={<IonIcon icon={personOutline} className="text-slate-400" />}
-          />
-          <ListItem
-            titleWrapClassName="text-sm"
-            title="Mobile"
-            after={
-              <span className="text-slate-800">{profile.mobileNumber}</span>
-            }
-            media={<IonIcon icon={callOutline} className="text-slate-400" />}
-          />
-          <ListItem
-            title="Gender"
-            titleWrapClassName="text-sm"
-            after={
-              <span className="text-slate-800 capitalize">
-                {profile.gender}
-              </span>
-            }
-            media={<IonIcon icon={maleOutline} className="text-slate-400" />}
-          />
-          <ListItem
-            title="City"
-            titleWrapClassName="text-sm"
-            after={<span className="text-slate-800">{profile.city}</span>}
-            media={
-              <IonIcon icon={businessOutline} className="text-slate-400" />
-            }
-          />
-          <ListItem
-            title="Area"
-            titleWrapClassName="text-sm"
-            after={<span className="text-slate-800">{profile.area}</span>}
-            media={
-              <IonIcon icon={locationOutline} className="text-slate-400" />
-            }
-          />
-          <ListItem
-            title="Pincode"
-            titleWrapClassName="text-sm"
-            after={<span className="text-slate-800">{profile.pincode}</span>}
-            media={<IonIcon icon={mapOutline} className="text-slate-400" />}
-          />
-        </List>
-      )}
+      </SlidePage>
 
-      {!isEditing && (
-        <Block>
-          <Button
-            outline
-            rounded
-            large
-            onClick={() => setLogoutActionSheetOpen(true)}
-            className="font-bold text-red-500 border-red-500/20 bg-red-50/50 pt-2 pb-2"
-          >
-            Logout
-          </Button>
-        </Block>
-      )}
+      {/* About Us Page */}
+      <SlidePage
+        open={activePage === "about"}
+        onClose={() => setActivePage(null)}
+        title="About Us"
+      >
+        <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <span className="text-2xl font-bold text-white">BC</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">Bohri Connect</h3>
+            <p className="text-xs text-slate-400">Version {APP_VERSION}</p>
+          </div>
+          <p>
+            Bohri Connect is a community-driven marketplace that connects
+            customers with trusted local service providers. Our mission is to
+            empower small businesses and make quality services accessible to
+            everyone.
+          </p>
+          <p>
+            Founded with the vision of strengthening community bonds, we provide
+            a platform where skilled professionals can showcase their talents
+            and customers can find reliable services — from tailoring and beauty
+            to home repairs and catering.
+          </p>
+          <h4 className="font-bold text-slate-800 pt-2">Our Values</h4>
+          <ul className="space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-amber-500 mt-0.5">●</span>
+              <span><strong>Trust:</strong> Every provider is verified to ensure quality and safety.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-amber-500 mt-0.5">●</span>
+              <span><strong>Community:</strong> Built by the community, for the community.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-amber-500 mt-0.5">●</span>
+              <span><strong>Empowerment:</strong> Supporting women-led businesses and local entrepreneurs.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-amber-500 mt-0.5">●</span>
+              <span><strong>Transparency:</strong> Clear pricing and honest reviews.</span>
+            </li>
+          </ul>
+          <h4 className="font-bold text-slate-800 pt-2">Contact</h4>
+          <p>
+            Email: support@bohriconnect.com<br />
+            Website: www.bohriconnect.com
+          </p>
+          <p className="text-xs text-slate-400 pt-4 text-center">
+            © {new Date().getFullYear()} Bohri Connect. All rights reserved.
+          </p>
+        </div>
+      </SlidePage>
 
+      {/* Terms & Conditions Page */}
+      <SlidePage
+        open={activePage === "terms"}
+        onClose={() => setActivePage(null)}
+        title="Terms & Conditions"
+      >
+        <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs text-slate-400">
+            Last updated: {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+
+          <h4 className="font-bold text-slate-800">1. Acceptance of Terms</h4>
+          <p>
+            By accessing or using the Bohri Connect application ("App"), you
+            agree to be bound by these Terms and Conditions. If you do not agree,
+            please do not use the App.
+          </p>
+
+          <h4 className="font-bold text-slate-800">2. Description of Service</h4>
+          <p>
+            Bohri Connect is a marketplace platform connecting customers with
+            local service providers. We facilitate the connection but do not
+            directly provide any services listed on the platform.
+          </p>
+
+          <h4 className="font-bold text-slate-800">3. User Accounts</h4>
+          <p>
+            You must provide accurate information when creating an account. You
+            are responsible for maintaining the security of your account
+            credentials. You must be at least 18 years old to use the App.
+          </p>
+
+          <h4 className="font-bold text-slate-800">4. User Conduct</h4>
+          <p>You agree not to:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Use the App for any unlawful purpose</li>
+            <li>Harass, abuse, or harm other users or providers</li>
+            <li>Post false or misleading information</li>
+            <li>Attempt to gain unauthorized access to the App</li>
+            <li>Use automated means to access the App without our permission</li>
+          </ul>
+
+          <h4 className="font-bold text-slate-800">5. Service Providers</h4>
+          <p>
+            Service providers are independent contractors. Bohri Connect does
+            not guarantee the quality, safety, or legality of services offered.
+            Users engage with providers at their own discretion.
+          </p>
+
+          <h4 className="font-bold text-slate-800">6. Reviews & Ratings</h4>
+          <p>
+            Reviews must be honest and based on genuine experiences. We reserve
+            the right to remove reviews that violate our guidelines.
+          </p>
+
+          <h4 className="font-bold text-slate-800">7. Intellectual Property</h4>
+          <p>
+            All content, trademarks, and intellectual property on the App belong
+            to Bohri Connect or its licensors. You may not reproduce, distribute,
+            or create derivative works without our permission.
+          </p>
+
+          <h4 className="font-bold text-slate-800">8. Limitation of Liability</h4>
+          <p>
+            Bohri Connect is provided "as is" without warranties of any kind.
+            We are not liable for any damages arising from your use of the App
+            or any services obtained through the platform.
+          </p>
+
+          <h4 className="font-bold text-slate-800">9. Account Termination</h4>
+          <p>
+            We may suspend or terminate your account if you violate these terms.
+            You may delete your account at any time through the App settings.
+          </p>
+
+          <h4 className="font-bold text-slate-800">10. Changes to Terms</h4>
+          <p>
+            We may update these terms at any time. Continued use of the App
+            after changes constitutes acceptance of the new terms.
+          </p>
+
+          <h4 className="font-bold text-slate-800">11. Governing Law</h4>
+          <p>
+            These terms are governed by the laws of India. Any disputes shall be
+            resolved in the courts of Pune, Maharashtra.
+          </p>
+
+          <h4 className="font-bold text-slate-800">12. Contact</h4>
+          <p>
+            For questions about these terms, contact us at
+            legal@bohriconnect.com.
+          </p>
+        </div>
+      </SlidePage>
+
+      {/* Privacy Policy Page */}
+      <SlidePage
+        open={activePage === "privacy"}
+        onClose={() => setActivePage(null)}
+        title="Privacy Policy"
+      >
+        <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs text-slate-400">
+            Last updated: {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+
+          <h4 className="font-bold text-slate-800">1. Information We Collect</h4>
+          <p>We collect the following types of information:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Personal Information:</strong> Name, phone number, gender, city, area, and pincode</li>
+            <li><strong>Location Data:</strong> Your device location to show nearby service providers</li>
+            <li><strong>Usage Data:</strong> App interactions, search queries, and browsing patterns</li>
+            <li><strong>Device Information:</strong> Device type, OS version, and app version</li>
+          </ul>
+
+          <h4 className="font-bold text-slate-800">2. How We Use Your Information</h4>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>To provide and improve our services</li>
+            <li>To show relevant service providers near your location</li>
+            <li>To send notifications about bookings and updates</li>
+            <li>To ensure platform safety and prevent fraud</li>
+            <li>To analyze usage patterns and improve user experience</li>
+          </ul>
+
+          <h4 className="font-bold text-slate-800">3. Data Sharing</h4>
+          <p>
+            We do not sell your personal data to third parties. We may share
+            your information with:
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Service providers you choose to engage with (name, location)</li>
+            <li>Analytics services to improve our platform</li>
+            <li>Legal authorities if required by law</li>
+          </ul>
+
+          <h4 className="font-bold text-slate-800">4. Data Storage & Security</h4>
+          <p>
+            Your data is stored securely using industry-standard encryption. We
+            implement appropriate technical and organizational measures to
+            protect your information.
+          </p>
+
+          <h4 className="font-bold text-slate-800">5. Your Rights</h4>
+          <p>You have the right to:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Access and download your personal data</li>
+            <li>Correct inaccurate information</li>
+            <li>Delete your account and associated data</li>
+            <li>Opt out of marketing communications</li>
+            <li>Withdraw consent for location tracking</li>
+          </ul>
+
+          <h4 className="font-bold text-slate-800">6. Cookies & Tracking</h4>
+          <p>
+            We use local storage and session data to maintain your preferences.
+            We do not use third-party tracking cookies.
+          </p>
+
+          <h4 className="font-bold text-slate-800">7. Children's Privacy</h4>
+          <p>
+            Our App is not intended for children under 18. We do not knowingly
+            collect information from children.
+          </p>
+
+          <h4 className="font-bold text-slate-800">8. Data Retention</h4>
+          <p>
+            We retain your data for as long as your account is active. Upon
+            account deletion, your data is permanently removed within 30 days.
+          </p>
+
+          <h4 className="font-bold text-slate-800">9. Changes to This Policy</h4>
+          <p>
+            We may update this policy periodically. We will notify you of
+            significant changes through the App.
+          </p>
+
+          <h4 className="font-bold text-slate-800">10. Contact Us</h4>
+          <p>
+            For privacy-related inquiries:<br />
+            Email: privacy@bohriconnect.com<br />
+            Address: Pune, Maharashtra, India
+          </p>
+        </div>
+      </SlidePage>
+
+      {/* Help & FAQ Page */}
+      <SlidePage
+        open={activePage === "help"}
+        onClose={() => setActivePage(null)}
+        title="Help & FAQ"
+      >
+        <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <FAQItem
+            q="How do I book a service?"
+            a="Browse categories or search for a service, tap on a provider to view their profile, and contact them directly through the app."
+          />
+          <FAQItem
+            q="How do I become a service provider?"
+            a="Go to your Profile → 'Become a Provider' and fill out the application form. Our team will review it within 24-48 hours."
+          />
+          <FAQItem
+            q="Is my personal information safe?"
+            a="Yes. We use industry-standard encryption and never sell your data to third parties. Read our Privacy Policy for more details."
+          />
+          <FAQItem
+            q="How do I change my location?"
+            a="Tap the location bar at the top of the home screen to search for a new area or use your current GPS location."
+          />
+          <FAQItem
+            q="Can I delete my account?"
+            a="Yes. Go to Profile → Delete Account. This action is permanent and all your data will be removed."
+          />
+          <FAQItem
+            q="How do reviews work?"
+            a="After using a service, you can leave a rating and review. All reviews are verified and must follow our community guidelines."
+          />
+          <FAQItem
+            q="I'm having trouble with the app. What should I do?"
+            a="Try force-closing and reopening the app. If the issue persists, contact us at support@bohriconnect.com."
+          />
+          <div className="pt-4 text-center">
+            <p className="text-xs text-slate-400">
+              Still need help? Reach us at
+            </p>
+            <p className="text-sm font-semibold text-blue-500 mt-1">
+              support@bohriconnect.com
+            </p>
+          </div>
+        </div>
+      </SlidePage>
+
+      {/* ── Action Sheets ────────────────────────────────────── */}
       <Actions
         opened={logoutActionSheetOpen}
         onBackdropClick={() => setLogoutActionSheetOpen(false)}
       >
         <ActionsGroup>
-          <ActionsLabel>
-            Are you sure you want to log out?
-          </ActionsLabel>
+          <ActionsLabel>Are you sure you want to log out?</ActionsLabel>
           <ActionsButton
-            onClick={() => {
-              localStorage.removeItem("user");
-              localStorage.removeItem("token");
-              dispatch(clearUser());
-              setLogoutActionSheetOpen(false);
-              router.push("/auth/login");
-            }}
+            onClick={handleLogout}
             className="text-red-500 font-semibold"
           >
             Log Out
@@ -419,7 +1016,49 @@ const ProfileContent = () => {
           </ActionsButton>
         </ActionsGroup>
       </Actions>
+
+      <DeleteAccountSheet
+        open={deleteSheetOpen}
+        onClose={() => setDeleteSheetOpen(false)}
+        onConfirm={handleDeleteAccount}
+        isDeleting={isDeleting}
+      />
     </>
+  );
+};
+
+// ─── FAQ Accordion Item ─────────────────────────────────────────────
+const FAQItem = ({ q, a }: { q: string; a: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-slate-100 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-slate-50"
+      >
+        <span className="text-sm font-semibold text-slate-800 pr-2">{q}</span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="text-slate-400 shrink-0"
+        >
+          ▾
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <p className="px-4 pb-3 text-sm text-slate-500">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
