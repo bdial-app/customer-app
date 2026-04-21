@@ -495,7 +495,7 @@ export default function ProviderDetailsPage() {
                 )}
                 {review.photos && review.photos.length > 0 && (
                   <div className="flex gap-1.5 mb-3">
-                    {review.photos.slice(0, 3).map((p) => (
+                    {review.photos.slice(0, 3).map((p: any) => (
                       <img key={p.id} src={p.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover" />
                     ))}
                   </div>
