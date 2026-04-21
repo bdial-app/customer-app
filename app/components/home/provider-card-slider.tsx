@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { star, location } from "ionicons/icons";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,7 @@ const container = {
   show: { transition: { staggerChildren: 0.06 } },
 };
 
-const cardVariant = {
+const cardVariant: Variants = {
   hidden: { opacity: 0, x: 30 },
   show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 20 } },
 };
