@@ -11,6 +11,7 @@ import {
 interface NotificationOptions {
   title: string;
   subtitle: string | string[];
+  duration?: number;
 }
 
 interface NotificationContextValue {
@@ -46,7 +47,7 @@ export const NotificationProvider = ({
       : opts.subtitle;
     setOptions({ title: opts.title, subtitle: resolvedSubtitle });
     setOpen(true);
-    timerRef.current = setTimeout(() => setOpen(false), AUTO_DISMISS_MS);
+    timerRef.current = setTimeout(() => setOpen(false), opts.duration ?? AUTO_DISMISS_MS);
   }, []);
 
   // Cleanup on unmount

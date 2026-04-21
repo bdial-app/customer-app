@@ -7,14 +7,14 @@ import {
   Preloader,
   Navbar,
 } from "konsta/react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ROUTE_PATH } from "@/utils/contants";
 import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
 import { useCreateAccount } from "@/hooks/useCreateAccount";
-import { useAppDispatch } from "@/hooks/useAppStore";
-import { setSkippedAuth } from "@/store/slices/authSlice";
 import { IonIcon } from "@ionic/react";
 import {
   phonePortraitOutline,
@@ -206,11 +206,15 @@ const LocationFields = () => {
 };
 
 // ─── Main Page ──────────────────────────────────────────────────
-export default function CreateAccountPage() {
-  const dispatch = useAppDispatch();
+function CreateAccountContent() {
+  const searchParams = useSearchParams();
+  const initialMobile = searchParams.get("mobile") ?? undefined;
   const {
     currentStep,
     isLoading,
+    isSendingOtp,
+    isVerifying,
+    isSubmitting,
     resendCooldown,
     location,
     requestLocation,
@@ -219,7 +223,7 @@ export default function CreateAccountPage() {
     handleNext,
     handleResendOtp,
     handleSubmit,
-  } = useCreateAccount();
+  } = useCreateAccount(initialMobile);
 
   const stepInfo = {
     mobile: {
@@ -238,18 +242,7 @@ export default function CreateAccountPage() {
 
   return (
     <Page className="bg-white">
-      <Navbar
-        title="Create Account"
-        right={
-          <Link
-            href={ROUTE_PATH.HOME}
-            onClick={() => dispatch(setSkippedAuth(true))}
-            className="text-sm text-slate-500 font-medium pr-4"
-          >
-            Skip
-          </Link>
-        }
-      />
+      <Navbar title="Create Account" />
 
       {/* Header */}
       <div className="px-6 pt-2 pb-1">
@@ -300,10 +293,10 @@ export default function CreateAccountPage() {
                     onClick={() =>
                       handleNext(validateForm, setTouched, values)
                     }
-                    disabled={!isValid || !dirty || isLoading}
+                    disabled={!isValid || !dirty || isSendingOtp}
                     type="button"
                   >
-                    {isLoading ? (
+                    {isSendingOtp ? (
                       <Preloader className="w-5 h-5" />
                     ) : (
                       "Send OTP"
@@ -345,9 +338,9 @@ export default function CreateAccountPage() {
                     onClick={() =>
                       handleResendOtp(values.mobile, setFieldValue)
                     }
-                    disabled={resendCooldown > 0 || isLoading}
+                    disabled={resendCooldown > 0 || isSendingOtp}
                     className={`text-xs font-semibold transition-colors ${
-                      resendCooldown > 0 || isLoading
+                      resendCooldown > 0 || isSendingOtp
                         ? "text-slate-400"
                         : "text-amber-600 active:text-amber-800"
                     }`}
@@ -367,21 +360,21 @@ export default function CreateAccountPage() {
                       onClick={() => handleBack(setFieldValue)}
                       className="flex-1"
                       type="button"
-                      disabled={isLoading}
+                      disabled={isVerifying}
                     >
                       Back
                     </Button>
                     <Button
                       large
                       rounded
-                      disabled={!isValid || !dirty || isLoading}
+                      disabled={!isValid || !dirty || isVerifying}
                       className="flex-1"
                       onClick={() =>
                         handleNext(validateForm, setTouched, values)
                       }
                       type="button"
                     >
-                      {isLoading ? (
+                      {isVerifying ? (
                         <Preloader className="w-5 h-5" />
                       ) : (
                         "Verify"
@@ -483,18 +476,18 @@ export default function CreateAccountPage() {
                       onClick={() => handleBack(setFieldValue)}
                       className="flex-1"
                       type="button"
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     >
                       Back
                     </Button>
                     <Button
                       large
                       rounded
-                      disabled={!isValid || !dirty || isLoading || !location}
+                      disabled={!isValid || !dirty || isSubmitting || !location}
                       className="flex-1"
                       type="submit"
                     >
-                      {isLoading ? (
+                      {isSubmitting ? (
                         <Preloader className="w-5 h-5" />
                       ) : (
                         "Create Account"
@@ -521,5 +514,13 @@ export default function CreateAccountPage() {
         )}
       </Formik>
     </Page>
+  );
+}
+
+export default function CreateAccountPage() {
+  return (
+    <Suspense>
+      <CreateAccountContent />
+    </Suspense>
   );
 }

@@ -73,3 +73,11 @@ export const googleSignIn = async (
   const { data } = await apiClient.post(AUTH_URLS.GOOGLE_SIGNIN, payload);
   return data;
 };
+
+// Send OTP for registration (bypasses user-existence check)
+export const sendRegistrationOtp = async (
+  payload: SendOtpPayload,
+): Promise<any> => {
+  const { data } = await apiClient.post(AUTH_URLS.REGISTER_SEND_OTP, payload);
+  return data;
+};

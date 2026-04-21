@@ -3,6 +3,7 @@ export const AUTH_URLS = {
   VERIFY_OTP: "/auth/verify-otp",
   REGISTER: "/users/me",
   GOOGLE_SIGNIN: "/auth/google/signin",
+  REGISTER_SEND_OTP: "/auth/register/send-otp",
 };
 
 export const USER_URLS = {

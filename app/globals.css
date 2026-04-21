@@ -3,6 +3,11 @@
 /* import Konsta UI theme */
 @import 'konsta/react/theme.css';
 
+/* Open Sans as global font */
+body, html, * {
+  font-family: var(--font-open-sans), 'Open Sans', sans-serif;
+}
+
 /* 
 .bg-md-light-surface-variant {
   background-color: transparent;

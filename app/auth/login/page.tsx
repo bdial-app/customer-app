@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import { Formik, Form, useField } from "formik";
@@ -7,435 +7,386 @@ import * as Yup from "yup";
 import { useSendOtp, useVerifyOtp, useGoogleSignIn } from "@/hooks/useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
 import { useRouter } from "next/navigation";
-import { useAppDispatch } from "@/hooks/useAppStore";
-import { setSkippedAuth } from "@/store/slices/authSlice";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
 
 type LoginStep = "mobile" | "otp";
 
-const validationSchemas = {
+const schemas = {
   mobile: Yup.object({
     mobile: Yup.string()
-      .matches(/^\d{10}$/, "Please enter valid 10 digit mobile number")
+      .matches(/^\d{10}$/, "Enter valid 10 digit number")
       .required("Required"),
   }),
   otp: Yup.object({
     otp: Yup.string()
-      .matches(/^\d{6}$/, "Please enter 6 digit OTP")
+      .matches(/^\d{6}$/, "Enter 6 digit OTP")
       .required("Required"),
   }),
 };
 
-function StyledInput({
+/* ── Tiny spinner ────────────────────────────────────────── */
+function Spinner() {
+  return (
+    <svg className="animate-spin h-5 w-5 text-current" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
+/* ── Inline input ────────────────────────────────────────── */
+function PhoneInput({
   name,
-  label,
   placeholder,
   prefix,
-  formatValue,
+  format,
+  autoFocus,
 }: {
   name: string;
-  label: string;
   placeholder: string;
   prefix?: string;
-  formatValue?: (val: string) => string;
+  format?: (v: string) => string;
+  autoFocus?: boolean;
 }) {
   const [field, meta, helpers] = useField(name);
-  const showError = meta.touched && meta.error;
-
+  const err = meta.touched && meta.error;
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
+    <div>
       <div
-        className={`flex items-center rounded-xl border-2 bg-white/80 backdrop-blur-sm transition-all duration-200 ${
-          showError
-            ? "border-red-400 ring-2 ring-red-100"
-            : "border-slate-200 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-100"
+        className={`flex items-center h-14 rounded-2xl bg-white border transition-colors ${
+          err ? "border-red-300" : "border-gray-200 focus-within:border-gray-400"
         }`}
       >
         {prefix && (
-          <span className="pl-4 pr-2 text-sm font-semibold text-slate-500 select-none">
+          <span className="pl-4 text-[15px] font-medium text-gray-400 select-none">
             {prefix}
           </span>
         )}
         <input
+          autoFocus={autoFocus}
           type="tel"
           inputMode="numeric"
           placeholder={placeholder}
           value={field.value}
           onBlur={field.onBlur}
           name={field.name}
-          onChange={(e) => {
-            const val = e.target.value;
-            helpers.setValue(formatValue ? formatValue(val) : val);
-          }}
-          className="flex-1 bg-transparent px-4 py-3.5 text-base text-slate-800 outline-none placeholder:text-slate-400"
+          onChange={(e) =>
+            helpers.setValue(format ? format(e.target.value) : e.target.value)
+          }
+          className="flex-1 h-full bg-transparent px-3 text-[16px] text-gray-900 outline-none placeholder:text-gray-300"
         />
       </div>
-      {showError && (
-        <p className="text-xs text-red-500 pl-1">{meta.error}</p>
-      )}
+      {err && <p className="text-[11px] text-red-400 mt-1 ml-1">{meta.error}</p>}
     </div>
   );
 }
 
+/* ── Core login content (lives inside GoogleOAuthProvider) ── */
 function LoginContent() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const { notify } = useNotification();
-  const [currentStep, setCurrentStep] = useState<LoginStep>("mobile");
+  const [step, setStep] = useState<LoginStep>("mobile");
 
-  const sendOtpMutation = useSendOtp();
-  const verifyOtpMutation = useVerifyOtp();
-  const googleSignInMutation = useGoogleSignIn();
+  const sendOtp = useSendOtp();
+  const verifyOtp = useVerifyOtp();
+  const googleMutation = useGoogleSignIn();
 
-  const isLoading =
-    sendOtpMutation.isPending ||
-    verifyOtpMutation.isPending ||
-    googleSignInMutation.isPending;
+  const busy = sendOtp.isPending || verifyOtp.isPending || googleMutation.isPending;
 
-  const handleBack = (setFieldValue: (f: string, v: string) => void) => {
-    setCurrentStep("mobile");
-    setFieldValue("otp", "");
-  };
+  const isApple = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    return /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+  }, []);
 
-  const handleNext = async (
+  /* ── OTP flow ── */
+  const handleSubmit = async (
     validateForm: () => Promise<Record<string, string>>,
     setTouched: (t: Record<string, boolean>) => void,
     values: { mobile: string; otp: string },
   ) => {
     const errors = await validateForm();
-    if (Object.keys(errors).length === 0) {
-      try {
-        if (currentStep === "mobile") {
-          await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
-          notify({
-            title: "OTP Sent",
-            subtitle: "OTP sent to your mobile number!",
-          });
-          setCurrentStep("otp");
-        } else if (currentStep === "otp") {
-          const res = await verifyOtpMutation.mutateAsync({
-            mobileNumber: values.mobile,
-            otp: values.otp,
-          });
-
-          if (res.user && res.user.name) {
-            router.push(ROUTE_PATH.HOME);
-            notify({
-              title: "Welcome Back",
-              subtitle: `Logged in as ${res.user.name}`,
-            });
-          } else {
-            router.push(ROUTE_PATH.CREATE_ACCOUNT);
-            notify({
-              title: "Profile Incomplete",
-              subtitle: "Please complete your profile details.",
-            });
-          }
-        }
-      } catch (err: any) {
-        notify({
-          title: "Error",
-          subtitle:
-            err?.response?.data?.message ??
-            "Something went wrong. Please retry.",
-        });
-      }
-    } else {
-      const touchedFields = Object.keys(errors).reduce(
-        (acc, current) => {
-          acc[current] = true;
-          return acc;
-        },
-        {} as Record<string, boolean>,
-      );
-      setTouched(touchedFields);
+    if (Object.keys(errors).length) {
+      setTouched(Object.fromEntries(Object.keys(errors).map((k) => [k, true])));
+      return;
     }
-  };
-
-  const handleGoogleSuccess = async (tokenResponse: { access_token: string }) => {
     try {
-      const userInfoRes = await fetch(
-        "https://www.googleapis.com/oauth2/v3/userinfo",
-        { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } },
-      );
-      const userInfo = await userInfoRes.json();
+      if (step === "mobile") {
+        const res = await sendOtp.mutateAsync({ mobileNumber: values.mobile });
 
-      const res = await googleSignInMutation.mutateAsync({
-        email: userInfo.email,
-        name: userInfo.name,
-        googleId: userInfo.sub,
-      });
+        // New user — skip OTP, go straight to registration with mobile pre-filled
+        if (res?.userExists === false) {
+          router.push(`${ROUTE_PATH.CREATE_ACCOUNT}?mobile=${values.mobile}`);
+          return;
+        }
 
-      if (res.user && res.user.name) {
-        router.push(ROUTE_PATH.HOME);
+        const otp: string | undefined = res?.data?.otp;
         notify({
-          title: "Welcome",
-          subtitle: `Signed in as ${res.user.name}`,
+          title: "OTP Sent",
+          subtitle: otp ? `Your code: ${otp}` : "Check your messages",
+          duration: 10000,
         });
+        setStep("otp");
       } else {
-        router.push(ROUTE_PATH.CREATE_ACCOUNT);
-        notify({
-          title: "Almost There",
-          subtitle: "Please complete your profile details.",
+        const res = await verifyOtp.mutateAsync({
+          mobileNumber: values.mobile,
+          otp: values.otp,
         });
+        if (res.user?.name) {
+          router.push(ROUTE_PATH.HOME);
+          notify({ title: "Welcome back", subtitle: res.user.name });
+        } else {
+          router.push(ROUTE_PATH.CREATE_ACCOUNT);
+          notify({ title: "Almost there", subtitle: "Complete your profile" });
+        }
       }
     } catch (err: any) {
       notify({
-        title: "Google Sign-In Failed",
-        subtitle:
-          err?.response?.data?.message ?? "Could not sign in with Google.",
+        title: "Error",
+        subtitle: err?.response?.data?.message ?? "Something went wrong",
       });
     }
   };
 
+  /* ── Google SSO ── */
   const googleLogin = useGoogleLogin({
-    onSuccess: handleGoogleSuccess,
-    onError: () => {
-      notify({
-        title: "Google Sign-In",
-        subtitle: "Google sign-in was cancelled or failed.",
-      });
+    onSuccess: async (tok) => {
+      try {
+        const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tok.access_token}` },
+        });
+        const info = await r.json();
+        const res = await googleMutation.mutateAsync({
+          email: info.email,
+          name: info.name,
+          googleId: info.sub,
+        });
+        if (res.user?.name) {
+          router.push(ROUTE_PATH.HOME);
+          notify({ title: "Welcome", subtitle: res.user.name });
+        } else {
+          router.push(ROUTE_PATH.CREATE_ACCOUNT);
+          notify({ title: "Almost there", subtitle: "Complete your profile" });
+        }
+      } catch (err: any) {
+        notify({
+          title: "Google Sign-In failed",
+          subtitle: err?.response?.data?.message ?? "Please try again",
+        });
+      }
     },
+    onError: () =>
+      notify({ title: "Cancelled", subtitle: "Google sign-in was cancelled" }),
   });
 
-  const handleAppleSignIn = () => {
-    notify({
-      title: "Coming Soon",
-      subtitle: "Apple Sign-In will be available shortly.",
-    });
-  };
+  const handleApple = () =>
+    notify({ title: "Coming Soon", subtitle: "Apple Sign-In coming shortly" });
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-amber-50/30">
-      {/* Skip button */}
-      <div className="flex justify-end p-4 pt-[env(safe-area-inset-top,12px)]">
-        <Link
-          href={ROUTE_PATH.HOME}
-          onClick={() => dispatch(setSkippedAuth(true))}
-          className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors px-3 py-1.5 rounded-full hover:bg-slate-100"
-        >
-          Skip for now
-        </Link>
+    <div className="fixed inset-0 flex flex-col bg-gray-50">
+      {/* ── Top safe-area (no skip) ── */}
+      <div
+        className="shrink-0"
+        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
+      />
+
+      {/* ── Logo area ── */}
+      <div className="flex flex-col items-center pt-10 pb-6 shrink-0">
+        <div className="w-16 h-16 rounded-[18px] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-3">
+          <span className="text-2xl font-black text-white leading-none">T</span>
+        </div>
+        <p className="text-[13px] font-semibold text-gray-800 tracking-wide">
+          TIJARAH CONNECT
+        </p>
       </div>
 
-      {/* Logo & Branding */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center pt-6 pb-8"
-      >
-        {/* Logo placeholder */}
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200/50 mb-4">
-          <span className="text-3xl font-black text-white">T</span>
-        </div>
-        <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-          Tijarah Connect
-        </h1>
-      </motion.div>
+      {/* ── Card ── */}
+      <div className="flex-1 flex flex-col bg-white rounded-t-[28px] shadow-[0_-4px_30px_rgba(0,0,0,0.04)] px-6 pt-7 pb-0 overflow-y-auto">
+        <AnimatePresence mode="wait">
+          {step === "mobile" ? (
+            <motion.div
+              key="mobile-heading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-6"
+            >
+              <h1 className="text-[22px] font-bold text-gray-900 leading-tight">
+                Enter your mobile number
+              </h1>
+              <p className="text-[13px] text-gray-400 mt-1">
+                We&apos;ll send a verification code
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="otp-heading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-6"
+            >
+              <h1 className="text-[22px] font-bold text-gray-900 leading-tight">
+                Verification code
+              </h1>
+              <p className="text-[13px] text-gray-400 mt-1">
+                Sent to your mobile number
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Main content */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="flex-1 px-6"
-      >
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Sign in to access your account
-          </p>
-        </div>
-
-        {/* Phone / OTP Form */}
         <Formik
           initialValues={{ mobile: "", otp: "" }}
-          validationSchema={validationSchemas[currentStep]}
+          validationSchema={schemas[step]}
           onSubmit={() => {}}
         >
           {({ isValid, validateForm, setTouched, setFieldValue, dirty, values }) => (
-            <Form className="space-y-4">
+            <Form className="flex flex-col flex-1">
               <AnimatePresence mode="wait">
-                {currentStep === "mobile" && (
+                {step === "mobile" && (
                   <motion.div
-                    key="mobile"
-                    initial={{ opacity: 0, x: -20 }}
+                    key="phone"
+                    initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.25 }}
+                    exit={{ opacity: 0, x: 16 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <StyledInput
+                    <PhoneInput
                       name="mobile"
-                      label="Mobile Number"
-                      placeholder="9876543210"
+                      placeholder="9876 543 210"
                       prefix="+91"
-                      formatValue={(val) => val.replace(/\D/g, "").slice(0, 10)}
+                      format={(v) => v.replace(/\D/g, "").slice(0, 10)}
+                      autoFocus
                     />
                   </motion.div>
                 )}
-                {currentStep === "otp" && (
+                {step === "otp" && (
                   <motion.div
                     key="otp"
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.25 }}
+                    exit={{ opacity: 0, x: 16 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <StyledInput
+                    <PhoneInput
                       name="otp"
-                      label="Verification Code"
-                      placeholder="Enter 6-digit OTP"
-                      formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
+                      placeholder="000 000"
+                      format={(v) => v.replace(/\D/g, "").slice(0, 6)}
+                      autoFocus
                     />
-                    <p className="text-xs text-slate-500 mt-2 pl-1">
-                      OTP sent to +91 {values.mobile}
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setStep("mobile"); setFieldValue("otp", ""); }}
+                      className="text-[12px] text-amber-600 font-medium mt-2 ml-1"
+                    >
+                      Change number
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Action buttons */}
-              <div className="pt-1">
-                {currentStep === "mobile" ? (
+              {/* CTA */}
+              <button
+                type="button"
+                onClick={() => handleSubmit(validateForm, setTouched, values)}
+                disabled={!isValid || !dirty || busy}
+                className="mt-5 h-[52px] rounded-2xl bg-gray-900 text-white text-[15px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:bg-gray-200 disabled:text-gray-400"
+              >
+                {busy ? <Spinner /> : step === "mobile" ? "Continue" : "Verify"}
+              </button>
+
+              {/* ── Divider ── */}
+              {step === "mobile" && (
+                <div className="flex items-center gap-3 my-6">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-[11px] font-medium text-gray-300 uppercase tracking-widest">
+                    or
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+              )}
+
+              {/* ── Social buttons ── */}
+              {step === "mobile" && (
+                <div className="space-y-3">
                   <button
                     type="button"
-                    onClick={() => handleNext(validateForm, setTouched, values)}
-                    disabled={!isValid || !dirty || isLoading}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-base shadow-md shadow-amber-200/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none disabled:active:scale-100"
+                    onClick={() => googleLogin()}
+                    disabled={busy}
+                    className="w-full h-[52px] rounded-2xl border border-gray-200 bg-white flex items-center justify-center gap-3 text-[15px] font-medium text-gray-700 active:scale-[0.98] transition-all disabled:opacity-40"
                   >
-                    {isLoading ? (
-                      <span className="inline-flex items-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        Sending...
-                      </span>
-                    ) : (
-                      "Get OTP"
-                    )}
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Continue with Google
                   </button>
-                ) : (
-                  <div className="flex gap-3">
+
+                  {isApple && (
                     <button
                       type="button"
-                      onClick={() => handleBack(setFieldValue)}
-                      disabled={isLoading}
-                      className="flex-1 py-3.5 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-base hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-50"
+                      onClick={handleApple}
+                      disabled={busy}
+                      className="w-full h-[52px] rounded-2xl bg-black text-white flex items-center justify-center gap-3 text-[15px] font-medium active:scale-[0.98] transition-all disabled:opacity-40"
                     >
-                      Back
+                      <FaApple className="text-lg" />
+                      Continue with Apple
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleNext(validateForm, setTouched, values)}
-                      disabled={!isValid || !dirty || isLoading}
-                      className="flex-[2] py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-base shadow-md shadow-amber-200/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none disabled:active:scale-100"
-                    >
-                      {isLoading ? (
-                        <span className="inline-flex items-center gap-2">
-                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          Verifying...
-                        </span>
-                      ) : (
-                        "Verify OTP"
-                      )}
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
+
+              {/* ── Footer ── */}
+              <div
+                className="mt-auto pt-6 text-center shrink-0"
+                style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 20px)" }}
+              >
+                <p className="text-[13px] text-gray-400">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    href={ROUTE_PATH.CREATE_ACCOUNT}
+                    className="text-gray-900 font-semibold"
+                  >
+                    Sign up
+                  </Link>
+                </p>
+                <p className="text-[10px] text-gray-300 mt-3 leading-relaxed">
+                  By continuing you agree to our Terms & Privacy Policy
+                </p>
               </div>
             </Form>
           )}
         </Formik>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-            or continue with
-          </span>
-          <div className="flex-1 h-px bg-slate-200" />
-        </div>
-
-        {/* Social sign-in buttons */}
-        <div className="space-y-3">
-          {/* Google */}
-          <button
-            type="button"
-            onClick={() => googleLogin()}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border-2 border-slate-200 bg-white font-semibold text-slate-700 text-base hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
-          >
-            <FcGoogle className="text-xl" />
-            Sign in with Google
-          </button>
-
-          {/* Apple */}
-          <button
-            type="button"
-            onClick={handleAppleSignIn}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-black text-white font-semibold text-base hover:bg-slate-900 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
-          >
-            <FaApple className="text-xl" />
-            Sign in with Apple
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Footer */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="px-6 py-6 pb-[env(safe-area-inset-bottom,24px)] text-center space-y-2"
-      >
-        <p className="text-sm text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link
-            href={ROUTE_PATH.CREATE_ACCOUNT}
-            className="font-semibold text-amber-600 hover:text-amber-700"
-          >
-            Create Account
-          </Link>
-        </p>
-        <p className="text-xs text-slate-400">
-          By continuing, you agree to our{" "}
-          <span className="underline cursor-pointer">Terms</span> &{" "}
-          <span className="underline cursor-pointer">Privacy Policy</span>
-        </p>
-      </motion.div>
+      </div>
     </div>
   );
 }
 
+/* ── Page wrapper (client-only for Google SDK) ── */
 export default function LoginPage() {
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-  const [mounted, setMounted] = useState(false);
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setReady(true);
   }, []);
 
-  if (!mounted) {
+  if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-amber-50/30">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200/50 animate-pulse">
-          <span className="text-3xl font-black text-white">T</span>
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+        <div className="w-16 h-16 rounded-[18px] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center animate-pulse">
+          <span className="text-2xl font-black text-white">T</span>
         </div>
       </div>
     );
   }
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleOAuthProvider clientId={clientId}>
       <LoginContent />
     </GoogleOAuthProvider>
   );

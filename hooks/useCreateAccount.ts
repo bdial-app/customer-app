@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
-import { useSendOtp, useVerifyOtp, useCreateAccountMutation } from "./useAuth";
+import { useSendOtp, useRegistrationSendOtp, useVerifyOtp, useCreateAccountMutation } from "./useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
 
 export type CreateAccountStep = "mobile" | "otp" | "details";
 
-export const useCreateAccount = () => {
+export const useCreateAccount = (initialMobile?: string) => {
   const router = useRouter();
   const { notify } = useNotification();
-  const [currentStep, setCurrentStep] = useState<CreateAccountStep>("mobile");
+  const [currentStep, setCurrentStep] = useState<CreateAccountStep>(
+    initialMobile ? "otp" : "mobile",
+  );
   const [resendCooldown, setResendCooldown] = useState(0);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null,
@@ -79,13 +81,38 @@ export const useCreateAccount = () => {
   }, [currentStep, location, requestLocation]);
 
   const sendOtpMutation = useSendOtp();
+  const registrationSendOtpMutation = useRegistrationSendOtp();
   const verifyOtpMutation = useVerifyOtp();
   const createAccountMutation = useCreateAccountMutation();
 
-  const isLoading =
-    sendOtpMutation.isPending ||
-    verifyOtpMutation.isPending ||
-    createAccountMutation.isPending;
+  // Granular loading states so each button only spins for its own action
+  const isSendingOtp =
+    sendOtpMutation.isPending || registrationSendOtpMutation.isPending;
+  const isVerifying = verifyOtpMutation.isPending;
+  const isSubmitting = createAccountMutation.isPending;
+  const isLoading = isSendingOtp || isVerifying || isSubmitting;
+
+  // When arriving from login redirect with a pre-filled mobile, auto-send the OTP
+  const autoSentRef = useRef(false);
+  useEffect(() => {
+    if (!initialMobile || autoSentRef.current) return;
+    autoSentRef.current = true;
+    registrationSendOtpMutation.mutateAsync({ mobileNumber: initialMobile }).then((res) => {
+      const otp: string | undefined = res?.data?.otp;
+      notify({
+        title: "OTP Sent",
+        subtitle: otp ? `Your code: ${otp}` : "Check your messages",
+        duration: 10000,
+      });
+      startCooldown();
+    }).catch((err: any) => {
+      notify({
+        title: "Error",
+        subtitle: err?.response?.data?.message ?? "Failed to send OTP. Please try again.",
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMobile]);
 
   const handleBack = (setFieldValue: (field: string, value: any) => void) => {
     if (currentStep === "otp") {
@@ -114,10 +141,12 @@ export const useCreateAccount = () => {
 
     try {
       if (currentStep === "mobile") {
-        await sendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
+        const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
+        const otp: string | undefined = res?.data?.otp;
         notify({
           title: "OTP Sent",
-          subtitle: "OTP sent to your mobile number!",
+          subtitle: otp ? `Your code: ${otp}` : "OTP sent to your mobile number!",
+          duration: 10000,
         });
         startCooldown();
         setCurrentStep("otp");
@@ -184,11 +213,13 @@ export const useCreateAccount = () => {
   ) => {
     if (resendCooldown > 0) return;
     try {
-      await sendOtpMutation.mutateAsync({ mobileNumber: mobile });
+      const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: mobile });
+      const otp: string | undefined = res?.data?.otp;
       setFieldValue("otp", "");
       notify({
         title: "OTP Sent",
-        subtitle: "OTP resent to your mobile number!",
+        subtitle: otp ? `Your code: ${otp}` : "OTP resent to your mobile!",
+        duration: 10000,
       });
       startCooldown();
     } catch (err: any) {
@@ -201,7 +232,7 @@ export const useCreateAccount = () => {
   };
 
   const initialValues = {
-    mobile: "",
+    mobile: initialMobile ?? "",
     otp: "",
     name: "",
     gender: "",
@@ -213,6 +244,9 @@ export const useCreateAccount = () => {
   return {
     currentStep,
     isLoading,
+    isSendingOtp,
+    isVerifying,
+    isSubmitting,
     resendCooldown,
     location,
     requestLocation,

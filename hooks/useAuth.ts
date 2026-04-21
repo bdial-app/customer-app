@@ -4,6 +4,7 @@ import {
   verifyOtp,
   createAccount,
   googleSignIn,
+  sendRegistrationOtp,
   SendOtpPayload,
   VerifyOtpPayload,
   CreateAccountPayload,
@@ -60,3 +61,8 @@ export const useGoogleSignIn = () => {
     },
   });
 };
+
+export const useRegistrationSendOtp = () =>
+  useMutation({
+    mutationFn: (payload: SendOtpPayload) => sendRegistrationOtp(payload),
+  });
