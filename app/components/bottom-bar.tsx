@@ -11,8 +11,8 @@ import {
   analyticsSharp,
   compassOutline,
   compass,
-  receiptOutline,
-  receipt,
+  bookmarkOutline,
+  bookmark,
 } from "ionicons/icons";
 import { motion } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
@@ -39,10 +39,10 @@ const TABS: TabItem[] = [
     iconFilled: compass,
   },
   {
-    id: "orders",
-    label: "Orders",
-    iconOutline: receiptOutline,
-    iconFilled: receipt,
+    id: "saved",
+    label: "Saved",
+    iconOutline: bookmarkOutline,
+    iconFilled: bookmark,
   },
   {
     id: "analytics",

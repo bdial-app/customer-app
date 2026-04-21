@@ -10,7 +10,7 @@ import UserHome from "./components/user-home";
 import ProviderHome from "./components/provider-home";
 import AnalyticsContent from "./components/analytics-content";
 import ExploreContent from "./components/explore-content";
-import OrdersContent from "./components/orders-content";
+import SavedContent from "./components/saved-content";
 import { useAppContext } from "./context/AppContext";
 import GeoLocation from "./components/geo-location";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -34,7 +34,7 @@ export default function Home() {
   }, [userMode]);
 
   const handleTabChange = (tab: string) => {
-    if (!user && (tab === "chats" || tab === "profile" || tab === "orders")) {
+    if (!user && (tab === "chats" || tab === "profile" || tab === "saved")) {
       router.push("/auth/login");
       return;
     }
@@ -47,8 +47,8 @@ export default function Home() {
         return userMode === "customer" ? "Bohri Connect" : "Home";
       case "explore":
         return "Explore";
-      case "orders":
-        return "My Orders";
+      case "saved":
+        return "Saved";
       case "chats":
         return "Messages";
       case "profile":
@@ -95,7 +95,7 @@ export default function Home() {
 
       {activeTab === "explore" && <ExploreContent />}
 
-      {activeTab === "orders" && <OrdersContent />}
+      {activeTab === "saved" && <SavedContent />}
 
       {activeTab === "chats" && (
         <MessagesContent onChatClick={(name) => setActiveChat(name)} />
