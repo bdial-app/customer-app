@@ -13,7 +13,7 @@ const getGreeting = () => {
 const GreetingCard = () => {
   const { user } = useAppSelector((s) => s.auth);
   const greeting = getGreeting();
-  const firstName = user?.fullName?.split(" ")[0] || user?.phone || "there";
+  const firstName = user?.name?.split(" ")[0] || user?.mobileNumber || "there";
 
   return (
     <motion.div

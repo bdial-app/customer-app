@@ -22,15 +22,19 @@ export interface CreateAccountPayload {
 }
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
+  accessToken?: string;
   user: {
     id: string;
     name: string;
-    mobileNumber: string;
-    gender: string;
-    city: string;
+    mobileNumber?: string;
+    email?: string;
+    gender?: string;
+    city?: string;
     area?: string;
-    pincode: string;
+    pincode?: string;
+    role?: string;
+    ssoProvider?: string;
   };
 }
 
@@ -53,5 +57,19 @@ export const createAccount = async (
   payload: CreateAccountPayload,
 ): Promise<UserProfile> => {
   const { data } = await apiClient.patch(AUTH_URLS.REGISTER, payload);
+  return data;
+};
+
+// Google SSO sign-in
+export interface GoogleSignInPayload {
+  email: string;
+  name?: string;
+  googleId?: string;
+}
+
+export const googleSignIn = async (
+  payload: GoogleSignInPayload,
+): Promise<AuthResponse> => {
+  const { data } = await apiClient.post(AUTH_URLS.GOOGLE_SIGNIN, payload);
   return data;
 };

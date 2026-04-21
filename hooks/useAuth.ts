@@ -3,9 +3,11 @@ import {
   sendOtp,
   verifyOtp,
   createAccount,
+  googleSignIn,
   SendOtpPayload,
   VerifyOtpPayload,
   CreateAccountPayload,
+  GoogleSignInPayload,
 } from "@/services/auth.service";
 import { useAppDispatch } from "./useAppStore";
 import { setUser, setProfile, setToken } from "@/store/slices/authSlice";
@@ -38,6 +40,23 @@ export const useCreateAccountMutation = () => {
     onSuccess: (user) => {
       // Step 3 (PATCH /users/me) returns only the profile, the token stays in state/localStorage
       dispatch(setProfile(user));
+    },
+  });
+};
+
+export const useGoogleSignIn = () => {
+  const dispatch = useAppDispatch();
+  return useMutation({
+    mutationFn: (payload: GoogleSignInPayload) => googleSignIn(payload),
+    onSuccess: (data: any) => {
+      const jwt = data.accessToken ?? data.token;
+      if (jwt && typeof window !== "undefined") {
+        localStorage.setItem("token", jwt);
+        dispatch(setToken(jwt));
+      }
+      if (data.user) {
+        dispatch(setProfile(data.user));
+      }
     },
   });
 };

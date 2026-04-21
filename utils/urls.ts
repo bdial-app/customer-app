@@ -2,6 +2,7 @@ export const AUTH_URLS = {
   SEND_OTP: "/auth/send-otp",
   VERIFY_OTP: "/auth/verify-otp",
   REGISTER: "/users/me",
+  GOOGLE_SIGNIN: "/auth/google/signin",
 };
 
 export const USER_URLS = {

@@ -7,37 +7,25 @@ interface AuthState {
   hasSkippedAuth: boolean;
 }
 
-const getInitialUser = () => {
-  if (typeof window !== "undefined") {
-    try {
-      const storedUser = localStorage.getItem("user");
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
-};
-
-const getInitialToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
-
-const getInitialSkipped = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("skippedAuth") === "true";
-  }
-  return false;
-};
-
 const initialState: AuthState = {
-  user: getInitialUser(),
-  token: getInitialToken(),
-  hasSkippedAuth: getInitialSkipped(),
+  user: null,
+  token: null,
+  hasSkippedAuth: false,
 };
+
+function hydrateFromStorage(): Partial<AuthState> {
+  if (typeof window === "undefined") return {};
+  try {
+    const storedUser = localStorage.getItem("user");
+    return {
+      user: storedUser ? JSON.parse(storedUser) : null,
+      token: localStorage.getItem("token") ?? null,
+      hasSkippedAuth: localStorage.getItem("skippedAuth") === "true",
+    };
+  } catch {
+    return {};
+  }
+}
 
 const authSlice = createSlice({
   name: "auth",
@@ -46,7 +34,7 @@ const authSlice = createSlice({
     // Sets everything (token + user) — usually after login/OTP verify
     setUser(state, action: PayloadAction<AuthResponse>) {
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.token = action.payload.token ?? action.payload.accessToken ?? null;
     },
     // Sets only the user profile — usually after PATCH /users/me
     setProfile(state, action: PayloadAction<AuthResponse["user"]>) {
@@ -72,9 +60,22 @@ const authSlice = createSlice({
         localStorage.removeItem("skippedAuth");
       }
     },
+    hydrateAuth(state) {
+      const stored = hydrateFromStorage();
+      if (stored.user !== undefined) state.user = stored.user;
+      if (stored.token !== undefined) state.token = stored.token;
+      if (stored.hasSkippedAuth !== undefined)
+        state.hasSkippedAuth = stored.hasSkippedAuth;
+    },
   },
 });
 
-export const { setUser, setProfile, setToken, clearUser, setSkippedAuth } =
-  authSlice.actions;
+export const {
+  setUser,
+  setProfile,
+  setToken,
+  clearUser,
+  setSkippedAuth,
+  hydrateAuth,
+} = authSlice.actions;
 export default authSlice.reducer;
