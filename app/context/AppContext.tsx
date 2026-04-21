@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import { updateUser } from "@/services/user.service";
 
 export type ProviderStatus =
   | "not_applied"
@@ -57,6 +58,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const setUserMode = useCallback((mode: UserMode) => {
     _setUserMode(mode);
     try { localStorage.setItem(USER_MODE_KEY, mode); } catch {}
+    updateUser({ preferredMode: mode }).catch(() => {});
   }, []);
 
   const toggleMode = useCallback(() => {
@@ -67,6 +69,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       _setUserMode((prev) => {
         const next = prev === "customer" ? "provider" : "customer";
         try { localStorage.setItem(USER_MODE_KEY, next); } catch {}
+        updateUser({ preferredMode: next }).catch(() => {});
         return next;
       });
     }

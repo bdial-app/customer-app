@@ -1,125 +1,120 @@
 "use client";
+import React from "react";
 import { useNotification } from "@/app/context/NotificationContext";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  checkmarkCircle,
-  alertCircle,
-  warningOutline,
-  informationCircle,
-  close,
-} from "ionicons/icons";
-import dynamic from "next/dynamic";
+import { AnimatePresence, motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
-const IonIcon = dynamic(
-  () => import("@ionic/react").then((m) => m.IonIcon),
-  { ssr: false },
-);
+type Variant = "success" | "error" | "warning" | "info";
 
-const VARIANT_CONFIG = {
+const VARIANT_CONFIG: Record<Variant, { accent: string; iconBg: string; icon: React.ReactNode }> = {
   success: {
-    icon: checkmarkCircle,
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    iconColor: "text-emerald-500",
-    titleColor: "text-emerald-900",
-    subtitleColor: "text-emerald-600",
-    progressColor: "bg-emerald-400",
+    accent: "bg-emerald-500",
+    iconBg: "bg-emerald-50",
+    icon: (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="#10B981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M22 4L12 14.01l-3-3" stroke="#10B981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
   },
   error: {
-    icon: alertCircle,
-    bg: "bg-red-50",
-    border: "border-red-200",
-    iconColor: "text-red-500",
-    titleColor: "text-red-900",
-    subtitleColor: "text-red-600",
-    progressColor: "bg-red-400",
+    accent: "bg-red-500",
+    iconBg: "bg-red-50",
+    icon: (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+        <circle cx={12} cy={12} r={10} stroke="#EF4444" strokeWidth={2} />
+        <path d="M15 9l-6 6M9 9l6 6" stroke="#EF4444" strokeWidth={2} strokeLinecap="round" />
+      </svg>
+    ),
   },
   warning: {
-    icon: warningOutline,
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    iconColor: "text-amber-500",
-    titleColor: "text-amber-900",
-    subtitleColor: "text-amber-600",
-    progressColor: "bg-amber-400",
+    accent: "bg-amber-500",
+    iconBg: "bg-amber-50",
+    icon: (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#F59E0B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 9v4m0 4h.01" stroke="#F59E0B" strokeWidth={2} strokeLinecap="round" />
+      </svg>
+    ),
   },
   info: {
-    icon: informationCircle,
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    iconColor: "text-blue-500",
-    titleColor: "text-blue-900",
-    subtitleColor: "text-blue-600",
-    progressColor: "bg-blue-400",
+    accent: "bg-blue-500",
+    iconBg: "bg-blue-50",
+    icon: (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+        <circle cx={12} cy={12} r={10} stroke="#3B82F6" strokeWidth={2} />
+        <path d="M12 16v-4m0-4h.01" stroke="#3B82F6" strokeWidth={2} strokeLinecap="round" />
+      </svg>
+    ),
   },
 };
 
 export const AppToast = () => {
-  const { open, options, dismiss, progress } = useNotification();
+  const { open, options, dismiss } = useNotification();
   const variant = options?.variant ?? "info";
   const config = VARIANT_CONFIG[variant];
+  const y = useMotionValue(0);
+  const opacity = useTransform(y, [-60, 0], [0, 1]);
+
+  const handleDragEnd = (_: never, info: PanInfo) => {
+    if (info.offset.y < -30) dismiss();
+  };
 
   return (
     <AnimatePresence>
       {open && options && (
         <motion.div
           key="toast"
-          initial={{ y: -80, opacity: 0, scale: 0.95 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -80, opacity: 0, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed top-0 inset-x-0 z-[9999] px-4 pt-[calc(env(safe-area-inset-top)+8px)]"
-          style={{ pointerEvents: "none" }}
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -100, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 440, damping: 32, mass: 0.8 }}
+          drag="y"
+          dragConstraints={{ top: -80, bottom: 0 }}
+          dragElastic={0.18}
+          onDragEnd={handleDragEnd}
+          style={{ y, opacity }}
+          className="fixed top-0 inset-x-0 z-[9999] flex justify-center px-4 pt-[calc(env(safe-area-inset-top)+10px)]"
         >
           <div
-            className={`${config.bg} ${config.border} border rounded-2xl shadow-lg shadow-black/5 overflow-hidden`}
-            style={{ pointerEvents: "auto" }}
+            className="w-full max-w-[420px] bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden cursor-grab active:cursor-grabbing"
+            onClick={dismiss}
           >
-            <div className="flex items-start gap-3 px-4 py-3.5">
+            {/* Grab indicator */}
+            <div className="flex justify-center pt-1.5">
+              <div className="w-9 h-[3.5px] rounded-full bg-gray-200" />
+            </div>
+
+            <div className="flex items-start gap-3.5 px-4 pt-2.5 pb-3.5">
+              {/* Left accent bar */}
+              <div className={`w-1 self-stretch rounded-full ${config.accent} flex-shrink-0`} />
+
               {/* Icon */}
-              <div className="flex-shrink-0 mt-0.5">
-                <IonIcon
-                  icon={config.icon}
-                  className={`w-5 h-5 ${config.iconColor}`}
-                />
+              <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${config.iconBg} flex items-center justify-center`}>
+                {config.icon}
               </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className={`text-[13px] font-semibold ${config.titleColor} leading-tight`}
-                >
+              {/* Text */}
+              <div className="flex-1 min-w-0 pt-0.5">
+                <p className="text-[15px] font-semibold text-gray-900 leading-tight">
                   {options.title}
                 </p>
                 {options.subtitle && (
-                  <p
-                    className={`text-[12px] ${config.subtitleColor} mt-0.5 leading-snug`}
-                  >
-                    {options.subtitle}
+                  <p className="text-[13px] text-gray-500 leading-snug mt-1 line-clamp-2">
+                    {Array.isArray(options.subtitle) ? options.subtitle.join(", ") : options.subtitle}
                   </p>
                 )}
               </div>
 
-              {/* Dismiss */}
+              {/* Dismiss X */}
               <button
-                onClick={dismiss}
-                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-black/5 active:bg-black/10 transition-colors -mr-1 -mt-0.5"
+                type="button"
+                className="flex-shrink-0 mt-0.5 p-1 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                onClick={(e) => { e.stopPropagation(); dismiss(); }}
               >
-                <IonIcon
-                  icon={close}
-                  className="w-3.5 h-3.5 text-gray-400"
-                />
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" />
+                </svg>
               </button>
-            </div>
-
-            {/* Progress bar */}
-            <div className="h-[2px] bg-black/5">
-              <motion.div
-                className={`h-full ${config.progressColor}`}
-                initial={{ width: "100%" }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.1, ease: "linear" }}
-              />
             </div>
           </div>
         </motion.div>

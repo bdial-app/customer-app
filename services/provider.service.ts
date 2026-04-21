@@ -73,6 +73,7 @@ export interface ProviderStatusResponse {
   verificationStatus: string | null;
   provider: ProviderData | null;
   verification: any | null;
+  preferredMode?: "customer" | "provider";
 }
 
 export interface UpdateProviderPayload {

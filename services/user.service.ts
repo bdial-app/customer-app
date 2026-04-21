@@ -9,6 +9,7 @@ export interface UpdateUserPayload {
   pincode?: string;
   latitude?: number;
   longitude?: number;
+  preferredMode?: 'customer' | 'provider';
 }
 
 export interface UserProfile {

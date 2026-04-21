@@ -194,7 +194,7 @@ const SlidePage = ({
 
 // ─── Main Profile Content ───────────────────────────────────────────
 const ProfileContent = () => {
-  const { providerStatus, userMode, setProviderStatus, setProviderInfo, toggleMode, resetProviderState } =
+  const { providerStatus, userMode, setProviderStatus, setProviderInfo, setUserMode, toggleMode, resetProviderState } =
     useAppContext();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user as any);
@@ -231,13 +231,16 @@ const ProfileContent = () => {
               brandName: result.provider.brandName,
             });
           }
+          if (result.preferredMode) {
+            setUserMode(result.preferredMode);
+          }
         }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [user?.id, setProviderStatus, setProviderInfo]);
+  }, [user?.id, setProviderStatus, setProviderInfo, setUserMode]);
 
   const dispatch = useDispatch();
 
