@@ -2,7 +2,7 @@
 import { IonIcon } from "@ionic/react";
 import { locationSharp, chevronDown } from "ionicons/icons";
 import { motion } from "framer-motion";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const AddressBarNavigation = ({
   title,
@@ -17,6 +17,10 @@ const AddressBarNavigation = ({
   hideIcon?: boolean;
   hideChevron?: boolean;
 }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const showSkeleton = mounted && isLoading;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -31,7 +35,7 @@ const AddressBarNavigation = ({
       )}
 
       <div className="flex-1 min-w-0">
-        {isLoading ? (
+        {showSkeleton ? (
           <div className="flex flex-col gap-1.5">
             <div className="h-4 w-24 bg-white/10 animate-pulse rounded-md" />
             <div className="h-3 w-36 bg-white/5 animate-pulse rounded-md" />
