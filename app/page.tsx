@@ -7,7 +7,9 @@ import ProfileContent from "./components/profile-content";
 import MessagesContent from "./components/messages-content";
 import MessagesPage from "./components/messages-page";
 import UserHome from "./components/user-home";
-import ProviderHome from "./components/provider-home";
+import ProviderDashboard from "./components/provider/provider-dashboard";
+import ProviderListingsManager from "./components/provider/provider-listings-manager";
+import ProviderMessagesContent from "./components/provider/provider-messages-content";
 import AnalyticsContent from "./components/analytics-content";
 import ExploreContent from "./components/explore-content";
 import SavedContent from "./components/saved-content";
@@ -44,11 +46,13 @@ export default function Home() {
   const getPageTitle = () => {
     switch (activeTab) {
       case "home":
-        return userMode === "customer" ? "Bohri Connect" : "Home";
+        return userMode === "customer" ? "Bohri Connect" : "Dashboard";
       case "explore":
         return "Explore";
       case "saved":
         return "Saved";
+      case "listings":
+        return "My Listings";
       case "chats":
         return "Messages";
       case "profile":
@@ -76,8 +80,9 @@ export default function Home() {
             : "#FAFAFA",
       }}
     >
-      {/* Modern header for non-home tabs */}
-      {activeTab !== "home" && (
+      {/* Modern header for non-home tabs (skip for provider views which have own headers) */}
+      {activeTab !== "home" &&
+        !(userMode === "provider" && (activeTab === "listings" || activeTab === "analytics")) && (
         <div
           className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100/60"
           style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
@@ -91,15 +96,20 @@ export default function Home() {
       {activeTab === "home" && userMode === "customer" && <GeoLocation />}
 
       {activeTab === "home" &&
-        (userMode === "customer" ? <UserHome /> : <ProviderHome />)}
+        (userMode === "customer" ? <UserHome /> : <ProviderDashboard />)}
 
       {activeTab === "explore" && <ExploreContent />}
 
       {activeTab === "saved" && <SavedContent />}
 
-      {activeTab === "chats" && (
-        <MessagesContent onChatClick={(name) => setActiveChat(name)} />
-      )}
+      {activeTab === "listings" && <ProviderListingsManager />}
+
+      {activeTab === "chats" &&
+        (userMode === "provider" ? (
+          <ProviderMessagesContent onChatClick={(name) => setActiveChat(name)} />
+        ) : (
+          <MessagesContent onChatClick={(name) => setActiveChat(name)} />
+        ))}
 
       {activeTab === "profile" && <ProfileContent />}
 

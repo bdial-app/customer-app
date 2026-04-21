@@ -93,6 +93,15 @@ function LoginContent() {
   const verifyOtp = useVerifyOtp();
   const googleMutation = useGoogleSignIn();
 
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  // Resend countdown timer
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const id = setInterval(() => setResendCountdown((c) => (c <= 1 ? 0 : c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [resendCountdown]);
+
   const busy = sendOtp.isPending || verifyOtp.isPending || googleMutation.isPending;
 
   const isApple = useMemo(() => {
@@ -125,8 +134,10 @@ function LoginContent() {
         notify({
           title: "OTP Sent",
           subtitle: otp ? `Your code: ${otp}` : "Check your messages",
+          variant: "success",
           duration: 10000,
         });
+        setResendCountdown(60);
         setStep("otp");
       } else {
         const res = await verifyOtp.mutateAsync({
@@ -135,17 +146,29 @@ function LoginContent() {
         });
         if (res.user?.name) {
           router.push(ROUTE_PATH.HOME);
-          notify({ title: "Welcome back", subtitle: res.user.name });
+          notify({ title: "Welcome back", subtitle: res.user.name, variant: "success" });
         } else {
           router.push(ROUTE_PATH.CREATE_ACCOUNT);
-          notify({ title: "Almost there", subtitle: "Complete your profile" });
+          notify({ title: "Almost there", subtitle: "Complete your profile", variant: "info" });
         }
       }
     } catch (err: any) {
-      notify({
-        title: "Error",
-        subtitle: err?.response?.data?.message ?? "Something went wrong",
-      });
+      const data = err?.response?.data;
+      if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
+        setResendCountdown(data.retryAfterSeconds);
+        if (step === "mobile") setStep("otp");
+        notify({
+          title: "OTP already sent",
+          subtitle: `You can resend in ${data.retryAfterSeconds}s`,
+          variant: "warning",
+        });
+      } else {
+        notify({
+          title: "Error",
+          subtitle: data?.message ?? "Something went wrong",
+          variant: "error",
+        });
+      }
     }
   };
 
@@ -164,24 +187,25 @@ function LoginContent() {
         });
         if (res.user?.name) {
           router.push(ROUTE_PATH.HOME);
-          notify({ title: "Welcome", subtitle: res.user.name });
+          notify({ title: "Welcome", subtitle: res.user.name, variant: "success" });
         } else {
           router.push(ROUTE_PATH.CREATE_ACCOUNT);
-          notify({ title: "Almost there", subtitle: "Complete your profile" });
+          notify({ title: "Almost there", subtitle: "Complete your profile", variant: "info" });
         }
       } catch (err: any) {
         notify({
           title: "Google Sign-In failed",
           subtitle: err?.response?.data?.message ?? "Please try again",
+          variant: "error",
         });
       }
     },
     onError: () =>
-      notify({ title: "Cancelled", subtitle: "Google sign-in was cancelled" }),
+      notify({ title: "Cancelled", subtitle: "Google sign-in was cancelled", variant: "warning" }),
   });
 
   const handleApple = () =>
-    notify({ title: "Coming Soon", subtitle: "Apple Sign-In coming shortly" });
+    notify({ title: "Coming Soon", subtitle: "Apple Sign-In coming shortly", variant: "info" });
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gray-50">
@@ -276,13 +300,46 @@ function LoginContent() {
                       format={(v) => v.replace(/\D/g, "").slice(0, 6)}
                       autoFocus
                     />
-                    <button
-                      type="button"
-                      onClick={() => { setStep("mobile"); setFieldValue("otp", ""); }}
-                      className="text-[12px] text-amber-600 font-medium mt-2 ml-1"
-                    >
-                      Change number
-                    </button>
+                    <div className="flex items-center justify-between mt-2 ml-1">
+                      <button
+                        type="button"
+                        onClick={() => { setStep("mobile"); setFieldValue("otp", ""); }}
+                        className="text-[12px] text-amber-600 font-medium"
+                      >
+                        Change number
+                      </button>
+                      <button
+                        type="button"
+                        disabled={resendCountdown > 0 || sendOtp.isPending}
+                        onClick={async () => {
+                          try {
+                            const res = await sendOtp.mutateAsync({ mobileNumber: values.mobile });
+                            const code: string | undefined = res?.data?.otp;
+                            setFieldValue("otp", "");
+                            setResendCountdown(60);
+                            notify({
+                              title: "OTP Resent",
+                              subtitle: code ? `Your new code: ${code}` : "Check your messages",
+                              variant: "success",
+                              duration: 10000,
+                            });
+                          } catch (err: any) {
+                            const data = err?.response?.data;
+                            if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
+                              setResendCountdown(data.retryAfterSeconds);
+                              notify({ title: "Please wait", subtitle: `Resend available in ${data.retryAfterSeconds}s`, variant: "warning" });
+                            } else {
+                              notify({ title: "Error", subtitle: data?.message ?? "Failed to resend OTP", variant: "error" });
+                            }
+                          }
+                        }}
+                        className={`text-[12px] font-medium ${
+                          resendCountdown > 0 ? "text-gray-300" : "text-amber-600"
+                        }`}
+                      >
+                        {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend OTP"}
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

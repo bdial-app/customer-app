@@ -1,6 +1,8 @@
 import apiClient from "@/utils/axios";
 import { PROVIDER_URLS } from "@/utils/urls";
 
+// ─── Types ──────────────────────────────────────────────────────────
+
 export interface ProviderNearbyParams {
   lat: number;
   lng: number;
@@ -40,15 +42,56 @@ export interface BecomeProviderPayload {
   ijamatDocUrl?: string;
   latitude?: string;
   longitude?: string;
-  aadhaarFile: File;
+  aadhaarFile?: File;
+}
+
+export interface ProviderData {
+  id: string;
+  userId: string;
+  brandName: string;
+  description: string | null;
+  address: string | null;
+  city: string;
+  area: string | null;
+  pincode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  contactNumber: string;
+  openTime: string | null;
+  closeTime: string | null;
+  isAvailable: boolean;
+  profilePhotoUrl: string | null;
+  status: "pending" | "in_review" | "active" | "suspended" | "unverified";
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: any;
 }
 
 export interface ProviderStatusResponse {
   providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected";
   verificationStatus: string | null;
-  provider: any | null;
+  provider: ProviderData | null;
   verification: any | null;
 }
+
+export interface UpdateProviderPayload {
+  brandName?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  area?: string;
+  pincode?: string;
+  latitude?: number;
+  longitude?: number;
+  contactNumber?: string;
+  openTime?: string;
+  closeTime?: string;
+  isAvailable?: boolean;
+  profilePhotoUrl?: string;
+}
+
+// ─── API Functions ──────────────────────────────────────────────────
 
 export const getNearbyProviders = async (
   params: ProviderNearbyParams,
@@ -82,7 +125,7 @@ export const becomeProvider = async (
   if (payload.ijamatNumber) formData.append("ijamatNumber", payload.ijamatNumber);
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
-  formData.append("file", payload.aadhaarFile);
+  if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
 
   const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -105,5 +148,27 @@ export const verifyProviderOtp = async (
   otp: string,
 ): Promise<{ verified: boolean }> => {
   const { data } = await apiClient.post(PROVIDER_URLS.VERIFY_OTP, { mobileNumber, otp });
+  return data;
+};
+
+export const updateProvider = async (
+  id: string,
+  payload: UpdateProviderPayload,
+): Promise<ProviderData> => {
+  const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE(id), payload);
+  return data;
+};
+
+export const submitVerification = async (
+  file: File,
+  docType?: string,
+): Promise<any> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (docType) formData.append("docType", docType);
+
+  const { data } = await apiClient.post(PROVIDER_URLS.SUBMIT_VERIFICATION, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };

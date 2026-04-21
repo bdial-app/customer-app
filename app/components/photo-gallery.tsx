@@ -240,25 +240,33 @@ const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
     <>
       <style>{KEYFRAMES}</style>
 
-      {/* Root — bg adapts to OS colour scheme */}
+      {/* Root */}
       <div className="min-h-screen bg-transparent">
 
-        {/* ── 3-column square grid ── */}
-        <div className="grid grid-cols-3 gap-0.5 dark:bg-black" style={{
-          marginTop: -32
-        }} >
+        {/* Photo count header */}
+        <div className="flex items-center justify-between px-5 py-3">
+          <span className="text-[13px] font-semibold text-gray-900">{IMAGES.length} Photos</span>
+          <span className="text-[11px] text-gray-400">Tap to view</span>
+        </div>
+
+        {/* 3-column grid with rounded corners */}
+        <div className="grid grid-cols-3 gap-[3px] px-1">
           {IMAGES.map((img, idx) => (
             <button
               key={img.id}
               type="button"
               aria-label={img.label}
               onClick={() => open(idx)}
-              className="
-                relative aspect-square overflow-hidden
+              className={`
+                relative overflow-hidden
                 bg-gray-100 dark:bg-neutral-900
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-                active:opacity-70 transition-opacity duration-150
-              "
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500
+                active:opacity-70 active:scale-[0.98] transition-all duration-150
+                ${idx === 0 ? "rounded-tl-2xl" : ""}
+                ${idx === 2 ? "rounded-tr-2xl" : ""}
+                ${idx === IMAGES.length - 3 + (IMAGES.length % 3 === 0 ? 0 : IMAGES.length % 3 === 1 ? 0 : IMAGES.length % 3 === 2 ? -1 : 0) ? "" : ""}
+                aspect-square
+              `}
             >
               <img
                 src={img.thumb}
@@ -267,6 +275,8 @@ const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
                 draggable={false}
                 className="w-full h-full object-cover select-none"
               />
+              {/* Subtle gradient on hover area */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
             </button>
           ))}
         </div>

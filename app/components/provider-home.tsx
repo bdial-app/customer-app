@@ -13,10 +13,6 @@ import {
   Sheet,
   Page,
   Navbar,
-  Actions,
-  ActionsGroup,
-  ActionsLabel,
-  ActionsButton,
   Fab,
 } from "konsta/react";
 import { IonIcon } from "@ionic/react";
@@ -38,6 +34,7 @@ import {
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "./formik-input";
+import { AppDialog } from "./app-dialog";
 
 const overviewSchema = Yup.object({
   name: Yup.string().required("Required"),
@@ -744,36 +741,25 @@ const ProviderHome = () => {
             </Page>
           </Sheet>
 
-          <Actions
-            opened={deleteActionSheetOpen}
-            onBackdropClick={() => setDeleteActionSheetOpen(false)}
-          >
-            <ActionsGroup>
-              <ActionsLabel>
-                This product will be permanently removed.
-              </ActionsLabel>
-              <ActionsButton
-                onClick={() => {
-                  if (editingProduct) {
-                    handleDeleteProduct(editingProduct.id);
-                  }
-                  setDeleteActionSheetOpen(false);
-                  setProductSheetOpen(false);
-                }}
-                className="text-red-500 font-semibold"
-              >
-                Delete
-              </ActionsButton>
-            </ActionsGroup>
-            <ActionsGroup>
-              <ActionsButton
-                onClick={() => setDeleteActionSheetOpen(false)}
-                bold
-              >
-                Cancel
-              </ActionsButton>
-            </ActionsGroup>
-          </Actions>
+          <AppDialog
+            open={deleteActionSheetOpen}
+            onClose={() => setDeleteActionSheetOpen(false)}
+            icon={trashOutline}
+            iconColor="text-red-500"
+            iconBg="bg-red-50"
+            title="Delete Product?"
+            description="This product will be permanently removed."
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            onConfirm={() => {
+              if (editingProduct) {
+                handleDeleteProduct(editingProduct.id);
+              }
+              setDeleteActionSheetOpen(false);
+              setProductSheetOpen(false);
+            }}
+            confirmColor="red"
+          />
         </div>
       )}
 

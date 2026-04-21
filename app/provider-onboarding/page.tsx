@@ -38,6 +38,7 @@ import {
   becomeProvider,
   getMyProviderStatus,
 } from "@/services/provider.service";
+import { AppDialog } from "../components/app-dialog";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -69,12 +70,12 @@ const step1Schema = Yup.object({
 
 const step2Schema = Yup.object({
   identity_doc: Yup.mixed<File>()
-    .required("Identity document is required")
+    .nullable()
     .test("fileSize", "File must be less than 5 MB", (val) =>
-      val instanceof File ? val.size <= MAX_FILE_SIZE : false,
+      !val || (val instanceof File && val.size <= MAX_FILE_SIZE),
     )
     .test("fileType", "Only JPEG, PNG or PDF allowed", (val) =>
-      val instanceof File ? ALLOWED_FILE_TYPES.includes(val.type) : false,
+      !val || (val instanceof File && ALLOWED_FILE_TYPES.includes(val.type)),
     ),
 });
 
@@ -570,7 +571,7 @@ const WhatHappensNext = () => (
         {
           step: "2",
           text: "Your provider profile gets verified and activated",
-          time: "1â€“2 business days",
+          time: "1-2 business days",
         },
         {
           step: "3",
@@ -609,7 +610,7 @@ const UnderReviewBanner = ({
       iconColor: "text-amber-500",
       title: "Application Submitted",
       subtitle:
-        "Your application is in our queue and will be reviewed shortly. This usually takes 1â€“2 business days.",
+        "Your application is in our queue and will be reviewed shortly. This usually takes 1-2 business days.",
       steps: [
         { label: "Application submitted", done: true },
         { label: "Identity verification in progress", done: false },
@@ -736,6 +737,8 @@ const ProviderOnboardingPage = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [docType, setDocType] = useState<DocTypeId>("aadhaar");
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const pendingSubmitRef = useRef<(() => void) | null>(null);
 
   // Fetch real provider status on mount
   useEffect(() => {
@@ -786,11 +789,6 @@ const ProviderOnboardingPage = () => {
       setSubmitError("You must be logged in to become a provider.");
       return;
     }
-    if (!values.identity_doc) {
-      setSubmitError("Please upload your identity document.");
-      return;
-    }
-
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -806,9 +804,10 @@ const ProviderOnboardingPage = () => {
         pincode: values.pincode.trim(),
         openTime: values.open_time || undefined,
         closeTime: values.close_time || undefined,
-        aadhaarFile: values.identity_doc,
+        aadhaarFile: values.identity_doc || undefined,
       });
-      setProviderStatus("pending");
+      // If user uploaded doc → pending verification; if skipped → approved (unverified)
+      setProviderStatus(values.identity_doc ? "pending" : "approved");
     } catch (err: any) {
       const message =
         err?.response?.data?.message ??
@@ -829,7 +828,7 @@ const ProviderOnboardingPage = () => {
         <Navbar title="Become a Provider" />
         <div className="flex flex-col items-center justify-center min-h-[70vh] gap-3">
           <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-          <p className="text-sm text-slate-400">Checking your statusâ€¦</p>
+          <p className="text-sm text-slate-400">Checking your status...</p>
         </div>
       </Page>
     );
@@ -882,6 +881,7 @@ const ProviderOnboardingPage = () => {
           setTouched,
           errors,
           touched,
+          submitForm,
         }) => {
           const isStep1Valid = Boolean(
             values.brand_name.trim() &&
@@ -988,7 +988,7 @@ const ProviderOnboardingPage = () => {
                     <SectionHeader
                       icon={timeOutline}
                       title="Business Hours"
-                      subtitle="Optional â€” shown on your profile"
+                      subtitle="Optional - shown on your profile"
                     />
                     <List strongIos insetIos className="!mt-0">
                       <TimePicker
@@ -1011,10 +1011,15 @@ const ProviderOnboardingPage = () => {
                         icon={shieldCheckmarkOutline}
                         className="text-amber-500 text-lg shrink-0 mt-0.5"
                       />
-                      <p className="text-xs text-amber-800 leading-relaxed">
-                        Upload a government-issued identity document for
-                        verification. This is a one-time process.
-                      </p>
+                      <div>
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          Upload a government-issued identity document for
+                          verification. This helps build customer trust and improves your search ranking.
+                        </p>
+                        <p className="text-[10px] text-amber-600 mt-1 font-medium">
+                          This step is optional - you can always verify later from your dashboard.
+                        </p>
+                      </div>
                     </div>
 
                     <SectionHeader
@@ -1095,7 +1100,7 @@ const ProviderOnboardingPage = () => {
                         disabled={!isStep1Valid || isSubmitting}
                         type="button"
                       >
-                        Next Step â†’
+                        Next Step
                       </Button>
                     </>
                   ) : (
@@ -1109,24 +1114,47 @@ const ProviderOnboardingPage = () => {
                         disabled={isSubmitting}
                         type="button"
                       >
-                        â† Back
+                        Back
                       </Button>
-                      <Button
-                        large
-                        rounded
-                        className="flex-1"
-                        type="submit"
-                        disabled={!isStep2Valid || isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <span className="flex items-center gap-2 justify-center">
-                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                            Submittingâ€¦
-                          </span>
-                        ) : (
-                          "Submit Application"
-                        )}
-                      </Button>
+                      {isStep2Valid ? (
+                        <Button
+                          large
+                          rounded
+                          className="flex-1"
+                          type="submit"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? (
+                            <span className="flex items-center gap-2 justify-center">
+                              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                              Submitting...
+                            </span>
+                          ) : (
+                            "Submit"
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          large
+                          rounded
+                          className="flex-1"
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => {
+                            pendingSubmitRef.current = submitForm;
+                            setShowSkipConfirm(true);
+                          }}
+                        >
+                          {isSubmitting ? (
+                            <span className="flex items-center gap-2 justify-center">
+                              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                              Submitting...
+                            </span>
+                          ) : (
+                            "Skip & Submit"
+                          )}
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
@@ -1135,6 +1163,25 @@ const ProviderOnboardingPage = () => {
           );
         }}
       </Formik>
+
+      {/* Skip Verification Confirmation */}
+      <AppDialog
+        open={showSkipConfirm}
+        onClose={() => setShowSkipConfirm(false)}
+        icon={informationCircleOutline}
+        iconColor="text-amber-600"
+        iconBg="bg-amber-50"
+        title="Skip Verification?"
+        description="You can always verify later from your dashboard, but verified providers get better visibility and trust from customers."
+        confirmLabel="Skip for Now"
+        cancelLabel="Add Verification"
+        onConfirm={() => {
+          setShowSkipConfirm(false);
+          pendingSubmitRef.current?.();
+          pendingSubmitRef.current = null;
+        }}
+        confirmColor="gray"
+      />
     </Page>
   );
 };

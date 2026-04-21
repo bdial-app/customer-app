@@ -172,6 +172,23 @@ const AnalyticsContent = () => {
   return (
     <div className="pb-8 overflow-x-hidden">
 
+      {/* Analytics header */}
+      <div
+        className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
+        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+      >
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-white">Analytics</h1>
+            <p className="text-[11px] text-white/50">Performance &amp; insights</p>
+          </div>
+          <div className="flex items-center gap-1.5 bg-emerald-500/20 px-2.5 py-1 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-400 text-[10px] font-bold">Live</span>
+          </div>
+        </div>
+      </div>
+
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           HERO SCORE CARD
           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
@@ -579,121 +596,6 @@ const AnalyticsContent = () => {
         </div>
       </div>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          RECENT REVIEWS
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <div className="px-4 mb-5">
-        <div className="flex items-center justify-between mb-2.5">
-          <h3 className="text-[13px] font-bold text-slate-800">Latest Reviews</h3>
-          <button className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
-            All <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
-          </button>
-        </div>
-        <div className="space-y-2">
-          {RECENT_REVIEWS.map((r, i) => (
-            <motion.div
-              key={r.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-              className="bg-white rounded-2xl p-3.5 border border-slate-100"
-            >
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-[11px] font-bold">{r.name[0]}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-bold text-slate-800">{r.name}</span>
-                    <span className="text-[9px] text-slate-400">{r.time}</span>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    {[1,2,3,4,5].map((s) => (
-                      <IonIcon key={s} icon={s <= r.rating ? star : starOutline} className={`text-[9px] ${s <= r.rating ? "text-amber-400" : "text-slate-200"}`} />
-                    ))}
-                    <span className="text-[9px] text-slate-400 ml-1">{r.listing}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">{r.text}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          GROWTH TIPS
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <div className="px-4 mb-5">
-        <div className="flex items-center justify-between mb-2.5">
-          <h3 className="text-[13px] font-bold text-slate-800">Growth Tips</h3>
-          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-            {GROWTH_TIPS.filter(t => t.priority === "high").length} urgent
-          </span>
-        </div>
-        <div className="space-y-2">
-          {GROWTH_TIPS.map((tip, i) => {
-            const priorityBadge = {
-              high: "bg-red-50 text-red-600",
-              medium: "bg-amber-50 text-amber-600",
-              low: "bg-slate-50 text-slate-500",
-            }[tip.priority];
-
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + i * 0.06 }}
-                className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 active:bg-slate-50"
-              >
-                <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
-                  <IonIcon icon={tip.icon} className="text-base text-slate-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-bold text-slate-800">{tip.title}</span>
-                    <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full uppercase ${priorityBadge}`}>
-                      {tip.priority}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5 truncate">{tip.desc}</p>
-                </div>
-                <IonIcon icon={chevronForwardOutline} className="text-slate-300 text-sm flex-shrink-0" />
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          NOTIFICATIONS PREVIEW
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <div className="px-4 mb-2">
-        <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-2xl p-4 border border-slate-100">
-          <div className="flex items-center gap-2.5 mb-3">
-            <IonIcon icon={notifications} className="text-slate-600 text-base" />
-            <h3 className="text-[13px] font-bold text-slate-800">Recent Activity</h3>
-          </div>
-          <div className="space-y-2.5">
-            {[
-              { text: "New review from Fatima B. on Mehendi", time: "2h ago", type: "review" },
-              { text: "Your Catering listing is under review", time: "6h ago", type: "listing" },
-              { text: "3 new enquiries this week", time: "1d ago", type: "enquiry" },
-            ].map((n, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <div className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
-                  n.type === "review" ? "bg-amber-400" : n.type === "listing" ? "bg-blue-400" : "bg-emerald-400"
-                }`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-slate-700">{n.text}</p>
-                  <span className="text-[9px] text-slate-400">{n.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

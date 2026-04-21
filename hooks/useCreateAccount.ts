@@ -37,6 +37,7 @@ export const useCreateAccount = (initialMobile?: string) => {
       notify({
         title: "Geolocation Error",
         subtitle: "Your browser does not support geolocation.",
+        variant: "error",
       });
       return;
     }
@@ -50,6 +51,7 @@ export const useCreateAccount = (initialMobile?: string) => {
         notify({
           title: "Location Secured",
           subtitle: "We've accurately pinned your location.",
+          variant: "success",
         });
       },
       (error) => {
@@ -61,6 +63,7 @@ export const useCreateAccount = (initialMobile?: string) => {
         notify({
           title: "Location Required",
           subtitle: message,
+          variant: "warning",
         });
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -102,6 +105,7 @@ export const useCreateAccount = (initialMobile?: string) => {
       notify({
         title: "OTP Sent",
         subtitle: otp ? `Your code: ${otp}` : "Check your messages",
+        variant: "success",
         duration: 10000,
       });
       startCooldown();
@@ -109,6 +113,7 @@ export const useCreateAccount = (initialMobile?: string) => {
       notify({
         title: "Error",
         subtitle: err?.response?.data?.message ?? "Failed to send OTP. Please try again.",
+        variant: "error",
       });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,6 +151,7 @@ export const useCreateAccount = (initialMobile?: string) => {
         notify({
           title: "OTP Sent",
           subtitle: otp ? `Your code: ${otp}` : "OTP sent to your mobile number!",
+          variant: "success",
           duration: 10000,
         });
         startCooldown();
@@ -162,6 +168,7 @@ export const useCreateAccount = (initialMobile?: string) => {
           notify({
             title: "Welcome Back",
             subtitle: `Logged in as ${res.user.name}`,
+            variant: "success",
           });
         } else {
           setCurrentStep("details");
@@ -172,6 +179,7 @@ export const useCreateAccount = (initialMobile?: string) => {
         title: "Error",
         subtitle:
           err?.response?.data?.message ?? "Something went wrong. Please retry.",
+        variant: "error",
       });
     }
   };
@@ -182,6 +190,7 @@ export const useCreateAccount = (initialMobile?: string) => {
         title: "Location Required",
         subtitle:
           "We need your geolocation to complete registration. Please allow access.",
+        variant: "warning",
       });
       requestLocation();
       return;
@@ -203,6 +212,7 @@ export const useCreateAccount = (initialMobile?: string) => {
         title: "Error",
         subtitle:
           err?.response?.data?.message ?? "Account creation failed. Try again.",
+        variant: "error",
       });
     }
   };
@@ -219,15 +229,26 @@ export const useCreateAccount = (initialMobile?: string) => {
       notify({
         title: "OTP Sent",
         subtitle: otp ? `Your code: ${otp}` : "OTP resent to your mobile!",
+        variant: "success",
         duration: 10000,
       });
       startCooldown();
     } catch (err: any) {
-      notify({
-        title: "Error",
-        subtitle:
-          err?.response?.data?.message ?? "Failed to resend OTP. Try again.",
-      });
+      const data = err?.response?.data;
+      if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
+        setResendCooldown(data.retryAfterSeconds);
+        notify({
+          title: "Please wait",
+          subtitle: `You can resend in ${data.retryAfterSeconds}s`,
+          variant: "warning",
+        });
+      } else {
+        notify({
+          title: "Error",
+          subtitle: data?.message ?? "Failed to resend OTP. Try again.",
+          variant: "error",
+        });
+      }
     }
   };
 

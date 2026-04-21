@@ -31,8 +31,29 @@ export const PROVIDER_URLS = {
   NEARBY: "/providers/nearby",
   FEATURED: "/providers/featured",
   BY_ID: (id: string) => `/providers/${id}`,
+  UPDATE: (id: string) => `/providers/${id}`,
   BECOME_PROVIDER: "/providers/become-provider",
   MY_STATUS: "/providers/my-status",
   SEND_OTP: "/providers/send-otp",
   VERIFY_OTP: "/providers/verify-otp",
+  SUBMIT_VERIFICATION: "/providers/submit-verification",
+};
+
+export const LISTING_URLS = {
+  LIST: "/listings",
+  CREATE: "/listings",
+  BY_ID: (id: string) => `/listings/${id}`,
+  UPDATE: (id: string) => `/listings/${id}`,
+  DELETE: (id: string) => `/listings/${id}`,
+  MY_LISTINGS: "/users/me/listings",
+};
+
+export const PHOTO_URLS = {
+  UPLOAD_LISTING: (listingId: string) => `/photos/listing/${listingId}`,
+  DELETE_LISTING: (photoId: string) => `/photos/listing/${photoId}`,
+  REORDER_LISTING: (listingId: string) => `/photos/listing/${listingId}/reorder`,
+};
+
+export const REVIEW_URLS = {
+  BY_LISTING: (listingId: string) => `/listings/${listingId}`,
 };

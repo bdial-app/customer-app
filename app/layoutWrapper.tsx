@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "@/store";
 import { NotificationProvider } from "./context/NotificationContext";
-import { AppNotification } from "./components/app-notification";
+import { AppToast } from "./components/app-toast";
 import { hydrateAuth } from "@/store/slices/authSlice";
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -22,7 +22,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         <AppProvider>
           <NotificationProvider>
             <App theme="ios">
-              <AppNotification />
+              <AppToast />
               {children}
             </App>
           </NotificationProvider>

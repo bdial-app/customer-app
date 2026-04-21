@@ -8,10 +8,6 @@ import {
   BlockTitle,
   Block,
   Button,
-  Actions,
-  ActionsGroup,
-  ActionsLabel,
-  ActionsButton,
 } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -57,6 +53,7 @@ import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
 import { getMyProviderStatus } from "@/services/provider.service";
+import { AppDialog } from "./app-dialog";
 
 interface UserProfile {
   mobileNumber: string;
@@ -195,71 +192,9 @@ const SlidePage = ({
   </AnimatePresence>
 );
 
-// ─── Delete Account Confirmation ────────────────────────────────────
-const DeleteAccountSheet = ({
-  open,
-  onClose,
-  onConfirm,
-  isDeleting,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isDeleting: boolean;
-}) => (
-  <AnimatePresence>
-    {open && (
-      <>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] bg-black/40"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[201] bg-white rounded-t-3xl"
-          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
-        >
-          <div className="flex flex-col items-center px-6 pt-6 pb-4">
-            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
-              <IonIcon icon={trashOutline} className="text-3xl text-red-500" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-800 mb-1">
-              Delete Account?
-            </h3>
-            <p className="text-sm text-slate-500 text-center leading-relaxed mb-6">
-              This action is permanent and cannot be undone. All your data,
-              bookings, saved locations, and preferences will be permanently
-              deleted.
-            </p>
-            <button
-              onClick={onConfirm}
-              disabled={isDeleting}
-              className="w-full py-3.5 rounded-xl bg-red-500 text-white font-bold text-sm active:bg-red-600 disabled:opacity-50 transition-colors mb-3"
-            >
-              {isDeleting ? "Deleting..." : "Yes, Delete My Account"}
-            </button>
-            <button
-              onClick={onClose}
-              className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm active:bg-slate-200 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </motion.div>
-      </>
-    )}
-  </AnimatePresence>
-);
-
 // ─── Main Profile Content ───────────────────────────────────────────
 const ProfileContent = () => {
-  const { providerStatus, userMode, setProviderStatus, toggleMode, resetProviderState } =
+  const { providerStatus, userMode, setProviderStatus, setProviderInfo, toggleMode, resetProviderState } =
     useAppContext();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user as any);
@@ -290,13 +225,19 @@ const ProfileContent = () => {
       .then((result) => {
         if (!cancelled) {
           setProviderStatus(result.providerStatus as any);
+          if (result.provider) {
+            setProviderInfo({
+              id: result.provider.id,
+              brandName: result.provider.brandName,
+            });
+          }
         }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [user?.id, setProviderStatus]);
+  }, [user?.id, setProviderStatus, setProviderInfo]);
 
   const dispatch = useDispatch();
 
@@ -314,12 +255,14 @@ const ProfileContent = () => {
       notify({
         title: "Profile Updated",
         subtitle: "Your information was successfully updated.",
+        variant: "success",
       });
       setActivePage(null);
     } catch (err: any) {
       notify({
         title: "Update Failed",
         subtitle: err?.response?.data?.message || "Something went wrong.",
+        variant: "error",
       });
     }
   };
@@ -348,9 +291,9 @@ const ProfileContent = () => {
       resetProviderState();
       setDeleteSheetOpen(false);
       router.push("/auth/login");
-      notify({ title: "Account Deleted", subtitle: "Your account has been removed." });
+      notify({ title: "Account Deleted", subtitle: "Your account has been removed.", variant: "success" });
     } catch {
-      notify({ title: "Error", subtitle: "Failed to delete account. Please try again." });
+      notify({ title: "Error", subtitle: "Failed to delete account. Please try again.", variant: "error" });
     } finally {
       setIsDeleting(false);
     }
@@ -408,7 +351,7 @@ const ProfileContent = () => {
       </motion.div>
 
       {/* Provider Status Cards */}
-      {providerStatus === "approved" && (
+      {(providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review") && (
         <div className="mx-4 mb-3">
           <div className="bg-white rounded-2xl p-4 border border-slate-100 flex gap-4 justify-between items-center">
             <div>
@@ -455,7 +398,7 @@ const ProfileContent = () => {
         </motion.div>
       )}
 
-      {providerStatus === "pending" && (
+      {providerStatus === "pending" && userMode === "customer" && (
         <div className="mx-4 mb-3">
           <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
             <div className="flex items-start gap-3">
@@ -465,7 +408,7 @@ const ProfileContent = () => {
               <div className="flex-1">
                 <div className="font-bold text-sm text-amber-900">Verification Pending</div>
                 <div className="text-amber-700 text-xs mt-0.5">
-                  Under review. Usually takes 24-48 hours.
+                  Under review. You can still manage your business.
                 </div>
               </div>
             </div>
@@ -496,6 +439,47 @@ const ProfileContent = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Provider Business Card - shown when in provider mode */}
+      {(providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review") && userMode === "provider" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-4 mb-3"
+        >
+          <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
+                <IonIcon icon={businessOutline} className="text-xl text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">
+                  {profile.name || "Your Business"}
+                </p>
+                <p className="text-white/70 text-[11px]">Business Profile</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  // Navigate back to home/dashboard tab to manage business
+                }}
+                className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
+              >
+                Manage Business
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={toggleMode}
+                className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
+              >
+                Switch to Customer
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* ── Account Section ──────────────────────────────────── */}
@@ -996,32 +980,35 @@ const ProfileContent = () => {
         </div>
       </SlidePage>
 
-      {/* ── Action Sheets ────────────────────────────────────── */}
-      <Actions
-        opened={logoutActionSheetOpen}
-        onBackdropClick={() => setLogoutActionSheetOpen(false)}
-      >
-        <ActionsGroup>
-          <ActionsLabel>Are you sure you want to log out?</ActionsLabel>
-          <ActionsButton
-            onClick={handleLogout}
-            className="text-red-500 font-semibold"
-          >
-            Log Out
-          </ActionsButton>
-        </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton onClick={() => setLogoutActionSheetOpen(false)} bold>
-            Cancel
-          </ActionsButton>
-        </ActionsGroup>
-      </Actions>
+      {/* ── Dialogs ─────────────────────────────────────── */}
+      <AppDialog
+        open={logoutActionSheetOpen}
+        onClose={() => setLogoutActionSheetOpen(false)}
+        icon={logOutOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title="Log Out?"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        onConfirm={handleLogout}
+        confirmColor="red"
+      />
 
-      <DeleteAccountSheet
+      <AppDialog
         open={deleteSheetOpen}
         onClose={() => setDeleteSheetOpen(false)}
+        icon={trashOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title="Delete Account?"
+        description="This action is permanent and cannot be undone. All your data, bookings, saved locations, and preferences will be permanently deleted."
+        confirmLabel="Yes, Delete My Account"
+        cancelLabel="Cancel"
         onConfirm={handleDeleteAccount}
-        isDeleting={isDeleting}
+        confirmColor="red"
+        isLoading={isDeleting}
+        loadingLabel="Deleting..."
       />
     </>
   );
