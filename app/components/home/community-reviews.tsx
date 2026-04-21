@@ -1,9 +1,10 @@
 "use client";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import type { CommunityReview } from "@/services/home.service";
 
-interface Review {
-  id: number;
+interface DisplayReview {
+  id: string;
   name: string;
   avatar: string;
   service: string;
@@ -11,54 +12,6 @@ interface Review {
   rating: number;
   timeAgo: string;
 }
-
-const REVIEWS: Review[] = [
-  {
-    id: 1,
-    name: "Fatima B.",
-    avatar: "FB",
-    service: "Tailoring",
-    text: "Ahmed's Tailoring did an amazing job on my suit. Perfect stitching and delivered on time!",
-    rating: 5,
-    timeAgo: "2h ago",
-  },
-  {
-    id: 2,
-    name: "Hussain M.",
-    avatar: "HM",
-    service: "AC Repair",
-    text: "Quick response, fixed my AC in 30 minutes. Very professional service.",
-    rating: 5,
-    timeAgo: "4h ago",
-  },
-  {
-    id: 3,
-    name: "Sakina T.",
-    avatar: "ST",
-    service: "Beauty Salon",
-    text: "Best bridal makeup! Glow Studio understands exactly what you want.",
-    rating: 5,
-    timeAgo: "6h ago",
-  },
-  {
-    id: 4,
-    name: "Murtaza K.",
-    avatar: "MK",
-    service: "Plumbing",
-    text: "Fixed a major leak in 15 minutes. Honest pricing, no hidden charges.",
-    rating: 4,
-    timeAgo: "1d ago",
-  },
-  {
-    id: 5,
-    name: "Zahra A.",
-    avatar: "ZA",
-    service: "Tiffin",
-    text: "Homemade taste, delivered on time every single day. My family loves it!",
-    rating: 5,
-    timeAgo: "1d ago",
-  },
-];
 
 const AVATAR_COLORS = [
   "from-amber-400 to-orange-500",
@@ -68,9 +21,53 @@ const AVATAR_COLORS = [
   "from-purple-400 to-violet-500",
 ];
 
-const CommunityReviews = () => {
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 1) return "Just now";
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  return `${weeks}w ago`;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+interface CommunityReviewsProps {
+  reviews?: CommunityReview[];
+  isLoading?: boolean;
+}
+
+const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+
+  const displayReviews: DisplayReview[] = useMemo(() => {
+    if (!reviews || reviews.length === 0) return [];
+    return reviews.map((r) => ({
+      id: r.id,
+      name: r.name,
+      avatar: getInitials(r.name),
+      service: r.service,
+      text: r.text,
+      rating: r.rating,
+      timeAgo: formatTimeAgo(r.timeAgo),
+    }));
+  }, [reviews]);
+
+  const avgRating = useMemo(() => {
+    if (displayReviews.length === 0) return 0;
+    const sum = displayReviews.reduce((acc, r) => acc + r.rating, 0);
+    return (sum / displayReviews.length).toFixed(1);
+  }, [displayReviews]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -93,7 +90,9 @@ const CommunityReviews = () => {
   }, [isPaused]);
 
   // Duplicate for infinite scroll
-  const allReviews = [...REVIEWS, ...REVIEWS];
+  const allReviews = [...displayReviews, ...displayReviews];
+
+  if (displayReviews.length === 0 && !isLoading) return null;
 
   return (
     <div className="mb-2">
@@ -106,12 +105,39 @@ const CommunityReviews = () => {
             Real reviews from our community
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full">
-          <span className="text-xs font-bold text-amber-700">4.8</span>
-          <span className="text-[10px] text-amber-600">★★★★★</span>
-        </div>
+        {Number(avgRating) > 0 && (
+          <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold text-amber-700">{avgRating}</span>
+            <span className="text-[10px] text-amber-600">★★★★★</span>
+          </div>
+        )}
       </div>
 
+      {isLoading ? (
+        <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="shrink-0 w-[260px] bg-white rounded-2xl p-3.5 border border-slate-100 animate-pulse">
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <div className="w-9 h-9 rounded-full bg-slate-100" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 bg-slate-100 rounded-full w-24" />
+                  <div className="h-2 bg-slate-50 rounded-full w-32" />
+                </div>
+                <div className="flex gap-px">
+                  {[1, 2, 3, 4, 5].map((j) => (
+                    <div key={j} className="w-2.5 h-2.5 bg-slate-100 rounded-sm" />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-2.5 bg-slate-100 rounded-full w-full" />
+                <div className="h-2.5 bg-slate-100 rounded-full w-5/6" />
+                <div className="h-2.5 bg-slate-50 rounded-full w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
       <div
         ref={scrollRef}
         onTouchStart={() => setIsPaused(true)}
@@ -129,7 +155,7 @@ const CommunityReviews = () => {
             <div className="flex items-center gap-2.5 mb-2.5">
               <div
                 className={`w-9 h-9 rounded-full bg-gradient-to-br ${
-                  AVATAR_COLORS[review.id % AVATAR_COLORS.length]
+                  AVATAR_COLORS[i % AVATAR_COLORS.length]
                 } flex items-center justify-center`}
               >
                 <span className="text-[11px] font-bold text-white">
@@ -154,6 +180,7 @@ const CommunityReviews = () => {
           </motion.div>
         ))}
       </div>
+      )}
     </div>
   );
 };

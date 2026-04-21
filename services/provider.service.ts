@@ -106,6 +106,85 @@ export const getProviderById = async (id: string): Promise<any> => {
   return data;
 };
 
+export interface ProviderDetailsPhoto {
+  id: string;
+  listingId: string;
+  businessName?: string;
+  imageUrl: string;
+  storageKey: string;
+  displayOrder: number;
+  uploadedAt: string;
+}
+
+export interface ProviderDetailsProduct {
+  id: string;
+  listingId: string;
+  businessName?: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  currency: string;
+  photoUrl: string | null;
+  isActive: boolean;
+  displayOrder: number;
+}
+
+export interface ProviderDetailsReview {
+  id: string;
+  listingId: string;
+  businessName?: string;
+  reviewerId: string;
+  starRating: number;
+  reviewText: string | null;
+  status: string;
+  postedAt: string;
+  reviewer?: {
+    id: string;
+    name: string;
+  } | null;
+  photos?: Array<{ id: string; imageUrl: string }>;
+}
+
+export interface ProviderDetailsListingSummary {
+  id: string;
+  businessName: string;
+  description: string | null;
+  city: string;
+  area: string | null;
+  status: string;
+  isWomenLed: boolean;
+  communityVerified: boolean;
+  approvedAt: string | null;
+  photoCount: number;
+  productCount: number;
+  reviewCount: number;
+  categories: Array<{ id: string; name: string; slug: string }>;
+}
+
+export interface ProviderDetailsResponse {
+  provider: ProviderData;
+  listings: ProviderDetailsListingSummary[];
+  photos: ProviderDetailsPhoto[];
+  products: ProviderDetailsProduct[];
+  reviews: ProviderDetailsReview[];
+  stats: {
+    rating: number;
+    reviewCount: number;
+    ratingDist: number[];
+    listingCount: number;
+    photoCount: number;
+    productCount: number;
+    priceRange: { min: number; max: number; currency: string } | null;
+  };
+}
+
+export const getProviderDetails = async (
+  id: string,
+): Promise<ProviderDetailsResponse> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.DETAILS(id));
+  return data;
+};
+
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
 ): Promise<{ provider: any; verification: any }> => {

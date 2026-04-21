@@ -1,6 +1,10 @@
 "use client";
 import { useAllCategories } from "@/hooks/useCategories";
-import { IonIcon } from "@ionic/react";
+import dynamic from "next/dynamic";
+const IonIcon = dynamic(
+  () => import("@ionic/react").then((m) => m.IonIcon),
+  { ssr: false },
+);
 import { close } from "ionicons/icons";
 
 interface FilterChipsProps {
@@ -19,35 +23,36 @@ const FilterChips = ({
   if (selectedFilters.size === 0) return null;
 
   const getLabel = (id: string) => {
-    const category = categoryResponse?.data.find((c) => c.id === id);
-    return category?.name || id;
+    // Search both parent and child categories
+    for (const cat of categoryResponse?.data ?? []) {
+      if (cat.id === id) return cat.name;
+      for (const child of cat.children ?? []) {
+        if (child.id === id) return child.name;
+      }
+    }
+    return id;
   };
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-4 pb-2">
-      <div className="flex gap-2 shrink-0">
-        {selectedFilters.size > 0 && <div className="h-4"></div>}
-        {Array.from(selectedFilters).map((filterId) => (
-          <button
-            key={filterId}
-            onClick={() => onRemoveFilter(filterId)}
-            className="inline-flex items-center gap-1 pl-3 pr-2 py-1 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap"
-            style={{
-              background: "rgba(0, 122, 255, 0.12)",
-              color: "#007AFF",
-            }}
-          >
-            {getLabel(filterId)}
-            <IonIcon icon={close} style={{ fontSize: "14px" }} />
-          </button>
-        ))}
-      </div>
-      {/* <button
-        onClick={onClearAll}
-        className="text-xs text-gray-500 underline py-1 shrink-0 whitespace-nowrap"
-      >
-        Clear all
-      </button> */}
+    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      {Array.from(selectedFilters).map((filterId) => (
+        <button
+          key={filterId}
+          onClick={() => onRemoveFilter(filterId)}
+          className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200/60 active:bg-amber-100 transition-colors"
+        >
+          {getLabel(filterId)}
+          <IonIcon icon={close} className="w-3.5 h-3.5" />
+        </button>
+      ))}
+      {selectedFilters.size > 1 && (
+        <button
+          onClick={onClearAll}
+          className="text-[11px] font-semibold text-gray-400 whitespace-nowrap px-2 py-1 active:text-gray-600"
+        >
+          Clear all
+        </button>
+      )}
     </div>
   );
 };

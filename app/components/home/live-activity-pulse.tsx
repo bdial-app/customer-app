@@ -1,21 +1,32 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useLiveActivity } from "@/hooks/useHomeFeed";
 
-const ACTIVITIES = [
-  { count: 42, text: "bookings completed near you today" },
-  { count: 18, text: "providers online in your area" },
-  { count: 7, text: "people booked tailoring this hour" },
-  { count: 23, text: "salon appointments booked today" },
-  { count: 12, text: "home services ongoing nearby" },
+const FALLBACK_ACTIVITIES = [
+  { count: 0, text: "bookings completed near you today" },
+  { count: 0, text: "providers online in your area" },
+  { count: 0, text: "services booked in the last hour" },
 ];
 
-const LiveActivityPulse = () => {
+interface LiveActivityPulseProps {
+  lat?: number;
+  lng?: number;
+  city?: string;
+}
+
+const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
+  const { data: activities } = useLiveActivity({ lat, lng, city });
   const [index, setIndex] = useState(0);
 
+  const displayActivities = useMemo(() => {
+    if (!activities || activities.length === 0) return FALLBACK_ACTIVITIES;
+    return activities;
+  }, [activities]);
+
   const next = useCallback(() => {
-    setIndex((prev) => (prev + 1) % ACTIVITIES.length);
-  }, []);
+    setIndex((prev) => (prev + 1) % displayActivities.length);
+  }, [displayActivities.length]);
 
   useEffect(() => {
     const timer = setInterval(next, 4500);
@@ -50,8 +61,8 @@ const LiveActivityPulse = () => {
               transition={{ duration: 0.25 }}
               className="text-[12px] text-emerald-800 font-medium absolute whitespace-nowrap"
             >
-              <span className="font-bold">{ACTIVITIES[index].count}</span>{" "}
-              {ACTIVITIES[index].text}
+              <span className="font-bold">{displayActivities[index].count}</span>{" "}
+              {displayActivities[index].text}
             </motion.p>
           </AnimatePresence>
         </div>

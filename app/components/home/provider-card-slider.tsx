@@ -34,12 +34,14 @@ const ProviderCardSlider = ({
   providers,
   viewAllLink,
   accentColor = "#F8CB45",
+  isLoading = false,
 }: {
   title: string;
   subtitle?: string;
   providers: Provider[];
   viewAllLink?: string;
   accentColor?: string;
+  isLoading?: boolean;
 }) => {
   const router = useRouter();
 
@@ -65,7 +67,25 @@ const ProviderCardSlider = ({
         )}
       </div>
 
-      {/* Card Slider */}
+      {/* Skeleton Loading State */}
+      {isLoading ? (
+        <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="shrink-0 w-[150px] bg-white rounded-2xl overflow-hidden border border-slate-50 animate-pulse">
+              <div className="h-[120px] bg-slate-100" />
+              <div className="p-2.5 space-y-2">
+                <div className="h-3.5 bg-slate-100 rounded-full w-4/5" />
+                <div className="h-2.5 bg-slate-50 rounded-full w-3/5" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-12 bg-slate-100 rounded-md" />
+                  <div className="h-3 w-14 bg-slate-50 rounded-full mt-1" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+      /* Card Slider */
       <motion.div
         variants={container}
         initial="hidden"
@@ -142,6 +162,7 @@ const ProviderCardSlider = ({
           </motion.div>
         ))}
       </motion.div>
+      )}
     </div>
   );
 };

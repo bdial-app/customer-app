@@ -34,11 +34,13 @@ const FeaturedProviderGrid = ({
   subtitle,
   providers,
   viewAllLink,
+  isLoading = false,
 }: {
   title: string;
   subtitle?: string;
   providers: Provider[];
   viewAllLink?: string;
+  isLoading?: boolean;
 }) => {
   const router = useRouter();
 
@@ -62,6 +64,24 @@ const FeaturedProviderGrid = ({
         )}
       </div>
 
+      {isLoading ? (
+        <div className="grid grid-cols-2 gap-3 px-4 pb-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-slate-50 animate-pulse">
+              <div className="h-[130px] bg-slate-100" />
+              <div className="p-2.5 space-y-2">
+                <div className="h-3.5 bg-slate-100 rounded-full w-4/5" />
+                <div className="h-2.5 bg-slate-50 rounded-full w-3/5" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-12 bg-slate-100 rounded-md" />
+                  <div className="h-3 w-10 bg-slate-50 rounded-full mt-1" />
+                </div>
+                <div className="h-3 bg-slate-50 rounded-full w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
       <motion.div
         variants={container}
         initial="hidden"
@@ -124,6 +144,7 @@ const FeaturedProviderGrid = ({
           </motion.div>
         ))}
       </motion.div>
+      )}
     </div>
   );
 };

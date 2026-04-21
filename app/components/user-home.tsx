@@ -17,136 +17,43 @@ import TrendingServices from "./home/trending-services";
 import CommunityReviews from "./home/community-reviews";
 import ReferEarnCard from "./home/refer-earn-card";
 import BecomeProviderCTA from "./home/become-provider-cta";
-
-const MOCK_PROVIDERS = [
-  {
-    id: 1,
-    name: "Ahmed's Tailoring",
-    service: "Tailoring & Stitching",
-    rating: 4.8,
-    reviews: 127,
-    price: "1000-5000",
-    location: "Downtown, 2.5 km",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
-    verified: true,
-  },
-  {
-    id: 2,
-    name: "Fashion House",
-    service: "Designer Wear",
-    rating: 4.5,
-    reviews: 89,
-    price: "1500-3000",
-    location: "City Center, 3.2 km",
-    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400",
-    verified: true,
-    womenLed: true,
-  },
-  {
-    id: 3,
-    name: "Stitch Perfect",
-    service: "Alterations",
-    rating: 4.6,
-    reviews: 203,
-    price: "1000-2000",
-    location: "West End, 1.8 km",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    verified: false,
-  },
-  {
-    id: 4,
-    name: "Royal Tailors",
-    service: "Traditional Wear",
-    rating: 4.9,
-    reviews: 156,
-    price: "500-5000",
-    location: "Old Town, 4.1 km",
-    image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400",
-    verified: true,
-    womenLed: true,
-  },
-  {
-    id: 5,
-    name: "Zara Boutique",
-    service: "Women's Fashion",
-    rating: 4.7,
-    reviews: 312,
-    price: "2000-8000",
-    location: "MG Road, 1.2 km",
-    image: "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=400",
-    verified: true,
-    womenLed: true,
-  },
-  {
-    id: 6,
-    name: "Classic Cuts",
-    service: "Everyday Alterations",
-    rating: 4.3,
-    reviews: 74,
-    price: "800-2500",
-    location: "Suburbs, 5.0 km",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
-    verified: false,
-  },
-];
-
-const BEAUTY_PROVIDERS = [
-  {
-    id: 10,
-    name: "Glow Studio",
-    service: "Salon & Makeup",
-    rating: 4.9,
-    reviews: 245,
-    price: "500-3000",
-    location: "MG Road, 1.5 km",
-    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400",
-    verified: true,
-    womenLed: true,
-  },
-  {
-    id: 11,
-    name: "Radiance Spa",
-    service: "Spa & Wellness",
-    rating: 4.7,
-    reviews: 178,
-    price: "1000-5000",
-    location: "Koregaon Park, 3 km",
-    image: "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=400",
-    verified: true,
-  },
-  {
-    id: 12,
-    name: "Mehandi Arts",
-    service: "Mehandi Artist",
-    rating: 4.8,
-    reviews: 89,
-    price: "300-2000",
-    location: "Camp, 2 km",
-    image: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400",
-    verified: true,
-    womenLed: true,
-  },
-  {
-    id: 13,
-    name: "Style Studio",
-    service: "Hair & Beauty",
-    rating: 4.5,
-    reviews: 134,
-    price: "400-2500",
-    location: "Baner, 4 km",
-    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400",
-    verified: false,
-  },
-];
+import { useHomeFeed } from "@/hooks/useHomeFeed";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 const UserHome = () => {
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const user = useAppSelector((state) => state.auth.user);
+
+  const { data: feed, isLoading } = useHomeFeed({
+    lat: user?.latitude ?? undefined,
+    lng: user?.longitude ?? undefined,
+    city: user?.city ?? undefined,
+  });
 
   const handleSearchTap = () => {
     setIsSheetOpen(true);
   };
+
+  // Map API providers to the shape expected by slider/grid components
+  const mapProvider = (p: any) => ({
+    id: p.id,
+    name: p.name,
+    image: p.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+    service: p.services || undefined,
+    rating: p.rating || 0,
+    reviews: p.reviewCount || 0,
+    price: undefined,
+    location: p.location || undefined,
+    verified: p.verified || false,
+    womenLed: false,
+    distance: p.distance,
+  });
+
+  const nearbyProviders = (feed?.nearbyProviders || []).map(mapProvider);
+  const beautyProviders = (feed?.beautyProviders || []).map(mapProvider);
+  const stats = feed?.platformStats;
 
   return (
     <>
@@ -176,19 +83,23 @@ const UserHome = () => {
         <GreetingCard />
 
         {/* Live Activity Pulse — social proof */}
-        <LiveActivityPulse />
+        <LiveActivityPulse
+          lat={user?.latitude ?? undefined}
+          lng={user?.longitude ?? undefined}
+          city={user?.city ?? undefined}
+        />
 
         {/* Promo Banner Carousel */}
-        <PromoBannerCarousel />
+        <PromoBannerCarousel banners={feed?.promoBanners} isLoading={isLoading} />
 
         {/* Reorder / Your last booking */}
-        <ReorderRibbon />
+        <ReorderRibbon lastBooking={feed?.lastBooking ?? null} />
 
         {/* Divider */}
         <div className="h-2 bg-slate-50 mx-0" />
 
         {/* 🔥 Trending Now */}
-        <TrendingServices />
+        <TrendingServices categories={feed?.trendingCategories} isLoading={isLoading} />
 
         {/* Divider */}
         <div className="h-2 bg-slate-50 mx-0" />
@@ -197,9 +108,10 @@ const UserHome = () => {
         <ProviderCardSlider
           title="Near You"
           subtitle="Top-rated providers nearby"
-          providers={MOCK_PROVIDERS}
+          providers={nearbyProviders}
           viewAllLink={ROUTE_PATH.ALL_SERVICES}
           accentColor="#F8CB45"
+          isLoading={isLoading}
         />
 
         {/* Refer & Earn */}
@@ -212,15 +124,16 @@ const UserHome = () => {
         <FeaturedProviderGrid
           title="Beauty & Wellness"
           subtitle="Pamper yourself today"
-          providers={BEAUTY_PROVIDERS}
+          providers={beautyProviders}
           viewAllLink={ROUTE_PATH.ALL_SERVICES}
+          isLoading={isLoading}
         />
 
         {/* Divider */}
         <div className="h-2 bg-slate-50 mx-0" />
 
         {/* Community Reviews */}
-        <CommunityReviews />
+        <CommunityReviews reviews={feed?.communityReviews} isLoading={isLoading} />
 
         {/* Divider */}
         <div className="h-2 bg-slate-50 mx-0" />
@@ -229,9 +142,10 @@ const UserHome = () => {
         <ProviderCardSlider
           title="Popular in Tailoring"
           subtitle="Most booked this week"
-          providers={MOCK_PROVIDERS.slice(0, 4)}
+          providers={nearbyProviders.slice(0, 4)}
           viewAllLink={ROUTE_PATH.ALL_SERVICES}
           accentColor="#9C27B0"
+          isLoading={isLoading}
         />
 
         {/* Become a Provider CTA */}
@@ -253,17 +167,17 @@ const UserHome = () => {
           </p>
           <div className="flex items-center justify-around text-center">
             <div>
-              <p className="text-xl font-extrabold text-slate-800">500+</p>
+              <p className="text-xl font-extrabold text-slate-800">{stats?.verifiedProviders ?? 0}+</p>
               <p className="text-[10px] text-slate-500 mt-0.5">Verified Providers</p>
             </div>
             <div className="w-px h-10 bg-slate-200/80" />
             <div>
-              <p className="text-xl font-extrabold text-slate-800">10K+</p>
+              <p className="text-xl font-extrabold text-slate-800">{stats?.totalBookings ?? 0}+</p>
               <p className="text-[10px] text-slate-500 mt-0.5">Happy Customers</p>
             </div>
             <div className="w-px h-10 bg-slate-200/80" />
             <div>
-              <p className="text-xl font-extrabold text-amber-500">4.8★</p>
+              <p className="text-xl font-extrabold text-amber-500">{stats?.avgRating ? `${stats.avgRating}★` : '—'}</p>
               <p className="text-[10px] text-slate-500 mt-0.5">Average Rating</p>
             </div>
           </div>

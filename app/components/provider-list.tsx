@@ -1,15 +1,22 @@
 import { ROUTE_PATH } from "@/utils/contants";
-import { IonIcon } from "@ionic/react";
-import { location, star } from "ionicons/icons";
-import { Block, List, ListItem } from "konsta/react";
+import dynamic from "next/dynamic";
+const IonIcon = dynamic(
+  () => import("@ionic/react").then((m) => m.IonIcon),
+  { ssr: false },
+);
+import {
+  locationOutline,
+  star,
+  checkmarkCircle,
+  timeOutline,
+} from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 const ProviderList = ({
   providerList,
-  sliderMode,
 }: {
   providerList: any[];
-  sliderMode?: boolean;
 }) => {
   const router = useRouter();
 
@@ -18,73 +25,90 @@ const ProviderList = ({
   };
 
   return (
-    <Block className="!px-0 !mb-2">
-      <div
-        className={`pl-4 pr-4 no-scrollbar ${
-          sliderMode
-            ? "flex flex-row gap-3 overflow-x-auto pb-2"
-            : "grid grid-cols-2 gap-2"
-        }`}
-      >
+    <div className="px-4 pb-4">
+      <div className="grid grid-cols-2 gap-3">
         {providerList.map((provider: any, index: number) => (
-          <div
+          <motion.div
             key={provider.id}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.03, duration: 0.3 }}
             onClick={() => handleNavigate(provider.id)}
-            className={`cursor-pointer bg-white rounded-md relative flex flex-col ${
-              sliderMode
-                ? "w-[130px] shrink-0"
-                : index % 2 !== 0
-                  ? "relative top-10"
-                  : ""
-            }`}
+            className="cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform"
           >
-            {/* Image with its own overflow-hidden for rounded corners */}
-            <div className="overflow-hidden rounded-t-lg">
+            {/* Image */}
+            <div className="relative h-[140px] overflow-hidden">
               <img
                 src={provider.image}
                 alt={provider.name}
-                className="w-full h-40 object-cover"
+                className="w-full h-full object-cover"
+                loading="lazy"
               />
-            </div>
-
-            {/* Women-Led chip — absolute top-right over image, not clipped */}
-            {provider.womenLed && (
-              <span
-                className="absolute top-2 right-2 z-10 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none shadow-sm"
-                style={{
-                  background: "linear-gradient(135deg, #F0E6FF, #FFE6F0)",
-                  color: "#9B59B6",
-                }}
-              >
-                ♀ Women-Led
-              </span>
-            )}
-
-            <div className="p-2 flex flex-col gap-1">
-              <span className="text-sm font-medium line-clamp-1">
-                {provider.name}
-              </span>
-
-              {/* Star rating */}
-              {provider.rating && (
-                <div className="flex items-center gap-1">
-                  <IonIcon icon={star} className="w-3 h-3 text-yellow-400" />
-                  <span className="text-xs font-medium text-gray-700">
-                    {provider.rating}
-                  </span>
-                  {provider.reviews && (
-                    <span className="text-xs text-gray-400">
-                      ({provider.reviews})
-                    </span>
-                  )}
+              {/* Verified badge */}
+              {provider.verified && (
+                <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+                  <IonIcon icon={checkmarkCircle} className="w-2.5 h-2.5" />
+                  Verified
+                </div>
+              )}
+              {/* Women-Led badge */}
+              {provider.womenLed && (
+                <div
+                  className="absolute top-2 right-2 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm"
+                  style={{
+                    background: "linear-gradient(135deg, #F0E6FF, #FFE6F0)",
+                    color: "#9B59B6",
+                  }}
+                >
+                  ♀ Women-Led
+                </div>
+              )}
+              {/* Distance pill */}
+              {provider.distance && (
+                <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm text-white text-[9px] font-medium px-2 py-0.5 rounded-full">
+                  {typeof provider.distance === "number"
+                    ? `${provider.distance.toFixed(1)} km`
+                    : provider.distance}
                 </div>
               )}
             </div>
-          </div>
+
+            {/* Content */}
+            <div className="p-2.5">
+              <h4 className="text-[13px] font-semibold text-gray-900 leading-tight line-clamp-1">
+                {provider.name}
+              </h4>
+              {provider.service && (
+                <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">
+                  {provider.service}
+                </p>
+              )}
+              <div className="flex items-center gap-2 mt-1.5">
+                {provider.rating != null && provider.rating > 0 && (
+                  <div className="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                    <IonIcon icon={star} className="w-3 h-3 text-amber-500" />
+                    <span className="text-[10px] font-bold text-amber-700">
+                      {Number(provider.rating).toFixed(1)}
+                    </span>
+                  </div>
+                )}
+                {provider.reviews != null && provider.reviews > 0 && (
+                  <span className="text-[10px] text-gray-400">
+                    ({provider.reviews})
+                  </span>
+                )}
+              </div>
+              {provider.location && (
+                <div className="flex items-center gap-0.5 mt-1.5 text-[10px] text-gray-400">
+                  <IonIcon icon={locationOutline} className="w-3 h-3" />
+                  <span className="truncate">{provider.location}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
         ))}
       </div>
-      {!sliderMode && <div className="h-20"></div>}
-    </Block>
+    </div>
   );
 };
 

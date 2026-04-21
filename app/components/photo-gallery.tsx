@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, FC, useImperativeHandle, forwardRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, FC, useImperativeHandle, forwardRef } from "react";
 import { createPortal } from "react-dom";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ type GestureState =
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const IMAGES: ImageItem[] = Array.from({ length: 10 }, (_, i) => ({
+const FALLBACK_IMAGES: ImageItem[] = Array.from({ length: 10 }, (_, i) => ({
   id: i + 1,
   src: `https://picsum.photos/seed/${i + 1}/800/800`,
   thumb: `https://picsum.photos/seed/${i + 1}/300/300`,
@@ -90,7 +90,25 @@ export interface PhotoGalleryRef {
   isLightboxOpen: () => boolean;
 }
 
-const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
+export interface PhotoGalleryProps {
+  images?: Array<{ src: string; thumb?: string; label?: string; alt?: string }>;
+}
+
+const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
+  const IMAGES: ImageItem[] = useMemo(
+    () =>
+      props.images && props.images.length > 0
+        ? props.images.map((img, i) => ({
+            id: i + 1,
+            src: img.src,
+            thumb: img.thumb ?? img.src,
+            label: img.label ?? `Photo ${i + 1}`,
+            alt: img.alt ?? img.label ?? `Photo ${i + 1}`,
+          }))
+        : FALLBACK_IMAGES,
+    [props.images],
+  );
+
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
@@ -115,7 +133,7 @@ const Gallery = forwardRef<PhotoGalleryRef>((props, ref) => {
     setLightbox((p) => ((p ?? 0) + dir + IMAGES.length) % IMAGES.length);
     setZoom(1);
     setPan({ x: 0, y: 0 });
-  }, []);
+  }, [IMAGES.length]);
 
   useEffect(() => {
     if (lightbox === null) return;

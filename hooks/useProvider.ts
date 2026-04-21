@@ -2,6 +2,8 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   getNearbyProviders,
   getProviderById,
+  getProviderDetails,
+  ProviderDetailsResponse,
   ProviderNearbyParams,
 } from "@/services/provider.service";
 
@@ -23,6 +25,14 @@ export const useProviderById = (id: string) => {
   return useQuery({
     queryKey: ["provider", id],
     queryFn: () => getProviderById(id),
+    enabled: !!id,
+  });
+};
+
+export const useProviderDetails = (id: string) => {
+  return useQuery<ProviderDetailsResponse>({
+    queryKey: ["provider-details", id],
+    queryFn: () => getProviderDetails(id),
     enabled: !!id,
   });
 };

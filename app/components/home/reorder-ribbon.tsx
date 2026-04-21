@@ -1,7 +1,17 @@
 "use client";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import type { LastBooking } from "@/services/home.service";
 
-const ReorderRibbon = () => {
+interface ReorderRibbonProps {
+  lastBooking: LastBooking | null;
+}
+
+const ReorderRibbon = ({ lastBooking }: ReorderRibbonProps) => {
+  const router = useRouter();
+
+  if (!lastBooking) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -17,13 +27,17 @@ const ReorderRibbon = () => {
               Your last booking
             </p>
             <h3 className="text-sm font-bold text-slate-800 mt-0.5">
-              Ahmed's Tailoring Shop
+              {lastBooking.providerName}
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Tailoring • 2.5 km away</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {lastBooking.categories || lastBooking.listingName}
+              {lastBooking.location ? ` • ${lastBooking.location}` : ""}
+            </p>
           </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
             className="bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm"
+            onClick={() => router.push(`/provider-details/${lastBooking.providerId}`)}
           >
             Rebook
           </motion.button>

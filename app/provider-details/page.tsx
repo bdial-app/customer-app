@@ -26,62 +26,76 @@ import {
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
-import { useProviderById } from "@/hooks/useProvider";
-
-// -- Types --
-
-interface Review {
-  id: number;
-  name: string;
-  avatar: string;
-  rating: number;
-  date: string;
-  comment: string;
-  verified: boolean;
-  helpful: number;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  photo_url: string;
-  badge?: string;
-}
-
-// -- Mock Data --
-
-const MOCK_REVIEWS: Review[] = [
-  { id: 1, name: "Sarah Johnson", avatar: "SJ", rating: 5, date: "2 days ago", comment: "Excellent work! The fit was perfect and quality exceeded expectations. Highly recommended for anyone looking for premium tailoring.", verified: true, helpful: 12 },
-  { id: 2, name: "Mohammed Ali", avatar: "MA", rating: 4, date: "1 week ago", comment: "Good service and reasonable prices. Got my traditional kurta stitched here and it turned out well. Slight delay but overall satisfied.", verified: true, helpful: 8 },
-  { id: 3, name: "Fatima Khan", avatar: "FK", rating: 5, date: "2 weeks ago", comment: "A master at the craft! Recreated a vintage design exactly as I wanted. Incredible attention to detail. Will definitely come back.", verified: false, helpful: 15 },
-  { id: 4, name: "Raj Patel", avatar: "RP", rating: 4, date: "3 weeks ago", comment: "Professional work and timely delivery. The alterations on my suit were done perfectly. Worth the quality.", verified: true, helpful: 6 },
-  { id: 5, name: "Aisha Begum", avatar: "AB", rating: 5, date: "1 month ago", comment: "Been coming here for years and never disappointed. Understands cultural preferences perfectly. Exceptional traditional wear.", verified: true, helpful: 20 },
-];
-
-const MOCK_PRODUCTS: Product[] = [
-  { id: "123e4567-e89b-12d3-a456-426614174000", name: "Premium Suit", description: "Custom tailored with high-quality fabric", price: 5000, currency: "\u20B9", photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", badge: "Bestseller" },
-  { id: "223e4567-e89b-12d3-a456-426614174001", name: "Business Shirt", description: "Professional fabric, tailored fit", price: 1200, currency: "\u20B9", photo_url: "https://images.unsplash.com/photo-1596755098206-66d6dc2b2876?w=400" },
-  { id: "323e4567-e89b-12d3-a456-426614174002", name: "Traditional Kurta", description: "Modern design with traditional essence", price: 1800, currency: "\u20B9", photo_url: "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400", badge: "New" },
-  { id: "424e4567-e89b-12d3-a456-426614174003", name: "Formal Trousers", description: "Well-fitted for office wear", price: 1500, currency: "\u20B9", photo_url: "https://images.unsplash.com/photo-1594637879035-79c445bc5d0c?w=400" },
-  { id: "525e4567-e89b-12d3-a456-426614174004", name: "Casual Shirt", description: "Comfortable everyday wear", price: 800, currency: "\u20B9", photo_url: "https://images.unsplash.com/photo-1521572163474-6864f9a17a77?w=400" },
-  { id: "626e4567-e89b-12d3-a456-426614174005", name: "Designer Blazer", description: "Stylish for special occasions", price: 3500, currency: "\u20B9", photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", badge: "Premium" },
-];
-
-const GALLERY_IMAGES = [
-  "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600",
-  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600",
-  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600",
-  "https://images.unsplash.com/photo-1560749614-612495a177a5?w=600",
-];
+import { useProviderDetails } from "@/hooks/useProvider";
+import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
 
+// -- Static Fallback Data --
+const STATIC_REVIEWS = [
+  { id: "sr1", listingId: "", reviewerId: "", starRating: 5, reviewText: "Absolutely amazing service! The quality of work exceeded my expectations. Highly recommended for anyone looking for professional service.", status: "active", postedAt: new Date(Date.now() - 2 * 86400000).toISOString(), reviewer: { id: "u1", name: "Fatima Bohra" }, photos: [] },
+  { id: "sr2", listingId: "", reviewerId: "", starRating: 4, reviewText: "Very good experience overall. Prompt delivery and great attention to detail. Will definitely come back again.", status: "active", postedAt: new Date(Date.now() - 5 * 86400000).toISOString(), reviewer: { id: "u2", name: "Ahmed Hussain" }, photos: [] },
+  { id: "sr3", listingId: "", reviewerId: "", starRating: 5, reviewText: "Best in the area! Fair pricing and excellent craftsmanship. The owner is very friendly and accommodating.", status: "active", postedAt: new Date(Date.now() - 12 * 86400000).toISOString(), reviewer: { id: "u3", name: "Sakina Merchant" }, photos: [] },
+  { id: "sr4", listingId: "", reviewerId: "", starRating: 4, reviewText: "Good quality work. Slightly delayed but the end result was worth the wait.", status: "active", postedAt: new Date(Date.now() - 20 * 86400000).toISOString(), reviewer: { id: "u4", name: "Murtaza Ali" }, photos: [] },
+  { id: "sr5", listingId: "", reviewerId: "", starRating: 5, reviewText: "Outstanding! This is my go-to place now. Professional, reliable, and affordable.", status: "active", postedAt: new Date(Date.now() - 30 * 86400000).toISOString(), reviewer: { id: "u5", name: "Zahra Bhai" }, photos: [] },
+];
+
+const STATIC_PRODUCTS = [
+  { id: "sp1", listingId: "", name: "Premium Package", description: "Our best-selling premium service package with full coverage", price: 1999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", isActive: true, displayOrder: 1 },
+  { id: "sp2", listingId: "", name: "Standard Service", description: "Quality service at an affordable price point", price: 999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", isActive: true, displayOrder: 2 },
+  { id: "sp3", listingId: "", name: "Express Package", description: "Quick turnaround for urgent requirements", price: 1499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556740758-90de940de450?w=400", isActive: true, displayOrder: 3 },
+  { id: "sp4", listingId: "", name: "Economy Option", description: "Budget-friendly option without compromising quality", price: 499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?w=400", isActive: true, displayOrder: 4 },
+];
+
+const STATIC_PHOTOS = [
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600",
+  "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600",
+  "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600",
+  "https://images.unsplash.com/photo-1556740758-90de940de450?w=600",
+  "https://images.unsplash.com/photo-1555244162-803834f70033?w=600",
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600",
+];
+
+const STATIC_STATS = {
+  rating: 4.6,
+  reviewCount: 47,
+  ratingDist: [2, 3, 5, 12, 25],
+  listingCount: 2,
+  photoCount: 6,
+  productCount: 4,
+  priceRange: { min: 499, max: 1999, currency: "INR" },
+};
+
 // -- Helpers --
+
+function formatRelative(dateStr: string): string {
+  const d = new Date(dateStr);
+  const diffMs = Date.now() - d.getTime();
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day === 1) return "1 day ago";
+  if (day < 7) return `${day} days ago`;
+  if (day < 30) return `${Math.floor(day / 7)} week${day >= 14 ? "s" : ""} ago`;
+  if (day < 365) return `${Math.floor(day / 30)} month${day >= 60 ? "s" : ""} ago`;
+  return `${Math.floor(day / 365)} year${day >= 730 ? "s" : ""} ago`;
+}
+
+function initialsOf(name?: string | null): string {
+  if (!name) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+}
 
 function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
@@ -132,7 +146,7 @@ export default function ProviderDetailsPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") || "";
 
-  const { data: fetchedProvider, isLoading, isError } = useProviderById(id);
+  const { data, isLoading, isError } = useProviderDetails(id);
 
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -140,29 +154,77 @@ export default function ProviderDetailsPage() {
   const [sheetOpened, setSheetOpened] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
-  const [liked, setLiked] = useState(false);
 
-  const provider = useMemo(() => {
-    if (!fetchedProvider) return null;
-    return {
-      ...fetchedProvider,
-      name: fetchedProvider.brandName,
-      service: fetchedProvider.description?.split(",")[0] || "Services",
-      rating: 4.8,
-      reviewCount: 127,
-      price: "\u20B9500 \u2013 \u20B92,000",
-      image: fetchedProvider.profilePhotoUrl || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800",
-      experience: "10+ Years",
-      availability: `${fetchedProvider.openTime?.slice(0, 5) || "09:00"} \u2013 ${fetchedProvider.closeTime?.slice(0, 5) || "21:00"}`,
-      phone: fetchedProvider.contactNumber,
-    };
-  }, [fetchedProvider]);
+  const user = useAppSelector((state) => state.auth.user);
+  const { data: savedData } = useIsSaved(id, "provider");
+  const toggleSaved = useToggleSaved();
+  const liked = savedData?.saved ?? false;
 
-  const ratingDist = useMemo(() => {
-    const dist = [0, 0, 0, 0, 0];
-    MOCK_REVIEWS.forEach((r) => dist[r.rating - 1]++);
-    return dist;
-  }, []);
+  const handleToggleSaved = () => {
+    if (!user) return; // Only allow for logged-in users
+    toggleSaved.mutate({ itemId: id, itemType: "provider" });
+  };
+
+  const provider = data?.provider ?? null;
+  const stats = data?.stats ?? (provider ? STATIC_STATS : null);
+  const photos = (data?.photos?.length ?? 0) > 0 ? data!.photos : [];
+  const products = (data?.products?.length ?? 0) > 0 ? data!.products : (provider ? STATIC_PRODUCTS as any[] : []);
+  const reviews = (data?.reviews?.length ?? 0) > 0 ? data!.reviews : (provider ? STATIC_REVIEWS as any[] : []);
+  const listings = data?.listings ?? [];
+
+  const galleryImages = useMemo(() => {
+    const urls: string[] = [];
+    if (provider?.profilePhotoUrl) urls.push(provider.profilePhotoUrl);
+    photos.forEach((p) => {
+      if (p.imageUrl && !urls.includes(p.imageUrl)) urls.push(p.imageUrl);
+    });
+    // If no real photos, use static gallery
+    if (urls.length === 0 && provider) {
+      return STATIC_PHOTOS;
+    }
+    return urls;
+  }, [provider?.profilePhotoUrl, photos, provider]);
+
+  const galleryItems = useMemo(
+    () =>
+      galleryImages.map((src, i) => ({
+        src,
+        thumb: src,
+        label: `Photo ${i + 1}`,
+        alt: `Photo ${i + 1}`,
+      })),
+    [galleryImages],
+  );
+
+  const heroImage =
+    provider?.profilePhotoUrl ||
+    galleryImages[0] ||
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800";
+
+  const priceLabel = useMemo(() => {
+    if (!stats?.priceRange) return null;
+    const { min, max, currency } = stats.priceRange;
+    const symbol = currency === "INR" ? "₹" : currency + " ";
+    if (min === max) return `${symbol}${min.toLocaleString()}`;
+    return `${symbol}${min.toLocaleString()} – ${symbol}${max.toLocaleString()}`;
+  }, [stats]);
+
+  const categoryLabel = useMemo(() => {
+    const names = Array.from(
+      new Set(
+        listings
+          .flatMap((l) => l.categories?.map((c) => c.name) ?? [])
+          .filter(Boolean) as string[],
+      ),
+    );
+    if (names.length === 0) return provider?.description?.split(".")[0] || "Services";
+    if (names.length <= 2) return names.join(" · ");
+    return `${names.slice(0, 2).join(" · ")} +${names.length - 2}`;
+  }, [listings, provider?.description]);
+
+  const hours = provider
+    ? `${provider.openTime?.slice(0, 5) || "09:00"} – ${provider.closeTime?.slice(0, 5) || "21:00"}`
+    : "";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -175,9 +237,10 @@ export default function ProviderDetailsPage() {
   }, [isLightboxOpen]);
 
   const handleShare = async () => {
+    if (!provider) return;
     const shareData = {
-      title: provider?.name || "",
-      text: `Check out ${provider?.name} \u2013 ${provider?.service}\n\u2B50 ${provider?.rating}\n${provider?.description || ""}`,
+      title: provider.brandName,
+      text: `Check out ${provider.brandName} – ${categoryLabel}\n⭐ ${stats?.rating ?? 0}\n${provider.description || ""}`,
       url: window.location.href,
     };
     try {
@@ -221,12 +284,17 @@ export default function ProviderDetailsPage() {
     );
   }
 
+  const rating = stats?.rating ?? 0;
+  const reviewCount = stats?.reviewCount ?? 0;
+  const ratingDist = stats?.ratingDist ?? [0, 0, 0, 0, 0];
+  const owner = (provider as any)?.user;
+
   return (
     <Page className="!bg-gray-50/80">
       {/* Hero */}
       <div className="relative" style={{ display: isLightboxOpen ? "none" : "block" }}>
         <div className="relative h-72 overflow-hidden">
-          <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" />
+          <img src={heroImage} alt={provider.brandName} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
           {/* Top Actions */}
@@ -235,7 +303,7 @@ export default function ProviderDetailsPage() {
               <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
             </button>
             <div className="flex gap-2">
-              <button onClick={() => setLiked((l) => !l)} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
+              <button onClick={handleToggleSaved} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
                 <IonIcon icon={liked ? heart : heartOutline} className={`w-5 h-5 ${liked ? "text-red-400" : "text-white"}`} />
               </button>
               <button onClick={handleShare} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
@@ -245,18 +313,20 @@ export default function ProviderDetailsPage() {
           </div>
 
           {/* Photo Count */}
-          <button onClick={() => setActiveTab("Photos")} className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white text-xs font-medium px-3 py-1.5 rounded-full active:scale-95 transition-transform">
-            <IonIcon icon={imagesOutline} className="w-3.5 h-3.5" />
-            {GALLERY_IMAGES.length} Photos
-          </button>
+          {galleryImages.length > 0 && (
+            <button onClick={() => setActiveTab("Photos")} className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white text-xs font-medium px-3 py-1.5 rounded-full active:scale-95 transition-transform">
+              <IonIcon icon={imagesOutline} className="w-3.5 h-3.5" />
+              {galleryImages.length} Photos
+            </button>
+          )}
 
           {/* Provider Name */}
           <div className="absolute bottom-4 left-4 right-20">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl font-bold text-white leading-tight truncate">{provider.name}</h1>
+              <h1 className="text-xl font-bold text-white leading-tight truncate">{provider.brandName}</h1>
               {provider.status === "active" && <IonIcon icon={checkmarkCircle} className="w-5 h-5 text-blue-400 flex-shrink-0" />}
             </div>
-            <p className="text-white/80 text-sm truncate">{provider.service}</p>
+            <p className="text-white/80 text-sm truncate">{categoryLabel}</p>
           </div>
         </div>
 
@@ -266,11 +336,11 @@ export default function ProviderDetailsPage() {
             <svg width={16} height={16} viewBox="0 0 20 20" fill="#FBBF24">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
             </svg>
-            <span className="text-sm font-bold text-gray-900">{provider.rating}</span>
-            <span className="text-xs text-gray-400">({provider.reviewCount})</span>
+            <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
+            <span className="text-xs text-gray-400">({reviewCount})</span>
           </div>
           <div className="w-px h-5 bg-gray-200" />
-          <span className="text-sm font-semibold text-amber-600">{provider.price}</span>
+          <span className="text-sm font-semibold text-amber-600">{priceLabel || "Contact for price"}</span>
           <div className="w-px h-5 bg-gray-200" />
           <div className="flex items-center gap-1 text-gray-500">
             <IonIcon icon={locationOutline} className="w-3.5 h-3.5" />
@@ -295,23 +365,25 @@ export default function ProviderDetailsPage() {
       {activeTab === "Overview" && (
         <div className="px-5 pt-5 pb-28 space-y-5">
           {/* Gallery Preview */}
-          <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
-            {GALLERY_IMAGES.slice(0, 3).map((img, i) => (
-              <button key={i} onClick={() => setActiveTab("Photos")} className={`relative aspect-square overflow-hidden active:opacity-80 transition-opacity ${i === 0 ? "col-span-2 row-span-2" : ""}`}>
-                <img src={img} alt="" className="w-full h-full object-cover" />
-                {i === 2 && GALLERY_IMAGES.length > 3 && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">+{GALLERY_IMAGES.length - 3}</span>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
+          {galleryImages.length > 0 && (
+            <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
+              {galleryImages.slice(0, 3).map((img, i) => (
+                <button key={i} onClick={() => setActiveTab("Photos")} className={`relative aspect-square overflow-hidden active:opacity-80 transition-opacity ${i === 0 ? "col-span-2 row-span-2" : ""}`}>
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  {i === 2 && galleryImages.length > 3 && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">+{galleryImages.length - 3}</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Info Chips */}
           <div className="grid grid-cols-2 gap-2.5">
-            <InfoChip icon={ribbonOutline} label="Experience" value={provider.experience} />
-            <InfoChip icon={time} label="Hours" value={provider.availability} />
+            <InfoChip icon={ribbonOutline} label="Listings" value={`${stats?.listingCount ?? 0}`} />
+            <InfoChip icon={time} label="Hours" value={hours} />
             <InfoChip icon={storefrontOutline} label="Status" value={provider.isAvailable ? "Open Now" : "Closed"} />
             <InfoChip icon={shieldCheckmark} label="Verified" value={provider.status === "active" ? "Verified" : "Pending"} />
           </div>
@@ -321,6 +393,31 @@ export default function ProviderDetailsPage() {
             <h3 className="text-[15px] font-bold text-gray-900 mb-2">About</h3>
             <p className="text-[13px] text-gray-600 leading-relaxed">{provider.description || "No description provided yet."}</p>
           </div>
+
+          {/* Services / Listings */}
+          {listings.length > 0 && (
+            <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <h3 className="text-[15px] font-bold text-gray-900 mb-3">Services ({listings.length})</h3>
+              <div className="space-y-2.5">
+                {listings.map((l) => (
+                  <div key={l.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50/80">
+                    <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <IonIcon icon={storefrontOutline} className="w-[18px] h-[18px] text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[13px] font-semibold text-gray-900 truncate">{l.businessName}</h4>
+                      {l.description && <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{l.description}</p>}
+                      <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400 font-medium">
+                        <span>{l.productCount} products</span>
+                        <span>{l.reviewCount} reviews</span>
+                        <span>{l.photoCount} photos</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Address */}
           {provider.address && (
@@ -336,16 +433,16 @@ export default function ProviderDetailsPage() {
           )}
 
           {/* Business Owner */}
-          {fetchedProvider?.user && (
+          {owner && (
             <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <h3 className="text-[15px] font-bold text-gray-900 mb-3">Business Owner</h3>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                  {fetchedProvider.user.name?.charAt(0) || "?"}
+                  {initialsOf(owner.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-gray-900 truncate">{fetchedProvider.user.name}</h4>
-                  <p className="text-xs text-gray-500">{fetchedProvider.user.mobileNumber}</p>
+                  <h4 className="text-sm font-bold text-gray-900 truncate">{owner.name}</h4>
+                  <p className="text-xs text-gray-500">{owner.mobileNumber}</p>
                 </div>
               </div>
             </div>
@@ -360,46 +457,52 @@ export default function ProviderDetailsPage() {
           <div className="bg-white rounded-2xl p-5 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <div className="flex gap-5">
               <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100">
-                <span className="text-4xl font-extrabold text-gray-900 leading-none">{provider.rating}</span>
-                <StarRow rating={Math.round(provider.rating)} size={13} />
-                <span className="text-[11px] text-gray-400 mt-1.5 font-medium">{provider.reviewCount} reviews</span>
+                <span className="text-4xl font-extrabold text-gray-900 leading-none">{rating.toFixed(1)}</span>
+                <StarRow rating={Math.round(rating)} size={13} />
+                <span className="text-[11px] text-gray-400 mt-1.5 font-medium">{reviewCount} reviews</span>
               </div>
               <div className="flex-1 flex flex-col gap-1.5 justify-center">
                 {[5, 4, 3, 2, 1].map((s) => (
-                  <RatingBar key={s} starCount={s} count={ratingDist[s - 1]} total={MOCK_REVIEWS.length} />
+                  <RatingBar key={s} starCount={s} count={ratingDist[s - 1] ?? 0} total={reviewCount} />
                 ))}
               </div>
             </div>
           </div>
 
           {/* Review Cards */}
-          {MOCK_REVIEWS.map((review) => (
-            <div key={review.id} className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <div className="flex items-start justify-between mb-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 flex-shrink-0">{review.avatar}</div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[13px] font-semibold text-gray-900">{review.name}</span>
-                      {review.verified && <IonIcon icon={checkmarkCircle} className="w-3.5 h-3.5 text-blue-500" />}
-                    </div>
-                    <span className="text-[11px] text-gray-400">{review.date}</span>
-                  </div>
-                </div>
-                <StarRow rating={review.rating} size={12} />
-              </div>
-              <p className="text-[13px] text-gray-600 leading-relaxed mb-3">{review.comment}</p>
-              <div className="flex items-center gap-3 pt-2 border-t border-gray-50">
-                <button className="flex items-center gap-1 text-[11px] text-gray-400 active:text-gray-600 transition-colors">
-                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                  </svg>
-                  Helpful ({review.helpful})
-                </button>
-              </div>
+          {reviews.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 border border-gray-100/80 text-center">
+              <p className="text-sm text-gray-500">No reviews yet. Be the first to share your experience!</p>
             </div>
-          ))}
+          ) : (
+            reviews.map((review) => (
+              <div key={review.id} className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <div className="flex items-start justify-between mb-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 flex-shrink-0">{initialsOf(review.reviewer?.name)}</div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13px] font-semibold text-gray-900">{review.reviewer?.name || "Anonymous"}</span>
+                        <IonIcon icon={checkmarkCircle} className="w-3.5 h-3.5 text-blue-500" />
+                      </div>
+                      <span className="text-[11px] text-gray-400">{formatRelative(review.postedAt)}{review.businessName ? ` · ${review.businessName}` : ""}</span>
+                    </div>
+                  </div>
+                  <StarRow rating={review.starRating} size={12} />
+                </div>
+                {review.reviewText && (
+                  <p className="text-[13px] text-gray-600 leading-relaxed mb-3">{review.reviewText}</p>
+                )}
+                {review.photos && review.photos.length > 0 && (
+                  <div className="flex gap-1.5 mb-3">
+                    {review.photos.slice(0, 3).map((p) => (
+                      <img key={p.id} src={p.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
 
           {/* Write Review */}
           <button onClick={() => setSheetOpened(true)} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
@@ -413,34 +516,54 @@ export default function ProviderDetailsPage() {
       {activeTab === "Products" && (
         <div className="px-5 pt-5 pb-28">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[15px] font-bold text-gray-900">{MOCK_PRODUCTS.length} Products</h3>
+            <h3 className="text-[15px] font-bold text-gray-900">{products.length} Products</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {MOCK_PRODUCTS.map((product) => (
-              <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                <div className="group bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img src={product.photo_url} alt={product.name} className="w-full h-full object-cover" />
-                    {product.badge && (
-                      <span className={`absolute top-2 left-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${product.badge === "Bestseller" ? "bg-amber-500 text-white" : product.badge === "New" ? "bg-emerald-500 text-white" : "bg-gray-900 text-white"}`}>{product.badge}</span>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <h4 className="text-[13px] font-semibold text-gray-900 mb-0.5 line-clamp-1">{product.name}</h4>
-                    <p className="text-[11px] text-gray-400 mb-2 line-clamp-1">{product.description}</p>
-                    <span className="text-[15px] font-bold text-amber-600">{product.currency}{product.price.toLocaleString()}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {products.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 border border-gray-100/80 text-center">
+              <p className="text-sm text-gray-500">This provider hasn&apos;t added any products yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {products.map((product) => {
+                const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
+                return (
+                  <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
+                    <div className="group bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                        {product.photoUrl ? (
+                          <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <IonIcon icon={imagesOutline} className="w-8 h-8" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h4 className="text-[13px] font-semibold text-gray-900 mb-0.5 line-clamp-1">{product.name}</h4>
+                        <p className="text-[11px] text-gray-400 mb-2 line-clamp-1">{product.description || product.businessName}</p>
+                        <span className="text-[15px] font-bold text-amber-600">
+                          {product.price !== null ? `${currencySymbol}${Number(product.price).toLocaleString()}` : "Enquire"}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {/* === PHOTOS === */}
       {activeTab === "Photos" && (
         <div className="pt-2 pb-28">
-          <PhotoGallary ref={photoGalleryRef} />
+          {galleryImages.length === 0 ? (
+            <div className="bg-white mx-5 rounded-2xl p-8 border border-gray-100/80 text-center mt-4">
+              <p className="text-sm text-gray-500">No photos uploaded yet.</p>
+            </div>
+          ) : (
+            <PhotoGallary ref={photoGalleryRef} images={galleryItems} />
+          )}
         </div>
       )}
 
@@ -451,7 +574,7 @@ export default function ProviderDetailsPage() {
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
             Message
           </button>
-          <button onClick={() => window.open(`tel:${provider.phone}`)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
+          <button onClick={() => window.open(`tel:${provider.contactNumber}`)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
             <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
             Call Now
           </button>

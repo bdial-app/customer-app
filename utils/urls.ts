@@ -31,6 +31,7 @@ export const PROVIDER_URLS = {
   NEARBY: "/providers/nearby",
   FEATURED: "/providers/featured",
   BY_ID: (id: string) => `/providers/${id}`,
+  DETAILS: (id: string) => `/providers/${id}/details`,
   UPDATE: (id: string) => `/providers/${id}`,
   BECOME_PROVIDER: "/providers/become-provider",
   MY_STATUS: "/providers/my-status",
@@ -56,4 +57,25 @@ export const PHOTO_URLS = {
 
 export const REVIEW_URLS = {
   BY_LISTING: (listingId: string) => `/listings/${listingId}`,
+};
+
+export const PRODUCT_URLS = {
+  BY_ID: (id: string) => `/products/${id}`,
+};
+
+export const HOME_URLS = {
+  FEED: '/home/feed',
+  BANNERS: '/home/banners',
+  TRENDING: '/home/trending',
+  REVIEWS: '/home/reviews',
+  STATS: '/home/stats',
+  LIVE_ACTIVITY: '/home/live-activity',
+  CATEGORY_PROVIDERS: '/home/category-providers',
+};
+
+export const SAVED_ITEM_URLS = {
+  TOGGLE: '/saved-items/toggle',
+  LIST: '/saved-items',
+  IDS: '/saved-items/ids',
+  CHECK: (itemId: string, itemType: string) => `/saved-items/check/${itemId}/${itemType}`,
 };
