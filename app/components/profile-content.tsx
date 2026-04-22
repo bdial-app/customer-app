@@ -42,6 +42,9 @@ import {
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSelector, LanguageMenuButton } from "./language-selector";
+import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -207,7 +210,7 @@ const ProfileContent = () => {
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
-    "about" | "terms" | "privacy" | "help" | "editProfile" | null
+    "about" | "terms" | "privacy" | "help" | "editProfile" | "language" | null
   >(null);
 
   const [profile, setProfile] = useState<any>(user || {});
@@ -529,6 +532,7 @@ const ProfileContent = () => {
             />
           }
         />
+        <LanguageMenuButton onClick={() => setActivePage("language")} />
       </MenuSection>
 
       {/* ── Support Section ──────────────────────────────────── */}
@@ -613,6 +617,31 @@ const ProfileContent = () => {
       </div>
 
       {/* ── Slide Pages ──────────────────────────────────────── */}
+
+      {/* Language Page */}
+      <SlidePage
+        open={activePage === "language"}
+        onClose={() => setActivePage(null)}
+        title="Language"
+      >
+        <LanguageSelector
+          onLanguageChange={(newLocale: Locale) => {
+            // Save to backend
+            updateUserMutation.mutate(
+              { preferredLanguage: newLocale } as any,
+              {
+                onSuccess: () => {
+                  notify({
+                    title: "Language Updated",
+                    subtitle: "Your language preference has been saved.",
+                    variant: "success",
+                  });
+                },
+              },
+            );
+          }}
+        />
+      </SlidePage>
 
       {/* Edit Profile Page */}
       <SlidePage

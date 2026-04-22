@@ -308,8 +308,8 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   city: provider.city || "",
                   area: provider.area || "",
                   pincode: provider.pincode || "",
-                  openTime: provider.openTime || "",
-                  closeTime: provider.closeTime || "",
+                  openTime: provider.openTime?.slice(0, 5) || "",
+                  closeTime: provider.closeTime?.slice(0, 5) || "",
                 }}
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}

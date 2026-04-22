@@ -21,6 +21,7 @@
     "framework7-icons": "^5.0.5",
     "konsta": "^5.0.8",
     "next": "16.2.2",
+    "next-intl": "^4.9.1",
     "postcss": "^8.5.8",
     "react": "19.2.4",
     "react-dom": "19.2.4",
