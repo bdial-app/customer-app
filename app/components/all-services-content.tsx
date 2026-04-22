@@ -88,8 +88,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
         ...p,
         name: p.brandName,
         image:
-          p.profilePhotoUrl ||
-          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+          p.profilePhotoUrl || p.bannerImageUrl || "",
         location: [p.area, p.city].filter(Boolean).join(", "),
         rating: p.rating ?? null,
         reviews: p.reviewCount ?? 0,

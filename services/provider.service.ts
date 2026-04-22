@@ -38,6 +38,8 @@ export interface BecomeProviderPayload {
   closeTime?: string;
   profilePhotoUrl?: string;
   bannerImageUrl?: string;
+  bannerImage?: File;
+  profileImage?: File;
   ijamatNumber?: string;
   ijamatExpiry?: string;
   ijamatDocUrl?: string;
@@ -45,6 +47,8 @@ export interface BecomeProviderPayload {
   longitude?: string;
   aadhaarFile?: File;
   categoryIds?: string[];
+  products?: Array<{ name: string; description?: string; price?: number; currency?: string; imageCount?: number }>;
+  productImages?: File[];
 }
 
 export interface ProviderData {
@@ -179,7 +183,7 @@ export const getProviderDetails = async (
 
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
-): Promise<{ provider: any; verification: any }> => {
+): Promise<{ provider: any; verification: any; products: any[] }> => {
   const formData = new FormData();
   formData.append("userId", payload.userId);
   formData.append("brandName", payload.brandName);
@@ -198,9 +202,18 @@ export const becomeProvider = async (
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
   if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
+  if (payload.bannerImage) formData.append("bannerImage", payload.bannerImage);
+  if (payload.profileImage) formData.append("profileImage", payload.profileImage);
   if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
   if (payload.categoryIds?.length) {
     payload.categoryIds.forEach((id) => formData.append("categoryIds", id));
+  }
+  // Products as JSON string + individual image files
+  if (payload.products?.length) {
+    formData.append("products", JSON.stringify(payload.products));
+    payload.productImages?.forEach((img) => {
+      formData.append("productImages", img);
+    });
   }
 
   const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {

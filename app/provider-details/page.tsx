@@ -35,38 +35,14 @@ import { openChat } from "@/store/slices/chatSlice";
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
 
-// -- Static Fallback Data --
-const STATIC_REVIEWS = [
-  { id: "sr1", providerId: "", reviewerId: "", starRating: 5, reviewText: "Absolutely amazing service! The quality of work exceeded my expectations. Highly recommended for anyone looking for professional service.", status: "active", postedAt: new Date(Date.now() - 2 * 86400000).toISOString(), reviewer: { id: "u1", name: "Fatima Bohra" }, photos: [] },
-  { id: "sr2", providerId: "", reviewerId: "", starRating: 4, reviewText: "Very good experience overall. Prompt delivery and great attention to detail. Will definitely come back again.", status: "active", postedAt: new Date(Date.now() - 5 * 86400000).toISOString(), reviewer: { id: "u2", name: "Ahmed Hussain" }, photos: [] },
-  { id: "sr3", providerId: "", reviewerId: "", starRating: 5, reviewText: "Best in the area! Fair pricing and excellent craftsmanship. The owner is very friendly and accommodating.", status: "active", postedAt: new Date(Date.now() - 12 * 86400000).toISOString(), reviewer: { id: "u3", name: "Sakina Merchant" }, photos: [] },
-  { id: "sr4", providerId: "", reviewerId: "", starRating: 4, reviewText: "Good quality work. Slightly delayed but the end result was worth the wait.", status: "active", postedAt: new Date(Date.now() - 20 * 86400000).toISOString(), reviewer: { id: "u4", name: "Murtaza Ali" }, photos: [] },
-  { id: "sr5", providerId: "", reviewerId: "", starRating: 5, reviewText: "Outstanding! This is my go-to place now. Professional, reliable, and affordable.", status: "active", postedAt: new Date(Date.now() - 30 * 86400000).toISOString(), reviewer: { id: "u5", name: "Zahra Bhai" }, photos: [] },
-];
-
-const STATIC_PRODUCTS = [
-  { id: "sp1", providerId: "", name: "Premium Package", description: "Our best-selling premium service package with full coverage", price: 1999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", isActive: true, displayOrder: 1 },
-  { id: "sp2", providerId: "", name: "Standard Service", description: "Quality service at an affordable price point", price: 999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", isActive: true, displayOrder: 2 },
-  { id: "sp3", providerId: "", name: "Express Package", description: "Quick turnaround for urgent requirements", price: 1499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556740758-90de940de450?w=400", isActive: true, displayOrder: 3 },
-  { id: "sp4", providerId: "", name: "Economy Option", description: "Budget-friendly option without compromising quality", price: 499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?w=400", isActive: true, displayOrder: 4 },
-];
-
-const STATIC_PHOTOS = [
-  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600",
-  "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600",
-  "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600",
-  "https://images.unsplash.com/photo-1556740758-90de940de450?w=600",
-  "https://images.unsplash.com/photo-1555244162-803834f70033?w=600",
-  "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600",
-];
-
-const STATIC_STATS = {
-  rating: 4.6,
-  reviewCount: 47,
-  ratingDist: [2, 3, 5, 12, 25],
-  photoCount: 6,
-  productCount: 4,
-  priceRange: { min: 499, max: 1999, currency: "INR" },
+// -- Empty state defaults (no fake data) --
+const EMPTY_STATS = {
+  rating: 0,
+  reviewCount: 0,
+  ratingDist: [0, 0, 0, 0, 0],
+  photoCount: 0,
+  productCount: 0,
+  priceRange: null as { min: number; max: number; currency: string } | null,
 };
 
 // -- Helpers --
@@ -169,24 +145,21 @@ export default function ProviderDetailsPage() {
   };
 
   const provider = data?.provider ?? null;
-  const stats = data?.stats ?? (provider ? STATIC_STATS : null);
+  const stats = data?.stats ?? (provider ? EMPTY_STATS : null);
   const photos = (data?.photos?.length ?? 0) > 0 ? data!.photos : [];
-  const products = (data?.products?.length ?? 0) > 0 ? data!.products : (provider ? STATIC_PRODUCTS as any[] : []);
-  const reviews = (data?.reviews?.length ?? 0) > 0 ? data!.reviews : (provider ? STATIC_REVIEWS as any[] : []);
+  const products = (data?.products?.length ?? 0) > 0 ? data!.products : [];
+  const reviews = (data?.reviews?.length ?? 0) > 0 ? data!.reviews : [];
   const categories = data?.categories ?? [];
 
   const galleryImages = useMemo(() => {
     const urls: string[] = [];
+    if (provider?.bannerImageUrl) urls.push(provider.bannerImageUrl);
     if (provider?.profilePhotoUrl) urls.push(provider.profilePhotoUrl);
     photos.forEach((p) => {
       if (p.imageUrl && !urls.includes(p.imageUrl)) urls.push(p.imageUrl);
     });
-    // If no real photos, use static gallery
-    if (urls.length === 0 && provider) {
-      return STATIC_PHOTOS;
-    }
     return urls;
-  }, [provider?.profilePhotoUrl, photos, provider]);
+  }, [provider?.bannerImageUrl, provider?.profilePhotoUrl, photos]);
 
   const galleryItems = useMemo(
     () =>
@@ -200,9 +173,10 @@ export default function ProviderDetailsPage() {
   );
 
   const heroImage =
+    provider?.bannerImageUrl ||
     provider?.profilePhotoUrl ||
     galleryImages[0] ||
-    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800";
+    "";
 
   const priceLabel = useMemo(() => {
     if (!stats?.priceRange) return null;
@@ -290,8 +264,14 @@ export default function ProviderDetailsPage() {
     <Page className="!bg-gray-50/80">
       {/* Hero */}
       <div className="relative" style={{ display: isLightboxOpen ? "none" : "block" }}>
-        <div className="relative h-72 overflow-hidden">
-          <img src={heroImage} alt={provider.brandName} className="w-full h-full object-cover" />
+        <div className="relative h-72 overflow-hidden bg-gradient-to-br from-slate-200 to-slate-100">
+          {heroImage ? (
+            <img src={heroImage} alt={provider.brandName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-6xl font-bold text-slate-300">{provider.brandName?.charAt(0)?.toUpperCase()}</span>
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
           {/* Top Actions */}
@@ -330,11 +310,17 @@ export default function ProviderDetailsPage() {
         {/* Quick Stats */}
         <div className="flex items-center justify-between bg-white px-5 py-3 border-b border-gray-100/80">
           <div className="flex items-center gap-1.5">
-            <svg width={16} height={16} viewBox="0 0 20 20" fill="#FBBF24">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-            </svg>
-            <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
-            <span className="text-xs text-gray-400">({reviewCount})</span>
+            {reviewCount > 0 ? (
+              <>
+                <svg width={16} height={16} viewBox="0 0 20 20" fill="#FBBF24">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+                </svg>
+                <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
+                <span className="text-xs text-gray-400">({reviewCount})</span>
+              </>
+            ) : (
+              <span className="text-sm font-semibold text-indigo-600">New</span>
+            )}
           </div>
           <div className="w-px h-5 bg-gray-200" />
           <span className="text-sm font-semibold text-amber-600">{priceLabel || "Contact for price"}</span>
@@ -440,6 +426,7 @@ export default function ProviderDetailsPage() {
       {activeTab === "Reviews" && (
         <div className="px-5 pt-5 pb-28 space-y-4">
           {/* Rating Summary */}
+          {reviewCount > 0 ? (
           <div className="bg-white rounded-2xl p-5 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <div className="flex gap-5">
               <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100">
@@ -454,6 +441,12 @@ export default function ProviderDetailsPage() {
               </div>
             </div>
           </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-5 border border-gray-100/80 text-center">
+              <p className="text-lg font-bold text-indigo-600 mb-1">New Provider</p>
+              <p className="text-xs text-gray-400">No ratings yet — be the first to review!</p>
+            </div>
+          )}
 
           {/* Review Cards */}
           {reviews.length === 0 ? (
@@ -471,7 +464,7 @@ export default function ProviderDetailsPage() {
                         <span className="text-[13px] font-semibold text-gray-900">{review.reviewer?.name || "Anonymous"}</span>
                         <IonIcon icon={checkmarkCircle} className="w-3.5 h-3.5 text-blue-500" />
                       </div>
-                      <span className="text-[11px] text-gray-400">{formatRelative(review.postedAt)}{review.businessName ? ` · ${review.businessName}` : ""}</span>
+                      <span className="text-[11px] text-gray-400">{formatRelative(review.postedAt)}</span>
                     </div>
                   </div>
                   <StarRow rating={review.starRating} size={12} />
@@ -526,7 +519,7 @@ export default function ProviderDetailsPage() {
                       </div>
                       <div className="p-3">
                         <h4 className="text-[13px] font-semibold text-gray-900 mb-0.5 line-clamp-1">{product.name}</h4>
-                        <p className="text-[11px] text-gray-400 mb-2 line-clamp-1">{product.description || product.businessName}</p>
+                        <p className="text-[11px] text-gray-400 mb-2 line-clamp-1">{product.description || ""}</p>
                         <span className="text-[15px] font-bold text-amber-600">
                           {product.price !== null ? `${currencySymbol}${Number(product.price).toLocaleString()}` : "Enquire"}
                         </span>

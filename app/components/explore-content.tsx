@@ -94,8 +94,9 @@ const ExploreContent = () => {
         distance: p.distance,
         rating: p.rating ?? 0,
         reviews: p.reviewCount ?? 0,
-        image: p.profilePhotoUrl || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+        image: p.profilePhotoUrl || p.bannerImageUrl || "",
         verified: p.status === "active",
+        womenLed: p.isWomenLed || false,
         location: [p.area, p.city].filter(Boolean).join(", "),
       }))
     );
@@ -310,8 +311,14 @@ const ExploreContent = () => {
                   className="bg-white rounded-2xl overflow-hidden border border-slate-100 cursor-pointer"
                 >
                   <div className="flex gap-3 p-3">
-                    <div className="relative w-[90px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-slate-100">
-                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                    <div className="relative w-[90px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-slate-100 to-slate-50">
+                      {p.image ? (
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-2xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
+                        </div>
+                      )}
                       {p.verified && (
                         <div className="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                           <IonIcon icon={checkmarkCircleOutline} className="text-[7px]" />
@@ -335,11 +342,15 @@ const ExploreContent = () => {
                       <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{p.service}</p>
 
                       <div className="flex items-center gap-2.5 mt-1.5">
-                        {p.rating > 0 && (
+                        {p.rating > 0 ? (
                           <div className="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-md">
                             <IonIcon icon={star} className="text-[10px] text-amber-500" />
                             <span className="text-[10px] font-bold text-amber-700">{p.rating.toFixed(1)}</span>
                             {p.reviews > 0 && <span className="text-[9px] text-amber-600/60">({p.reviews})</span>}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-0.5 bg-indigo-50 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[10px] font-bold text-indigo-600">New</span>
                           </div>
                         )}
                         {p.distance != null && (

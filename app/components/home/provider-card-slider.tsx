@@ -102,13 +102,19 @@ const ProviderCardSlider = ({
             className="shrink-0 w-[150px] bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50"
           >
             {/* Image */}
-            <div className="relative h-[120px] overflow-hidden">
-              <img
-                src={provider.image}
-                alt={provider.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+            <div className="relative h-[120px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
+              {provider.image ? (
+                <img
+                  src={provider.image}
+                  alt={provider.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-3xl font-bold text-slate-200">{provider.name?.charAt(0)?.toUpperCase()}</span>
+                </div>
+              )}
               {/* Verified Badge */}
               {provider.verified && (
                 <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
@@ -143,12 +149,16 @@ const ProviderCardSlider = ({
                 </p>
               )}
               <div className="flex items-center gap-2 mt-1.5">
-                {provider.rating && (
+                {provider.rating ? (
                   <div className="flex items-center gap-0.5 bg-green-50 px-1.5 py-0.5 rounded-md">
                     <IonIcon icon={star} className="w-3 h-3 text-green-600" />
                     <span className="text-[10px] font-bold text-green-700">
                       {provider.rating}
                     </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-0.5 bg-indigo-50 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold text-indigo-600">New</span>
                   </div>
                 )}
                 {provider.location && (
