@@ -792,6 +792,24 @@ const ProviderOnboardingPage = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    // Try to get user's current location for provider discoverability
+    let latitude: string | undefined;
+    let longitude: string | undefined;
+    try {
+      if ((user as any)?.latitude && (user as any)?.longitude) {
+        latitude = String((user as any).latitude);
+        longitude = String((user as any).longitude);
+      } else if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+        );
+        latitude = String(pos.coords.latitude);
+        longitude = String(pos.coords.longitude);
+      }
+    } catch {
+      // Location not available — provider will need to add it later
+    }
+
     try {
       await becomeProvider({
         userId: user.id,
@@ -805,6 +823,8 @@ const ProviderOnboardingPage = () => {
         openTime: values.open_time || undefined,
         closeTime: values.close_time || undefined,
         aadhaarFile: values.identity_doc || undefined,
+        latitude,
+        longitude,
       });
       // If user uploaded doc → pending verification; if skipped → approved (unverified)
       setProviderStatus(values.identity_doc ? "pending" : "approved");

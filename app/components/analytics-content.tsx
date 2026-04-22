@@ -49,6 +49,7 @@ import {
   PieChart,
   Pie,
 } from "recharts";
+import { useProviderAnalytics } from "@/hooks/useMyProvider";
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type Period = "7d" | "30d" | "90d";
@@ -123,23 +124,23 @@ const CATEGORY_DATA = [
   { name: "Other", value: 12, fill: "#94a3b8" },
 ];
 
-const LISTINGS = [
+const SERVICES = [
   { id: "1", name: "Mehendi & Henna Art", status: "live" as const, views: 245, enquiries: 34, rating: 4.7, products: 8, trend: 18 },
   { id: "2", name: "Tailoring & Alterations", status: "live" as const, views: 182, enquiries: 22, rating: 4.4, products: 12, trend: -5 },
   { id: "3", name: "Catering Services", status: "pending" as const, views: 0, enquiries: 0, rating: 0, products: 5, trend: 0 },
 ];
 
 const RECENT_REVIEWS = [
-  { id: "1", name: "Fatima B.", rating: 5, text: "Amazing henna work! Intricate and beautiful designs.", time: "2h ago", listing: "Mehendi & Henna" },
-  { id: "2", name: "Aisha K.", rating: 4, text: "Good quality tailoring. Delivered on time as promised.", time: "1d ago", listing: "Tailoring" },
-  { id: "3", name: "Maryam S.", rating: 5, text: "Best caterer in the area. Absolutely delicious food!", time: "3d ago", listing: "Catering" },
+  { id: "1", name: "Fatima B.", rating: 5, text: "Amazing henna work! Intricate and beautiful designs.", time: "2h ago", service: "Mehendi & Henna" },
+  { id: "2", name: "Aisha K.", rating: 4, text: "Good quality tailoring. Delivered on time as promised.", time: "1d ago", service: "Tailoring" },
+  { id: "3", name: "Maryam S.", rating: 5, text: "Best caterer in the area. Absolutely delicious food!", time: "3d ago", service: "Catering" },
 ];
 
 const GROWTH_TIPS = [
-  { icon: imageOutline, title: "Add 3 more photos", desc: "Listings with 5+ photos get 3Ã— more views", priority: "high" as const },
+  { icon: imageOutline, title: "Add 3 more photos", desc: "Profiles with 5+ photos get 3× more views", priority: "high" as const },
   { icon: cubeOutline, title: "Complete your catalog", desc: "3 products missing descriptions", priority: "medium" as const },
   { icon: chatbubbleOutline, title: "Reply to 2 reviews", desc: "Responding boosts trust & ranking", priority: "high" as const },
-  { icon: megaphoneOutline, title: "Share your listing", desc: "Get 20% more reach with social sharing", priority: "low" as const },
+  { icon: megaphoneOutline, title: "Share your profile", desc: "Get 20% more reach with social sharing", priority: "low" as const },
 ];
 
 // â”€â”€â”€ Custom Tooltip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -161,13 +162,32 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 // â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const AnalyticsContent = () => {
   const [period, setPeriod] = useState<Period>("30d");
-  const kpis = KPI_DATA[period];
+  const { data: analytics, isLoading: analyticsLoading } = useProviderAnalytics();
+
+  // Use real data for KPIs when available, fall back to mock
+  const realKpis: KPI[] = analytics
+    ? [
+        { label: "Products", value: String(analytics.totalProducts), sub: "active products", change: 0, icon: eyeOutline, accent: "text-blue-600", bg: "bg-blue-500" },
+        { label: "Enquiries", value: String(analytics.totalEnquiries), sub: "total chats", change: 0, icon: callOutline, accent: "text-emerald-600", bg: "bg-emerald-500" },
+        { label: "Rating", value: String(analytics.averageRating), sub: "avg stars", change: 0, icon: star, accent: "text-amber-600", bg: "bg-amber-500" },
+        { label: "Reviews", value: String(analytics.totalReviews), sub: "total reviews", change: 0, icon: chatbubbleOutline, accent: "text-violet-600", bg: "bg-violet-500" },
+      ]
+    : KPI_DATA[period];
+  const kpis = realKpis;
   const chartData = VIEWS_DATA[period];
 
-  const totalReviews = RATING_DIST.reduce((s, r) => s + r.count, 0);
-  const avgRating = RATING_DIST.reduce((s, r) => s + r.stars * r.count, 0) / totalReviews;
-  const liveListings = LISTINGS.filter((l) => l.status === "live").length;
-  const pendingListings = LISTINGS.filter((l) => l.status === "pending").length;
+  const realRatingDist = analytics
+    ? [5, 4, 3, 2, 1].map((s) => {
+        const count = analytics.ratingBreakdown[s as 1 | 2 | 3 | 4 | 5] ?? 0;
+        const total = analytics.totalReviews || 1;
+        return { stars: s, count, pct: Math.round((count / total) * 100) };
+      })
+    : RATING_DIST;
+
+  const totalReviews = analytics?.totalReviews ?? RATING_DIST.reduce((s, r) => s + r.count, 0);
+  const avgRating = analytics?.averageRating ?? (RATING_DIST.reduce((s, r) => s + r.stars * r.count, 0) / totalReviews);
+  const liveServices = analytics?.totalProducts ?? SERVICES.filter((l) => l.status === "live").length;
+  const pendingServices = analytics ? 0 : SERVICES.filter((l) => l.status === "pending").length;
 
   return (
     <div className="pb-8 overflow-x-hidden">
@@ -245,11 +265,11 @@ const AnalyticsContent = () => {
 
               <div className="flex-1 grid grid-cols-2 gap-2">
                 <div className="bg-white/[0.06] rounded-xl px-3 py-2">
-                  <div className="text-white font-bold text-base">{LISTINGS.length}</div>
-                  <div className="text-white/40 text-[9px]">Listings</div>
+                  <div className="text-white font-bold text-base">{SERVICES.length}</div>
+                  <div className="text-white/40 text-[9px]">Services</div>
                 </div>
                 <div className="bg-white/[0.06] rounded-xl px-3 py-2">
-                  <div className="text-emerald-400 font-bold text-base">{liveListings}</div>
+                  <div className="text-emerald-400 font-bold text-base">{liveServices}</div>
                   <div className="text-white/40 text-[9px]">Live</div>
                 </div>
                 <div className="bg-white/[0.06] rounded-xl px-3 py-2">
@@ -428,7 +448,7 @@ const AnalyticsContent = () => {
             <span className="text-[9px] text-slate-400 ml-auto">({totalReviews})</span>
           </div>
           <div className="space-y-1.5">
-            {RATING_DIST.map((r) => (
+            {realRatingDist.map((r) => (
               <div key={r.stars} className="flex items-center gap-1.5">
                 <span className="text-[9px] font-bold text-slate-500 w-2.5">{r.stars}</span>
                 <div className="flex-1 h-[6px] bg-slate-100 rounded-full overflow-hidden">
@@ -531,17 +551,17 @@ const AnalyticsContent = () => {
       </div>
 
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          MY LISTINGS
+          MY SERVICES
           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="px-4 mb-5">
         <div className="flex items-center justify-between mb-2.5">
-          <h3 className="text-[13px] font-bold text-slate-800">Listing Performance</h3>
+          <h3 className="text-[13px] font-bold text-slate-800">Service Performance</h3>
           <button className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
             Manage <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
           </button>
         </div>
         <div className="space-y-2.5">
-          {LISTINGS.map((l, i) => {
+          {SERVICES.map((l, i) => {
             const statusCfg = {
               live: { label: "Live", cls: "text-emerald-700 bg-emerald-50", icon: checkmarkCircleOutline },
               pending: { label: "Pending", cls: "text-amber-700 bg-amber-50", icon: hourglassOutline },

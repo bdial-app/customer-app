@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
   addOutline,
@@ -10,118 +10,200 @@ import {
   closeOutline,
   cubeOutline,
   pricetagOutline,
+  checkmarkCircleOutline,
+  alertCircleOutline,
 } from "ionicons/icons";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import {
-  Sheet,
-  Page,
-  Navbar,
-  List,
-  Button,
-  Block,
-} from "konsta/react";
+import { Sheet, Page, Navbar, List, Button, Block } from "konsta/react";
 import { FormikInput } from "../formik-input";
-import { ListingProduct } from "@/services/listing.service";
+import { ProviderDetailsProduct } from "@/services/provider.service";
 import { AppDialog } from "../app-dialog";
+import {
+  useCreateProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+} from "@/hooks/useProduct";
 
 interface ProviderProductsTabProps {
-  products: ListingProduct[];
+  products: ProviderDetailsProduct[];
+  providerId: string | null;
 }
 
 const productSchema = Yup.object({
-  name: Yup.string().required("Name is required"),
+  name: Yup.string().required("Product name is required").max(150),
   price: Yup.string().required("Price is required"),
-  description: Yup.string().nullable(),
+  description: Yup.string().max(2000).nullable(),
+  currency: Yup.string().oneOf(["INR", "USD"]).default("INR"),
 });
 
-const ProviderProductsTab = ({ products: initialProducts }: ProviderProductsTabProps) => {
-  // TODO: Replace with API-backed state when Products CRUD endpoints exist
-  const [products, setProducts] = useState(initialProducts);
+const ProviderProductsTab = ({
+  products,
+  providerId,
+}: ProviderProductsTabProps) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editing, setEditing] = useState<ListingProduct | null>(null);
+  const [editing, setEditing] = useState<ProviderDetailsProduct | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const createMutation = useCreateProduct();
+  const updateMutation = useUpdateProduct();
+  const deleteMutation = useDeleteProduct();
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const handleAdd = () => {
     setEditing(null);
+    setPhotoPreview(null);
     setSheetOpen(true);
   };
 
-  const handleEdit = (p: ListingProduct) => {
+  const handleEdit = (p: ProviderDetailsProduct) => {
     setEditing(p);
+    setPhotoPreview(p.photoUrl);
     setSheetOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    setDeleteOpen(false);
-    setSheetOpen(false);
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        setDeleteOpen(false);
+        setSheetOpen(false);
+        setEditing(null);
+      },
+    });
   };
+
+  const handleToggleActive = (p: ProviderDetailsProduct) => {
+    updateMutation.mutate({ id: p.id, isActive: !p.isActive });
+  };
+
+  const activeCount = products.filter((p) => p.isActive).length;
+  const inactiveCount = products.length - activeCount;
 
   return (
     <div className="animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h3 className="text-sm font-bold text-slate-800">
-          Products & Services ({products.length})
-        </h3>
+        <div>
+          <h3 className="text-sm font-bold text-slate-800">
+            Products & Services
+          </h3>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {activeCount} active
+            {inactiveCount > 0 && ` · ${inactiveCount} inactive`}
+          </p>
+        </div>
+        {!providerId && (
+          <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium">
+            Set up your provider profile first
+          </span>
+        )}
       </div>
 
-      {/* Product Grid */}
+      {/* Product List */}
       {products.length > 0 ? (
-        <div className="px-4 space-y-3">
+        <div className="px-4 space-y-2.5">
           {products.map((p, i) => (
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleEdit(p)}
-              className="bg-white rounded-2xl border border-slate-100 overflow-hidden flex shadow-sm active:bg-slate-50"
+              transition={{ delay: i * 0.04 }}
+              className={`bg-white rounded-2xl border overflow-hidden flex shadow-sm ${
+                !p.isActive
+                  ? "border-slate-200 opacity-60"
+                  : "border-slate-100"
+              }`}
             >
               {/* Photo */}
-              <div className="w-24 h-24 shrink-0 bg-slate-100">
+              <div
+                className="w-[88px] h-[88px] shrink-0 bg-slate-100 cursor-pointer"
+                onClick={() => handleEdit(p)}
+              >
                 {p.photoUrl ? (
-                  <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" />
+                  <img
+                    src={p.photoUrl}
+                    alt={p.name}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <IonIcon icon={cubeOutline} className="text-2xl text-slate-300" />
+                    <IonIcon
+                      icon={cubeOutline}
+                      className="text-2xl text-slate-300"
+                    />
                   </div>
                 )}
               </div>
 
               {/* Info */}
-              <div className="flex-1 min-w-0 p-3 flex flex-col justify-center">
-                <p className="text-sm font-semibold text-slate-800 truncate">{p.name}</p>
+              <div
+                className="flex-1 min-w-0 p-3 flex flex-col justify-center cursor-pointer"
+                onClick={() => handleEdit(p)}
+              >
+                <p className="text-[13px] font-semibold text-slate-800 truncate">
+                  {p.name}
+                </p>
                 {p.description && (
-                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
                     {p.description}
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-1.5">
                   {p.price !== null && (
-                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
-                      <IonIcon icon={pricetagOutline} className="text-[10px]" />
-                      {p.currency === "INR" ? "₹" : "$"}{p.price}
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+                      <IonIcon
+                        icon={pricetagOutline}
+                        className="text-[10px]"
+                      />
+                      {p.currency === "INR" ? "₹" : "$"}
+                      {p.price}
                     </span>
                   )}
                   {!p.isActive && (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-medium">
+                    <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-500 text-[10px] font-medium">
                       Inactive
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center pr-3">
-                <IonIcon icon={createOutline} className="text-slate-400 text-lg" />
+              {/* Actions */}
+              <div className="flex flex-col items-center justify-center gap-1 pr-2">
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
+                  onClick={() => handleEdit(p)}
+                  className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center"
+                >
+                  <IonIcon
+                    icon={createOutline}
+                    className="text-slate-400 text-sm"
+                  />
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
+                  onClick={() => handleToggleActive(p)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    p.isActive ? "bg-emerald-50" : "bg-slate-50"
+                  }`}
+                >
+                  <IonIcon
+                    icon={
+                      p.isActive
+                        ? checkmarkCircleOutline
+                        : alertCircleOutline
+                    }
+                    className={`text-sm ${
+                      p.isActive ? "text-emerald-500" : "text-slate-400"
+                    }`}
+                  />
+                </motion.button>
               </div>
             </motion.div>
           ))}
         </div>
       ) : (
-        /* Empty State */
         <div className="px-4 py-12 text-center">
           <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <IonIcon icon={cubeOutline} className="text-4xl text-teal-400" />
@@ -130,12 +212,13 @@ const ProviderProductsTab = ({ products: initialProducts }: ProviderProductsTabP
             No products yet
           </h4>
           <p className="text-sm text-slate-500 max-w-[250px] mx-auto mb-5">
-            Add your first product or service to showcase to customers
+            Add your products or services to showcase to customers
           </p>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleAdd}
-            className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5"
+            disabled={!providerId}
+            className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
           >
             <IonIcon icon={addOutline} className="text-lg" />
             Add Product
@@ -144,7 +227,7 @@ const ProviderProductsTab = ({ products: initialProducts }: ProviderProductsTabP
       )}
 
       {/* FAB */}
-      {products.length > 0 && (
+      {products.length > 0 && providerId && (
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleAdd}
@@ -159,111 +242,199 @@ const ProviderProductsTab = ({ products: initialProducts }: ProviderProductsTabP
       {/* Add/Edit Sheet */}
       <Sheet
         opened={sheetOpen}
-        onBackdropClick={() => setSheetOpen(false)}
-        className="pb-safe rounded-t-3xl h-fit min-h-[80vh] max-h-[90vh]"
+        onBackdropClick={() => !isSaving && setSheetOpen(false)}
+        className="pb-safe rounded-t-3xl !h-[88vh]"
       >
-        <Page className="flex flex-col">
+        <Page className="flex flex-col bg-white">
           <Navbar
-            title={editing ? "Edit Product" : "Add Product"}
+            title={editing ? "Edit Product" : "New Product"}
             left={
-              <Button clear onClick={() => setSheetOpen(false)}>
+              <Button
+                clear
+                onClick={() => !isSaving && setSheetOpen(false)}
+              >
                 <IonIcon icon={closeOutline} className="w-5 h-5" />
               </Button>
             }
             right={
               editing && (
-                <Button clear onClick={() => setDeleteOpen(true)} className="text-red-500">
+                <Button
+                  clear
+                  onClick={() => setDeleteOpen(true)}
+                  className="!text-red-500"
+                >
                   <IonIcon icon={trashOutline} className="w-5 h-5" />
                 </Button>
               )
             }
           />
-          <div className="overflow-y-auto pb-4">
+          <div className="overflow-y-auto flex-1 pb-8">
             <Formik
               initialValues={{
                 name: editing?.name || "",
                 description: editing?.description || "",
                 price: editing?.price != null ? String(editing.price) : "",
+                currency: editing?.currency || "INR",
                 photoUrl: editing?.photoUrl || "",
               }}
               validationSchema={productSchema}
               enableReinitialize
               onSubmit={(values) => {
+                const payload = {
+                  name: values.name,
+                  description: values.description || undefined,
+                  price: values.price ? parseFloat(values.price) : undefined,
+                  currency: values.currency || "INR",
+                  photoUrl: values.photoUrl || undefined,
+                };
                 if (editing) {
-                  setProducts((prev) =>
-                    prev.map((p) =>
-                      p.id === editing.id
-                        ? { ...p, name: values.name, description: values.description, price: parseFloat(values.price) || 0, photoUrl: values.photoUrl }
-                        : p,
-                    ),
+                  updateMutation.mutate(
+                    { id: editing.id, ...payload },
+                    {
+                      onSuccess: () => {
+                        setSheetOpen(false);
+                        setEditing(null);
+                      },
+                    },
                   );
-                } else {
-                  const newProduct: ListingProduct = {
-                    id: `local-${Date.now()}`,
-                    listingId: "",
-                    name: values.name,
-                    description: values.description,
-                    price: parseFloat(values.price) || 0,
-                    currency: "INR",
-                    photoUrl: values.photoUrl,
-                    isActive: true,
-                    displayOrder: products.length,
-                  };
-                  setProducts((prev) => [...prev, newProduct]);
+                } else if (providerId) {
+                  createMutation.mutate(
+                    { providerId, ...payload },
+                    {
+                      onSuccess: () => setSheetOpen(false),
+                    },
+                  );
                 }
-                setSheetOpen(false);
               }}
             >
               {({ values, setFieldValue, isValid, dirty }) => (
                 <Form className="contents">
-                  <label className="block mt-6 mb-4 text-center cursor-pointer">
+                  {/* Photo upload */}
+                  <label className="block mt-5 mb-4 text-center cursor-pointer">
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) setFieldValue("photoUrl", URL.createObjectURL(file));
+                        if (file) {
+                          const url = URL.createObjectURL(file);
+                          setPhotoPreview(url);
+                          setFieldValue("photoUrl", url);
+                        }
                       }}
                     />
-                    <div className="w-52 h-52 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center relative transition-all active:scale-95">
-                      {values.photoUrl ? (
+                    <div className="w-44 h-44 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center relative transition-all active:scale-[0.97]">
+                      {photoPreview || values.photoUrl ? (
                         <>
-                          <img src={values.photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <img
+                            src={photoPreview || values.photoUrl}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                             <span className="text-white text-xs font-semibold px-3 py-1 border border-white/50 rounded-full">
-                              Change
+                              Change Photo
                             </span>
                           </div>
                         </>
                       ) : (
                         <>
-                          <IonIcon icon={cameraOutline} className="text-3xl mb-1 text-teal-400" />
-                          <span className="text-xs font-semibold text-slate-500">Upload Photo</span>
+                          <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-2">
+                            <IonIcon
+                              icon={cameraOutline}
+                              className="text-xl text-teal-500"
+                            />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-500">
+                            Upload Photo
+                          </span>
+                          <span className="text-[10px] text-slate-400 mt-0.5">
+                            Recommended: 800×800px
+                          </span>
                         </>
                       )}
                     </div>
                   </label>
+
+                  {/* Fields */}
+                  <div className="px-4 pb-1">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Product Details
+                    </p>
+                  </div>
                   <List strongIos insetIos className="!mt-0">
-                    <FormikInput name="name" label="Name" type="text" placeholder="Product or service name" />
-                    <FormikInput name="price" label="Price (₹)" type="number" placeholder="e.g. 500" />
+                    <FormikInput
+                      name="name"
+                      label="Name"
+                      type="text"
+                      placeholder="e.g. Bridal Mehendi Package"
+                      media={<IonIcon icon={cubeOutline} />}
+                    />
+                    <FormikInput
+                      name="price"
+                      label="Price (₹)"
+                      type="number"
+                      placeholder="e.g. 2500"
+                      media={<IonIcon icon={pricetagOutline} />}
+                    />
                     <FormikInput
                       name="description"
                       label="Description"
                       type="textarea"
-                      placeholder="Brief description..."
+                      placeholder="What's included, duration, special features..."
                       inputClassName="!h-28 resize-none"
                     />
                   </List>
-                  <Block className="mt-auto px-4">
+
+                  {/* Currency */}
+                  <div className="px-4 pb-3">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Currency
+                    </p>
+                    <div className="flex gap-2">
+                      {(["INR", "USD"] as const).map((c) => (
+                        <motion.button
+                          key={c}
+                          type="button"
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setFieldValue("currency", c)}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            values.currency === c
+                              ? "bg-teal-500 text-white border-teal-500"
+                              : "bg-white text-slate-600 border-slate-200"
+                          }`}
+                        >
+                          {c === "INR" ? "₹ INR" : "$ USD"}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <Block className="px-4 pt-2">
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       type="submit"
-                      disabled={!isValid || (!dirty && !editing)}
-                      className="w-full py-3.5 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50"
+                      disabled={!isValid || (!dirty && !editing) || isSaving}
+                      className="w-full py-3.5 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {editing ? "Save Changes" : "Add Product"}
+                      {isSaving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          {editing ? "Saving..." : "Adding..."}
+                        </>
+                      ) : editing ? (
+                        "Save Changes"
+                      ) : (
+                        "Add Product"
+                      )}
                     </motion.button>
+                    {(createMutation.isError || updateMutation.isError) && (
+                      <p className="text-xs text-red-500 text-center mt-2">
+                        Something went wrong. Please try again.
+                      </p>
+                    )}
                   </Block>
                 </Form>
               )}

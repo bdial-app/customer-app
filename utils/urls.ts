@@ -38,29 +38,25 @@ export const PROVIDER_URLS = {
   SEND_OTP: "/providers/send-otp",
   VERIFY_OTP: "/providers/verify-otp",
   SUBMIT_VERIFICATION: "/providers/submit-verification",
-};
-
-export const LISTING_URLS = {
-  LIST: "/listings",
-  CREATE: "/listings",
-  BY_ID: (id: string) => `/listings/${id}`,
-  UPDATE: (id: string) => `/listings/${id}`,
-  DELETE: (id: string) => `/listings/${id}`,
-  MY_LISTINGS: "/users/me/listings",
+  MY_ANALYTICS: "/providers/my-analytics",
 };
 
 export const PHOTO_URLS = {
-  UPLOAD_LISTING: (listingId: string) => `/photos/listing/${listingId}`,
-  DELETE_LISTING: (photoId: string) => `/photos/listing/${photoId}`,
-  REORDER_LISTING: (listingId: string) => `/photos/listing/${listingId}/reorder`,
+  UPLOAD_PROVIDER: (providerId: string) => `/photos/provider/${providerId}`,
+  DELETE_PROVIDER: (photoId: string) => `/photos/provider/${photoId}`,
+  REORDER_PROVIDER: (providerId: string) => `/photos/provider/${providerId}/reorder`,
 };
 
 export const REVIEW_URLS = {
-  BY_LISTING: (listingId: string) => `/listings/${listingId}`,
+  BY_PROVIDER: (providerId: string) => `/reviews/provider/${providerId}`,
+  REPLY: (reviewId: string) => `/reviews/${reviewId}/reply`,
 };
 
 export const PRODUCT_URLS = {
   BY_ID: (id: string) => `/products/${id}`,
+  CREATE: "/products",
+  UPDATE: (id: string) => `/products/${id}`,
+  DELETE: (id: string) => `/products/${id}`,
 };
 
 export const HOME_URLS = {
@@ -78,4 +74,17 @@ export const SAVED_ITEM_URLS = {
   LIST: '/saved-items',
   IDS: '/saved-items/ids',
   CHECK: (itemId: string, itemType: string) => `/saved-items/check/${itemId}/${itemType}`,
+};
+
+export const CHAT_URLS = {
+  CONVERSATIONS: '/chat/conversations',
+  CONVERSATION: (id: string) => `/chat/conversations/${id}`,
+  MESSAGES: (id: string) => `/chat/conversations/${id}/messages`,
+  MARK_READ: (id: string) => `/chat/conversations/${id}/read`,
+  ARCHIVE: (id: string) => `/chat/conversations/${id}/archive`,
+  UPLOAD_MEDIA: (id: string) => `/chat/conversations/${id}/media`,
+  TYPING: (id: string) => `/chat/conversations/${id}/typing`,
+  UNREAD_COUNT: '/chat/unread-count',
+  HEARTBEAT: '/chat/heartbeat',
+  PRESENCE: (userId: string) => `/chat/presence/${userId}`,
 };

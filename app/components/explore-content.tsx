@@ -229,8 +229,8 @@ const ExploreContent = () => {
               >
                 {cat.icon && <span className="text-base">{cat.icon}</span>}
                 <span className="text-[12px] font-semibold text-slate-700 whitespace-nowrap">{cat.name}</span>
-                {cat.listingCount > 0 && (
-                  <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md">{cat.listingCount}</span>
+                {cat.providerCount > 0 && (
+                  <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md">{cat.providerCount}</span>
                 )}
               </motion.button>
             ))}

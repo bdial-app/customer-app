@@ -1,18 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  uploadListingPhotos,
-  deleteListingPhoto,
-  reorderListingPhotos,
+  uploadProviderPhotos,
+  deleteProviderPhoto,
+  reorderProviderPhotos,
 } from "@/services/photo.service";
-import { MY_LISTINGS_KEY } from "./useListing";
+import { PROVIDER_STATUS_KEY } from "./useMyProvider";
 
 export const useUploadPhotos = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ listingId, files }: { listingId: string; files: File[] }) =>
-      uploadListingPhotos(listingId, files),
+    mutationFn: ({ providerId, files }: { providerId: string; files: File[] }) =>
+      uploadProviderPhotos(providerId, files),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_LISTINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },
   });
 };
@@ -20,9 +20,9 @@ export const useUploadPhotos = () => {
 export const useDeletePhoto = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (photoId: string) => deleteListingPhoto(photoId),
+    mutationFn: (photoId: string) => deleteProviderPhoto(photoId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_LISTINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },
   });
 };
@@ -30,10 +30,10 @@ export const useDeletePhoto = () => {
 export const useReorderPhotos = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ listingId, orderedIds }: { listingId: string; orderedIds: string[] }) =>
-      reorderListingPhotos(listingId, orderedIds),
+    mutationFn: ({ providerId, orderedIds }: { providerId: string; orderedIds: string[] }) =>
+      reorderProviderPhotos(providerId, orderedIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: MY_LISTINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },
   });
 };

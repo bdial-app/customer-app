@@ -56,7 +56,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
       id: r.id,
       name: r.name,
       avatar: getInitials(r.name),
-      service: r.service,
+      service: r.providerName,
       text: r.text,
       rating: r.rating,
       timeAgo: formatTimeAgo(r.timeAgo),

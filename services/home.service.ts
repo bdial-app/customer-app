@@ -13,7 +13,6 @@ export interface HomeProvider {
   location: string;
   rating: number;
   reviewCount: number;
-  listingCount: number;
   services: string | null;
   verified: boolean;
   isFeatured: boolean;
@@ -40,14 +39,13 @@ export interface TrendingCategory {
   name: string;
   slug: string;
   icon: string | null;
-  listingCount: number;
+  providerCount: number;
   recentBookings: number;
 }
 
 export interface CommunityReview {
   id: string;
   name: string;
-  service: string;
   providerName: string;
   text: string;
   rating: number;
@@ -66,8 +64,6 @@ export interface LastBooking {
   providerId: string;
   providerName: string;
   providerImage: string | null;
-  listingId: string;
-  listingName: string;
   categories: string | null;
   location: string;
   completedAt: string;

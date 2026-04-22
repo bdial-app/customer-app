@@ -30,7 +30,7 @@ const ReorderRibbon = ({ lastBooking }: ReorderRibbonProps) => {
               {lastBooking.providerName}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {lastBooking.categories || lastBooking.listingName}
+              {lastBooking.categories || lastBooking.providerName}
               {lastBooking.location ? ` • ${lastBooking.location}` : ""}
             </p>
           </div>

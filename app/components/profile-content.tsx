@@ -362,7 +362,7 @@ const ProfileContent = () => {
               <div className="text-[11px] text-slate-500 mt-0.5">
                 {userMode === "provider"
                   ? "Managing your business"
-                  : "Switch to manage listings"}
+                  : "Switch to manage your business"}
               </div>
             </div>
             <Toggle

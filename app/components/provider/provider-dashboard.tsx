@@ -27,8 +27,8 @@ import { useRouter } from "next/navigation";
 import ProviderHeader from "./provider-header";
 import ProviderQuickStats from "./provider-quick-stats";
 import { useMyProvider } from "@/hooks/useMyProvider";
-import { useMyListings } from "@/hooks/useListing";
-import { ListingData } from "@/services/listing.service";
+import { useProviderDetails } from "@/hooks/useProvider";
+import { ProviderDetailsPhoto, ProviderDetailsProduct, ProviderDetailsReview } from "@/services/provider.service";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
@@ -134,15 +134,18 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
 };
 
 // ─── Today's Activity Card ─────────────────────────────────────────
-const TodayActivity = ({ listings }: { listings: ListingData[] }) => {
-  const todayReviews = listings.flatMap((l) => l.reviews ?? []).filter((r) => {
+interface ProviderStats {
+  photos: ProviderDetailsPhoto[];
+  products: ProviderDetailsProduct[];
+  reviews: ProviderDetailsReview[];
+}
+
+const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
+  const todayReviews = stats.reviews.filter((r) => {
     const posted = new Date(r.postedAt);
     const today = new Date();
     return posted.toDateString() === today.toDateString();
   });
-
-  const pendingListings = listings.filter((l) => l.status === "pending");
-  const totalPhotos = listings.reduce((s, l) => s + (l.photos?.length ?? 0), 0);
 
   return (
     <div className="px-4 mb-4">
@@ -159,11 +162,11 @@ const TodayActivity = ({ listings }: { listings: ListingData[] }) => {
           <p className="text-[10px] text-slate-500">New Reviews</p>
         </div>
         <div className="bg-white rounded-2xl p-3 border border-slate-100 text-center">
-          <p className="text-xl font-bold text-amber-600">{pendingListings.length}</p>
-          <p className="text-[10px] text-slate-500">Pending</p>
+          <p className="text-xl font-bold text-amber-600">{stats.products.length}</p>
+          <p className="text-[10px] text-slate-500">Products</p>
         </div>
         <div className="bg-white rounded-2xl p-3 border border-slate-100 text-center">
-          <p className="text-xl font-bold text-blue-600">{totalPhotos}</p>
+          <p className="text-xl font-bold text-blue-600">{stats.photos.length}</p>
           <p className="text-[10px] text-slate-500">Photos</p>
         </div>
       </div>
@@ -172,18 +175,16 @@ const TodayActivity = ({ listings }: { listings: ListingData[] }) => {
 };
 
 // ─── Growth Tips ────────────────────────────────────────────────────
-const GrowthTips = ({ listings }: { listings: ListingData[] }) => {
-  const totalPhotos = listings.reduce((s, l) => s + (l.photos?.length ?? 0), 0);
-  const totalProducts = listings.reduce((s, l) => s + (l.products?.length ?? 0), 0);
-  const unrepliedReviews = listings
-    .flatMap((l) => l.reviews ?? [])
-    .filter((r) => r.status === "active").length;
+const GrowthTips = ({ stats }: { stats: ProviderStats }) => {
+  const totalPhotos = stats.photos.length;
+  const totalProducts = stats.products.length;
+  const unrepliedReviews = stats.reviews.filter((r) => r.status === "active" && !r.replyText).length;
 
   const tips = [
     totalPhotos < 5 && {
       icon: imageOutline,
       title: "Add more photos",
-      desc: "Listings with 5+ photos get 3× more views",
+      desc: "Profiles with 5+ photos get 3× more views",
       priority: "high" as const,
     },
     totalProducts === 0 && {
@@ -255,9 +256,8 @@ const GrowthTips = ({ listings }: { listings: ListingData[] }) => {
 };
 
 // ─── Recent Reviews ─────────────────────────────────────────────────
-const RecentReviewsList = ({ listings }: { listings: ListingData[] }) => {
-  const allReviews = listings
-    .flatMap((l) => l.reviews ?? [])
+const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
+  const allReviews = [...stats.reviews]
     .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
     .slice(0, 3);
 
@@ -313,30 +313,17 @@ const RecentReviewsList = ({ listings }: { listings: ListingData[] }) => {
   );
 };
 
-// ─── Listings Overview ──────────────────────────────────────────────
-const ListingsOverview = ({ listings }: { listings: ListingData[] }) => {
-  const statusCfg: Record<string, { label: string; cls: string; icon: string }> = {
-    live: { label: "Live", cls: "text-emerald-700 bg-emerald-50", icon: checkmarkCircleOutline },
-    pending: { label: "Pending", cls: "text-amber-700 bg-amber-50", icon: hourglassOutline },
-    rejected: { label: "Rejected", cls: "text-red-700 bg-red-50", icon: closeCircleOutline },
-    inactive: { label: "Inactive", cls: "text-slate-600 bg-slate-50", icon: alertCircleOutline },
-  };
-
-  if (listings.length === 0) {
+// ─── Products Overview ──────────────────────────────────────────────
+const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
+  if (stats.products.length === 0) {
     return (
       <div className="px-4 mb-4">
         <div className="bg-white rounded-2xl p-6 border border-slate-100 text-center">
           <div className="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-3">
             <IonIcon icon={ribbonOutline} className="text-2xl text-teal-400" />
           </div>
-          <h4 className="text-sm font-bold text-slate-800 mb-1">No listings yet</h4>
-          <p className="text-xs text-slate-500 mb-3">Create your first listing to start getting customers</p>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 rounded-xl bg-teal-500 text-white text-xs font-semibold"
-          >
-            Create Listing
-          </motion.button>
+          <h4 className="text-sm font-bold text-slate-800 mb-1">No products yet</h4>
+          <p className="text-xs text-slate-500 mb-3">Add products to showcase to customers</p>
         </div>
       </div>
     );
@@ -345,48 +332,33 @@ const ListingsOverview = ({ listings }: { listings: ListingData[] }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800">My Listings</h3>
-        <span className="text-[10px] font-medium text-slate-400">{listings.length} total</span>
+        <h3 className="text-sm font-bold text-slate-800">My Products</h3>
+        <span className="text-[10px] font-medium text-slate-400">{stats.products.length} total</span>
       </div>
       <div className="space-y-2">
-        {listings.slice(0, 3).map((l, i) => {
-          const cfg = statusCfg[l.status] || statusCfg.pending;
-          return (
-            <motion.div
-              key={l.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="bg-white rounded-2xl p-3.5 border border-slate-100"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-slate-800 truncate flex-1 mr-2">
-                  {l.businessName}
-                </p>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${cfg.cls}`}>
-                  <IonIcon icon={cfg.icon} className="text-[9px]" />
-                  {cfg.label}
-                </span>
-              </div>
-              {l.status === "live" && (
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 bg-slate-50 rounded-lg px-2 py-1.5 text-center">
-                    <p className="text-xs font-bold text-slate-800">{l.photos?.length ?? 0}</p>
-                    <p className="text-[8px] text-slate-400">Photos</p>
-                  </div>
-                  <div className="flex-1 bg-slate-50 rounded-lg px-2 py-1.5 text-center">
-                    <p className="text-xs font-bold text-slate-800">{l.products?.length ?? 0}</p>
-                    <p className="text-[8px] text-slate-400">Products</p>
-                  </div>
-                  <div className="flex-1 bg-slate-50 rounded-lg px-2 py-1.5 text-center">
-                    <p className="text-xs font-bold text-slate-800">{l.reviews?.length ?? 0}</p>
-                    <p className="text-[8px] text-slate-400">Reviews</p>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
+        {stats.products.slice(0, 3).map((p, i) => (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="bg-white rounded-2xl p-3.5 border border-slate-100"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-slate-800 truncate flex-1 mr-2">
+                {p.name}
+              </p>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                p.isActive ? "text-emerald-700 bg-emerald-50" : "text-slate-600 bg-slate-50"
+              }`}>
+                {p.isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+            {p.price && (
+              <p className="text-[11px] text-slate-500">{p.currency === "INR" ? "₹" : p.currency}{p.price.toLocaleString()}</p>
+            )}
+          </motion.div>
+        ))}
       </div>
     </div>
   );
@@ -395,10 +367,10 @@ const ListingsOverview = ({ listings }: { listings: ListingData[] }) => {
 // ─── Profile Completeness ───────────────────────────────────────────
 const ProfileCompleteness = ({
   provider,
-  listings,
+  stats,
 }: {
   provider: any;
-  listings: ListingData[];
+  stats: ProviderStats;
 }) => {
   const checks = [
     { label: "Brand name", done: !!provider?.brandName },
@@ -407,8 +379,8 @@ const ProfileCompleteness = ({
     { label: "Address", done: !!provider?.address },
     { label: "Operating hours", done: !!provider?.openTime && !!provider?.closeTime },
     { label: "Profile photo", done: !!provider?.profilePhotoUrl },
-    { label: "At least 1 listing", done: listings.length > 0 },
-    { label: "At least 3 photos", done: listings.reduce((s, l) => s + (l.photos?.length ?? 0), 0) >= 3 },
+    { label: "At least 1 product", done: stats.products.length > 0 },
+    { label: "At least 3 photos", done: stats.photos.length >= 3 },
   ];
 
   const done = checks.filter((c) => c.done).length;
@@ -463,11 +435,18 @@ const ProfileCompleteness = ({
 const ProviderDashboard = () => {
   const router = useRouter();
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
-  const { data: listings, isLoading: listingsLoading } = useMyListings();
 
   const provider = providerData?.provider ?? null;
+  const providerId = provider?.id ?? "";
+  const { data: details, isLoading: detailsLoading } = useProviderDetails(providerId);
   const verificationStatus = providerData?.verificationStatus ?? null;
-  const isLoading = providerLoading || listingsLoading;
+  const isLoading = providerLoading || detailsLoading;
+
+  const providerStats: ProviderStats = {
+    photos: details?.photos ?? [],
+    products: details?.products ?? [],
+    reviews: details?.reviews ?? [],
+  };
 
   const needsVerification = !verificationStatus || verificationStatus === "rejected";
 
@@ -508,7 +487,7 @@ const ProviderDashboard = () => {
   return (
     <div className="pb-24">
       <ProviderHeader provider={provider} verificationStatus={verificationStatus} />
-      <ProviderQuickStats listings={listings ?? []} />
+      <ProviderQuickStats stats={providerStats} />
       {needsVerification && (
         <VerificationPrompt onVerify={() => router.push("/provider-onboarding/verify")} />
       )}
@@ -518,11 +497,11 @@ const ProviderDashboard = () => {
       {verificationStatus === "approved" && (
         <VerificationStatusCard status={verificationStatus} />
       )}
-      <ProfileCompleteness provider={provider} listings={listings ?? []} />
-      <TodayActivity listings={listings ?? []} />
-      <GrowthTips listings={listings ?? []} />
-      <ListingsOverview listings={listings ?? []} />
-      <RecentReviewsList listings={listings ?? []} />
+      <ProfileCompleteness provider={provider} stats={providerStats} />
+      <TodayActivity stats={providerStats} />
+      <GrowthTips stats={providerStats} />
+      <ProductsOverview stats={providerStats} />
+      <RecentReviewsList stats={providerStats} />
     </div>
   );
 };

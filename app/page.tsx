@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Page, Navbar } from "konsta/react";
+import { useState, useEffect, useRef } from "react";
+import { Page } from "konsta/react";
 import BottomBar from "./components/bottom-bar";
 import ProfileContent from "./components/profile-content";
 import MessagesContent from "./components/messages-content";
@@ -15,14 +15,34 @@ import ExploreContent from "./components/explore-content";
 import SavedContent from "./components/saved-content";
 import { useAppContext } from "./context/AppContext";
 import GeoLocation from "./components/geo-location";
-import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useChatSubscription } from "@/hooks/useChatSubscription";
+import { useHeartbeat } from "@/hooks/useChat";
+import { clearPendingChat } from "@/store/slices/chatSlice";
 
 export default function Home() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const { userMode } = useAppContext();
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
+  const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
+  const prevUserMode = useRef(userMode);
+
+  // Global chat subscription for unread badge
+  useChatSubscription();
+  // Heartbeat for online presence
+  useHeartbeat();
+
+  // Open a specific chat when dispatched from another page (e.g. provider-details, product-details)
+  useEffect(() => {
+    if (pendingChatOpen) {
+      setActiveTab("chats");
+      setActiveChat(pendingChatOpen);
+      dispatch(clearPendingChat());
+    }
+  }, [pendingChatOpen, dispatch]);
 
   useEffect(() => {
     if (!user && !hasSkippedAuth) {
@@ -30,9 +50,12 @@ export default function Home() {
     }
   }, [user, hasSkippedAuth, router]);
 
-  // When provider/customer mode changes, go to home tab
+  // When provider/customer mode CHANGES (not on initial mount), go to home tab
   useEffect(() => {
-    setActiveTab("home");
+    if (prevUserMode.current !== userMode) {
+      prevUserMode.current = userMode;
+      setActiveTab("home");
+    }
   }, [userMode]);
 
   const handleTabChange = (tab: string) => {
@@ -52,7 +75,7 @@ export default function Home() {
       case "saved":
         return "Saved";
       case "listings":
-        return "My Listings";
+        return "My Business";
       case "chats":
         return "Messages";
       case "profile":
@@ -66,7 +89,7 @@ export default function Home() {
 
   if (activeTab === "chats" && activeChat) {
     return (
-      <MessagesPage chatName={activeChat} onBack={() => setActiveChat(null)} />
+      <MessagesPage conversationId={activeChat} onBack={() => setActiveChat(null)} />
     );
   }
 
@@ -106,9 +129,9 @@ export default function Home() {
 
       {activeTab === "chats" &&
         (userMode === "provider" ? (
-          <ProviderMessagesContent onChatClick={(name) => setActiveChat(name)} />
+          <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
         ) : (
-          <MessagesContent onChatClick={(name) => setActiveChat(name)} />
+          <MessagesContent onChatClick={(id) => setActiveChat(id)} />
         ))}
 
       {activeTab === "profile" && <ProfileContent />}

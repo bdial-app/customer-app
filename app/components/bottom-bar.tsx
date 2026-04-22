@@ -20,6 +20,7 @@ import {
 } from "ionicons/icons";
 import { motion } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 interface BottomBarProps {
   activeTab: string;
@@ -55,7 +56,7 @@ const TABS: TabItem[] = [
   // Provider-only
   {
     id: "listings",
-    label: "Listings",
+    label: "Business",
     iconOutline: layersOutline,
     iconFilled: layers,
     mode: "provider",
@@ -84,6 +85,7 @@ const TABS: TabItem[] = [
 
 const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
   const { userMode } = useAppContext();
+  const unreadCount = useAppSelector((state) => state.chat.totalUnreadCount);
 
   const visibleTabs = TABS.filter(
     (tab) => !tab.mode || tab.mode === userMode
@@ -132,6 +134,14 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
                         : "text-slate-400"
                     }`}
                   />
+                  {/* Unread badge */}
+                  {tab.id === "chats" && unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-2 min-w-[16px] h-4 rounded-full bg-red-500 flex items-center justify-center px-1">
+                      <span className="text-[9px] font-bold text-white leading-none">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <span

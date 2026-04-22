@@ -28,25 +28,27 @@ import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import { useProviderDetails } from "@/hooks/useProvider";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
-import { useAppSelector } from "@/hooks/useAppStore";
+import { useCreateConversation } from "@/hooks/useChat";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { openChat } from "@/store/slices/chatSlice";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
 
 // -- Static Fallback Data --
 const STATIC_REVIEWS = [
-  { id: "sr1", listingId: "", reviewerId: "", starRating: 5, reviewText: "Absolutely amazing service! The quality of work exceeded my expectations. Highly recommended for anyone looking for professional service.", status: "active", postedAt: new Date(Date.now() - 2 * 86400000).toISOString(), reviewer: { id: "u1", name: "Fatima Bohra" }, photos: [] },
-  { id: "sr2", listingId: "", reviewerId: "", starRating: 4, reviewText: "Very good experience overall. Prompt delivery and great attention to detail. Will definitely come back again.", status: "active", postedAt: new Date(Date.now() - 5 * 86400000).toISOString(), reviewer: { id: "u2", name: "Ahmed Hussain" }, photos: [] },
-  { id: "sr3", listingId: "", reviewerId: "", starRating: 5, reviewText: "Best in the area! Fair pricing and excellent craftsmanship. The owner is very friendly and accommodating.", status: "active", postedAt: new Date(Date.now() - 12 * 86400000).toISOString(), reviewer: { id: "u3", name: "Sakina Merchant" }, photos: [] },
-  { id: "sr4", listingId: "", reviewerId: "", starRating: 4, reviewText: "Good quality work. Slightly delayed but the end result was worth the wait.", status: "active", postedAt: new Date(Date.now() - 20 * 86400000).toISOString(), reviewer: { id: "u4", name: "Murtaza Ali" }, photos: [] },
-  { id: "sr5", listingId: "", reviewerId: "", starRating: 5, reviewText: "Outstanding! This is my go-to place now. Professional, reliable, and affordable.", status: "active", postedAt: new Date(Date.now() - 30 * 86400000).toISOString(), reviewer: { id: "u5", name: "Zahra Bhai" }, photos: [] },
+  { id: "sr1", providerId: "", reviewerId: "", starRating: 5, reviewText: "Absolutely amazing service! The quality of work exceeded my expectations. Highly recommended for anyone looking for professional service.", status: "active", postedAt: new Date(Date.now() - 2 * 86400000).toISOString(), reviewer: { id: "u1", name: "Fatima Bohra" }, photos: [] },
+  { id: "sr2", providerId: "", reviewerId: "", starRating: 4, reviewText: "Very good experience overall. Prompt delivery and great attention to detail. Will definitely come back again.", status: "active", postedAt: new Date(Date.now() - 5 * 86400000).toISOString(), reviewer: { id: "u2", name: "Ahmed Hussain" }, photos: [] },
+  { id: "sr3", providerId: "", reviewerId: "", starRating: 5, reviewText: "Best in the area! Fair pricing and excellent craftsmanship. The owner is very friendly and accommodating.", status: "active", postedAt: new Date(Date.now() - 12 * 86400000).toISOString(), reviewer: { id: "u3", name: "Sakina Merchant" }, photos: [] },
+  { id: "sr4", providerId: "", reviewerId: "", starRating: 4, reviewText: "Good quality work. Slightly delayed but the end result was worth the wait.", status: "active", postedAt: new Date(Date.now() - 20 * 86400000).toISOString(), reviewer: { id: "u4", name: "Murtaza Ali" }, photos: [] },
+  { id: "sr5", providerId: "", reviewerId: "", starRating: 5, reviewText: "Outstanding! This is my go-to place now. Professional, reliable, and affordable.", status: "active", postedAt: new Date(Date.now() - 30 * 86400000).toISOString(), reviewer: { id: "u5", name: "Zahra Bhai" }, photos: [] },
 ];
 
 const STATIC_PRODUCTS = [
-  { id: "sp1", listingId: "", name: "Premium Package", description: "Our best-selling premium service package with full coverage", price: 1999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", isActive: true, displayOrder: 1 },
-  { id: "sp2", listingId: "", name: "Standard Service", description: "Quality service at an affordable price point", price: 999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", isActive: true, displayOrder: 2 },
-  { id: "sp3", listingId: "", name: "Express Package", description: "Quick turnaround for urgent requirements", price: 1499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556740758-90de940de450?w=400", isActive: true, displayOrder: 3 },
-  { id: "sp4", listingId: "", name: "Economy Option", description: "Budget-friendly option without compromising quality", price: 499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?w=400", isActive: true, displayOrder: 4 },
+  { id: "sp1", providerId: "", name: "Premium Package", description: "Our best-selling premium service package with full coverage", price: 1999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", isActive: true, displayOrder: 1 },
+  { id: "sp2", providerId: "", name: "Standard Service", description: "Quality service at an affordable price point", price: 999, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", isActive: true, displayOrder: 2 },
+  { id: "sp3", providerId: "", name: "Express Package", description: "Quick turnaround for urgent requirements", price: 1499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556740758-90de940de450?w=400", isActive: true, displayOrder: 3 },
+  { id: "sp4", providerId: "", name: "Economy Option", description: "Budget-friendly option without compromising quality", price: 499, currency: "INR", photoUrl: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?w=400", isActive: true, displayOrder: 4 },
 ];
 
 const STATIC_PHOTOS = [
@@ -62,7 +64,6 @@ const STATIC_STATS = {
   rating: 4.6,
   reviewCount: 47,
   ratingDist: [2, 3, 5, 12, 25],
-  listingCount: 2,
   photoCount: 6,
   productCount: 4,
   priceRange: { min: 499, max: 1999, currency: "INR" },
@@ -156,9 +157,11 @@ export default function ProviderDetailsPage() {
   const [reviewComment, setReviewComment] = useState("");
 
   const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
   const { data: savedData } = useIsSaved(id, "provider");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
+  const { mutate: createConversation } = useCreateConversation();
 
   const handleToggleSaved = () => {
     if (!user) return; // Only allow for logged-in users
@@ -170,7 +173,7 @@ export default function ProviderDetailsPage() {
   const photos = (data?.photos?.length ?? 0) > 0 ? data!.photos : [];
   const products = (data?.products?.length ?? 0) > 0 ? data!.products : (provider ? STATIC_PRODUCTS as any[] : []);
   const reviews = (data?.reviews?.length ?? 0) > 0 ? data!.reviews : (provider ? STATIC_REVIEWS as any[] : []);
-  const listings = data?.listings ?? [];
+  const categories = data?.categories ?? [];
 
   const galleryImages = useMemo(() => {
     const urls: string[] = [];
@@ -210,17 +213,11 @@ export default function ProviderDetailsPage() {
   }, [stats]);
 
   const categoryLabel = useMemo(() => {
-    const names = Array.from(
-      new Set(
-        listings
-          .flatMap((l) => l.categories?.map((c) => c.name) ?? [])
-          .filter(Boolean) as string[],
-      ),
-    );
+    const names = categories.map((c) => c.name).filter(Boolean);
     if (names.length === 0) return provider?.description?.split(".")[0] || "Services";
     if (names.length <= 2) return names.join(" · ");
     return `${names.slice(0, 2).join(" · ")} +${names.length - 2}`;
-  }, [listings, provider?.description]);
+  }, [categories, provider?.description]);
 
   const hours = provider
     ? `${provider.openTime?.slice(0, 5) || "09:00"} – ${provider.closeTime?.slice(0, 5) || "21:00"}`
@@ -382,7 +379,7 @@ export default function ProviderDetailsPage() {
 
           {/* Info Chips */}
           <div className="grid grid-cols-2 gap-2.5">
-            <InfoChip icon={ribbonOutline} label="Listings" value={`${stats?.listingCount ?? 0}`} />
+            <InfoChip icon={ribbonOutline} label="Products" value={`${stats?.productCount ?? 0}`} />
             <InfoChip icon={time} label="Hours" value={hours} />
             <InfoChip icon={storefrontOutline} label="Status" value={provider.isAvailable ? "Open Now" : "Closed"} />
             <InfoChip icon={shieldCheckmark} label="Verified" value={provider.status === "active" ? "Verified" : "Pending"} />
@@ -394,26 +391,15 @@ export default function ProviderDetailsPage() {
             <p className="text-[13px] text-gray-600 leading-relaxed">{provider.description || "No description provided yet."}</p>
           </div>
 
-          {/* Services / Listings */}
-          {listings.length > 0 && (
+          {/* Categories */}
+          {categories.length > 0 && (
             <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <h3 className="text-[15px] font-bold text-gray-900 mb-3">Services ({listings.length})</h3>
-              <div className="space-y-2.5">
-                {listings.map((l) => (
-                  <div key={l.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50/80">
-                    <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <IonIcon icon={storefrontOutline} className="w-[18px] h-[18px] text-amber-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-[13px] font-semibold text-gray-900 truncate">{l.businessName}</h4>
-                      {l.description && <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{l.description}</p>}
-                      <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400 font-medium">
-                        <span>{l.productCount} products</span>
-                        <span>{l.reviewCount} reviews</span>
-                        <span>{l.photoCount} photos</span>
-                      </div>
-                    </div>
-                  </div>
+              <h3 className="text-[15px] font-bold text-gray-900 mb-3">Services ({categories.length})</h3>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((c) => (
+                  <span key={c.id} className="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-[12px] font-medium">
+                    {c.name}
+                  </span>
                 ))}
               </div>
             </div>
@@ -570,7 +556,16 @@ export default function ProviderDetailsPage() {
       {/* Floating CTA */}
       <div className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5" style={{ background: "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))", display: isLightboxOpen ? "none" : "block" }}>
         <div className="flex gap-3">
-          <button onClick={() => console.log("Message provider")} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform">
+          <button onClick={() => {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (!token) { router.push('/auth/login'); return; }
+            createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
+              onSuccess: (conv) => {
+                dispatch(openChat(conv.id));
+                router.push('/');
+              },
+            });
+          }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform">
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
             Message
           </button>

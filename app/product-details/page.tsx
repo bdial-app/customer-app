@@ -23,7 +23,9 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProduct } from "@/hooks/useProduct";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
-import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useCreateConversation } from "@/hooks/useChat";
+import { openChat } from "@/store/slices/chatSlice";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -38,9 +40,11 @@ export default function ProductDetailsPage() {
   const [currentPhoto, setCurrentPhoto] = useState(0);
 
   const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
+  const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
 
   const handleToggleSaved = () => {
     if (!user) return;
@@ -48,7 +52,6 @@ export default function ProductDetailsPage() {
   };
 
   const product = data?.product;
-  const listing = data?.listing ?? null;
   const provider = data?.provider ?? null;
   const stats = data?.stats;
   const related = data?.related ?? [];
@@ -56,11 +59,8 @@ export default function ProductDetailsPage() {
   const photos = useMemo(() => {
     const p: string[] = [];
     if (product?.photoUrl) p.push(product.photoUrl);
-    (listing?.photos ?? []).forEach((ph) => {
-      if (ph.imageUrl && !p.includes(ph.imageUrl)) p.push(ph.imageUrl);
-    });
     return p.length > 0 ? p : [FALLBACK_IMAGE];
-  }, [product?.photoUrl, listing?.photos]);
+  }, [product?.photoUrl]);
 
   if (!id) {
     return (
@@ -132,7 +132,7 @@ export default function ProductDetailsPage() {
             </div>
           </div>
 
-          {listing?.communityVerified && (
+          {provider?.communityVerified && (
             <span className="absolute top-[calc(env(safe-area-inset-top)+56px)] left-4 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white">
               Community Verified
             </span>
@@ -239,7 +239,7 @@ export default function ProductDetailsPage() {
                 <h4 className="text-[13px] font-bold text-gray-900 truncate">
                   {provider.brandName}
                 </h4>
-                {listing?.communityVerified && (
+                {provider?.communityVerified && (
                   <IonIcon
                     icon={checkmarkCircle}
                     className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
@@ -260,9 +260,9 @@ export default function ProductDetailsPage() {
           </Link>
         )}
 
-        {listing?.categories && listing.categories.length > 0 && (
+        {provider?.categories && provider.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {listing.categories.map((cat) => (
+            {provider.categories.map((cat: any) => (
               <span
                 key={cat.id}
                 className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full"
@@ -353,14 +353,33 @@ export default function ProductDetailsPage() {
       >
         <button
           onClick={() => {
-            if (provider?.contactNumber) {
-              window.location.href = `tel:${provider.contactNumber}`;
-            }
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (!token) { router.push('/auth/login'); return; }
+            if (!provider?.id) return;
+            createConversation({
+              providerId: provider.id,
+              contextType: 'product',
+              contextId: product?.id,
+              initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
+              initialMessageMetadata: {
+                productId: product?.id,
+                productName: product?.name,
+                productImage: product?.photoUrl,
+                productPrice: product?.price,
+                currency: product?.currency,
+              },
+            }, {
+              onSuccess: (conv) => {
+                dispatch(openChat(conv.id));
+                router.push('/');
+              },
+            });
           }}
+          disabled={isCreatingChat}
           className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
         >
           <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-          Send Enquiry
+          {isCreatingChat ? 'Opening Chat...' : 'Send Enquiry'}
         </button>
       </div>
     </Page>

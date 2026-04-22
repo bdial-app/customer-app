@@ -2,23 +2,26 @@
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { eyeOutline, starOutline, chatbubblesOutline, trendingUpOutline } from "ionicons/icons";
-import { ListingData } from "@/services/listing.service";
+import { ProviderDetailsPhoto, ProviderDetailsProduct, ProviderDetailsReview } from "@/services/provider.service";
 
 interface ProviderQuickStatsProps {
-  listings: ListingData[];
+  stats: {
+    photos: ProviderDetailsPhoto[];
+    products: ProviderDetailsProduct[];
+    reviews: ProviderDetailsReview[];
+  };
 }
 
-const ProviderQuickStats = ({ listings }: ProviderQuickStatsProps) => {
-  const totalReviews = listings.reduce((sum, l) => sum + (l.reviews?.length || 0), 0);
-  const allRatings = listings.flatMap((l) => l.reviews?.map((r) => r.starRating) || []);
+const ProviderQuickStats = ({ stats: { photos, products, reviews } }: ProviderQuickStatsProps) => {
+  const totalReviews = reviews.length;
+  const allRatings = reviews.map((r) => r.starRating);
   const avgRating = allRatings.length > 0
     ? (allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1)
     : "—";
-  const liveListings = listings.filter((l) => l.status === "live").length;
-  const totalProducts = listings.reduce((sum, l) => sum + (l.products?.length || 0), 0);
+  const totalProducts = products.length;
 
-  const stats = [
-    { icon: eyeOutline, label: "Listings", value: liveListings.toString(), color: "text-blue-500", bg: "bg-blue-50" },
+  const statItems = [
+    { icon: eyeOutline, label: "Photos", value: photos.length.toString(), color: "text-blue-500", bg: "bg-blue-50" },
     { icon: starOutline, label: "Rating", value: avgRating, color: "text-amber-500", bg: "bg-amber-50" },
     { icon: chatbubblesOutline, label: "Reviews", value: totalReviews.toString(), color: "text-purple-500", bg: "bg-purple-50" },
     { icon: trendingUpOutline, label: "Products", value: totalProducts.toString(), color: "text-emerald-500", bg: "bg-emerald-50" },
@@ -27,7 +30,7 @@ const ProviderQuickStats = ({ listings }: ProviderQuickStatsProps) => {
   return (
     <div className="px-4 py-4">
       <div className="grid grid-cols-4 gap-2">
-        {stats.map((stat, i) => (
+        {statItems.map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 10 }}
