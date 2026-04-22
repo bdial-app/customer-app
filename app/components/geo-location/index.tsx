@@ -31,6 +31,7 @@ import {
   home,
   laptopOutline,
   location,
+  locationSharp,
   navigateCircleOutline,
   notificationsOutline,
   search,
@@ -192,22 +193,44 @@ const GeoLocation = () => {
   return (
     <>
       <div
-        onClick={() => setOpen(true)}
-        className="sticky top-0 z-40 px-4 py-2 cursor-pointer"
+        className="sticky top-0 z-40"
         style={{
-          paddingTop: "max(env(safe-area-inset-top), 8px)",
-          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+          paddingTop: "env(safe-area-inset-top)",
+          background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
         }}
       >
-        <div className="flex items-center justify-between">
-          <AddressBarNavigation
-            title={addressData?.label || "Azam Campus"}
-            address={addressData?.fullAddress || "Gulistan-e-Jauhar, Camp"}
-            isLoading={isAddressLoading}
-          />
-          <div className="shrink-0 ml-3 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-            <IonIcon icon={notificationsOutline} className="text-white/80 text-lg" />
+        {/* subtle bottom separator */}
+        <div className="absolute inset-x-0 bottom-0 h-px bg-white/[0.06]" />
+        <div
+          onClick={() => setOpen(true)}
+          className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer active:bg-white/[0.04] transition-colors"
+        >
+          {/* left — location pill */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="shrink-0 w-9 h-9 rounded-2xl bg-amber-400/15 border border-amber-400/20 flex items-center justify-center">
+              <IonIcon
+                icon={locationSharp}
+                className="text-amber-400 text-[17px]"
+              />
+            </div>
+            <AddressBarNavigation
+              title={addressData?.label || "Azam Campus"}
+              address={addressData?.fullAddress || "Gulistan-e-Jauhar, Camp"}
+              isLoading={isAddressLoading}
+              hideIcon
+            />
           </div>
+
+          {/* right — notification button */}
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="shrink-0 relative w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:bg-white/[0.12] transition-colors"
+          >
+            <IonIcon icon={notificationsOutline} className="text-white/75 text-[17px]" />
+            {/* unread dot */}
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 ring-1 ring-[#0f172a]" />
+          </button>
         </div>
       </div>
       <Sheet opened={open} onBackdropClick={() => setOpen(false)}>
