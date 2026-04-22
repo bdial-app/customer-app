@@ -9,7 +9,8 @@ import { useNotification } from "@/app/context/NotificationContext";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import { LogoApple } from "framework7-icons/react";
+import { IonIcon } from "@ionic/react";
+import { logoApple } from "ionicons/icons";
 
 type LoginStep = "mobile" | "otp";
 
@@ -476,7 +477,7 @@ function LoginContent() {
                       disabled={busy}
                       className="w-full h-[52px] rounded-2xl bg-black text-white flex items-center justify-center gap-3 text-[15px] font-medium active:scale-[0.98] transition-all disabled:opacity-40"
                     >
-                      <LogoApple className="text-lg" />
+                      <IonIcon icon={logoApple} className="text-lg" />
                       Continue with Apple
                     </button>
                   )}
