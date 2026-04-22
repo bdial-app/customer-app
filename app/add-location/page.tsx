@@ -107,9 +107,8 @@ const AddLocationPage = () => {
   const [marker, setMarker] = useState(defaultCenter);
   const [address, setAddress] = useState("");
   const [locationLabel, setLocationLabel] = useState("");
-  const [fullLocation, setFullLocation] = useState<ReverseGeocodeResponse | null>(
-    null,
-  );
+  const [fullLocation, setFullLocation] =
+    useState<ReverseGeocodeResponse | null>(null);
   const [isReverseLoading, setIsReverseLoading] = useState(false);
 
   const createSavedLocationMutation = useCreateSavedLocation();
@@ -232,7 +231,7 @@ const AddLocationPage = () => {
         title={isFocused ? "Search Location" : "Add Address"}
         left={
           <button onClick={handleBack} className="link">
-            {/* <IonIcon icon={arrowBack} className="text-2xl" /> */}
+            <IonIcon icon={arrowBack} className="text-2xl" />
           </button>
         }
         leftClassName="w-11"

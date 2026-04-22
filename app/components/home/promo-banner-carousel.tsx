@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import type { PromoBanner as PromoBannerType } from "@/services/home.service";
 
 interface Banner {
+  image_url: any;
   id: string;
   title: string;
   subtitle: string;
@@ -14,19 +15,61 @@ interface Banner {
 }
 
 const GRADIENT_MAP: Record<string, string> = {
-  "from-violet-600 to-purple-700": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  "from-cyan-500 to-blue-600": "linear-gradient(135deg, #00c6fb 0%, #005bea 100%)",
-  "from-pink-500 to-rose-600": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-  "from-amber-500 to-orange-600": "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)",
-  "from-emerald-500 to-teal-600": "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-  "from-fuchsia-500 to-pink-600": "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
+  "from-violet-600 to-purple-700":
+    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "from-cyan-500 to-blue-600":
+    "linear-gradient(135deg, #00c6fb 0%, #005bea 100%)",
+  "from-pink-500 to-rose-600":
+    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+  "from-amber-500 to-orange-600":
+    "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)",
+  "from-emerald-500 to-teal-600":
+    "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  "from-fuchsia-500 to-pink-600":
+    "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
 };
 
 const FALLBACK_BANNERS: Banner[] = [
-  { id: "fb1", title: "Get 20% off", subtitle: "First tailoring order", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", emoji: "🧵", cta: "Order Now", tag: "NEW USER" },
-  { id: "fb2", title: "AC Service", subtitle: "Starting at ₹499", gradient: "linear-gradient(135deg, #00c6fb 0%, #005bea 100%)", emoji: "❄️", cta: "Book Now", tag: "SUMMER DEAL" },
-  { id: "fb3", title: "Beauty at Home", subtitle: "Salon-quality services", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", emoji: "💅", cta: "Explore", tag: "TRENDING" },
-  { id: "fb4", title: "Food & Tiffin", subtitle: "Homemade meals daily", gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", emoji: "🍛", cta: "View Menu", tag: "POPULAR" },
+  {
+    id: "fb1",
+    title: "Get 20% off",
+    subtitle: "First tailoring order",
+    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    image_url: "/path/to/image1.jpg",
+    emoji: "🧵",
+    cta: "Order Now",
+    tag: "NEW USER",
+  },
+  {
+    id: "fb2",
+    title: "AC Service",
+    subtitle: "Starting at ₹499",
+    gradient: "linear-gradient(135deg, #00c6fb 0%, #005bea 100%)",
+    image_url: "/path/to/image2.jpg",
+    emoji: "❄️",
+    cta: "Book Now",
+    tag: "SUMMER DEAL",
+  },
+  {
+    id: "fb3",
+    title: "Beauty at Home",
+    subtitle: "Salon-quality services",
+    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    image_url: "/path/to/image3.jpg",
+    emoji: "💅",
+    cta: "Explore",
+    tag: "TRENDING",
+  },
+  {
+    id: "fb4",
+    title: "Food & Tiffin",
+    subtitle: "Homemade meals daily",
+    gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    image_url: "/path/to/image4.jpg",
+    emoji: "🍛",
+    cta: "View Menu",
+    tag: "POPULAR",
+  },
 ];
 
 interface PromoBannerCarouselProps {
@@ -34,17 +77,24 @@ interface PromoBannerCarouselProps {
   isLoading?: boolean;
 }
 
-const PromoBannerCarousel = ({ banners, isLoading }: PromoBannerCarouselProps) => {
+const PromoBannerCarousel = ({
+  banners,
+  isLoading,
+}: PromoBannerCarouselProps) => {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
 
   const displayBanners: Banner[] = useMemo(() => {
     if (!banners || banners.length === 0) return FALLBACK_BANNERS;
+    console.log("Received banners:", banners);
     return banners.map((b) => ({
       id: b.id,
       title: b.title,
       subtitle: b.subtitle || "",
-      gradient: GRADIENT_MAP[b.gradient || ""] || `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
+      gradient:
+        GRADIENT_MAP[b.gradient || ""] ||
+        `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
+      image_url: b.imageUrl || "/path/to/default/image.jpg",
       emoji: b.emoji || "✨",
       cta: b.cta || "View",
       tag: b.tag || "",
@@ -57,8 +107,8 @@ const PromoBannerCarousel = ({ banners, isLoading }: PromoBannerCarouselProps) =
   }, [displayBanners.length]);
 
   useEffect(() => {
-    const timer = setInterval(next, 4000);
-    return () => clearInterval(timer);
+    // const timer = setInterval(next, 4000);
+    // return () => clearInterval(timer);
   }, [next]);
 
   const handleDot = (i: number) => {
@@ -77,10 +127,18 @@ const PromoBannerCarousel = ({ banners, isLoading }: PromoBannerCarouselProps) =
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: direction * -80, scale: 0.95 }}
             transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="absolute inset-0 flex items-center px-5 py-4"
+            className="absolute inset-0 flex items-center"
             style={{ background: displayBanners[current].gradient }}
           >
-            <div className="flex flex-col gap-1 z-10 flex-1">
+            <div
+              className="flex flex-col gap-1 z-10 flex-1 px-5 py-4"
+              style={{
+                backgroundImage: `url('${displayBanners[current].image_url}')`,
+                backgroundSize: "contain",
+                backgroundPosition: "center right",
+                backgroundRepeat: "no-repeat",
+              }}
+            >
               <span className="text-[9px] font-bold tracking-[0.15em] text-white/70 bg-white/15 self-start px-2 py-0.5 rounded-full">
                 {displayBanners[current].tag}
               </span>
@@ -98,10 +156,7 @@ const PromoBannerCarousel = ({ banners, isLoading }: PromoBannerCarouselProps) =
                 {displayBanners[current].cta}
               </motion.button>
             </div>
-            {/* Large emoji decoration */}
-            <span className="text-7xl absolute right-3 bottom-1 opacity-20 select-none">
-              {displayBanners[current].emoji}
-            </span>
+
             {/* Decorative circles */}
             <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/[0.08]" />
             <div className="absolute right-12 -bottom-6 w-20 h-20 rounded-full bg-white/[0.06]" />

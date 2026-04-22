@@ -109,7 +109,7 @@ export const AppDialog = ({
                 )}
 
                 {/* Actions */}
-                <div className={`flex gap-3 mt-5 ${icon ? "ml-[56px]" : ""}`}>
+                <div className={`flex flex-col gap-3 mt-5 ${icon ? "ml-[56px]" : ""}`}>
                   {onConfirm && (
                     <button
                       onClick={onConfirm}

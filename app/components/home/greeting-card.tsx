@@ -1,13 +1,15 @@
 "use client";
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { IonIcon } from "@ionic/react";
+import { sunnyOutline, cloudOutline, moonOutline } from "ionicons/icons";
 
 const getGreeting = () => {
   const h = new Date().getHours();
-  if (h < 12) return { text: "Good morning", icon: "☀️" };
-  if (h < 17) return { text: "Good afternoon", icon: "🌤" };
-  if (h < 21) return { text: "Good evening", icon: "🌅" };
-  return { text: "Good night", icon: "🌙" };
+  if (h < 12) return { text: "Good morning", icon: sunnyOutline };
+  if (h < 17) return { text: "Good afternoon", icon: cloudOutline };
+  if (h < 21) return { text: "Good evening", icon: sunnyOutline };
+  return { text: "Good night", icon: moonOutline };
 };
 
 const GreetingCard = () => {
@@ -39,7 +41,7 @@ const GreetingCard = () => {
           transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
           className="text-3xl"
         >
-          {greeting.icon}
+          <IonIcon icon={greeting.icon} className="text-amber-500" />
         </motion.span>
       </div>
     </motion.div>

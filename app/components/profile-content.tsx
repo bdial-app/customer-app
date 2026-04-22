@@ -39,6 +39,7 @@ import {
   heartOutline,
   shareOutline,
   bugOutline,
+  arrowBack,
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
@@ -47,7 +48,10 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "./formik-input";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
-import { setProfile as setReduxProfile, clearUser } from "@/store/slices/authSlice";
+import {
+  setProfile as setReduxProfile,
+  clearUser,
+} from "@/store/slices/authSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
@@ -178,9 +182,10 @@ const SlidePage = ({
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={onClose}
-              className="text-blue-500 font-semibold text-sm active:opacity-50"
+              className="text-blue-500 font-semibold text-sm active:opacity-50 flex items-center gap-1"
             >
-              ← Back
+              <IonIcon icon={arrowBack} className="text-lg" />
+              Back
             </button>
             <h2 className="text-base font-bold text-slate-800">{title}</h2>
             <div className="w-12" />
@@ -194,8 +199,15 @@ const SlidePage = ({
 
 // ─── Main Profile Content ───────────────────────────────────────────
 const ProfileContent = () => {
-  const { providerStatus, userMode, setProviderStatus, setProviderInfo, setUserMode, toggleMode, resetProviderState } =
-    useAppContext();
+  const {
+    providerStatus,
+    userMode,
+    setProviderStatus,
+    setProviderInfo,
+    setUserMode,
+    toggleMode,
+    resetProviderState,
+  } = useAppContext();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user as any);
   const updateUserMutation = useUpdateUser();
@@ -294,9 +306,17 @@ const ProfileContent = () => {
       resetProviderState();
       setDeleteSheetOpen(false);
       router.push("/auth/login");
-      notify({ title: "Account Deleted", subtitle: "Your account has been removed.", variant: "success" });
+      notify({
+        title: "Account Deleted",
+        subtitle: "Your account has been removed.",
+        variant: "success",
+      });
     } catch {
-      notify({ title: "Error", subtitle: "Failed to delete account. Please try again.", variant: "error" });
+      notify({
+        title: "Error",
+        subtitle: "Failed to delete account. Please try again.",
+        variant: "error",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -354,11 +374,15 @@ const ProfileContent = () => {
       </motion.div>
 
       {/* Provider Status Cards */}
-      {(providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review") && (
+      {(providerStatus === "approved" ||
+        providerStatus === "pending" ||
+        providerStatus === "in_review") && (
         <div className="mx-4 mb-3">
           <div className="bg-white rounded-2xl p-4 border border-slate-100 flex gap-4 justify-between items-center">
             <div>
-              <div className="text-sm font-bold text-slate-800">Provider Mode</div>
+              <div className="text-sm font-bold text-slate-800">
+                Provider Mode
+              </div>
               <div className="text-[11px] text-slate-500 mt-0.5">
                 {userMode === "provider"
                   ? "Managing your business"
@@ -383,7 +407,9 @@ const ProfileContent = () => {
         >
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
             <div className="relative z-10">
-              <h3 className="text-white font-bold text-sm">Become a Provider</h3>
+              <h3 className="text-white font-bold text-sm">
+                Become a Provider
+              </h3>
               <p className="text-white/70 text-xs mt-0.5 mb-3">
                 Start offering your services on Bohri Connect
               </p>
@@ -406,10 +432,15 @@ const ProfileContent = () => {
           <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-amber-100 rounded-xl">
-                <IonIcon icon={timeOutline} className="text-xl text-amber-600" />
+                <IonIcon
+                  icon={timeOutline}
+                  className="text-xl text-amber-600"
+                />
               </div>
               <div className="flex-1">
-                <div className="font-bold text-sm text-amber-900">Verification Pending</div>
+                <div className="font-bold text-sm text-amber-900">
+                  Verification Pending
+                </div>
                 <div className="text-amber-700 text-xs mt-0.5">
                   Under review. You can still manage your business.
                 </div>
@@ -424,10 +455,15 @@ const ProfileContent = () => {
           <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-red-100 rounded-xl">
-                <IonIcon icon={alertCircleOutline} className="text-xl text-red-600" />
+                <IonIcon
+                  icon={alertCircleOutline}
+                  className="text-xl text-red-600"
+                />
               </div>
               <div className="flex-1">
-                <div className="font-bold text-sm text-red-900">Application Rejected</div>
+                <div className="font-bold text-sm text-red-900">
+                  Application Rejected
+                </div>
                 <div className="text-red-700 text-xs mt-0.5">
                   Please review your documents and try again.
                 </div>
@@ -445,45 +481,51 @@ const ProfileContent = () => {
       )}
 
       {/* Provider Business Card - shown when in provider mode */}
-      {(providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review") && userMode === "provider" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mx-4 mb-3"
-        >
-          <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
-                <IonIcon icon={businessOutline} className="text-xl text-white" />
+      {(providerStatus === "approved" ||
+        providerStatus === "pending" ||
+        providerStatus === "in_review") &&
+        userMode === "provider" && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-4 mb-3"
+          >
+            <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
+                  <IonIcon
+                    icon={businessOutline}
+                    className="text-xl text-white"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm truncate">
+                    {profile.name || "Your Business"}
+                  </p>
+                  <p className="text-white/70 text-[11px]">Business Profile</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate">
-                  {profile.name || "Your Business"}
-                </p>
-                <p className="text-white/70 text-[11px]">Business Profile</p>
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    // Navigate back to home/dashboard tab to manage business
+                  }}
+                  className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
+                >
+                  Manage Business
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={toggleMode}
+                  className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
+                >
+                  Switch to Customer
+                </motion.button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  // Navigate back to home/dashboard tab to manage business
-                }}
-                className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
-              >
-                Manage Business
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={toggleMode}
-                className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
-              >
-                Switch to Customer
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
 
       {/* ── Account Section ──────────────────────────────────── */}
       <MenuSection title="Account">
@@ -726,24 +768,36 @@ const ProfileContent = () => {
           <ul className="space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">●</span>
-              <span><strong>Trust:</strong> Every provider is verified to ensure quality and safety.</span>
+              <span>
+                <strong>Trust:</strong> Every provider is verified to ensure
+                quality and safety.
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">●</span>
-              <span><strong>Community:</strong> Built by the community, for the community.</span>
+              <span>
+                <strong>Community:</strong> Built by the community, for the
+                community.
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">●</span>
-              <span><strong>Empowerment:</strong> Supporting women-led businesses and local entrepreneurs.</span>
+              <span>
+                <strong>Empowerment:</strong> Supporting women-led businesses
+                and local entrepreneurs.
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">●</span>
-              <span><strong>Transparency:</strong> Clear pricing and honest reviews.</span>
+              <span>
+                <strong>Transparency:</strong> Clear pricing and honest reviews.
+              </span>
             </li>
           </ul>
           <h4 className="font-bold text-slate-800 pt-2">Contact</h4>
           <p>
-            Email: support@bohriconnect.com<br />
+            Email: support@bohriconnect.com
+            <br />
             Website: www.bohriconnect.com
           </p>
           <p className="text-xs text-slate-400 pt-4 text-center">
@@ -760,17 +814,24 @@ const ProfileContent = () => {
       >
         <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
           <p className="text-xs text-slate-400">
-            Last updated: {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}
+            Last updated:{" "}
+            {new Date().toLocaleDateString("en-IN", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
 
           <h4 className="font-bold text-slate-800">1. Acceptance of Terms</h4>
           <p>
             By accessing or using the Bohri Connect application ("App"), you
-            agree to be bound by these Terms and Conditions. If you do not agree,
-            please do not use the App.
+            agree to be bound by these Terms and Conditions. If you do not
+            agree, please do not use the App.
           </p>
 
-          <h4 className="font-bold text-slate-800">2. Description of Service</h4>
+          <h4 className="font-bold text-slate-800">
+            2. Description of Service
+          </h4>
           <p>
             Bohri Connect is a marketplace platform connecting customers with
             local service providers. We facilitate the connection but do not
@@ -791,7 +852,9 @@ const ProfileContent = () => {
             <li>Harass, abuse, or harm other users or providers</li>
             <li>Post false or misleading information</li>
             <li>Attempt to gain unauthorized access to the App</li>
-            <li>Use automated means to access the App without our permission</li>
+            <li>
+              Use automated means to access the App without our permission
+            </li>
           </ul>
 
           <h4 className="font-bold text-slate-800">5. Service Providers</h4>
@@ -810,15 +873,17 @@ const ProfileContent = () => {
           <h4 className="font-bold text-slate-800">7. Intellectual Property</h4>
           <p>
             All content, trademarks, and intellectual property on the App belong
-            to Bohri Connect or its licensors. You may not reproduce, distribute,
-            or create derivative works without our permission.
+            to Bohri Connect or its licensors. You may not reproduce,
+            distribute, or create derivative works without our permission.
           </p>
 
-          <h4 className="font-bold text-slate-800">8. Limitation of Liability</h4>
+          <h4 className="font-bold text-slate-800">
+            8. Limitation of Liability
+          </h4>
           <p>
-            Bohri Connect is provided "as is" without warranties of any kind.
-            We are not liable for any damages arising from your use of the App
-            or any services obtained through the platform.
+            Bohri Connect is provided "as is" without warranties of any kind. We
+            are not liable for any damages arising from your use of the App or
+            any services obtained through the platform.
           </p>
 
           <h4 className="font-bold text-slate-800">9. Account Termination</h4>
@@ -855,19 +920,40 @@ const ProfileContent = () => {
       >
         <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
           <p className="text-xs text-slate-400">
-            Last updated: {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}
+            Last updated:{" "}
+            {new Date().toLocaleDateString("en-IN", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
 
-          <h4 className="font-bold text-slate-800">1. Information We Collect</h4>
+          <h4 className="font-bold text-slate-800">
+            1. Information We Collect
+          </h4>
           <p>We collect the following types of information:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Personal Information:</strong> Name, phone number, gender, city, area, and pincode</li>
-            <li><strong>Location Data:</strong> Your device location to show nearby service providers</li>
-            <li><strong>Usage Data:</strong> App interactions, search queries, and browsing patterns</li>
-            <li><strong>Device Information:</strong> Device type, OS version, and app version</li>
+            <li>
+              <strong>Personal Information:</strong> Name, phone number, gender,
+              city, area, and pincode
+            </li>
+            <li>
+              <strong>Location Data:</strong> Your device location to show
+              nearby service providers
+            </li>
+            <li>
+              <strong>Usage Data:</strong> App interactions, search queries, and
+              browsing patterns
+            </li>
+            <li>
+              <strong>Device Information:</strong> Device type, OS version, and
+              app version
+            </li>
           </ul>
 
-          <h4 className="font-bold text-slate-800">2. How We Use Your Information</h4>
+          <h4 className="font-bold text-slate-800">
+            2. How We Use Your Information
+          </h4>
           <ul className="list-disc pl-5 space-y-1">
             <li>To provide and improve our services</li>
             <li>To show relevant service providers near your location</li>
@@ -882,12 +968,16 @@ const ProfileContent = () => {
             your information with:
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Service providers you choose to engage with (name, location)</li>
+            <li>
+              Service providers you choose to engage with (name, location)
+            </li>
             <li>Analytics services to improve our platform</li>
             <li>Legal authorities if required by law</li>
           </ul>
 
-          <h4 className="font-bold text-slate-800">4. Data Storage & Security</h4>
+          <h4 className="font-bold text-slate-800">
+            4. Data Storage & Security
+          </h4>
           <p>
             Your data is stored securely using industry-standard encryption. We
             implement appropriate technical and organizational measures to
@@ -922,7 +1012,9 @@ const ProfileContent = () => {
             account deletion, your data is permanently removed within 30 days.
           </p>
 
-          <h4 className="font-bold text-slate-800">9. Changes to This Policy</h4>
+          <h4 className="font-bold text-slate-800">
+            9. Changes to This Policy
+          </h4>
           <p>
             We may update this policy periodically. We will notify you of
             significant changes through the App.
@@ -930,8 +1022,10 @@ const ProfileContent = () => {
 
           <h4 className="font-bold text-slate-800">10. Contact Us</h4>
           <p>
-            For privacy-related inquiries:<br />
-            Email: privacy@bohriconnect.com<br />
+            For privacy-related inquiries:
+            <br />
+            Email: privacy@bohriconnect.com
+            <br />
             Address: Pune, Maharashtra, India
           </p>
         </div>

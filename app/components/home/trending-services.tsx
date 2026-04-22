@@ -2,6 +2,8 @@
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { IonIcon } from "@ionic/react";
+import { flameOutline } from "ionicons/icons";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { TrendingCategory } from "@/services/home.service";
 
@@ -88,9 +90,9 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
           <motion.span
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="text-xs"
+            className="text-base"
           >
-            🔥
+            <IonIcon icon={flameOutline} className="text-orange-500" />
           </motion.span>
         </div>
       </div>
@@ -98,7 +100,10 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
       {isLoading ? (
         <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="shrink-0 w-[130px] rounded-2xl bg-slate-100 p-3 animate-pulse h-[100px]">
+            <div
+              key={i}
+              className="shrink-0 w-[130px] rounded-2xl bg-slate-100 p-3 animate-pulse h-[100px]"
+            >
               <div className="h-3.5 bg-slate-200 rounded-full w-4/5 mb-2" />
               <div className="h-2.5 bg-slate-200/60 rounded-full w-3/5 mb-3" />
               <div className="flex -space-x-1.5">
@@ -110,54 +115,54 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
           ))}
         </div>
       ) : (
-      <motion.div
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-40px" }}
-        className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
-      >
-        {trendingItems.map((t) => (
-          <motion.div
-            key={t.id}
-            variants={item}
-            whileTap={{ scale: 0.95 }}
-            onClick={() =>
-              router.push(
-                `${ROUTE_PATH.ALL_SERVICES}?search=${encodeURIComponent(t.label)}`
-              )
-            }
-            className={`shrink-0 w-[130px] rounded-2xl bg-gradient-to-br ${t.gradient} p-3 cursor-pointer relative overflow-hidden`}
-          >
-            {/* Abstract background shape */}
-            <svg
-              viewBox="0 0 48 48"
-              className="absolute inset-0 w-full h-full text-white/[0.08]"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-40px" }}
+          className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
+        >
+          {trendingItems.map((t) => (
+            <motion.div
+              key={t.id}
+              variants={item}
+              whileTap={{ scale: 0.95 }}
+              onClick={() =>
+                router.push(
+                  `${ROUTE_PATH.ALL_SERVICES}?search=${encodeURIComponent(t.label)}`,
+                )
+              }
+              className={`shrink-0 w-[130px] rounded-2xl bg-gradient-to-br ${t.gradient} p-3 cursor-pointer relative overflow-hidden`}
             >
-              <path d={t.abstractPath} />
-            </svg>
+              {/* Abstract background shape */}
+              <svg
+                viewBox="0 0 48 48"
+                className="absolute inset-0 w-full h-full text-white/[0.08]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d={t.abstractPath} />
+              </svg>
 
-            <div className="relative z-10">
-              <h4 className="text-sm font-bold text-white">{t.label}</h4>
-              <p className="text-[10px] text-white/60 mt-0.5">{t.bookings}</p>
-              <div className="flex items-center gap-1 mt-2.5">
-                <div className="flex -space-x-1.5">
-                  {[0, 1, 2].map((j) => (
-                    <div
-                      key={j}
-                      className="w-4 h-4 rounded-full bg-white/20 border border-white/30"
-                    />
-                  ))}
+              <div className="relative z-10">
+                <h4 className="text-sm font-bold text-white">{t.label}</h4>
+                <p className="text-[10px] text-white/60 mt-0.5">{t.bookings}</p>
+                <div className="flex items-center gap-1 mt-2.5">
+                  <div className="flex -space-x-1.5">
+                    {[0, 1, 2].map((j) => (
+                      <div
+                        key={j}
+                        className="w-4 h-4 rounded-full bg-white/20 border border-white/30"
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[9px] text-white/50">+more</span>
                 </div>
-                <span className="text-[9px] text-white/50">+more</span>
               </div>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+            </motion.div>
+          ))}
+        </motion.div>
       )}
     </div>
   );

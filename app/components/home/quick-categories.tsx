@@ -9,8 +9,22 @@ const ABSTRACT_ICONS: React.FC<{ className?: string }>[] = [
   // 0: Concentric rings
   ({ className }) => (
     <svg viewBox="0 0 48 48" className={className} fill="none">
-      <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-      <circle cx="24" cy="24" r="12" stroke="currentColor" strokeWidth="2.5" opacity="0.5" />
+      <circle
+        cx="24"
+        cy="24"
+        r="18"
+        stroke="currentColor"
+        strokeWidth="2"
+        opacity="0.3"
+      />
+      <circle
+        cx="24"
+        cy="24"
+        r="12"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        opacity="0.5"
+      />
       <circle cx="24" cy="24" r="6" fill="currentColor" opacity="0.8" />
     </svg>
   ),
@@ -26,31 +40,88 @@ const ABSTRACT_ICONS: React.FC<{ className?: string }>[] = [
   // 2: Diamond grid
   ({ className }) => (
     <svg viewBox="0 0 48 48" className={className} fill="currentColor">
-      <rect x="20" y="4" width="10" height="10" rx="2" transform="rotate(45 25 9)" opacity="0.4" />
-      <rect x="8" y="16" width="10" height="10" rx="2" transform="rotate(45 13 21)" opacity="0.6" />
-      <rect x="30" y="16" width="10" height="10" rx="2" transform="rotate(45 35 21)" opacity="0.6" />
-      <rect x="20" y="28" width="10" height="10" rx="2" transform="rotate(45 25 33)" opacity="0.8" />
+      <rect
+        x="20"
+        y="4"
+        width="10"
+        height="10"
+        rx="2"
+        transform="rotate(45 25 9)"
+        opacity="0.4"
+      />
+      <rect
+        x="8"
+        y="16"
+        width="10"
+        height="10"
+        rx="2"
+        transform="rotate(45 13 21)"
+        opacity="0.6"
+      />
+      <rect
+        x="30"
+        y="16"
+        width="10"
+        height="10"
+        rx="2"
+        transform="rotate(45 35 21)"
+        opacity="0.6"
+      />
+      <rect
+        x="20"
+        y="28"
+        width="10"
+        height="10"
+        rx="2"
+        transform="rotate(45 25 33)"
+        opacity="0.8"
+      />
     </svg>
   ),
   // 3: Waves
   ({ className }) => (
-    <svg viewBox="0 0 48 48" className={className} fill="none" stroke="currentColor">
-      <path d="M4 16 C12 10, 20 22, 28 16 S44 10, 44 16" strokeWidth="2.5" opacity="0.3" />
-      <path d="M4 24 C12 18, 20 30, 28 24 S44 18, 44 24" strokeWidth="2.5" opacity="0.6" />
-      <path d="M4 32 C12 26, 20 38, 28 32 S44 26, 44 32" strokeWidth="2.5" opacity="0.9" />
+    <svg
+      viewBox="0 0 48 48"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+    >
+      <path
+        d="M4 16 C12 10, 20 22, 28 16 S44 10, 44 16"
+        strokeWidth="2.5"
+        opacity="0.3"
+      />
+      <path
+        d="M4 24 C12 18, 20 30, 28 24 S44 18, 44 24"
+        strokeWidth="2.5"
+        opacity="0.6"
+      />
+      <path
+        d="M4 32 C12 26, 20 38, 28 32 S44 26, 44 32"
+        strokeWidth="2.5"
+        opacity="0.9"
+      />
     </svg>
   ),
   // 4: Hexagon
   ({ className }) => (
     <svg viewBox="0 0 48 48" className={className} fill="currentColor">
       <path d="M24 4 L42 15 L42 33 L24 44 L6 33 L6 15 Z" opacity="0.2" />
-      <path d="M24 12 L35 18.5 L35 31.5 L24 38 L13 31.5 L13 18.5 Z" opacity="0.5" />
+      <path
+        d="M24 12 L35 18.5 L35 31.5 L24 38 L13 31.5 L13 18.5 Z"
+        opacity="0.5"
+      />
       <circle cx="24" cy="25" r="5" opacity="0.8" />
     </svg>
   ),
   // 5: Radiating lines
   ({ className }) => (
-    <svg viewBox="0 0 48 48" className={className} stroke="currentColor" fill="none">
+    <svg
+      viewBox="0 0 48 48"
+      className={className}
+      stroke="currentColor"
+      fill="none"
+    >
       {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
         <line
           key={angle}
@@ -95,13 +166,18 @@ const ABSTRACT_ICONS: React.FC<{ className?: string }>[] = [
             r={x === 24 && y === 24 ? 5 : 3}
             opacity={x === 24 && y === 24 ? 0.9 : 0.35}
           />
-        ))
+        )),
       )}
     </svg>
   ),
   // 9: Spiral arcs
   ({ className }) => (
-    <svg viewBox="0 0 48 48" className={className} fill="none" stroke="currentColor">
+    <svg
+      viewBox="0 0 48 48"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+    >
       <path d="M24 24 C24 16, 34 16, 34 24" strokeWidth="2" opacity="0.3" />
       <path d="M34 24 C34 34, 14 34, 14 24" strokeWidth="2" opacity="0.5" />
       <path d="M14 24 C14 10, 40 10, 40 24" strokeWidth="2.5" opacity="0.7" />
@@ -147,7 +223,10 @@ const QuickCategories = () => {
       <div className="px-4 pb-3">
         <div className="flex gap-3 overflow-x-auto no-scrollbar">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="shrink-0 w-[72px] flex flex-col items-center gap-2">
+            <div
+              key={i}
+              className="shrink-0 w-[72px] flex flex-col items-center gap-2"
+            >
               <div className="w-[64px] h-[64px] rounded-2xl bg-white/[0.06] animate-pulse" />
               <div className="w-12 h-2 rounded bg-white/[0.06] animate-pulse" />
             </div>
@@ -168,23 +247,30 @@ const QuickCategories = () => {
         animate="show"
         className="flex gap-3 overflow-x-auto no-scrollbar px-4"
       >
-        {displayCategories.map((cat, i) => {
+        {displayCategories.map((cat: any, i) => {
           const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
-          const Icon = ABSTRACT_ICONS[i % ABSTRACT_ICONS.length];
+          // const Icon = ABSTRACT_ICONS[i % ABSTRACT_ICONS.length];
           return (
             <motion.div
               key={cat.id}
               variants={cardItem}
               whileTap={{ scale: 0.92 }}
               onClick={() =>
-                router.push(`${ROUTE_PATH.SERVICE_PROVIDERS}?categoryId=${cat.id}`)
+                router.push(
+                  `${ROUTE_PATH.SERVICE_PROVIDERS}?categoryId=${cat.id}`,
+                )
               }
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
             >
               <div
-                className={`w-[62px] h-[62px] rounded-2xl bg-gradient-to-br ${color.gradient} flex items-center justify-center relative overflow-hidden`}
+                className={`w-[62px] h-[62px] rounded-2xl flex items-center justify-center relative overflow-hidden`}
+                style={{
+                  background: `url(${cat.icon})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
               >
-                <Icon className="w-9 h-9 text-white" />
+                {/* <Icon className="w-9 h-9 text-white" /> */}
               </div>
               <span className="text-[10px] font-semibold text-white/70 text-center leading-tight w-[68px] line-clamp-2">
                 {cat.name}
