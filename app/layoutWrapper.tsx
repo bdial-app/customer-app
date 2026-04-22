@@ -8,9 +8,11 @@ import { store } from "@/store";
 import { NotificationProvider } from "./context/NotificationContext";
 import { AppToast } from "./components/app-toast";
 import { hydrateAuth } from "@/store/slices/authSlice";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   const [queryClient] = useState(() => new QueryClient());
+  useServiceWorker();
 
   useEffect(() => {
     store.dispatch(hydrateAuth());
