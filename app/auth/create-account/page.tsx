@@ -3,8 +3,6 @@ import {
   List,
   Page,
   Block,
-  Button,
-  Preloader,
   Navbar,
 } from "konsta/react";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +18,8 @@ import {
   phonePortraitOutline,
   keyOutline,
   personOutline,
+  arrowBack,
+  arrowForwardOutline,
   locationOutline,
   checkmarkCircle,
   navigateOutline,
@@ -441,23 +441,23 @@ function CreateAccountContent() {
                   />
                 </List>
 
-                <Block className="!mt-4">
-                  <Button
-                    large
-                    rounded
-                    onClick={() =>
-                      handleNext(validateForm, setTouched, values)
-                    }
-                    disabled={!isValid || !dirty || isSendingOtp}
+                <div className="px-4 mt-4">
+                  <button
                     type="button"
+                    onClick={() => handleNext(validateForm, setTouched, values)}
+                    disabled={!isValid || !dirty || isSendingOtp}
+                    className="flex w-full items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
                   >
                     {isSendingOtp ? (
-                      <Preloader className="w-5 h-5" />
+                      <span className="w-4 h-4 border-2 border-slate-400/40 border-t-slate-900 rounded-full animate-spin" />
                     ) : (
-                      "Send OTP"
+                      <>
+                        Send OTP
+                        <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                      </>
                     )}
-                  </Button>
-                </Block>
+                  </button>
+                </div>
               </>
             )}
 
@@ -506,37 +506,32 @@ function CreateAccountContent() {
                   </button>
                 </div>
 
-                <Block className="!mt-4">
-                  <div className="flex gap-2.5">
-                    <Button
-                      rounded
-                      clear
-                      large
-                      onClick={() => handleBack(setFieldValue)}
-                      className="flex-1"
-                      type="button"
-                      disabled={isVerifying}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      large
-                      rounded
-                      disabled={!isValid || !dirty || isVerifying}
-                      className="flex-1"
-                      onClick={() =>
-                        handleNext(validateForm, setTouched, values)
-                      }
-                      type="button"
-                    >
-                      {isVerifying ? (
-                        <Preloader className="w-5 h-5" />
-                      ) : (
-                        "Verify"
-                      )}
-                    </Button>
-                  </div>
-                </Block>
+                <div className="px-4 mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleBack(setFieldValue)}
+                    disabled={isVerifying}
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                  >
+                    <IonIcon icon={arrowBack} className="text-base shrink-0" />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNext(validateForm, setTouched, values)}
+                    disabled={!isValid || !dirty || isVerifying}
+                    className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
+                  >
+                    {isVerifying ? (
+                      <span className="w-4 h-4 border-2 border-slate-400/40 border-t-slate-900 rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        Verify
+                        <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </>
             )}
 
@@ -645,38 +640,36 @@ function CreateAccountContent() {
                   </div>
                 </div>
 
-                <Block className="!mt-3">
-                  <div className="flex gap-2.5">
-                    <Button
-                      rounded
-                      clear
-                      onClick={() => handleBack(setFieldValue)}
-                      className="flex-1"
-                      type="button"
-                      disabled={isSubmitting}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      large
-                      rounded
-                      disabled={!isValid || !dirty || isSubmitting || !location}
-                      className="flex-1"
-                      type="submit"
-                    >
-                      {isSubmitting ? (
-                        <Preloader className="w-5 h-5" />
-                      ) : (
-                        "Create Account"
-                      )}
-                    </Button>
-                  </div>
-                </Block>
+                <div className="px-4 mt-3 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleBack(setFieldValue)}
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                  >
+                    <IonIcon icon={arrowBack} className="text-base shrink-0" />
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!isValid || !dirty || isSubmitting || !location}
+                    className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-violet-200"
+                  >
+                    {isSubmitting ? (
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <IonIcon icon={checkmarkCircle} className="text-base shrink-0" />
+                        Create Account
+                      </>
+                    )}
+                  </button>
+                </div>
               </>
             )}
 
             {/* Footer Link */}
-            <Block className="!my-0 text-center !mb-4">
+            <Block className="!mt-6 text-center !mb-4">
               <p className="text-sm text-slate-500">
                 Already have an account?{" "}
                 <Link

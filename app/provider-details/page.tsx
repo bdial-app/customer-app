@@ -23,6 +23,8 @@ import {
   ribbonOutline,
   callOutline,
   chatbubbleOutline,
+  createOutline,
+  eyeOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
@@ -31,6 +33,7 @@ import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { openChat } from "@/store/slices/chatSlice";
+import { useAppContext } from "../context/AppContext";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -134,6 +137,7 @@ export default function ProviderDetailsPage() {
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
+  const { setUserMode } = useAppContext();
   const { data: savedData } = useIsSaved(id, "provider");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
@@ -145,6 +149,7 @@ export default function ProviderDetailsPage() {
   };
 
   const provider = data?.provider ?? null;
+  const isOwnProvider = Boolean(user && provider && user.id === provider.userId);
   const stats = data?.stats ?? (provider ? EMPTY_STATS : null);
   const photos = (data?.photos?.length ?? 0) > 0 ? data!.photos : [];
   const products = (data?.products?.length ?? 0) > 0 ? data!.products : [];
@@ -280,9 +285,11 @@ export default function ProviderDetailsPage() {
               <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
             </button>
             <div className="flex gap-2">
-              <button onClick={handleToggleSaved} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
-                <IonIcon icon={liked ? heart : heartOutline} className={`w-5 h-5 ${liked ? "text-red-400" : "text-white"}`} />
-              </button>
+              {!isOwnProvider && (
+                <button onClick={handleToggleSaved} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
+                  <IonIcon icon={liked ? heart : heartOutline} className={`w-5 h-5 ${liked ? "text-red-400" : "text-white"}`} />
+                </button>
+              )}
               <button onClick={handleShare} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
@@ -483,11 +490,13 @@ export default function ProviderDetailsPage() {
             ))
           )}
 
-          {/* Write Review */}
-          <button onClick={() => setSheetOpened(true)} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
-            <IonIcon icon={star} className="w-4 h-4" />
-            Write a Review
-          </button>
+          {/* Write Review — hidden for own provider */}
+          {!isOwnProvider && (
+            <button onClick={() => setSheetOpened(true)} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
+              <IonIcon icon={star} className="w-4 h-4" />
+              Write a Review
+            </button>
+          )}
         </div>
       )}
 
@@ -548,30 +557,59 @@ export default function ProviderDetailsPage() {
 
       {/* Floating CTA */}
       <div className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5" style={{ background: "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))", display: isLightboxOpen ? "none" : "block" }}>
-        <div className="flex gap-3">
-          <button disabled={isCreatingChat} onClick={() => {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            if (!token) { router.push('/auth/login'); return; }
-            if (!provider?.id) return;
-            createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
-              onSuccess: (conv) => {
-                dispatch(openChat(conv.id));
-                router.push('/');
-              },
-              onError: (err: any) => {
-                const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                alert(Array.isArray(msg) ? msg.join(', ') : msg);
-              },
-            });
-          }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50">
-            <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? 'Opening...' : 'Message'}
-          </button>
-          <button onClick={() => window.open(`tel:${provider.contactNumber}`)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
-            <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
-            Call Now
-          </button>
-        </div>
+        {isOwnProvider ? (
+          /* Owner mode — manage business banner */
+          <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
+              <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
+                <IonIcon icon={storefrontOutline} className="text-white text-sm" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">Your Business</p>
+                <p className="text-[10px] text-violet-500 truncate">You&apos;re viewing your own provider profile</p>
+              </div>
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
+                <IonIcon icon={eyeOutline} className="text-xs" />
+                Preview mode
+              </span>
+            </div>
+            <div className="flex gap-2.5 px-4 py-3">
+              <button
+                onClick={() => { setUserMode('provider'); router.push('/'); }}
+                className="flex flex-1 items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
+              >
+                <IonIcon icon={createOutline} className="text-base" />
+                Manage Business
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Customer mode — message & call */
+          <div className="flex gap-3">
+            <button disabled={isCreatingChat} onClick={() => {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+              if (!token) { router.push('/auth/login'); return; }
+              if (!provider?.id) return;
+              createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
+                onSuccess: (conv) => {
+                  dispatch(openChat(conv.id));
+                  router.push('/');
+                },
+                onError: (err: any) => {
+                  const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                },
+              });
+            }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50">
+              <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
+              {isCreatingChat ? 'Opening...' : 'Message'}
+            </button>
+            <button onClick={() => window.open(`tel:${provider.contactNumber}`)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
+              <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
+              Call Now
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Review Sheet */}

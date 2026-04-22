@@ -26,6 +26,8 @@ import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
+import { useAppContext } from "@/app/context/AppContext";
+import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -41,6 +43,7 @@ export default function ProductDetailsPage() {
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
+  const { setUserMode } = useAppContext();
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
@@ -53,6 +56,7 @@ export default function ProductDetailsPage() {
 
   const product = data?.product;
   const provider = data?.provider ?? null;
+  const isOwnProduct = Boolean(user && provider && user.id === provider.userId);
   const stats = data?.stats;
   const related = data?.related ?? [];
 
@@ -351,40 +355,67 @@ export default function ProductDetailsPage() {
             "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",
         }}
       >
-        <button
-          onClick={() => {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            if (!token) { router.push('/auth/login'); return; }
-            if (!provider?.id) return;
-            createConversation({
-              providerId: provider.id,
-              contextType: 'product',
-              contextId: product?.id,
-              initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
-              initialMessageMetadata: {
-                productId: product?.id,
-                productName: product?.name,
-                productImage: product?.photoUrl,
-                productPrice: product?.price,
-                currency: product?.currency,
-              },
-            }, {
-              onSuccess: (conv) => {
-                dispatch(openChat(conv.id));
-                router.push('/');
-              },
-              onError: (err: any) => {
-                const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                alert(Array.isArray(msg) ? msg.join(', ') : msg);
-              },
-            });
-          }}
-          disabled={isCreatingChat}
-          className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
-        >
-          <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-          {isCreatingChat ? 'Opening Chat...' : 'Send Enquiry'}
-        </button>
+        {isOwnProduct ? (
+          <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
+              <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
+                <IonIcon icon={storefrontOutline} className="text-white text-sm" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">Your Product</p>
+                <p className="text-[10px] text-violet-500 truncate">You&apos;re viewing your own listing</p>
+              </div>
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
+                <IonIcon icon={eyeOutline} className="text-xs" />
+                Preview mode
+              </span>
+            </div>
+            <div className="px-4 py-3">
+              <button
+                onClick={() => { setUserMode('provider'); router.push('/'); }}
+                className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
+              >
+                <IonIcon icon={createOutline} className="text-base" />
+                Manage Business
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+              if (!token) { router.push('/auth/login'); return; }
+              if (!provider?.id) return;
+              createConversation({
+                providerId: provider.id,
+                contextType: 'product',
+                contextId: product?.id,
+                initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
+                initialMessageMetadata: {
+                  productId: product?.id,
+                  productName: product?.name,
+                  productImage: product?.photoUrl,
+                  productPrice: product?.price,
+                  currency: product?.currency,
+                },
+              }, {
+                onSuccess: (conv) => {
+                  dispatch(openChat(conv.id));
+                  router.push('/');
+                },
+                onError: (err: any) => {
+                  const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                },
+              });
+            }}
+            disabled={isCreatingChat}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
+          >
+            <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
+            {isCreatingChat ? 'Opening Chat...' : 'Send Enquiry'}
+          </button>
+        )}
       </div>
     </Page>
   );

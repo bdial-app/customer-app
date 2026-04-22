@@ -15,6 +15,7 @@ export interface ProductDetail {
 
 export interface ProductProviderSummary {
   id: string;
+  userId: string;
   brandName: string;
   description: string | null;
   profilePhotoUrl: string | null;
