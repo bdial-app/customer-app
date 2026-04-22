@@ -234,10 +234,22 @@ export default function TimePicker({
   const anchorRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fix: use parseInt with isNaN checks instead of falsy || fallbacks
+  // Parses both 24-hour ("09:00") and 12-hour ("9:00 AM") formats
   const parseTime = (str: string) => {
     if (!str) return { h: 8, m: 0, ap: 0 };
-    const [time, ampm] = str.split(" ");
+    const parts = str.trim().split(" ");
+    if (parts.length === 1) {
+      // 24-hour format: "HH:MM"
+      const [hStr, mStr] = parts[0].split(":");
+      const h24 = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
+      if (isNaN(h24) || isNaN(m)) return { h: 8, m: 0, ap: 0 };
+      const ap = h24 >= 12 ? 1 : 0;
+      const h12 = h24 % 12 === 0 ? 12 : h24 % 12; // 1-12
+      return { h: h12 - 1, m, ap }; // h is index 0-11
+    }
+    // 12-hour format: "H:MM AM/PM"
+    const [time, ampm] = parts;
     const [hStr, mStr] = time.split(":");
     const h = parseInt(hStr, 10);
     const m = parseInt(mStr, 10);
@@ -246,6 +258,18 @@ export default function TimePicker({
       m: isNaN(m) ? 0 : m,
       ap: ampm === "PM" ? 1 : 0,
     };
+  };
+
+  // Converts internal state to 24-hour "HH:MM" for backend
+  const to24h = (s: { h: number; m: number; ap: number }) => {
+    const h12 = s.h + 1; // index 0-11 → hour 1-12
+    let h24: number;
+    if (s.ap === 0) {
+      h24 = h12 === 12 ? 0 : h12; // 12 AM → 0, 1-11 AM → 1-11
+    } else {
+      h24 = h12 === 12 ? 12 : h12 + 12; // 12 PM → 12, 1-11 PM → 13-23
+    }
+    return `${String(h24).padStart(2, "0")}:${MINS[s.m]}`;
   };
 
   const [committed, setCommitted] = useState(parseTime(value));
@@ -286,7 +310,7 @@ export default function TimePicker({
   const handleDone = () => {
     const next = { ...pending.current };
     setCommitted(next);
-    onChange(timeStr(next));
+    onChange(to24h(next)); // emit 24-hour format so backend validation passes
     setOpen(false);
   };
 
