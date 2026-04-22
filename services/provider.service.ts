@@ -37,12 +37,14 @@ export interface BecomeProviderPayload {
   openTime?: string;
   closeTime?: string;
   profilePhotoUrl?: string;
+  bannerImageUrl?: string;
   ijamatNumber?: string;
   ijamatExpiry?: string;
   ijamatDocUrl?: string;
   latitude?: string;
   longitude?: string;
   aadhaarFile?: File;
+  categoryIds?: string[];
 }
 
 export interface ProviderData {
@@ -196,6 +198,10 @@ export const becomeProvider = async (
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
   if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
+  if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
+  if (payload.categoryIds?.length) {
+    payload.categoryIds.forEach((id) => formData.append("categoryIds", id));
+  }
 
   const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
     headers: { "Content-Type": "multipart/form-data" },

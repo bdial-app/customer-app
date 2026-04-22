@@ -373,6 +373,10 @@ export default function ProductDetailsPage() {
                 dispatch(openChat(conv.id));
                 router.push('/');
               },
+              onError: (err: any) => {
+                const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                alert(Array.isArray(msg) ? msg.join(', ') : msg);
+              },
             });
           }}
           disabled={isCreatingChat}

@@ -38,6 +38,7 @@ import {
   becomeProvider,
   getMyProviderStatus,
 } from "@/services/provider.service";
+import { getTopLevelCategories } from "@/services/category.service";
 import { AppDialog } from "../components/app-dialog";
 
 // ---------------------------------------------------------------------------
@@ -738,7 +739,16 @@ const ProviderOnboardingPage = () => {
   const [statusLoading, setStatusLoading] = useState(true);
   const [docType, setDocType] = useState<DocTypeId>("aadhaar");
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; icon?: string }[]>([]);
   const pendingSubmitRef = useRef<(() => void) | null>(null);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    getTopLevelCategories()
+      .then((cats) => setCategories(cats.map((c) => ({ id: c.id, name: c.name, icon: (c as any).icon }))))
+      .catch(() => {});
+  }, []);
 
   // Fetch real provider status on mount
   useEffect(() => {
@@ -825,6 +835,8 @@ const ProviderOnboardingPage = () => {
         aadhaarFile: values.identity_doc || undefined,
         latitude,
         longitude,
+        categoryIds: selectedCategoryIds.length ? selectedCategoryIds : undefined,
+        bannerImageUrl: values.banner_image_url?.trim() || undefined,
       });
       // If user uploaded doc → pending verification; if skipped → approved (unverified)
       setProviderStatus(values.identity_doc ? "pending" : "approved");
@@ -887,6 +899,7 @@ const ProviderOnboardingPage = () => {
           contact_number: "",
           open_time: "",
           close_time: "",
+          banner_image_url: "",
           identity_doc: null as File | null,
         }}
         validationSchema={currentStep === 1 ? step1Schema : step2Schema}
@@ -966,6 +979,12 @@ const ProviderOnboardingPage = () => {
                           val.replace(/\D/g, "").slice(0, 10)
                         }
                       />
+                      <FormikInput
+                        name="banner_image_url"
+                        label="Banner Image URL (optional)"
+                        type="text"
+                        placeholder="https://example.com/banner.jpg"
+                      />
                     </List>
 
                     <SectionHeader
@@ -1022,6 +1041,42 @@ const ProviderOnboardingPage = () => {
                         onChange={(val) => setFieldValue("close_time", val)}
                       />
                     </List>
+
+                    <SectionHeader
+                      icon={storefrontOutline}
+                      title="Service Categories"
+                      subtitle="Select the categories your business falls under"
+                    />
+                    <div className="px-4 pb-4">
+                      <div className="flex flex-wrap gap-2">
+                        {categories.map((cat) => {
+                          const selected = selectedCategoryIds.includes(cat.id);
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedCategoryIds((prev) =>
+                                  selected
+                                    ? prev.filter((id) => id !== cat.id)
+                                    : [...prev, cat.id],
+                                )
+                              }
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                selected
+                                  ? "bg-indigo-500 text-white border-indigo-500"
+                                  : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                              }`}
+                            >
+                              {cat.icon ? `${cat.icon} ` : ""}{cat.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {categories.length === 0 && (
+                        <p className="text-xs text-gray-400 mt-1">Loading categories...</p>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>

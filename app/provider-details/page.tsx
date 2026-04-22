@@ -161,7 +161,7 @@ export default function ProviderDetailsPage() {
   const { data: savedData } = useIsSaved(id, "provider");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
-  const { mutate: createConversation } = useCreateConversation();
+  const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
 
   const handleToggleSaved = () => {
     if (!user) return; // Only allow for logged-in users
@@ -556,18 +556,23 @@ export default function ProviderDetailsPage() {
       {/* Floating CTA */}
       <div className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5" style={{ background: "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))", display: isLightboxOpen ? "none" : "block" }}>
         <div className="flex gap-3">
-          <button onClick={() => {
+          <button disabled={isCreatingChat} onClick={() => {
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
             if (!token) { router.push('/auth/login'); return; }
+            if (!provider?.id) return;
             createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
               onSuccess: (conv) => {
                 dispatch(openChat(conv.id));
                 router.push('/');
               },
+              onError: (err: any) => {
+                const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                alert(Array.isArray(msg) ? msg.join(', ') : msg);
+              },
             });
-          }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform">
+          }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50">
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            Message
+            {isCreatingChat ? 'Opening...' : 'Message'}
           </button>
           <button onClick={() => window.open(`tel:${provider.contactNumber}`)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
             <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
