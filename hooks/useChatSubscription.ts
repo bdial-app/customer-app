@@ -22,7 +22,11 @@ export function useChatSubscription() {
 
   useEffect(() => {
     if (unreadData) {
-      dispatch(setUnreadCount(unreadData.unreadCount));
+      dispatch(setUnreadCount({
+        total: unreadData.unreadCount,
+        customer: unreadData.customerUnreadCount ?? 0,
+        provider: unreadData.providerUnreadCount ?? 0,
+      }));
     }
   }, [unreadData, dispatch]);
 
@@ -36,7 +40,9 @@ export function useChatSubscription() {
     channel
       .on("broadcast", { event: "conversation_update" }, (payload) => {
         // A new message arrived in one of our conversations
-        dispatch(incrementUnread());
+        const role: "customer" | "provider" | undefined =
+          payload?.payload?.role ?? undefined;
+        dispatch(incrementUnread(role));
         // Refresh conversation list
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
         queryClient.invalidateQueries({ queryKey: ["unreadCount"] });

@@ -7,6 +7,8 @@ interface TypingUser {
 
 interface ChatState {
   totalUnreadCount: number;
+  customerUnreadCount: number;
+  providerUnreadCount: number;
   activeConversationId: string | null;
   typingUsers: Record<string, TypingUser>; // keyed by `${conversationId}:${userId}`
   /** Set when navigating to a specific chat from outside the home page */
@@ -15,6 +17,8 @@ interface ChatState {
 
 const initialState: ChatState = {
   totalUnreadCount: 0,
+  customerUnreadCount: 0,
+  providerUnreadCount: 0,
   activeConversationId: null,
   typingUsers: {},
   pendingChatOpen: null,
@@ -24,11 +28,15 @@ const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
-    setUnreadCount(state, action: PayloadAction<number>) {
-      state.totalUnreadCount = action.payload;
+    setUnreadCount(state, action: PayloadAction<{ total: number; customer: number; provider: number }>) {
+      state.totalUnreadCount = action.payload.total;
+      state.customerUnreadCount = action.payload.customer;
+      state.providerUnreadCount = action.payload.provider;
     },
-    incrementUnread(state) {
+    incrementUnread(state, action: PayloadAction<"customer" | "provider" | undefined>) {
       state.totalUnreadCount += 1;
+      if (action.payload === "provider") state.providerUnreadCount += 1;
+      else state.customerUnreadCount += 1;
     },
     setActiveConversation(state, action: PayloadAction<string | null>) {
       state.activeConversationId = action.payload;

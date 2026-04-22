@@ -118,7 +118,7 @@ export async function markAsRead(
   return res.data;
 }
 
-export async function getUnreadCount(): Promise<{ unreadCount: number }> {
+export async function getUnreadCount(): Promise<{ unreadCount: number; customerUnreadCount: number; providerUnreadCount: number }> {
   const res = await apiClient.get(CHAT_URLS.UNREAD_COUNT);
   return res.data;
 }

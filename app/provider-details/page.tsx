@@ -255,7 +255,9 @@ export default function ProviderDetailsPage() {
         </div>
         <h3 className="text-lg font-semibold text-gray-800 mb-1">Something went wrong</h3>
         <p className="text-sm text-gray-500 mb-6 text-center">We couldn&apos;t load this provider. Please try again.</p>
-        <button onClick={() => router.back()} className="px-6 py-2.5 bg-amber-500 text-white rounded-full text-sm font-semibold active:scale-95 transition-transform">Go Back</button>
+        <button onClick={() => router.back()} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center active:scale-90 transition-transform">
+          <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
+        </button>
       </Page>
     );
   }

@@ -2,6 +2,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Page } from "konsta/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { IonIcon } from "@ionic/react";
+import { chatbubblesOutline, arrowForwardOutline, storefrontOutline } from "ionicons/icons";
 import BottomBar from "./components/bottom-bar";
 import ProfileContent from "./components/profile-content";
 import MessagesContent from "./components/messages-content";
@@ -25,7 +28,8 @@ export default function Home() {
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
-  const { userMode } = useAppContext();
+  const { userMode, setUserMode } = useAppContext();
+  const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
   const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
   const prevUserMode = useRef(userMode);
@@ -140,6 +144,35 @@ export default function Home() {
 
       {/* Spacer for floating bottom bar */}
       <div className="h-24"></div>
+
+      {/* Provider notification nudge — only shown in customer mode */}
+      <AnimatePresence>
+        {userMode === "customer" && providerUnreadCount > 0 && (
+          <motion.button
+            key="provider-nudge"
+            initial={{ opacity: 0, y: 16, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            onClick={() => {
+              setUserMode("provider");
+              handleTabChange("chats");
+            }}
+            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
+          >
+            <IonIcon icon={storefrontOutline} className="text-base shrink-0" />
+            <span className="text-xs font-semibold whitespace-nowrap">
+              {providerUnreadCount === 1
+                ? "1 new business message"
+                : `${providerUnreadCount} new business messages`}
+            </span>
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/25 text-[10px] font-bold shrink-0">
+              {providerUnreadCount > 99 ? "99+" : providerUnreadCount}
+            </span>
+            <IonIcon icon={arrowForwardOutline} className="text-sm shrink-0" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
     </Page>

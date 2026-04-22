@@ -85,7 +85,9 @@ const TABS: TabItem[] = [
 
 const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
   const { userMode } = useAppContext();
-  const unreadCount = useAppSelector((state) => state.chat.totalUnreadCount);
+  const customerUnreadCount = useAppSelector((state) => state.chat.customerUnreadCount);
+  const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
+  const badgeCount = userMode === "provider" ? providerUnreadCount : customerUnreadCount;
 
   const visibleTabs = TABS.filter(
     (tab) => !tab.mode || tab.mode === userMode
@@ -135,10 +137,10 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
                     }`}
                   />
                   {/* Unread badge */}
-                  {tab.id === "chats" && unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-2 min-w-[16px] h-4 rounded-full bg-red-500 flex items-center justify-center px-1">
+                  {tab.id === "chats" && badgeCount > 0 && (
+                    <div className={`absolute -top-1 -right-2 min-w-[16px] h-4 rounded-full flex items-center justify-center px-1 ${isProvider ? "bg-teal-500" : "bg-red-500"}`}>
                       <span className="text-[9px] font-bold text-white leading-none">
-                        {unreadCount > 99 ? "99+" : unreadCount}
+                        {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
                     </div>
                   )}
