@@ -2,10 +2,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 
-const IonIcon = dynamic(
-  () => import("@ionic/react").then((m) => m.IonIcon),
-  { ssr: false },
-);
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
+  ssr: false,
+});
 
 export interface AppDialogProps {
   open: boolean;
@@ -109,7 +108,9 @@ export const AppDialog = ({
                 )}
 
                 {/* Actions */}
-                <div className={`flex flex-col gap-3 mt-5 ${icon ? "ml-[56px]" : ""}`}>
+                <div
+                  className={`flex flex-col gap-3 mt-5 ${icon ? "ml-[56px]" : ""}`}
+                >
                   {onConfirm && (
                     <button
                       onClick={onConfirm}
