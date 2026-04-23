@@ -10,12 +10,18 @@ export function useServiceWorker() {
       window.addEventListener("load", async () => {
         try {
           console.log("[PWA] Attempting to register service worker...");
-          
-          const registration = await navigator.serviceWorker.register("/sw.js", {
-            scope: "/",
-          });
-          
-          console.log("✓ Service Worker registered successfully:", registration);
+
+          const registration = await navigator.serviceWorker.register(
+            "/sw.js",
+            {
+              scope: "/",
+            },
+          );
+
+          console.log(
+            "✓ Service Worker registered successfully:",
+            registration,
+          );
 
           if (registration.waiting) {
             console.log("✓ Service Worker already active");
@@ -40,8 +46,13 @@ export function useServiceWorker() {
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener("statechange", () => {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  console.log("New Service Worker available, prompt user to refresh");
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  console.log(
+                    "New Service Worker available, prompt user to refresh",
+                  );
                 }
               });
             }

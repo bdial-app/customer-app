@@ -3,6 +3,7 @@
 ## Android (Chrome, Edge, Samsung Internet)
 
 ### Method 1: Auto Install Prompt (Recommended)
+
 1. Open Bohri Connect in your browser
 2. Wait 30 seconds for the app to fully load
 3. You should see an **"Install"** or **"Add to Home Screen"** prompt at the bottom
@@ -11,6 +12,7 @@
 6. The app will be added to your home screen
 
 ### Method 2: Manual Installation (If prompt doesn't appear)
+
 1. Open Bohri Connect in Chrome/Edge
 2. Tap the **menu icon** (3 dots) at the top right
 3. Select **"Install app"** or **"Add to Home Screen"**
@@ -18,6 +20,7 @@
 5. The app will be added to your home screen
 
 ### Method 3: Via Home Screen Menu
+
 1. Long-press on your home screen
 2. Select **"Widgets"** or **"Add app shortcut"**
 3. Find **"Bohri Connect"**
@@ -28,6 +31,7 @@
 ## iOS / iPad (Safari)
 
 ### Installation Steps
+
 1. Open Bohri Connect (https://) in Safari
 2. Tap the **Share** icon at the bottom center of screen
 3. Scroll down and tap **"Add to Home Screen"**
@@ -36,6 +40,7 @@
 6. The app will be added to your home screen
 
 **Note**: Look for the Share icon:
+
 - iPhone: Icon that looks like a square with an arrow pointing up
 - iPad: Same icon in the toolbar
 
@@ -44,12 +49,14 @@
 ## What's the Difference Between Browser & App?
 
 ### Browser Version
+
 - Opens in Safari/Chrome browser bar
 - Can switch between tabs and apps
 - Shows browser address bar
 - Takes more screen space
 
 ### Installed App Version
+
 - Full screen experience
 - Looks and feels like a native app
 - Faster to open
@@ -65,17 +72,19 @@
 **Reason**: The app might not meet install criteria yet.
 
 **Solutions**:
+
 1. **Reload the page**: Pull to refresh (iOS) or pull down on home screen (Android)
 2. **Wait 10-30 seconds**: The app needs to load completely
 3. **Use HTTPS**: Make sure URL starts with `https://`
 4. **Check internet connection**: Must have active internet for first load
-5. **Try a different browser**: 
+5. **Try a different browser**:
    - Android: Try Google Chrome if using Edge
    - iOS: Safari is required (only official browser that supports PWA)
 
 ### "The App Won't Open After Installation"
 
 **Solution**:
+
 1. Try reloading the app (pull to refresh)
 2. Check your internet connection
 3. If offline, some features won't work (but app should still open)
@@ -83,6 +92,7 @@
 ### "The App is Slow/Crashes"
 
 **Solution**:
+
 1. Close the app completely
 2. Clear cache: Open app → Settings → Storage → Clear Cache
 3. Reinstall: Uninstall the app and reinstall it
@@ -102,10 +112,12 @@
 ## First-Time Setup
 
 After installing, on first open:
+
 1. Grant **Location Permission** when prompted
 2. You're ready to use the app!
 
 ### Permissions You'll Be Asked For
+
 - ✓ **Location**: To show nearby service providers
 - ✓ **File Access**: To upload photos and documents
 
@@ -114,11 +126,13 @@ After installing, on first open:
 ## Uninstalling
 
 ### Android
+
 1. Long-press the Bohri Connect app icon
 2. Select **"Uninstall"**
 3. Confirm uninstall
 
 ### iOS
+
 1. Long-press the Bohri Connect app icon
 2. Select **"Remove App"**
 3. Select **"Remove from Home Screen"** or **"Delete App"**
@@ -148,15 +162,18 @@ If you still can't install the app:
 ## Tips & Tricks
 
 ### Make App Faster
+
 - Install it on home screen (less overhead)
 - Grant location permission (app runs location cache)
 - Use 4G or WiFi (faster content loading)
 
 ### Save Battery
+
 - App uses less battery than browser version
 - Offline features work without data usage
 
 ### Keep Updated
+
 - App automatically checks for updates
 - Updates install in background without notification
 - New version loads on next app restart
@@ -166,6 +183,7 @@ If you still can't install the app:
 ## Security & Privacy
 
 Your data is safe:
+
 - ✓ All data encrypted in transit (HTTPS)
 - ✓ No tracking cookies
 - ✓ Location data only used to find nearby services
