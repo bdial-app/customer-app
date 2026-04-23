@@ -5,10 +5,63 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#F59E0B",
   "categories": ["lifestyle", "productivity"],
-
+  "icons": [
+    {
+      "src": "/cloth-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/cloth-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/cloth-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/cloth-icon.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Services",
+      "short_name": "Explore",
+      "description": "Browse nearby service providers",
+      "url": "/all-services",
+      "icons": [
+        {
+          "src": "/cloth-icon.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Profile",
+      "short_name": "Profile",
+      "description": "View and manage your profile",
+      "url": "/profile",
+      "icons": [
+        {
+          "src": "/cloth-icon.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
   "permissions": ["geolocation", "file_upload"]
 }

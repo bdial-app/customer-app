@@ -1,13 +1,14 @@
 const CACHE_NAME = "bohri-connect-v1";
 const RUNTIME_CACHE = "bohri-runtime-cache-v1";
-const ASSETS_TO_CACHE = ["/", "/index.html", "/manifest.json"];
+const ASSETS_TO_CACHE = ["/", "/manifest.json"];
 
 // Install event - cache essential files
 self.addEventListener("install", (event) => {
+  console.log("[SW] Installing service worker...");
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(() => {
-        // Gracefully handle missing files
+      return cache.addAll(ASSETS_TO_CACHE).catch((error) => {
+        console.log("[SW] Cache install error (non-fatal):", error);
         return Promise.resolve();
       });
     }),
@@ -17,11 +18,13 @@ self.addEventListener("install", (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
+  console.log("[SW] Activating service worker...");
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+            console.log("[SW] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         }),
@@ -29,6 +32,7 @@ self.addEventListener("activate", (event) => {
     }),
   );
   self.clients.claim();
+  console.log("[SW] Service worker activated");
 });
 
 // Fetch event - network first, fallback to cache
@@ -41,63 +45,107 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Skip external requests (e.g., Google Maps, Supabase)
+  // Skip chrome extension requests
+  if (url.protocol === "chrome-extension:") {
+    return;
+  }
+
+  // External requests - network first with cache fallback
   if (url.origin !== location.origin) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful responses
           if (response.status === 200 && response.type !== "error") {
-            const cache = caches.open(RUNTIME_CACHE);
-            cache.then((c) => {
-              c.put(request, response.clone());
+            const cachePromise = caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, response.clone());
             });
+            // Don't wait for cache to complete
+            cachePromise.catch(() => {});
           }
           return response;
         })
         .catch(() => {
-          // Return cached version if available
-          return caches.match(request);
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return offline page if available
+            return caches.match("/");
+          });
         }),
     );
     return;
   }
 
-  // Network first strategy for API calls
+  // API calls - network first
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.status === 200) {
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, response.clone());
-            });
+            caches
+              .open(RUNTIME_CACHE)
+              .then((cache) => {
+                cache.put(request, response.clone());
+              })
+              .catch(() => {});
           }
           return response;
         })
         .catch(() => {
-          return caches.match(request);
+          return caches
+            .match(request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // Return a network error response
+              return new Response("Network error", {
+                status: 503,
+                statusText: "Service Unavailable",
+              });
+            })
+            .catch(() => {
+              return new Response("Cache error", {
+                status: 500,
+                statusText: "Internal Server Error",
+              });
+            });
         }),
     );
     return;
   }
 
-  // Cache first strategy for assets
+  // Assets - cache first with network fallback
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return fetch(request).then((response) => {
-        if (response.status === 200 && response.type !== "error") {
-          const responseToCache = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, responseToCache);
+      return fetch(request)
+        .then((response) => {
+          if (
+            response.status === 200 &&
+            response.type !== "error" &&
+            response.type !== "opaque"
+          ) {
+            const responseToCache = response.clone();
+            caches
+              .open(RUNTIME_CACHE)
+              .then((cache) => {
+                cache.put(request, responseToCache);
+              })
+              .catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => {
+          // Return cached version or offline page
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || caches.match("/");
           });
-        }
-        return response;
-      });
+        });
     }),
   );
 });
@@ -108,3 +156,7 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
+// Log when service worker is ready
+console.log("[SW] Service worker script loaded");
+

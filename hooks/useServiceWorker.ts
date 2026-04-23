@@ -7,30 +7,61 @@ export function useServiceWorker() {
     if (typeof window === "undefined") return;
 
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            console.log(
-              "✓ Service Worker registered successfully:",
-              registration,
-            );
+      window.addEventListener("load", async () => {
+        try {
+          console.log("[PWA] Attempting to register service worker...");
+          
+          const registration = await navigator.serviceWorker.register("/sw.js", {
+            scope: "/",
+          });
+          
+          console.log("✓ Service Worker registered successfully:", registration);
 
-            // Check for updates periodically
-            setInterval(() => {
-              registration.update();
-            }, 60000); // Check every minute
-          })
-          .catch((error) => {
-            console.log("✗ Service Worker registration failed:", error);
+          if (registration.waiting) {
+            console.log("✓ Service Worker already active");
+          }
+
+          if (registration.installing) {
+            console.log("⏳ Service Worker is installing...");
+          }
+
+          if (registration.active) {
+            console.log("✓ Service Worker is active");
+          }
+
+          // Check for updates periodically
+          const updateInterval = setInterval(() => {
+            registration.update();
+          }, 60000); // Check every minute
+
+          // Listen for updates
+          registration.addEventListener("updatefound", () => {
+            console.log("Update found for Service Worker");
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  console.log("New Service Worker available, prompt user to refresh");
+                }
+              });
+            }
           });
 
-        // Listen for updates
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          console.log("Service Worker updated");
-          // Show update notification to user if needed
-        });
+          return () => clearInterval(updateInterval);
+        } catch (error) {
+          console.error("✗ Service Worker registration failed:", error);
+          if (error instanceof Error) {
+            console.error("Error details:", error.message);
+          }
+        }
       });
+
+      // Listen for controller changes
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        console.log("✓ Service Worker controller changed (updated)");
+      });
+    } else {
+      console.warn("⚠️ Service Worker not supported in this browser");
     }
   }, []);
 }
