@@ -265,7 +265,7 @@ const QuickCategories = () => {
               <div
                 className={`w-[62px] h-[62px] rounded-2xl flex items-center justify-center relative overflow-hidden`}
                 style={{
-                  background: `url(${cat.icon})`,
+                  background: `url(${cat.imageUrl})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
