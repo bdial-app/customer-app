@@ -8,23 +8,23 @@ import {
   imagesOutline,
   cloudUploadOutline,
 } from "ionicons/icons";
-import { ListingPhoto } from "@/services/listing.service";
+import { ProviderDetailsPhoto } from "@/services/provider.service";
 import { useUploadPhotos, useDeletePhoto } from "@/hooks/usePhotos";
 
 interface ProviderPhotosTabProps {
-  photos: ListingPhoto[];
-  listingId: string | null;
+  photos: ProviderDetailsPhoto[];
+  providerId: string | null;
 }
 
-const ProviderPhotosTab = ({ photos, listingId }: ProviderPhotosTabProps) => {
+const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadPhotos();
   const deleteMutation = useDeletePhoto();
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files?.length || !listingId) return;
-    uploadMutation.mutate({ listingId, files: Array.from(files) });
+    if (!files?.length || !providerId) return;
+    uploadMutation.mutate({ providerId, files: Array.from(files) });
     e.target.value = "";
   };
 
@@ -42,7 +42,7 @@ const ProviderPhotosTab = ({ photos, listingId }: ProviderPhotosTabProps) => {
         <h3 className="text-sm font-bold text-slate-800">
           Photos ({photos.length}/{maxPhotos})
         </h3>
-        {photos.length > 0 && listingId && remaining > 0 && (
+        {photos.length > 0 && providerId && remaining > 0 && (
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => fileRef.current?.click()}
@@ -108,7 +108,7 @@ const ProviderPhotosTab = ({ photos, listingId }: ProviderPhotosTabProps) => {
           <p className="text-sm text-slate-500 max-w-[250px] mx-auto mb-5">
             Upload photos of your work to attract more customers
           </p>
-          {listingId ? (
+          {providerId ? (
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => fileRef.current?.click()}
@@ -120,7 +120,7 @@ const ProviderPhotosTab = ({ photos, listingId }: ProviderPhotosTabProps) => {
             </motion.button>
           ) : (
             <p className="text-xs text-slate-400">
-              Create a listing first to upload photos
+              Set up your provider profile first to upload photos
             </p>
           )}
         </div>

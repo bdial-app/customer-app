@@ -10,29 +10,32 @@ import {
   personCircleOutline,
 } from "ionicons/icons";
 import { Sheet, Page, Navbar, Button, Block, List, ListInput } from "konsta/react";
-import { ListingReview } from "@/services/listing.service";
+import { ProviderDetailsReview } from "@/services/provider.service";
+import { useReplyToReview } from "@/hooks/useMyProvider";
 
 interface ProviderReviewsTabProps {
-  reviews: ListingReview[];
+  reviews: ProviderDetailsReview[];
 }
 
 const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
   const [replySheet, setReplySheet] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<ListingReview | null>(null);
+  const [selectedReview, setSelectedReview] = useState<ProviderDetailsReview | null>(null);
   const [replyText, setReplyText] = useState("");
+  const replyMutation = useReplyToReview();
 
-  const handleOpenReply = (review: ListingReview) => {
+  const handleOpenReply = (review: ProviderDetailsReview) => {
     setSelectedReview(review);
     setReplyText("");
     setReplySheet(true);
   };
 
   const handleSubmitReply = () => {
-    // TODO: Integrate with reply API when available
     if (selectedReview && replyText.trim()) {
-      console.log("Reply to review:", selectedReview.id, replyText);
+      replyMutation.mutate(
+        { reviewId: selectedReview.id, replyText: replyText.trim() },
+        { onSuccess: () => setReplySheet(false) },
+      );
     }
-    setReplySheet(false);
   };
 
   // Calculate rating distribution

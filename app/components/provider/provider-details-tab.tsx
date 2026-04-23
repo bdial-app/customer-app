@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -12,6 +12,10 @@ import {
   closeOutline,
   storefrontOutline,
   mapOutline,
+  cameraOutline,
+  imageOutline,
+  personCircleOutline,
+  toggleOutline,
 } from "ionicons/icons";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -70,6 +74,8 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [detailSheet, setDetailSheet] = useState<{ title: string; content: string } | null>(null);
   const updateMutation = useUpdateProvider();
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const profileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = async (values: any) => {
     try {
@@ -91,6 +97,35 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
     } catch {
       // Error handled by mutation state
     }
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      updateMutation.mutate({
+        id: provider.id,
+        payload: { bannerImageUrl: url },
+      });
+    }
+  };
+
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      updateMutation.mutate({
+        id: provider.id,
+        payload: { profilePhotoUrl: url },
+      });
+    }
+  };
+
+  const handleToggleAvailability = () => {
+    updateMutation.mutate({
+      id: provider.id,
+      payload: { isAvailable: !provider.isAvailable },
+    });
   };
 
   const formatTime = (time: string | null) => {
@@ -117,6 +152,92 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
 
   return (
     <div className="animate-in fade-in duration-300">
+      {/* ─── Banner + Profile Photo Hero ──────────────── */}
+      <div className="relative mx-4 mt-3 mb-6">
+        {/* Banner */}
+        <div
+          onClick={() => bannerInputRef.current?.click()}
+          className="relative w-full h-36 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 cursor-pointer group"
+        >
+          {provider.bannerImageUrl ? (
+            <img
+              src={provider.bannerImageUrl}
+              alt="Banner"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center">
+              <IonIcon icon={imageOutline} className="text-3xl text-teal-300 mb-1" />
+              <span className="text-[11px] text-teal-400 font-medium">
+                Add Banner Image
+              </span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/0 group-active:bg-black/20 transition-colors flex items-center justify-center">
+            <div className="bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
+              <IonIcon icon={cameraOutline} className="text-slate-600 text-lg" />
+            </div>
+          </div>
+          <input
+            ref={bannerInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBannerChange}
+          />
+        </div>
+
+        {/* Profile Photo */}
+        <div className="absolute -bottom-5 left-4">
+          <div
+            onClick={() => profileInputRef.current?.click()}
+            className="w-20 h-20 rounded-2xl border-4 border-white bg-white shadow-md overflow-hidden cursor-pointer relative group"
+          >
+            {provider.profilePhotoUrl ? (
+              <img
+                src={provider.profilePhotoUrl}
+                alt={provider.brandName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-teal-50 flex items-center justify-center">
+                <IonIcon icon={personCircleOutline} className="text-3xl text-teal-300" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/0 group-active:bg-black/30 transition-colors flex items-center justify-center">
+              <IonIcon icon={cameraOutline} className="text-white text-sm opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+            </div>
+            <input
+              ref={profileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleProfileChange}
+            />
+          </div>
+        </div>
+
+        {/* Availability toggle */}
+        <div className="absolute -bottom-5 right-4">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleToggleAvailability}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border ${
+              provider.isAvailable
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-red-50 text-red-600 border-red-200"
+            }`}
+          >
+            <div
+              className={`w-2 h-2 rounded-full ${
+                provider.isAvailable ? "bg-emerald-500" : "bg-red-400"
+              }`}
+            />
+            {provider.isAvailable ? "Available" : "Unavailable"}
+          </motion.button>
+        </div>
+      </div>
+
       {/* View Mode */}
       <AnimatePresence mode="wait">
         {!isEditing ? (
@@ -187,8 +308,8 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   city: provider.city || "",
                   area: provider.area || "",
                   pincode: provider.pincode || "",
-                  openTime: provider.openTime || "",
-                  closeTime: provider.closeTime || "",
+                  openTime: provider.openTime?.slice(0, 5) || "",
+                  closeTime: provider.closeTime?.slice(0, 5) || "",
                 }}
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}

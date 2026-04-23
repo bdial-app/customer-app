@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -7,18 +7,17 @@ import {
   cubeOutline,
   imagesOutline,
   starOutline,
-  settingsOutline,
 } from "ionicons/icons";
 import ProviderDetailsTab from "./provider-details-tab";
 import ProviderProductsTab from "./provider-products-tab";
 import ProviderPhotosTab from "./provider-photos-tab";
 import ProviderReviewsTab from "./provider-reviews-tab";
 import { useMyProvider } from "@/hooks/useMyProvider";
-import { useMyListings } from "@/hooks/useListing";
+import { useProviderDetails } from "@/hooks/useProvider";
 
-type ListingTab = "details" | "products" | "photos" | "reviews";
+type ManagerTab = "details" | "products" | "photos" | "reviews";
 
-const tabs: { id: ListingTab; label: string; icon: string }[] = [
+const tabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "details", label: "Details", icon: storefrontOutline },
   { id: "products", label: "Products", icon: cubeOutline },
   { id: "photos", label: "Photos", icon: imagesOutline },
@@ -26,27 +25,19 @@ const tabs: { id: ListingTab; label: string; icon: string }[] = [
 ];
 
 const ProviderListingsManager = () => {
-  const [activeTab, setActiveTab] = useState<ListingTab>("details");
+  const [activeTab, setActiveTab] = useState<ManagerTab>("details");
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
-  const { data: listings, isLoading: listingsLoading } = useMyListings();
 
   const provider = providerData?.provider ?? null;
+  const providerId = provider?.id ?? null;
 
-  const allPhotos = useMemo(
-    () => (listings ?? []).flatMap((l) => l.photos ?? []),
-    [listings],
-  );
-  const allProducts = useMemo(
-    () => (listings ?? []).flatMap((l) => l.products ?? []),
-    [listings],
-  );
-  const allReviews = useMemo(
-    () => (listings ?? []).flatMap((l) => l.reviews ?? []),
-    [listings],
-  );
-  const primaryListingId = listings?.[0]?.id ?? null;
+  const { data: details, isLoading: detailsLoading } = useProviderDetails(providerId ?? "");
 
-  const isLoading = providerLoading || listingsLoading;
+  const photos = details?.photos ?? [];
+  const products = details?.products ?? [];
+  const reviews = details?.reviews ?? [];
+
+  const isLoading = providerLoading || detailsLoading;
 
   if (isLoading) {
     return (
@@ -83,17 +74,11 @@ const ProviderListingsManager = () => {
       >
         <div className="px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-white">Manage Listings</h1>
+            <h1 className="text-lg font-bold text-white">Manage Business</h1>
             <p className="text-[11px] text-white/60">
-              {listings?.length ?? 0} listing{(listings?.length ?? 0) !== 1 ? "s" : ""}
+              {provider?.brandName ?? ""}
             </p>
           </div>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
-          >
-            <IonIcon icon={settingsOutline} className="text-white text-lg" />
-          </motion.button>
         </div>
       </div>
 
@@ -128,15 +113,15 @@ const ProviderListingsManager = () => {
       )}
 
       {activeTab === "products" && (
-        <ProviderProductsTab products={allProducts} />
+        <ProviderProductsTab products={products} providerId={providerId} />
       )}
 
       {activeTab === "photos" && (
-        <ProviderPhotosTab photos={allPhotos} listingId={primaryListingId} />
+        <ProviderPhotosTab photos={photos} providerId={providerId} />
       )}
 
       {activeTab === "reviews" && (
-        <ProviderReviewsTab reviews={allReviews} />
+        <ProviderReviewsTab reviews={reviews} />
       )}
     </div>
   );

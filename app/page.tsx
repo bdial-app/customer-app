@@ -1,7 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Page, Navbar } from "konsta/react";
+import { useState, useEffect, useRef } from "react";
+import { Page } from "konsta/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { IonIcon } from "@ionic/react";
+import { chatbubblesOutline, arrowForwardOutline, storefrontOutline } from "ionicons/icons";
 import BottomBar from "./components/bottom-bar";
 import ProfileContent from "./components/profile-content";
 import MessagesContent from "./components/messages-content";
@@ -15,14 +18,35 @@ import ExploreContent from "./components/explore-content";
 import SavedContent from "./components/saved-content";
 import { useAppContext } from "./context/AppContext";
 import GeoLocation from "./components/geo-location";
-import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useChatSubscription } from "@/hooks/useChatSubscription";
+import { useHeartbeat } from "@/hooks/useChat";
+import { clearPendingChat } from "@/store/slices/chatSlice";
 
 export default function Home() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
-  const { userMode } = useAppContext();
+  const { userMode, setUserMode } = useAppContext();
+  const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
+  const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
+  const prevUserMode = useRef(userMode);
+
+  // Global chat subscription for unread badge
+  useChatSubscription();
+  // Heartbeat for online presence
+  useHeartbeat();
+
+  // Open a specific chat when dispatched from another page (e.g. provider-details, product-details)
+  useEffect(() => {
+    if (pendingChatOpen) {
+      setActiveTab("chats");
+      setActiveChat(pendingChatOpen);
+      dispatch(clearPendingChat());
+    }
+  }, [pendingChatOpen, dispatch]);
 
   useEffect(() => {
     if (!user && !hasSkippedAuth) {
@@ -30,9 +54,12 @@ export default function Home() {
     }
   }, [user, hasSkippedAuth, router]);
 
-  // When provider/customer mode changes, go to home tab
+  // When provider/customer mode CHANGES (not on initial mount), go to home tab
   useEffect(() => {
-    setActiveTab("home");
+    if (prevUserMode.current !== userMode) {
+      prevUserMode.current = userMode;
+      setActiveTab("home");
+    }
   }, [userMode]);
 
   const handleTabChange = (tab: string) => {
@@ -52,7 +79,7 @@ export default function Home() {
       case "saved":
         return "Saved";
       case "listings":
-        return "My Listings";
+        return "My Business";
       case "chats":
         return "Messages";
       case "profile":
@@ -66,7 +93,7 @@ export default function Home() {
 
   if (activeTab === "chats" && activeChat) {
     return (
-      <MessagesPage chatName={activeChat} onBack={() => setActiveChat(null)} />
+      <MessagesPage conversationId={activeChat} onBack={() => setActiveChat(null)} />
     );
   }
 
@@ -106,9 +133,9 @@ export default function Home() {
 
       {activeTab === "chats" &&
         (userMode === "provider" ? (
-          <ProviderMessagesContent onChatClick={(name) => setActiveChat(name)} />
+          <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
         ) : (
-          <MessagesContent onChatClick={(name) => setActiveChat(name)} />
+          <MessagesContent onChatClick={(id) => setActiveChat(id)} />
         ))}
 
       {activeTab === "profile" && <ProfileContent />}
@@ -117,6 +144,35 @@ export default function Home() {
 
       {/* Spacer for floating bottom bar */}
       <div className="h-24"></div>
+
+      {/* Provider notification nudge — only shown in customer mode */}
+      <AnimatePresence>
+        {userMode === "customer" && providerUnreadCount > 0 && (
+          <motion.button
+            key="provider-nudge"
+            initial={{ opacity: 0, y: 16, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            onClick={() => {
+              setUserMode("provider");
+              handleTabChange("chats");
+            }}
+            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
+          >
+            <IonIcon icon={storefrontOutline} className="text-base shrink-0" />
+            <span className="text-xs font-semibold whitespace-nowrap">
+              {providerUnreadCount === 1
+                ? "1 new business message"
+                : `${providerUnreadCount} new business messages`}
+            </span>
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/25 text-[10px] font-bold shrink-0">
+              {providerUnreadCount > 99 ? "99+" : providerUnreadCount}
+            </span>
+            <IonIcon icon={arrowForwardOutline} className="text-sm shrink-0" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
     </Page>

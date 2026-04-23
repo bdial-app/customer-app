@@ -1,19 +1,13 @@
-﻿"use client";
-import { useState, useEffect, useRef } from "react";
-import {
-  List,
-  Button,
-  Block,
-  Navbar,
-  Page,
-} from "konsta/react";
+"use client";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { List, Button, Block, Navbar, Page } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
   arrowBack,
+  arrowForwardOutline,
   cloudUploadOutline,
   checkmarkCircle,
   documentTextOutline,
-  trashOutline,
   alertCircleOutline,
   timeOutline,
   checkmarkDoneCircleOutline,
@@ -26,8 +20,21 @@ import {
   cardOutline,
   fingerPrintOutline,
   closeCircle,
+  navigateOutline,
+  searchOutline,
+  layersOutline,
+  cameraOutline,
+  imagesOutline,
+  addCircleOutline,
+  trashOutline,
+  bagHandleOutline,
+  pricetagOutline,
+  callOutline,
+  shieldOutline,
+  mapOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
+import { useNotification } from "../context/NotificationContext";
 import { useRouter } from "next/navigation";
 import TimePicker from "../components/time-picker";
 import { Formik, Form } from "formik";
@@ -37,13 +44,19 @@ import { useAppSelector } from "@/hooks/useAppStore";
 import {
   becomeProvider,
   getMyProviderStatus,
+  sendProviderOtp,
+  verifyProviderOtp,
 } from "@/services/provider.service";
+import { getTopLevelCategories, Category } from "@/services/category.service";
+import { reverseGeocode } from "@/services/geocode.service";
+import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -51,8 +64,20 @@ const ALLOWED_FILE_TYPES = [
   "application/pdf",
 ];
 
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+
+const STEPS = [
+  { id: 1, label: "Business", icon: storefrontOutline },
+  { id: 2, label: "Location", icon: locationOutline },
+  { id: 3, label: "Categories", icon: layersOutline },
+  { id: 4, label: "Products", icon: bagHandleOutline },
+  { id: 5, label: "Verify", icon: shieldCheckmarkOutline },
+] as const;
+
+type StepId = 1 | 2 | 3 | 4 | 5;
+
 // ---------------------------------------------------------------------------
-// Validation schemas
+// Validation schemas per step
 // ---------------------------------------------------------------------------
 const step1Schema = Yup.object({
   brand_name: Yup.string().trim().required("Brand name is required"),
@@ -60,15 +85,22 @@ const step1Schema = Yup.object({
   contact_number: Yup.string()
     .matches(/^\d{10}$/, "Enter a valid 10-digit mobile number")
     .required("Contact number is required"),
-  city: Yup.string().trim().required("City is required"),
+  open_time: Yup.string(),
+  close_time: Yup.string(),
+});
+
+const step2Schema = Yup.object({
   address: Yup.string().trim().required("Address is required"),
+  city: Yup.string().trim().required("City is required"),
   area: Yup.string().trim().required("Area is required"),
   pincode: Yup.string()
     .matches(/^\d{6}$/, "Pincode must be 6 digits")
     .required("Pincode is required"),
 });
 
-const step2Schema = Yup.object({
+const step3Schema = Yup.object({});
+const step4Schema = Yup.object({});
+const step5Schema = Yup.object({
   identity_doc: Yup.mixed<File>()
     .nullable()
     .test("fileSize", "File must be less than 5 MB", (val) =>
@@ -79,6 +111,14 @@ const step2Schema = Yup.object({
     ),
 });
 
+const schemaForStep: Record<StepId, Yup.ObjectSchema<any>> = {
+  1: step1Schema,
+  2: step2Schema,
+  3: step3Schema,
+  4: step4Schema,
+  5: step5Schema,
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -88,95 +128,91 @@ const formatFileSize = (bytes: number) => {
 };
 
 // ---------------------------------------------------------------------------
-// Progress header
+// Step indicator (4-step horizontal)
 // ---------------------------------------------------------------------------
-const ProgressHeader = ({
-  currentStep,
-  isStep1Valid,
-  isSubmitting,
+const StepIndicator = ({
+  current,
+  completedSteps,
   onStepClick,
+  isSubmitting,
 }: {
-  currentStep: 1 | 2;
-  isStep1Valid: boolean;
+  current: StepId;
+  completedSteps: Set<number>;
+  onStepClick: (step: StepId) => void;
   isSubmitting: boolean;
-  onStepClick: (step: 1 | 2) => void;
-}) => {
-  const steps = [
-    { id: 1, label: "Business Details", icon: storefrontOutline },
-    { id: 2, label: "Verification", icon: shieldCheckmarkOutline },
-  ];
+}) => (
+  <div className="px-3 pt-3 pb-2">
+    <div className="flex items-center">
+      {STEPS.map((step, idx) => {
+        const isActive = current === step.id;
+        const isDone = completedSteps.has(step.id);
+        const canClick =
+          step.id <= current ||
+          isDone ||
+          completedSteps.has(step.id - 1);
 
-  return (
-    <div className="px-4 pt-3 pb-4">
-      <div className="flex items-center gap-0">
-        {steps.map((step, idx) => {
-          const isActive = currentStep === step.id;
-          const isDone =
-            currentStep > step.id ||
-            (step.id === 1 && isStep1Valid && currentStep === 2);
-          const canClick = step.id === 1 || (step.id === 2 && isStep1Valid);
-
-          return (
-            <div key={step.id} className="flex items-center flex-1">
-              <button
-                type="button"
-                disabled={!canClick || isSubmitting}
-                onClick={() =>
-                  canClick &&
-                  !isSubmitting &&
-                  onStepClick(step.id as 1 | 2)
-                }
-                className="flex flex-col items-center gap-1.5 flex-1 disabled:opacity-50"
+        return (
+          <div key={step.id} className="flex items-center flex-1">
+            <button
+              type="button"
+              disabled={!canClick || isSubmitting}
+              onClick={() =>
+                canClick &&
+                !isSubmitting &&
+                onStepClick(step.id as StepId)
+              }
+              className="flex flex-col items-center gap-1 flex-1 disabled:opacity-40 transition-opacity"
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                  isActive
+                    ? "bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-200 scale-110"
+                    : isDone
+                    ? "bg-emerald-500 border-emerald-500"
+                    : "bg-white border-slate-200"
+                }`}
               >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    isActive
-                      ? "bg-indigo-600 border-indigo-600 shadow-md shadow-indigo-200"
-                      : isDone
-                      ? "bg-green-500 border-green-500"
-                      : "bg-white border-slate-200"
-                  }`}
-                >
-                  {isDone && !isActive ? (
-                    <IonIcon
-                      icon={checkmarkCircle}
-                      className="text-white text-lg"
-                    />
-                  ) : (
-                    <IonIcon
-                      icon={step.icon}
-                      className={`text-lg ${
-                        isActive ? "text-white" : "text-slate-400"
-                      }`}
-                    />
-                  )}
-                </div>
-                <span
-                  className={`text-[10px] font-semibold ${
-                    isActive
-                      ? "text-indigo-600"
-                      : isDone
-                      ? "text-green-600"
-                      : "text-slate-400"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </button>
-              {idx < steps.length - 1 && (
-                <div
-                  className={`h-0.5 flex-1 mx-1 rounded-full transition-all duration-500 ${
-                    isStep1Valid ? "bg-green-400" : "bg-slate-200"
-                  }`}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+                {isDone && !isActive ? (
+                  <IonIcon
+                    icon={checkmarkCircle}
+                    className="text-white text-base"
+                  />
+                ) : (
+                  <IonIcon
+                    icon={step.icon}
+                    className={`text-sm ${
+                      isActive ? "text-white" : "text-slate-400"
+                    }`}
+                  />
+                )}
+              </div>
+              <span
+                className={`text-[9px] font-bold tracking-wide ${
+                  isActive
+                    ? "text-indigo-600"
+                    : isDone
+                    ? "text-emerald-600"
+                    : "text-slate-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </button>
+            {idx < STEPS.length - 1 && (
+              <div
+                className={`h-0.5 flex-1 mx-0.5 rounded-full transition-colors duration-500 ${
+                  completedSteps.has(step.id)
+                    ? "bg-emerald-400"
+                    : "bg-slate-200"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
-  );
-};
+  </div>
+);
 
 // ---------------------------------------------------------------------------
 // Section header
@@ -204,7 +240,454 @@ const SectionHeader = ({
 );
 
 // ---------------------------------------------------------------------------
-// Document type selector
+// Tip banner
+// ---------------------------------------------------------------------------
+const TipBanner = ({
+  icon,
+  text,
+  color = "indigo",
+}: {
+  icon: string;
+  text: string;
+  color?: string;
+}) => {
+  const colors: Record<string, string> = {
+    indigo: "bg-indigo-50/70 border-indigo-100 text-indigo-700",
+    amber: "bg-amber-50/70 border-amber-100 text-amber-800",
+    emerald: "bg-emerald-50/70 border-emerald-100 text-emerald-700",
+  };
+  const iconColors: Record<string, string> = {
+    indigo: "text-indigo-500",
+    amber: "text-amber-500",
+    emerald: "text-emerald-500",
+  };
+  return (
+    <div
+      className={`mx-4 mb-3 p-3 border rounded-2xl flex items-start gap-2.5 ${colors[color]}`}
+    >
+      <IonIcon
+        icon={icon}
+        className={`text-lg shrink-0 mt-0.5 ${iconColors[color]}`}
+      />
+      <p className="text-xs leading-relaxed">{text}</p>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Interactive Map location picker with search (Step 2)
+// ---------------------------------------------------------------------------
+const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
+const MAP_CONTAINER = { width: "100%", height: "260px", borderRadius: "16px" };
+const DEFAULT_CENTER = { lat: 18.5204, lng: 73.8567 }; // Pune default
+
+const MapLocationPicker = ({
+  coords,
+  onLocationSelect,
+  onDetectGPS,
+  isDetecting,
+  detectedLabel,
+}: {
+  coords: { lat: number; lng: number } | null;
+  onLocationSelect: (lat: number, lng: number) => void;
+  onDetectGPS: () => void;
+  isDetecting: boolean;
+  detectedLabel: string | null;
+}) => {
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_KEY });
+  const [mapCenter, setMapCenter] = useState(coords || DEFAULT_CENTER);
+  const [markerPos, setMarkerPos] = useState(coords || null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ placeId: string; description: string; lat: number; lng: number }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  useEffect(() => {
+    if (coords) { setMapCenter(coords); setMarkerPos(coords); }
+  }, [coords]);
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!query.trim()) { setSearchResults([]); return; }
+    searchTimer.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchGeocode(query.trim());
+        setSearchResults(results.filter(r => r.lat && r.lng).map(r => ({
+          placeId: r.placeId, description: r.description, lat: r.lat, lng: r.lng
+        })));
+      } catch { setSearchResults([]); }
+      finally { setIsSearching(false); }
+    }, 400);
+  }, []);
+
+  const selectResult = (result: { lat: number; lng: number; description: string }) => {
+    const pos = { lat: result.lat, lng: result.lng };
+    setMarkerPos(pos);
+    setMapCenter(pos);
+    setSearchQuery(result.description);
+    setSearchResults([]);
+    mapRef.current?.panTo(pos);
+    onLocationSelect(pos.lat, pos.lng);
+  };
+
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setMarkerPos({ lat, lng });
+    onLocationSelect(lat, lng);
+  };
+
+  const handleDragEnd = (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setMarkerPos({ lat, lng });
+    onLocationSelect(lat, lng);
+  };
+
+  return (
+    <div className="px-4 space-y-3 mb-3">
+      {/* GPS button */}
+      <button type="button" onClick={onDetectGPS} disabled={isDetecting}
+        className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 transition-all active:scale-[0.99] disabled:opacity-60">
+        <div className={`w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0 ${isDetecting ? "animate-pulse" : ""}`}>
+          <IonIcon icon={navigateOutline} className="text-indigo-600 text-lg" />
+        </div>
+        <div className="text-left flex-1 min-w-0">
+          <p className="text-xs font-bold text-indigo-700">{isDetecting ? "Detecting..." : "Use My Current Location"}</p>
+          <p className="text-[10px] text-indigo-500/70 truncate">{detectedLabel || "Auto-fill from GPS"}</p>
+        </div>
+        {detectedLabel && !isDetecting && <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-lg shrink-0" />}
+      </button>
+
+      {/* Search bar */}
+      <div className="relative">
+        <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base z-10" />
+        <input type="text" value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Search for your business location..."
+          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+        {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /></div>}
+        {searchResults.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
+            {searchResults.map((r) => (
+              <button key={r.placeId} type="button" onClick={() => selectResult(r)}
+                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0">
+                <p className="text-xs text-slate-700 leading-snug">{r.description}</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Map */}
+      {isLoaded ? (
+        <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+          <GoogleMap mapContainerStyle={MAP_CONTAINER} center={mapCenter} zoom={markerPos ? 16 : 12}
+            onClick={handleMapClick} onLoad={(map) => { mapRef.current = map; }}
+            options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}>
+            {markerPos && <Marker position={markerPos} draggable onDragEnd={handleDragEnd} />}
+          </GoogleMap>
+          <div className="px-3 py-2 bg-slate-50 border-t border-slate-100">
+            <p className="text-[10px] text-slate-400 flex items-center gap-1">
+              <IonIcon icon={mapOutline} className="text-xs" />
+              {markerPos ? `📍 ${markerPos.lat.toFixed(5)}, ${markerPos.lng.toFixed(5)}` : "Tap on the map or search to pin your location"}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="h-[260px] rounded-2xl bg-slate-100 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Category selector with search (Step 3)
+// ---------------------------------------------------------------------------
+const CategorySelector = ({
+  categories,
+  selectedIds,
+  onToggle,
+}: {
+  categories: Category[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+}) => {
+  const [search, setSearch] = useState("");
+  const filtered = search.trim()
+    ? categories.filter((c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : categories;
+
+  return (
+    <div className="px-4 pb-2">
+      {/* Search */}
+      <div className="relative mb-3">
+        <IonIcon
+          icon={searchOutline}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base z-10"
+        />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search categories..."
+          className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+        />
+      </div>
+
+      {/* Selected count */}
+      {selectedIds.length > 0 && (
+        <p className="text-[11px] font-semibold text-indigo-600 mb-2">
+          {selectedIds.length} categor
+          {selectedIds.length === 1 ? "y" : "ies"} selected
+        </p>
+      )}
+
+      {/* Chips */}
+      <div className="flex flex-wrap gap-2">
+        {filtered.map((cat) => {
+          const selected = selectedIds.includes(cat.id);
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => onToggle(cat.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all active:scale-[0.96] ${
+                selected
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50"
+              }`}
+            >
+              {cat.icon && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={cat.icon}
+                  alt=""
+                  className="w-4 h-4 rounded-sm object-cover"
+                />
+              )}
+              {cat.name}
+              {selected && (
+                <IonIcon
+                  icon={checkmarkCircle}
+                  className="text-white/80 text-xs"
+                />
+              )}
+            </button>
+          );
+        })}
+        {filtered.length === 0 && (
+          <p className="text-xs text-slate-400 py-4 text-center w-full">
+            {categories.length === 0
+              ? "Loading categories..."
+              : `No categories matching "${search}"`}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Photo file upload with preview (replaces URL input)
+// ---------------------------------------------------------------------------
+const PhotoFileUpload = ({
+  label,
+  icon,
+  file,
+  onChange,
+  hint,
+}: {
+  label: string;
+  icon: string;
+  file: File | null;
+  onChange: (file: File | null) => void;
+  hint: string;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) { setPreview(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f && ALLOWED_IMAGE_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE) onChange(f);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="px-4 mb-3">
+      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+        {label}
+      </label>
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleChange} />
+      {file && preview ? (
+        <div className="relative rounded-xl overflow-hidden border border-green-200 bg-green-50/30 shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt={label} className="w-full h-32 object-cover" />
+          <div className="absolute top-2 left-2 bg-green-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <IonIcon icon={checkmarkCircle} className="text-xs" /> Selected
+          </div>
+          <button type="button" onClick={() => onChange(null)} className="absolute top-2 right-2 w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center">
+            <IonIcon icon={closeCircle} className="text-white text-sm" />
+          </button>
+          <div className="flex items-center justify-between p-2 border-t border-green-100 bg-white/80">
+            <p className="text-[10px] text-slate-500 truncate flex-1">{file.name} &bull; {formatFileSize(file.size)}</p>
+            <button type="button" onClick={() => inputRef.current?.click()} className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5 ml-2 shrink-0">Replace</button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={() => inputRef.current?.click()} className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-indigo-300 transition-all active:scale-[0.99]">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+            <IonIcon icon={icon} className="text-indigo-500 text-lg" />
+          </div>
+          <div className="text-left flex-1 min-w-0">
+            <p className="text-xs font-bold text-slate-700">Upload {label}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">{hint}</p>
+          </div>
+          <IonIcon icon={cloudUploadOutline} className="text-slate-300 text-xl shrink-0" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Product form item
+// ---------------------------------------------------------------------------
+interface ProductItem {
+  name: string;
+  description: string;
+  price: string;
+  images: File[];
+}
+
+const emptyProduct = (): ProductItem => ({ name: "", description: "", price: "", images: [] });
+
+const MAX_PRODUCT_IMAGES = 5;
+
+const ProductFormCard = ({
+  product,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  product: ProductItem;
+  index: number;
+  onUpdate: (p: ProductItem) => void;
+  onRemove: () => void;
+}) => {
+  const imgRef = useRef<HTMLInputElement>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = product.images.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [product.images]);
+
+  const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const valid = files.filter((f) => ALLOWED_IMAGE_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
+    const remaining = MAX_PRODUCT_IMAGES - product.images.length;
+    if (remaining > 0 && valid.length > 0) {
+      onUpdate({ ...product, images: [...product.images, ...valid.slice(0, remaining)] });
+    }
+    e.target.value = "";
+  };
+
+  const removeImage = (idx: number) => {
+    onUpdate({ ...product, images: product.images.filter((_, i) => i !== idx) });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50/80 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-indigo-600">{index + 1}</span>
+          </div>
+          <span className="text-xs font-bold text-slate-700">
+            {product.name.trim() || `Product ${index + 1}`}
+          </span>
+        </div>
+        <button type="button" onClick={onRemove} className="p-1 rounded-lg hover:bg-red-50 transition-colors active:scale-90">
+          <IonIcon icon={trashOutline} className="text-red-400 text-base" />
+        </button>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {/* Product images (up to 5) */}
+        <input ref={imgRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Photos ({product.images.length}/{MAX_PRODUCT_IMAGES})</label>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {previews.map((url, i) => (
+              <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-100 shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => removeImage(i)}
+                  className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
+                  <IonIcon icon={closeCircle} className="text-white text-xs" />
+                </button>
+              </div>
+            ))}
+            {product.images.length < MAX_PRODUCT_IMAGES && (
+              <button type="button" onClick={() => imgRef.current?.click()}
+                className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:border-indigo-200 transition-all shrink-0">
+                <IonIcon icon={cameraOutline} className="text-sm" />
+                <span className="text-[8px] font-medium">Add</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Name */}
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Product Name *</label>
+          <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehndi Package" maxLength={150}
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+          <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="Brief description of this product or service..." rows={2} maxLength={2000}
+            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none" />
+        </div>
+
+        {/* Price */}
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Price (₹)</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
+            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="0.00"
+              className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Document type selector (Step 4)
 // ---------------------------------------------------------------------------
 const DOC_TYPES = [
   {
@@ -212,21 +695,18 @@ const DOC_TYPES = [
     label: "Aadhaar Card",
     icon: fingerPrintOutline,
     color: "indigo",
-    desc: "12-digit unique identity",
   },
   {
     id: "pan",
     label: "PAN Card",
     icon: cardOutline,
     color: "emerald",
-    desc: "Permanent account number",
   },
   {
     id: "other",
-    label: "Other ID Proof",
+    label: "Other ID",
     icon: documentTextOutline,
     color: "amber",
-    desc: "Passport, Voter ID, etc.",
   },
 ] as const;
 
@@ -289,7 +769,9 @@ const DocumentTypeSelector = ({
             >
               <IonIcon
                 icon={doc.icon}
-                className={`text-xl ${isActive ? c.icon : "text-slate-400"}`}
+                className={`text-xl ${
+                  isActive ? c.icon : "text-slate-400"
+                }`}
               />
             </div>
             <span
@@ -309,25 +791,22 @@ const DocumentTypeSelector = ({
 // ---------------------------------------------------------------------------
 // Document file picker
 // ---------------------------------------------------------------------------
-interface DocFilePickerProps {
-  file: File | null;
-  error?: string;
-  touched?: boolean;
-  docType: DocTypeId;
-  onChange: (file: File | null) => void;
-}
-
 const DocFilePicker = ({
   file,
   error,
   touched,
   docType,
   onChange,
-}: DocFilePickerProps) => {
+}: {
+  file: File | null;
+  error?: string;
+  touched?: boolean;
+  docType: DocTypeId;
+  onChange: (file: File | null) => void;
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const hasError = touched && !!error;
-
   const docLabel =
     DOC_TYPES.find((d) => d.id === docType)?.label ?? "Document";
 
@@ -352,7 +831,6 @@ const DocFilePicker = ({
 
   return (
     <div className="px-4 py-2">
-      {/* Always-mounted hidden input */}
       <input
         ref={inputRef}
         type="file"
@@ -362,9 +840,7 @@ const DocFilePicker = ({
       />
 
       {file ? (
-        /* ---- File selected ---- */
         <div className="rounded-2xl border border-green-200 bg-gradient-to-b from-green-50/60 to-white overflow-hidden shadow-sm">
-          {/* Preview area */}
           {preview ? (
             <div className="relative w-full h-44 bg-slate-100 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -382,7 +858,10 @@ const DocFilePicker = ({
                 onClick={() => onChange(null)}
                 className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-90 transition-transform"
               >
-                <IonIcon icon={closeCircle} className="text-white text-lg" />
+                <IonIcon
+                  icon={closeCircle}
+                  className="text-white text-lg"
+                />
               </button>
             </div>
           ) : (
@@ -414,8 +893,6 @@ const DocFilePicker = ({
               </button>
             </div>
           )}
-
-          {/* File info bar */}
           <div className="flex items-center gap-3 p-3 border-t border-green-100">
             <div className="p-1.5 bg-green-100 rounded-lg shrink-0">
               <IonIcon
@@ -443,7 +920,6 @@ const DocFilePicker = ({
           </div>
         </div>
       ) : (
-        /* ---- Empty / upload state ---- */
         <label
           className={`relative flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer group ${
             hasError
@@ -492,7 +968,6 @@ const DocFilePicker = ({
         </label>
       )}
 
-      {/* Validation error */}
       {hasError && (
         <div className="flex items-center gap-1.5 mt-2 px-1">
           <IonIcon
@@ -533,7 +1008,6 @@ const DocumentGuidelines = () => (
         ))}
       </div>
     </div>
-
     <div className="flex items-start gap-2.5 px-1">
       <IonIcon
         icon={shieldCheckmarkOutline}
@@ -671,7 +1145,6 @@ const UnderReviewBanner = ({
             {config.subtitle}
           </p>
         </div>
-
         <div className="w-full bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-0">
           {config.steps.map((s, i) => (
             <div key={i}>
@@ -704,7 +1177,6 @@ const UnderReviewBanner = ({
             </div>
           ))}
         </div>
-
         <div className="w-full bg-indigo-50 border border-indigo-100 rounded-2xl p-3 flex items-start gap-2">
           <IonIcon
             icon={informationCircleOutline}
@@ -715,7 +1187,6 @@ const UnderReviewBanner = ({
             is being reviewed.
           </p>
         </div>
-
         <Button large rounded className="w-full" onClick={onGoBack}>
           Continue as Customer
         </Button>
@@ -724,23 +1195,56 @@ const UnderReviewBanner = ({
   );
 };
 
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// MAIN PAGE
+// ===========================================================================
 const ProviderOnboardingPage = () => {
   const { providerStatus, setProviderStatus } = useAppContext();
+  const { notify } = useNotification();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
 
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [currentStep, setCurrentStep] = useState<StepId>(1);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(
+    new Set(),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [docType, setDocType] = useState<DocTypeId>("aadhaar");
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [productItems, setProductItems] = useState<ProductItem[]>([emptyProduct()]);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [detectedLocationLabel, setDetectedLocationLabel] = useState<
+    string | null
+  >(null);
+  const [detectedCoords, setDetectedCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const pendingSubmitRef = useRef<(() => void) | null>(null);
+  const formikRef = useRef<any>(null);
 
-  // Fetch real provider status on mount
+  // Fetch categories
+  useEffect(() => {
+    getTopLevelCategories()
+      .then((cats) => setCategories(cats))
+      .catch(() => {});
+  }, []);
+
+  // Fetch provider status
   useEffect(() => {
     let cancelled = false;
     const fetchStatus = async () => {
@@ -764,19 +1268,124 @@ const ProviderOnboardingPage = () => {
     providerStatus === "in_review" ||
     providerStatus === "approved";
 
+  // Location detection with reverse geocode auto-fill
+  const handleDetectLocation = useCallback(async () => {
+    if (!formikRef.current) return;
+    setIsDetectingLocation(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 10000,
+          enableHighAccuracy: true,
+        }),
+      );
+      const { latitude: lat, longitude: lng } = pos.coords;
+      setDetectedCoords({ lat, lng });
+
+      try {
+        const geo = await reverseGeocode({ lat, lng });
+        const { setFieldValue } = formikRef.current;
+        if (geo.city) setFieldValue("city", geo.city);
+        if (geo.area) setFieldValue("area", geo.area);
+        if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+        setDetectedLocationLabel(
+          geo.label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+        );
+      } catch {
+        setDetectedLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      }
+    } catch {
+      alert(
+        "Could not detect location. Please allow location access and try again.",
+      );
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  }, []);
+
+  // OTP cooldown timer
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setTimeout(() => setOtpCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [otpCooldown]);
+
+  const handleSendOtp = useCallback(async (phone: string) => {
+    if (!phone || phone.length !== 10) return;
+    setOtpSending(true);
+    setOtpError(null);
+    try {
+      const res = await sendProviderOtp(phone);
+      setOtpSent(true);
+      setOtpCooldown(60);
+      const testOtp = res?.data?.otp;
+      notify({
+        title: "OTP Sent",
+        subtitle: testOtp ? `Your code: ${testOtp}` : "Check your messages",
+        variant: "success",
+        duration: 10000,
+      });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Failed to send OTP";
+      setOtpError(typeof msg === "string" ? msg : JSON.stringify(msg));
+      if (err?.response?.data?.retryAfterSeconds) setOtpCooldown(err.response.data.retryAfterSeconds);
+    } finally { setOtpSending(false); }
+  }, []);
+
+  const handleVerifyOtp = useCallback(async (phone: string) => {
+    if (!otpCode || otpCode.length !== 6) { setOtpError("Enter 6-digit OTP"); return; }
+    setOtpVerifying(true);
+    setOtpError(null);
+    try {
+      const res = await verifyProviderOtp(phone, otpCode);
+      if (res.verified) setOtpVerified(true);
+      else setOtpError("Invalid OTP");
+    } catch (err: any) {
+      setOtpError(err?.response?.data?.message ?? "Verification failed");
+    } finally { setOtpVerifying(false); }
+  }, [otpCode]);
+
+  // Map location select → reverse geocode to fill fields
+  const handleMapLocationSelect = useCallback(async (lat: number, lng: number) => {
+    setDetectedCoords({ lat, lng });
+    if (!formikRef.current) return;
+    try {
+      const geo = await reverseGeocode({ lat, lng });
+      const { setFieldValue } = formikRef.current;
+      if (geo.city) setFieldValue("city", geo.city);
+      if (geo.area) setFieldValue("area", geo.area);
+      if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+      setDetectedLocationLabel(geo.label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    } catch {
+      setDetectedLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    }
+  }, []);
+
   const handleBack = () => {
     if (isSubmitting) return;
-    if (currentStep > 1) setCurrentStep(1);
+    if (currentStep > 1) setCurrentStep((currentStep - 1) as StepId);
     else router.back();
   };
 
   const handleNext = async (validateForm: any, setTouched: any) => {
     const errors = await validateForm();
-    if (Object.keys(errors).length === 0) {
-      setCurrentStep(2);
+    const stepFields: Record<StepId, string[]> = {
+      1: ["brand_name", "description", "contact_number"],
+      2: ["address", "city", "area", "pincode"],
+      3: [],
+      4: [],
+      5: ["identity_doc"],
+    };
+    const relevantErrors = Object.keys(errors).filter((k) =>
+      stepFields[currentStep].includes(k),
+    );
+
+    if (relevantErrors.length === 0) {
+      setCompletedSteps((prev) => new Set([...prev, currentStep]));
+      setCurrentStep(Math.min(currentStep + 1, 5) as StepId);
     } else {
       setTouched(
-        Object.keys(errors).reduce(
+        relevantErrors.reduce(
           (acc, k) => ({ ...acc, [k]: true }),
           {} as any,
         ),
@@ -792,7 +1401,33 @@ const ProviderOnboardingPage = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    let latitude: string | undefined;
+    let longitude: string | undefined;
+    if (detectedCoords) {
+      latitude = String(detectedCoords.lat);
+      longitude = String(detectedCoords.lng);
+    } else if ((user as any)?.latitude && (user as any)?.longitude) {
+      latitude = String((user as any).latitude);
+      longitude = String((user as any).longitude);
+    }
+
     try {
+      // Build products array (only ones with a name)
+      const validProducts = productItems
+        .filter((p) => p.name.trim())
+        .map((p, i) => ({
+          name: p.name.trim(),
+          description: p.description.trim() || undefined,
+          price: p.price ? parseFloat(p.price) : undefined,
+          imageCount: p.images.length,
+        }));
+
+      // Collect all product images as a flat array
+      const allProductImages: File[] = [];
+      productItems.filter((p) => p.name.trim()).forEach((p) => {
+        p.images.forEach((img) => allProductImages.push(img));
+      });
+
       await becomeProvider({
         userId: user.id,
         brandName: values.brand_name.trim(),
@@ -802,11 +1437,21 @@ const ProviderOnboardingPage = () => {
         area: values.area.trim(),
         address: values.address.trim(),
         pincode: values.pincode.trim(),
-        openTime: values.open_time || undefined,
-        closeTime: values.close_time || undefined,
+        openTime: values.open_time?.slice(0, 5) || undefined,
+        closeTime: values.close_time?.slice(0, 5) || undefined,
         aadhaarFile: values.identity_doc || undefined,
+        latitude,
+        longitude,
+        categoryIds: selectedCategoryIds.length
+          ? selectedCategoryIds
+          : undefined,
+        bannerImage: bannerFile || undefined,
+        profileImage: profileFile || undefined,
+        products: validProducts.length ? validProducts : undefined,
+        productImages: allProductImages.length
+          ? allProductImages
+          : undefined,
       });
-      // If user uploaded doc → pending verification; if skipped → approved (unverified)
       setProviderStatus(values.identity_doc ? "pending" : "approved");
     } catch (err: any) {
       const message =
@@ -857,19 +1502,20 @@ const ProviderOnboardingPage = () => {
       />
 
       <Formik
+        innerRef={formikRef}
         initialValues={{
           brand_name: "",
           description: "",
+          contact_number: "",
+          open_time: "",
+          close_time: "",
           address: "",
           city: "",
           area: "",
           pincode: "",
-          contact_number: "",
-          open_time: "",
-          close_time: "",
           identity_doc: null as File | null,
         }}
-        validationSchema={currentStep === 1 ? step1Schema : step2Schema}
+        validationSchema={schemaForStep[currentStep]}
         onSubmit={handleSubmit}
         validateOnChange={false}
         validateOnBlur
@@ -886,39 +1532,44 @@ const ProviderOnboardingPage = () => {
           const isStep1Valid = Boolean(
             values.brand_name.trim() &&
               values.description.trim() &&
-              values.address.trim() &&
-              values.city.trim() &&
               values.contact_number.trim() &&
+              otpVerified,
+          );
+          const isStep2Valid = Boolean(
+            values.address.trim() &&
+              values.city.trim() &&
               values.area.trim() &&
               values.pincode.trim(),
           );
-          const isStep2Valid = values.identity_doc instanceof File;
+          const isStep5HasDoc = values.identity_doc instanceof File;
+
+          const canAdvance: Record<StepId, boolean> = {
+            1: isStep1Valid,
+            2: isStep2Valid,
+            3: true,
+            4: true,
+            5: true,
+          };
 
           return (
             <Form className="contents">
-              <ProgressHeader
-                currentStep={currentStep}
-                isStep1Valid={isStep1Valid}
-                isSubmitting={isSubmitting}
+              <StepIndicator
+                current={currentStep}
+                completedSteps={completedSteps}
                 onStepClick={setCurrentStep}
+                isSubmitting={isSubmitting}
               />
 
-              <div className="overflow-y-auto max-h-[calc(100vh-200px)] pb-36">
-                {currentStep === 1 ? (
+              <div className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
+                {/* ======================================================= */}
+                {/* STEP 1 — Business Information                           */}
+                {/* ======================================================= */}
+                {currentStep === 1 && (
                   <>
-                    {/* Tip banner */}
-                    <div className="mx-4 mb-3 p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-2.5">
-                      <IonIcon
-                        icon={sparklesOutline}
-                        className="text-indigo-500 text-lg shrink-0 mt-0.5"
-                      />
-                      <p className="text-xs text-indigo-700 leading-relaxed">
-                        Fill in your business details below. Accurate
-                        information helps customers find and trust your
-                        services.
-                      </p>
-                    </div>
-
+                    <TipBanner
+                      icon={sparklesOutline}
+                      text="Fill in your business details below. Accurate information helps customers find and trust your services."
+                    />
                     <SectionHeader
                       icon={storefrontOutline}
                       title="Business Information"
@@ -935,7 +1586,8 @@ const ProviderOnboardingPage = () => {
                         name="description"
                         label="Description"
                         type="textarea"
-                        placeholder="Tell us about your services..."
+                        placeholder="Describe your services, specialties, experience..."
+                        inputClassName="!min-h-[110px]"
                       />
                       <FormikInput
                         name="contact_number"
@@ -948,47 +1600,64 @@ const ProviderOnboardingPage = () => {
                       />
                     </List>
 
-                    <SectionHeader
-                      icon={locationOutline}
-                      title="Location Details"
-                      subtitle="Help customers find you"
-                    />
-                    <List strongIos insetIos>
-                      <FormikInput
-                        name="address"
-                        label="Address"
-                        type="text"
-                        placeholder="Shop address or locality"
-                      />
-                      <div className="flex">
-                        <FormikInput
-                          name="city"
-                          label="City"
-                          type="text"
-                          placeholder="e.g. Pune"
-                        />
-                        <FormikInput
-                          name="pincode"
-                          label="Pincode"
-                          type="text"
-                          placeholder="411001"
-                          formatValue={(val) =>
-                            val.replace(/\D/g, "").slice(0, 6)
-                          }
-                        />
-                      </div>
-                      <FormikInput
-                        name="area"
-                        label="Area / Locality"
-                        type="text"
-                        placeholder="e.g. Yerawada"
-                      />
-                    </List>
+                    {/* OTP Verification for Contact Number */}
+                    <div className="px-4 mb-4">
+                      {otpVerified ? (
+                        <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+                          <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-xl shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-emerald-700">Phone number verified</p>
+                            <p className="text-[10px] text-emerald-600/70">+91 {values.contact_number}</p>
+                          </div>
+                        </div>
+                      ) : !otpSent ? (
+                        <button type="button" disabled={values.contact_number.length !== 10 || otpSending}
+                          onClick={() => handleSendOtp(values.contact_number)}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 transition-all active:scale-[0.99] disabled:opacity-50">
+                          {otpSending ? (
+                            <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                          ) : (
+                            <IonIcon icon={shieldOutline} className="text-indigo-500 text-base" />
+                          )}
+                          <span className="text-xs font-bold text-indigo-600">
+                            {otpSending ? "Sending OTP..." : "Verify Phone Number"}
+                          </span>
+                        </button>
+                      ) : (
+                        <div className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/30 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <IonIcon icon={callOutline} className="text-indigo-500 text-base" />
+                            <p className="text-xs font-bold text-indigo-700">Enter OTP sent to +91 {values.contact_number}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <input type="text" inputMode="numeric" value={otpCode} maxLength={6}
+                              onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }}
+                              placeholder="6-digit OTP"
+                              className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+                            <button type="button" disabled={otpCode.length !== 6 || otpVerifying}
+                              onClick={() => handleVerifyOtp(values.contact_number)}
+                              className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-all">
+                              {otpVerifying ? "..." : "Verify"}
+                            </button>
+                          </div>
+                          {otpError && (
+                            <p className="text-[11px] text-red-500 font-medium flex items-center gap-1">
+                              <IonIcon icon={alertCircleOutline} className="text-xs" /> {otpError}
+                            </p>
+                          )}
+                          <button type="button" disabled={otpCooldown > 0 || otpSending}
+                            onClick={() => handleSendOtp(values.contact_number)}
+                            className="text-[11px] font-semibold text-indigo-600 disabled:text-slate-400">
+                            {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend OTP"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
                     <SectionHeader
                       icon={timeOutline}
                       title="Business Hours"
-                      subtitle="Optional - shown on your profile"
+                      subtitle="Optional — shown on your profile"
                     />
                     <List strongIos insetIos className="!mt-0">
                       <TimePicker
@@ -1003,23 +1672,181 @@ const ProviderOnboardingPage = () => {
                       />
                     </List>
                   </>
-                ) : (
+                )}
+
+                {/* ======================================================= */}
+                {/* STEP 2 — Location Details                               */}
+                {/* ======================================================= */}
+                {currentStep === 2 && (
                   <>
-                    {/* Step 2 intro */}
-                    <div className="mx-4 mt-3 mb-2 p-3 bg-amber-50/70 border border-amber-100 rounded-2xl flex items-start gap-2.5">
-                      <IonIcon
-                        icon={shieldCheckmarkOutline}
-                        className="text-amber-500 text-lg shrink-0 mt-0.5"
+                    <TipBanner
+                      icon={locationOutline}
+                      text="Pin your exact business location on the map or search by name. This helps customers find you accurately."
+                      color="emerald"
+                    />
+                    <MapLocationPicker
+                      coords={detectedCoords}
+                      onLocationSelect={handleMapLocationSelect}
+                      onDetectGPS={handleDetectLocation}
+                      isDetecting={isDetectingLocation}
+                      detectedLabel={detectedLocationLabel}
+                    />
+
+                    <SectionHeader
+                      icon={locationOutline}
+                      title="Address Details"
+                      subtitle="Auto-filled from pin — adjust if needed"
+                    />
+                    <List strongIos insetIos>
+                      <FormikInput
+                        name="address"
+                        label="Full Address"
+                        type="text"
+                        placeholder="Shop address or locality"
                       />
-                      <div>
-                        <p className="text-xs text-amber-800 leading-relaxed">
-                          Upload a government-issued identity document for
-                          verification. This helps build customer trust and improves your search ranking.
-                        </p>
-                        <p className="text-[10px] text-amber-600 mt-1 font-medium">
-                          This step is optional - you can always verify later from your dashboard.
-                        </p>
-                      </div>
+                      <FormikInput
+                        name="city"
+                        label="City"
+                        type="text"
+                        placeholder="e.g. Pune"
+                      />
+                      <FormikInput
+                        name="area"
+                        label="Area / Locality"
+                        type="text"
+                        placeholder="e.g. Yerawada"
+                      />
+                      <FormikInput
+                        name="pincode"
+                        label="Pincode"
+                        type="text"
+                        placeholder="e.g. 411001"
+                        formatValue={(val) =>
+                          val.replace(/\D/g, "").slice(0, 6)
+                        }
+                      />
+                    </List>
+                  </>
+                )}
+
+                {/* ======================================================= */}
+                {/* STEP 3 — Categories & Branding                          */}
+                {/* ======================================================= */}
+                {currentStep === 3 && (
+                  <>
+                    <TipBanner
+                      icon={layersOutline}
+                      text="Select the categories your business falls under so customers can find you. You can also add photos to make your profile stand out."
+                    />
+                    <SectionHeader
+                      icon={layersOutline}
+                      title="Service Categories"
+                      subtitle="What services do you offer?"
+                    />
+                    <CategorySelector
+                      categories={categories}
+                      selectedIds={selectedCategoryIds}
+                      onToggle={(id) =>
+                        setSelectedCategoryIds((prev) =>
+                          prev.includes(id)
+                            ? prev.filter((x) => x !== id)
+                            : [...prev, id],
+                        )
+                      }
+                    />
+
+                    <SectionHeader
+                      icon={imagesOutline}
+                      title="Business Photos"
+                      subtitle="Optional — upload a banner and profile photo"
+                    />
+                    <PhotoFileUpload
+                      label="Banner Image"
+                      icon={imageOutline}
+                      file={bannerFile}
+                      onChange={setBannerFile}
+                      hint="Wide cover photo for your profile (JPEG, PNG, WebP)"
+                    />
+                    <PhotoFileUpload
+                      label="Profile Photo"
+                      icon={cameraOutline}
+                      file={profileFile}
+                      onChange={setProfileFile}
+                      hint="Your logo or shop photo (JPEG, PNG, WebP)"
+                    />
+                  </>
+                )}
+
+                {/* ======================================================= */}
+                {/* STEP 4 — Products & Services                            */}
+                {/* ======================================================= */}
+                {currentStep === 4 && (
+                  <>
+                    <TipBanner
+                      icon={bagHandleOutline}
+                      text="Add your products or services so customers can see what you offer. You can always add more later from your dashboard."
+                      color="emerald"
+                    />
+                    <SectionHeader
+                      icon={pricetagOutline}
+                      title="Your Products / Services"
+                      subtitle="List what you offer with prices"
+                    />
+                    <div className="px-4 space-y-3 pb-2">
+                      {productItems.map((item, idx) => (
+                        <ProductFormCard
+                          key={idx}
+                          product={item}
+                          index={idx}
+                          onUpdate={(p) => {
+                            const next = [...productItems];
+                            next[idx] = p;
+                            setProductItems(next);
+                          }}
+                          onRemove={() => {
+                            if (productItems.length <= 1) {
+                              setProductItems([emptyProduct()]);
+                            } else {
+                              setProductItems(productItems.filter((_, i) => i !== idx));
+                            }
+                          }}
+                        />
+                      ))}
+
+                      {productItems.length < 20 && (
+                        <button
+                          type="button"
+                          onClick={() => setProductItems([...productItems, emptyProduct()])}
+                          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 hover:border-indigo-400 transition-all active:scale-[0.99]"
+                        >
+                          <IonIcon icon={addCircleOutline} className="text-indigo-500 text-lg" />
+                          <span className="text-xs font-bold text-indigo-600">Add Another Product</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="mx-4 mt-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        This step is optional — you can add products later from your provider dashboard.
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {/* ======================================================= */}
+                {/* STEP 5 — Verification (optional)                        */}
+                {/* ======================================================= */}
+                {currentStep === 5 && (
+                  <>
+                    <TipBanner
+                      icon={shieldCheckmarkOutline}
+                      text="Upload a government-issued identity document for verification. This builds customer trust and improves your search ranking."
+                      color="amber"
+                    />
+                    <div className="mx-4 mb-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl">
+                      <p className="text-[10px] text-amber-600 font-medium">
+                        This step is optional — you can always verify later
+                        from your dashboard.
+                      </p>
                     </div>
 
                     <SectionHeader
@@ -1027,19 +1854,14 @@ const ProviderOnboardingPage = () => {
                       title="Identity Verification"
                       subtitle="Upload any one of the accepted documents"
                     />
-
-                    {/* Document type selector */}
                     <DocumentTypeSelector
                       selected={docType}
                       onChange={(id) => {
                         setDocType(id);
-                        if (values.identity_doc) {
+                        if (values.identity_doc)
                           setFieldValue("identity_doc", null);
-                        }
                       }}
                     />
-
-                    {/* File uploader */}
                     <DocFilePicker
                       file={values.identity_doc}
                       error={errors.identity_doc as string}
@@ -1049,11 +1871,7 @@ const ProviderOnboardingPage = () => {
                         setFieldValue("identity_doc", file)
                       }
                     />
-
-                    {/* Guidelines */}
                     <DocumentGuidelines />
-
-                    {/* What happens next */}
                     <WhatHappensNext />
                   </>
                 )}
@@ -1075,87 +1893,73 @@ const ProviderOnboardingPage = () => {
               </div>
 
               {/* Bottom action bar */}
-              <div className="fixed bottom-0 left-0 w-full pb-safe z-10 bg-white/80 backdrop-blur-sm border-t border-slate-100 px-4 pt-3 pb-5">
+              <div className="fixed bottom-0 left-0 w-full z-10 bg-white/90 backdrop-blur-md border-t border-slate-100 px-4 pt-3 pb-6">
+                <p className="text-[10px] text-center text-slate-400 font-medium tracking-wide uppercase mb-3">
+                  Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].label}
+                </p>
                 <div className="flex gap-3">
-                  {currentStep === 1 ? (
-                    <>
-                      <Button
-                        large
-                        rounded
-                        clear
-                        className="flex-1"
-                        onClick={handleBack}
-                        disabled={isSubmitting}
-                        type="button"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        large
-                        rounded
-                        className="flex-1"
-                        onClick={() =>
-                          handleNext(validateForm, setTouched)
-                        }
-                        disabled={!isStep1Valid || isSubmitting}
-                        type="button"
-                      >
-                        Next Step
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        large
-                        rounded
-                        clear
-                        className="flex-1"
-                        onClick={handleBack}
-                        disabled={isSubmitting}
-                        type="button"
-                      >
-                        Back
-                      </Button>
-                      {isStep2Valid ? (
-                        <Button
-                          large
-                          rounded
-                          className="flex-1"
-                          type="submit"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? (
-                            <span className="flex items-center gap-2 justify-center">
-                              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                              Submitting...
-                            </span>
-                          ) : (
-                            "Submit"
-                          )}
-                        </Button>
+                  {/* Back / Exit */}
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                  >
+                    <IonIcon icon={arrowBack} className="text-base shrink-0" />
+                    {currentStep === 1 ? "Exit" : "Back"}
+                  </button>
+
+                  {/* Continue / Submit */}
+                  {currentStep < 5 ? (
+                    <button
+                      type="button"
+                      onClick={() => handleNext(validateForm, setTouched)}
+                      disabled={!canAdvance[currentStep] || isSubmitting}
+                      className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
+                    >
+                      {(["Set Location", "Choose Categories", "Add Products", "Verify Identity"] as const)[currentStep - 1]}
+                      <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                    </button>
+                  ) : isStep5HasDoc ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-violet-200"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          Submitting...
+                        </>
                       ) : (
-                        <Button
-                          large
-                          rounded
-                          className="flex-1"
-                          type="button"
-                          disabled={isSubmitting}
-                          onClick={() => {
-                            pendingSubmitRef.current = submitForm;
-                            setShowSkipConfirm(true);
-                          }}
-                        >
-                          {isSubmitting ? (
-                            <span className="flex items-center gap-2 justify-center">
-                              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                              Submitting...
-                            </span>
-                          ) : (
-                            "Skip & Submit"
-                          )}
-                        </Button>
+                        <>
+                          <IonIcon icon={checkmarkCircle} className="text-base shrink-0" />
+                          Submit Application
+                        </>
                       )}
-                    </>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        pendingSubmitRef.current = submitForm;
+                        setShowSkipConfirm(true);
+                      }}
+                      className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-violet-200"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                          Skip &amp; Submit
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
               </div>

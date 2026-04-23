@@ -37,12 +37,18 @@ export interface BecomeProviderPayload {
   openTime?: string;
   closeTime?: string;
   profilePhotoUrl?: string;
+  bannerImageUrl?: string;
+  bannerImage?: File;
+  profileImage?: File;
   ijamatNumber?: string;
   ijamatExpiry?: string;
   ijamatDocUrl?: string;
   latitude?: string;
   longitude?: string;
   aadhaarFile?: File;
+  categoryIds?: string[];
+  products?: Array<{ name: string; description?: string; price?: number; currency?: string; imageCount?: number }>;
+  productImages?: File[];
 }
 
 export interface ProviderData {
@@ -61,6 +67,7 @@ export interface ProviderData {
   closeTime: string | null;
   isAvailable: boolean;
   profilePhotoUrl: string | null;
+  bannerImageUrl: string | null;
   status: "pending" | "in_review" | "active" | "suspended" | "unverified";
   isFeatured: boolean;
   createdAt: string;
@@ -90,6 +97,7 @@ export interface UpdateProviderPayload {
   closeTime?: string;
   isAvailable?: boolean;
   profilePhotoUrl?: string;
+  bannerImageUrl?: string;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────
@@ -108,8 +116,7 @@ export const getProviderById = async (id: string): Promise<any> => {
 
 export interface ProviderDetailsPhoto {
   id: string;
-  listingId: string;
-  businessName?: string;
+  providerId: string;
   imageUrl: string;
   storageKey: string;
   displayOrder: number;
@@ -118,8 +125,7 @@ export interface ProviderDetailsPhoto {
 
 export interface ProviderDetailsProduct {
   id: string;
-  listingId: string;
-  businessName?: string;
+  providerId: string;
   name: string;
   description: string | null;
   price: number | null;
@@ -131,13 +137,14 @@ export interface ProviderDetailsProduct {
 
 export interface ProviderDetailsReview {
   id: string;
-  listingId: string;
-  businessName?: string;
+  providerId: string;
   reviewerId: string;
   starRating: number;
   reviewText: string | null;
   status: string;
   postedAt: string;
+  replyText?: string | null;
+  repliedAt?: string | null;
   reviewer?: {
     id: string;
     name: string;
@@ -145,25 +152,15 @@ export interface ProviderDetailsReview {
   photos?: Array<{ id: string; imageUrl: string }>;
 }
 
-export interface ProviderDetailsListingSummary {
+export interface ProviderDetailsCategory {
   id: string;
-  businessName: string;
-  description: string | null;
-  city: string;
-  area: string | null;
-  status: string;
-  isWomenLed: boolean;
-  communityVerified: boolean;
-  approvedAt: string | null;
-  photoCount: number;
-  productCount: number;
-  reviewCount: number;
-  categories: Array<{ id: string; name: string; slug: string }>;
+  name: string;
+  slug: string;
 }
 
 export interface ProviderDetailsResponse {
   provider: ProviderData;
-  listings: ProviderDetailsListingSummary[];
+  categories: ProviderDetailsCategory[];
   photos: ProviderDetailsPhoto[];
   products: ProviderDetailsProduct[];
   reviews: ProviderDetailsReview[];
@@ -171,7 +168,6 @@ export interface ProviderDetailsResponse {
     rating: number;
     reviewCount: number;
     ratingDist: number[];
-    listingCount: number;
     photoCount: number;
     productCount: number;
     priceRange: { min: number; max: number; currency: string } | null;
@@ -187,7 +183,7 @@ export const getProviderDetails = async (
 
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
-): Promise<{ provider: any; verification: any }> => {
+): Promise<{ provider: any; verification: any; products: any[] }> => {
   const formData = new FormData();
   formData.append("userId", payload.userId);
   formData.append("brandName", payload.brandName);
@@ -206,6 +202,19 @@ export const becomeProvider = async (
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
   if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
+  if (payload.bannerImage) formData.append("bannerImage", payload.bannerImage);
+  if (payload.profileImage) formData.append("profileImage", payload.profileImage);
+  if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
+  if (payload.categoryIds?.length) {
+    payload.categoryIds.forEach((id) => formData.append("categoryIds", id));
+  }
+  // Products as JSON string + individual image files
+  if (payload.products?.length) {
+    formData.append("products", JSON.stringify(payload.products));
+    payload.productImages?.forEach((img) => {
+      formData.append("productImages", img);
+    });
+  }
 
   const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -250,5 +259,33 @@ export const submitVerification = async (
   const { data } = await apiClient.post(PROVIDER_URLS.SUBMIT_VERIFICATION, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return data;
+};
+
+export interface ProviderAnalytics {
+  totalProducts: number;
+  totalReviews: number;
+  averageRating: number;
+  totalEnquiries: number;
+  ratingBreakdown: Record<1 | 2 | 3 | 4 | 5, number>;
+  recentReviews: Array<{
+    id: string;
+    starRating: number;
+    reviewText: string | null;
+    postedAt: string;
+    reviewer: { id: string; name: string } | null;
+  }>;
+}
+
+export const getMyAnalytics = async (): Promise<ProviderAnalytics> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.MY_ANALYTICS);
+  return data;
+};
+
+export const replyToReview = async (
+  reviewId: string,
+  replyText: string,
+): Promise<any> => {
+  const { data } = await apiClient.post(`/reviews/${reviewId}/reply`, { replyText });
   return data;
 };

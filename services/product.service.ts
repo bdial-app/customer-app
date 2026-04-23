@@ -3,7 +3,7 @@ import { PRODUCT_URLS } from "@/utils/urls";
 
 export interface ProductDetail {
   id: string;
-  listingId: string;
+  providerId: string;
   name: string;
   description: string | null;
   price: number | null;
@@ -13,30 +13,24 @@ export interface ProductDetail {
   displayOrder: number;
 }
 
-export interface ProductListingSummary {
+export interface ProductProviderSummary {
   id: string;
-  businessName: string;
+  userId: string;
+  brandName: string;
   description: string | null;
+  profilePhotoUrl: string | null;
   city: string;
   area: string | null;
+  contactNumber: string;
   isWomenLed: boolean;
   communityVerified: boolean;
   photos: Array<{ id: string; imageUrl: string; displayOrder: number }>;
   categories: Array<{ id: string; name: string; slug: string }>;
 }
 
-export interface ProductProviderSummary {
-  id: string;
-  brandName: string;
-  profilePhotoUrl: string | null;
-  city: string;
-  area: string | null;
-  contactNumber: string;
-}
-
 export interface ProductReview {
   id: string;
-  listingId: string;
+  providerId: string;
   reviewerId: string;
   starRating: number;
   reviewText: string | null;
@@ -47,7 +41,6 @@ export interface ProductReview {
 
 export interface ProductDetailsResponse {
   product: ProductDetail;
-  listing: ProductListingSummary | null;
   provider: ProductProviderSummary | null;
   related: ProductDetail[];
   stats: {
@@ -63,4 +56,37 @@ export const getProductById = async (
 ): Promise<ProductDetailsResponse> => {
   const { data } = await apiClient.get(PRODUCT_URLS.BY_ID(id));
   return data;
+};
+
+export interface CreateProductPayload {
+  providerId: string;
+  name: string;
+  description?: string;
+  price?: number;
+  currency?: string;
+  photoUrl?: string;
+}
+
+export interface UpdateProductPayload {
+  name?: string;
+  description?: string;
+  price?: number;
+  currency?: string;
+  photoUrl?: string;
+  isActive?: boolean;
+  displayOrder?: number;
+}
+
+export const createProduct = async (payload: CreateProductPayload): Promise<ProductDetail> => {
+  const { data } = await apiClient.post(PRODUCT_URLS.CREATE, payload);
+  return data;
+};
+
+export const updateProduct = async (id: string, payload: UpdateProductPayload): Promise<ProductDetail> => {
+  const { data } = await apiClient.patch(PRODUCT_URLS.UPDATE(id), payload);
+  return data;
+};
+
+export const deleteProduct = async (id: string): Promise<void> => {
+  await apiClient.delete(PRODUCT_URLS.DELETE(id));
 };

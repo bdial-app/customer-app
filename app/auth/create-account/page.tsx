@@ -1,5 +1,10 @@
 "use client";
-import { List, Page, Block, Button, Preloader, Navbar } from "konsta/react";
+import {
+  List,
+  Page,
+  Block,
+  Navbar,
+} from "konsta/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useState } from "react";
@@ -13,6 +18,8 @@ import {
   phonePortraitOutline,
   keyOutline,
   personOutline,
+  arrowBack,
+  arrowForwardOutline,
   locationOutline,
   checkmarkCircle,
   navigateOutline,
@@ -20,8 +27,6 @@ import {
   businessOutline,
   mapOutline,
   chevronDownOutline,
-  maleOutline,
-  femaleOutline,
 } from "ionicons/icons";
 import { CITY_NAMES } from "@/app/data/locations";
 
@@ -74,10 +79,7 @@ const StepProgress = ({
           const isComplete = i < currentIdx;
 
           return (
-            <div
-              key={step.key}
-              className="flex items-center flex-1 last:flex-none"
-            >
+            <div key={step.key} className="flex items-center flex-1 last:flex-none">
               <div className="flex flex-col items-center gap-1">
                 <div
                   className={`w-9 h-9 rounded-full grid place-content-center transition-all duration-300 ${
@@ -127,9 +129,9 @@ const StepProgress = ({
 const GenderSelector = () => {
   const { values, setFieldValue, touched, errors } = useFormikContext<any>();
   const genders = [
-    { value: "male", label: "Male", icon: maleOutline },
-    { value: "female", label: "Female", icon: femaleOutline },
-    { value: "other", label: "Other", icon: personOutline },
+    { value: "male", label: "Male", emoji: "👨" },
+    { value: "female", label: "Female", emoji: "👩" },
+    { value: "other", label: "Other", emoji: "🧑" },
   ];
 
   return (
@@ -153,13 +155,10 @@ const GenderSelector = () => {
             >
               {selected && (
                 <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-amber-500 rounded-full grid place-content-center shadow-sm">
-                  <IonIcon
-                    icon={checkmarkCircle}
-                    className="text-white text-[11px]"
-                  />
+                  <IonIcon icon={checkmarkCircle} className="text-white text-[11px]" />
                 </div>
               )}
-              <IonIcon icon={g.icon} className="text-2xl text-slate-600" />
+              <span className="text-2xl">{g.emoji}</span>
               <span
                 className={`text-xs font-bold ${selected ? "text-amber-700" : "text-slate-500"}`}
               >
@@ -218,10 +217,7 @@ const CitySelector = () => {
           {values.city || "Select your city"}
         </span>
         {values.city && isCitySupported && (
-          <IonIcon
-            icon={checkmarkCircle}
-            className="text-green-500 text-base"
-          />
+          <IonIcon icon={checkmarkCircle} className="text-green-500 text-base" />
         )}
         <IonIcon
           icon={chevronDownOutline}
@@ -322,9 +318,7 @@ const LocationFields = () => {
           />
         </div>
         {touched.area && errors.area && (
-          <div className="text-xs text-red-500 mt-1 px-1">
-            {String(errors.area)}
-          </div>
+          <div className="text-xs text-red-500 mt-1 px-1">{String(errors.area)}</div>
         )}
       </div>
 
@@ -356,9 +350,7 @@ const LocationFields = () => {
           />
         </div>
         {touched.pincode && errors.pincode && (
-          <div className="text-xs text-red-500 mt-1 px-1">
-            {String(errors.pincode)}
-          </div>
+          <div className="text-xs text-red-500 mt-1 px-1">{String(errors.pincode)}</div>
         )}
       </div>
     </>
@@ -449,21 +441,23 @@ function CreateAccountContent() {
                   />
                 </List>
 
-                <Block className="!mt-4">
-                  <Button
-                    large
-                    rounded
+                <div className="px-4 mt-4">
+                  <button
+                    type="button"
                     onClick={() => handleNext(validateForm, setTouched, values)}
                     disabled={!isValid || !dirty || isSendingOtp}
-                    type="button"
+                    className="flex w-full items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
                   >
                     {isSendingOtp ? (
-                      <Preloader className="w-5 h-5" />
+                      <span className="w-4 h-4 border-2 border-slate-400/40 border-t-slate-900 rounded-full animate-spin" />
                     ) : (
-                      "Send OTP"
+                      <>
+                        Send OTP
+                        <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                      </>
                     )}
-                  </Button>
-                </Block>
+                  </button>
+                </div>
               </>
             )}
 
@@ -512,37 +506,32 @@ function CreateAccountContent() {
                   </button>
                 </div>
 
-                <Block className="!mt-4">
-                  <div className="flex gap-2.5">
-                    <Button
-                      rounded
-                      clear
-                      large
-                      onClick={() => handleBack(setFieldValue)}
-                      className="flex-1"
-                      type="button"
-                      disabled={isVerifying}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      large
-                      rounded
-                      disabled={!isValid || !dirty || isVerifying}
-                      className="flex-1"
-                      onClick={() =>
-                        handleNext(validateForm, setTouched, values)
-                      }
-                      type="button"
-                    >
-                      {isVerifying ? (
-                        <Preloader className="w-5 h-5" />
-                      ) : (
-                        "Verify"
-                      )}
-                    </Button>
-                  </div>
-                </Block>
+                <div className="px-4 mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleBack(setFieldValue)}
+                    disabled={isVerifying}
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                  >
+                    <IonIcon icon={arrowBack} className="text-base shrink-0" />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNext(validateForm, setTouched, values)}
+                    disabled={!isValid || !dirty || isVerifying}
+                    className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
+                  >
+                    {isVerifying ? (
+                      <span className="w-4 h-4 border-2 border-slate-400/40 border-t-slate-900 rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        Verify
+                        <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </>
             )}
 
@@ -557,9 +546,7 @@ function CreateAccountContent() {
                     </label>
                     <div
                       className={`flex items-center gap-2 px-3.5 py-3 rounded-xl border-2 transition-all focus-within:border-amber-300 ${
-                        touched.name && errors.name
-                          ? "border-red-300 bg-white"
-                          : "border-slate-200 bg-white"
+                        touched.name && errors.name ? "border-red-300 bg-white" : "border-slate-200 bg-white"
                       }`}
                     >
                       <IonIcon
@@ -576,13 +563,9 @@ function CreateAccountContent() {
                         className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1 px-1">
-                      As it appears on your ID
-                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1 px-1">As it appears on your ID</p>
                     {touched.name && errors.name && (
-                      <div className="text-xs text-red-500 mt-1 px-1">
-                        {String(errors.name)}
-                      </div>
+                      <div className="text-xs text-red-500 mt-1 px-1">{String(errors.name)}</div>
                     )}
                   </div>
 
@@ -624,7 +607,9 @@ function CreateAccountContent() {
                         }`}
                       >
                         <IonIcon
-                          icon={location ? navigateOutline : alertCircleOutline}
+                          icon={
+                            location ? navigateOutline : alertCircleOutline
+                          }
                           className="text-lg"
                         />
                       </div>
@@ -632,7 +617,9 @@ function CreateAccountContent() {
                         <div
                           className={`text-xs font-bold ${location ? "text-green-700" : "text-slate-600"}`}
                         >
-                          {location ? "Location pinned" : "GPS location needed"}
+                          {location
+                            ? "Location pinned"
+                            : "GPS location needed"}
                         </div>
                         <div className="text-[10px] text-slate-500">
                           {location
@@ -653,38 +640,36 @@ function CreateAccountContent() {
                   </div>
                 </div>
 
-                <Block className="!mt-3">
-                  <div className="flex gap-2.5">
-                    <Button
-                      rounded
-                      clear
-                      onClick={() => handleBack(setFieldValue)}
-                      className="flex-1"
-                      type="button"
-                      disabled={isSubmitting}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      large
-                      rounded
-                      disabled={!isValid || !dirty || isSubmitting || !location}
-                      className="flex-1"
-                      type="submit"
-                    >
-                      {isSubmitting ? (
-                        <Preloader className="w-5 h-5" />
-                      ) : (
-                        "Create Account"
-                      )}
-                    </Button>
-                  </div>
-                </Block>
+                <div className="px-4 mt-3 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleBack(setFieldValue)}
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                  >
+                    <IonIcon icon={arrowBack} className="text-base shrink-0" />
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!isValid || !dirty || isSubmitting || !location}
+                    className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-violet-200"
+                  >
+                    {isSubmitting ? (
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <IonIcon icon={checkmarkCircle} className="text-base shrink-0" />
+                        Create Account
+                      </>
+                    )}
+                  </button>
+                </div>
               </>
             )}
 
             {/* Footer Link */}
-            <Block className="!my-0 text-center !mb-4">
+            <Block className="!mt-6 text-center !mb-4">
               <p className="text-sm text-slate-500">
                 Already have an account?{" "}
                 <Link

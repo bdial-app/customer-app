@@ -40,14 +40,14 @@ const UserHome = () => {
   const mapProvider = (p: any) => ({
     id: p.id,
     name: p.name,
-    image: p.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+    image: p.image || p.bannerImage || p.profilePhotoUrl || "",
     service: p.services || undefined,
     rating: p.rating || 0,
     reviews: p.reviewCount || 0,
     price: undefined,
     location: p.location || undefined,
     verified: p.verified || false,
-    womenLed: false,
+    womenLed: p.isWomenLed || p.womenLed || false,
     distance: p.distance,
   });
 

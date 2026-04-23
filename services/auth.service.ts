@@ -37,6 +37,7 @@ export interface AuthResponse {
     ssoProvider?: string;
     latitude?: number;
     longitude?: number;
+    preferredLanguage?: string;
   };
 }
 

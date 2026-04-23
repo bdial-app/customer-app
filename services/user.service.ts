@@ -10,6 +10,7 @@ export interface UpdateUserPayload {
   latitude?: number;
   longitude?: number;
   preferredMode?: 'customer' | 'provider';
+  preferredLanguage?: string;
 }
 
 export interface UserProfile {

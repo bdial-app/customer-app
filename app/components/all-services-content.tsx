@@ -88,8 +88,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
         ...p,
         name: p.brandName,
         image:
-          p.profilePhotoUrl ||
-          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+          p.profilePhotoUrl || p.bannerImageUrl || "",
         location: [p.area, p.city].filter(Boolean).join(", "),
         rating: p.rating ?? null,
         reviews: p.reviewCount ?? 0,
@@ -156,10 +155,10 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
           <div className="flex items-center gap-3 px-4 pt-3 pb-1">
             <button
               onClick={() => router.back()}
-              className="w-9 h-9 -ml-1 flex items-center justify-center rounded-full hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              className="w-9 h-9 -ml-1 flex items-center justify-center bg-gray-100 rounded-full active:scale-90 transition-transform"
               aria-label="Back"
             >
-              <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-800" />
+              <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
             </button>
             <div className="flex-1">
               <h1 className="text-lg font-bold text-gray-900">

@@ -23,34 +23,39 @@ const AddressBarNavigation = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="flex items-center gap-2.5 min-w-0"
     >
       {!hideIcon && (
-        <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center shrink-0">
-          <IonIcon icon={locationSharp} className="text-amber-400 text-base" />
+        <div className="w-9 h-9 rounded-2xl bg-amber-400/15 border border-amber-400/20 flex items-center justify-center shrink-0">
+          <IonIcon icon={locationSharp} className="text-amber-400 text-[17px]" />
         </div>
       )}
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0">
         {showSkeleton ? (
           <div className="flex flex-col gap-1.5">
-            <div className="h-4 w-24 bg-white/10 animate-pulse rounded-md" />
-            <div className="h-3 w-36 bg-white/5 animate-pulse rounded-md" />
+            <div className="h-3.5 w-28 bg-white/10 animate-pulse rounded-full" />
+            <div className="h-2.5 w-40 bg-white/[0.06] animate-pulse rounded-full" />
           </div>
         ) : (
           <>
             <div className="flex items-center gap-1">
-              <span className="text-[13px] font-bold text-white truncate leading-tight">
+              <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest leading-none mb-0.5">
+                Current Location
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[14px] font-semibold text-white truncate leading-snug">
                 {title}
               </span>
               {!hideChevron && (
-                <IonIcon icon={chevronDown} className="text-xs text-white/50" />
+                <IonIcon icon={chevronDown} className="text-[11px] text-amber-400/80 shrink-0" />
               )}
             </div>
-            <p className="text-[11px] text-white/50 truncate mt-0.5 leading-tight">
+            <p className="text-[11px] text-white/35 truncate leading-tight">
               {address}
             </p>
           </>

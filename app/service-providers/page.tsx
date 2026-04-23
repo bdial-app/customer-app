@@ -2,6 +2,7 @@
 import { Block, Navbar, Searchbar, Button, Card, Page, List, ListItem, Chip } from "konsta/react";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, star, call, location, chatbubble } from "ionicons/icons";
@@ -108,6 +109,8 @@ export default function ServiceProvidersPage() {
     }
   });
 
+  const router = useRouter();
+
   return (
     <Page style={{
       background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
@@ -119,9 +122,9 @@ export default function ServiceProvidersPage() {
         innerClassName="justify-start"
         leftClassName="w-11"
         left={
-          <Link href={ROUTE_PATH.ALL_SERVICES}>
-            <IonIcon icon={arrowBack} />
-          </Link>
+          <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full active:scale-90 transition-transform">
+            <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
+          </button>
         }
       />
 

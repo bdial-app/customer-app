@@ -1,9 +1,7 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
-  ssr: false,
-});
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
   searchOutline,
   locationOutline,
@@ -39,34 +37,10 @@ const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
 ];
 
 const COLLECTIONS = [
-  {
-    id: "wedding",
-    title: "Wedding Season",
-    count: "24+",
-    gradient: "from-amber-400 to-orange-600",
-    icon: ribbonOutline,
-  },
-  {
-    id: "budget",
-    title: "Under ₹500",
-    count: "45+",
-    gradient: "from-emerald-400 to-teal-600",
-    icon: flashOutline,
-  },
-  {
-    id: "new",
-    title: "New Arrivals",
-    count: "12+",
-    gradient: "from-blue-400 to-indigo-600",
-    icon: sparklesOutline,
-  },
-  {
-    id: "popular",
-    title: "Most Booked",
-    count: "30+",
-    gradient: "from-pink-400 to-rose-600",
-    icon: trendingUpOutline,
-  },
+  { id: "wedding", title: "Wedding Season", count: "24+", gradient: "from-amber-400 to-orange-600", icon: ribbonOutline },
+  { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-teal-600", icon: flashOutline },
+  { id: "new", title: "New Arrivals", count: "12+", gradient: "from-blue-400 to-indigo-600", icon: sparklesOutline },
+  { id: "popular", title: "Most Booked", count: "30+", gradient: "from-pink-400 to-rose-600", icon: trendingUpOutline },
 ];
 
 /* ── Component ── */
@@ -85,24 +59,20 @@ const ExploreContent = () => {
     city: user?.city ?? undefined,
   });
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useNearbyProviders({
-      lat: user?.latitude || 18.5204,
-      lng: user?.longitude || 73.8567,
-      search: debouncedSearch,
-      city: user?.city,
-      limit: 12,
-      radius: 20,
-    });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useNearbyProviders({
+    lat: user?.latitude || 18.5204,
+    lng: user?.longitude || 73.8567,
+    search: debouncedSearch,
+    city: user?.city,
+    limit: 12,
+    radius: 20,
+  });
 
   const { data: savedIds = [] } = useSavedItemIds();
   const toggleSaved = useToggleSaved();
 
   const savedProviderIds = useMemo(
-    () =>
-      new Set(
-        savedIds.filter((s) => s.itemType === "provider").map((s) => s.itemId),
-      ),
+    () => new Set(savedIds.filter((s) => s.itemType === "provider").map((s) => s.itemId)),
     [savedIds],
   );
 
@@ -124,19 +94,14 @@ const ExploreContent = () => {
         distance: p.distance,
         rating: p.rating ?? 0,
         reviews: p.reviewCount ?? 0,
-        image:
-          p.profilePhotoUrl ||
-          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+        image: p.profilePhotoUrl || p.bannerImageUrl || "",
         verified: p.status === "active",
+        womenLed: p.isWomenLed || false,
         location: [p.area, p.city].filter(Boolean).join(", "),
-      })),
+      }))
     );
-    if (sort === "top_rated")
-      return [...mapped].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-    if (sort === "nearest")
-      return [...mapped].sort(
-        (a, b) => (a.distance ?? 999) - (b.distance ?? 999),
-      );
+    if (sort === "top_rated") return [...mapped].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    if (sort === "nearest") return [...mapped].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999));
     return mapped;
   }, [data, sort]);
 
@@ -145,13 +110,11 @@ const ExploreContent = () => {
 
   return (
     <div className="flex flex-col pb-4">
+
       {/* ── Search Bar ── */}
       <div className="px-4 pt-2 pb-1">
         <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-2xl px-3.5 py-2.5 shadow-sm">
-          <IonIcon
-            icon={searchOutline}
-            className="text-base text-slate-400 shrink-0"
-          />
+          <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Search providers, services..."
@@ -160,14 +123,8 @@ const ExploreContent = () => {
             className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
           />
           {search ? (
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setSearch("")}
-            >
-              <IonIcon
-                icon={closeCircle}
-                className="text-base text-slate-400"
-              />
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearch("")}>
+              <IonIcon icon={closeCircle} className="text-base text-slate-400" />
             </motion.button>
           ) : (
             <motion.button
@@ -175,13 +132,8 @@ const ExploreContent = () => {
               onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
               className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1"
             >
-              <IonIcon
-                icon={filterOutline}
-                className="text-sm text-slate-600"
-              />
-              <span className="text-[11px] font-semibold text-slate-600">
-                Filter
-              </span>
+              <IonIcon icon={filterOutline} className="text-sm text-slate-600" />
+              <span className="text-[11px] font-semibold text-slate-600">Filter</span>
             </motion.button>
           )}
         </div>
@@ -191,18 +143,10 @@ const ExploreContent = () => {
       {flashDeals.length > 0 && (
         <div className="mt-3">
           <div className="flex items-center gap-2 px-4 mb-2.5">
-            <motion.div
-              animate={{ scale: [1, 1.15, 1] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
-            >
-              <IonIcon
-                icon={flashOutline}
-                className="text-base text-amber-500"
-              />
+            <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
+              <IonIcon icon={flashOutline} className="text-base text-amber-500" />
             </motion.div>
-            <h2 className="text-[15px] font-bold text-slate-800">
-              Flash Deals
-            </h2>
+            <h2 className="text-[15px] font-bold text-slate-800">Flash Deals</h2>
             <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full ml-auto">
               Limited Time
             </span>
@@ -215,10 +159,7 @@ const ExploreContent = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
                 whileTap={{ scale: 0.96 }}
-                style={{
-                  background:
-                    deal.gradient || "linear-gradient(135deg,#7c3aed,#5b21b6)",
-                }}
+                style={{ background: deal.gradient || "linear-gradient(135deg,#7c3aed,#5b21b6)" }}
                 className="shrink-0 w-[200px] rounded-2xl p-3.5 cursor-pointer relative overflow-hidden"
               >
                 <div className="absolute -right-6 -top-6 w-20 h-20 rounded-full bg-white/[0.08]" />
@@ -228,14 +169,8 @@ const ExploreContent = () => {
                       {deal.tag}
                     </span>
                   )}
-                  <h3 className="text-base font-extrabold text-white mt-2 leading-tight">
-                    {deal.title}
-                  </h3>
-                  {deal.subtitle && (
-                    <p className="text-[11px] text-white/70 mt-0.5">
-                      {deal.subtitle}
-                    </p>
-                  )}
+                  <h3 className="text-base font-extrabold text-white mt-2 leading-tight">{deal.title}</h3>
+                  {deal.subtitle && <p className="text-[11px] text-white/70 mt-0.5">{deal.subtitle}</p>}
                   <div className="flex items-center justify-between mt-3">
                     <span className="text-[10px] text-white/50 flex items-center gap-1">
                       <IonIcon icon={timeOutline} className="text-[10px]" />
@@ -254,9 +189,7 @@ const ExploreContent = () => {
 
       {/* ── Curated Collections ── */}
       <div className="mt-5">
-        <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">
-          Curated Collections
-        </h2>
+        <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">Curated Collections</h2>
         <div className="grid grid-cols-2 gap-2.5 px-4">
           {COLLECTIONS.map((col, i) => (
             <motion.div
@@ -265,21 +198,15 @@ const ExploreContent = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.06 }}
               whileTap={{ scale: 0.96 }}
-              onClick={() =>
-                router.push(`${ROUTE_PATH.ALL_SERVICES}?search=${col.title}`)
-              }
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?search=${col.title}`)}
               className={`rounded-2xl bg-gradient-to-br ${col.gradient} p-3.5 cursor-pointer relative overflow-hidden`}
             >
               <div className="absolute right-2 top-2 opacity-20">
                 <IonIcon icon={col.icon} className="text-4xl text-white" />
               </div>
               <div className="relative z-10">
-                <h3 className="text-[13px] font-bold text-white leading-tight">
-                  {col.title}
-                </h3>
-                <p className="text-[10px] text-white/60 mt-0.5">
-                  {col.count} providers
-                </p>
+                <h3 className="text-[13px] font-bold text-white leading-tight">{col.title}</h3>
+                <p className="text-[10px] text-white/60 mt-0.5">{col.count} providers</p>
               </div>
             </motion.div>
           ))}
@@ -289,9 +216,7 @@ const ExploreContent = () => {
       {/* ── Trending Categories from API ── */}
       {trendingCategories.length > 0 && (
         <div className="mt-5">
-          <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">
-            Trending Now
-          </h2>
+          <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">Trending Now</h2>
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
             {trendingCategories.map((cat: any, i: number) => (
               <motion.button
@@ -300,25 +225,13 @@ const ExploreContent = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() =>
-                  router.push(`${ROUTE_PATH.ALL_SERVICES}?search=${cat.name}`)
-                }
+                onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?search=${cat.name}`)}
                 className="shrink-0 flex items-center gap-1.5 bg-white border border-slate-100 shadow-sm px-3 py-2 rounded-xl"
               >
-                {cat.imageUrl && (
-                  <img
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    className="w-5 h-5 rounded-full"
-                  />
-                )}
-                <span className="text-[12px] font-semibold text-slate-700 whitespace-nowrap">
-                  {cat.name}
-                </span>
-                {cat.listingCount > 0 && (
-                  <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md">
-                    {cat.listingCount}
-                  </span>
+                {cat.icon && <span className="text-base">{cat.icon}</span>}
+                <span className="text-[12px] font-semibold text-slate-700 whitespace-nowrap">{cat.name}</span>
+                {cat.providerCount > 0 && (
+                  <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md">{cat.providerCount}</span>
                 )}
               </motion.button>
             ))}
@@ -329,20 +242,18 @@ const ExploreContent = () => {
       <div className="h-2 bg-slate-50 mx-0 mt-5" />
 
       {/* ── Sort chips + Discover section ── */}
-      <div className="flex flex-col gap-2 pt-4 pb-2 px-0 bg-white">
-        <h2 className="text-[15px] font-bold text-slate-800 mr-auto px-4">
+      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+        <h2 className="text-[15px] font-bold text-slate-800 mr-auto">
           {search ? `Results for "${search}"` : "Discover Nearby"}
         </h2>
-        <div className="flex gap-1.5 px-4">
+        <div className="flex gap-1.5">
           {SORT_OPTIONS.map((opt) => (
             <motion.button
               key={opt.key}
               whileTap={{ scale: 0.95 }}
               onClick={() => setSort(opt.key)}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-colors ${
-                sort === opt.key
-                  ? "bg-slate-800 text-white"
-                  : "bg-slate-100 text-slate-500"
+                sort === opt.key ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500"
               }`}
             >
               <IonIcon icon={opt.icon} className="text-xs" />
@@ -356,10 +267,7 @@ const ExploreContent = () => {
       {isLoading ? (
         <div className="flex flex-col px-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl p-3 border border-slate-100 animate-pulse"
-            >
+            <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100 animate-pulse">
               <div className="flex gap-3">
                 <div className="w-[90px] h-[90px] rounded-xl bg-slate-100 shrink-0" />
                 <div className="flex-1 space-y-2 py-1">
@@ -381,19 +289,11 @@ const ExploreContent = () => {
                 className="flex flex-col items-center justify-center py-16"
               >
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                  <IonIcon
-                    icon={searchOutline}
-                    className="text-2xl text-slate-300"
-                  />
+                  <IonIcon icon={searchOutline} className="text-2xl text-slate-300" />
                 </div>
-                <p className="text-sm font-medium text-slate-400">
-                  No providers found
-                </p>
+                <p className="text-sm font-medium text-slate-400">No providers found</p>
                 {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="mt-2 text-[12px] text-amber-600 font-semibold"
-                  >
+                  <button onClick={() => setSearch("")} className="mt-2 text-[12px] text-amber-600 font-semibold">
                     Clear search
                   </button>
                 )}
@@ -407,25 +307,21 @@ const ExploreContent = () => {
                   transition={{ delay: i * 0.04 }}
                   layout
                   whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${p.id}`)
-                  }
+                  onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${p.id}`)}
                   className="bg-white rounded-2xl overflow-hidden border border-slate-100 cursor-pointer"
                 >
                   <div className="flex gap-3 p-3">
-                    <div className="relative w-[90px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-slate-100">
-                      <img
-                        src={p.image}
-                        alt={p.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                    <div className="relative w-[90px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-slate-100 to-slate-50">
+                      {p.image ? (
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-2xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
+                        </div>
+                      )}
                       {p.verified && (
                         <div className="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                          <IonIcon
-                            icon={checkmarkCircleOutline}
-                            className="text-[7px]"
-                          />
+                          <IonIcon icon={checkmarkCircleOutline} className="text-[7px]" />
                           Verified
                         </div>
                       )}
@@ -435,54 +331,38 @@ const ExploreContent = () => {
                         className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center"
                       >
                         <IonIcon
-                          icon={
-                            savedProviderIds.has(p.id) ? heart : heartOutline
-                          }
+                          icon={savedProviderIds.has(p.id) ? heart : heartOutline}
                           className={`text-xs ${savedProviderIds.has(p.id) ? "text-red-400" : "text-white"}`}
                         />
                       </motion.button>
                     </div>
 
                     <div className="flex-1 min-w-0 py-0.5">
-                      <h3 className="text-[13px] font-bold text-slate-800 leading-tight line-clamp-1">
-                        {p.name}
-                      </h3>
-                      <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                        {p.service}
-                      </p>
+                      <h3 className="text-[13px] font-bold text-slate-800 leading-tight line-clamp-1">{p.name}</h3>
+                      <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{p.service}</p>
 
                       <div className="flex items-center gap-2.5 mt-1.5">
-                        {p.rating > 0 && (
+                        {p.rating > 0 ? (
                           <div className="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-md">
-                            <IonIcon
-                              icon={star}
-                              className="text-[10px] text-amber-500"
-                            />
-                            <span className="text-[10px] font-bold text-amber-700">
-                              {p.rating.toFixed(1)}
-                            </span>
-                            {p.reviews > 0 && (
-                              <span className="text-[9px] text-amber-600/60">
-                                ({p.reviews})
-                              </span>
-                            )}
+                            <IonIcon icon={star} className="text-[10px] text-amber-500" />
+                            <span className="text-[10px] font-bold text-amber-700">{p.rating.toFixed(1)}</span>
+                            {p.reviews > 0 && <span className="text-[9px] text-amber-600/60">({p.reviews})</span>}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-0.5 bg-indigo-50 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[10px] font-bold text-indigo-600">New</span>
                           </div>
                         )}
                         {p.distance != null && (
                           <span className="flex items-center gap-0.5 text-[10px] text-slate-400">
-                            <IonIcon
-                              icon={locationOutline}
-                              className="text-[10px]"
-                            />
+                            <IonIcon icon={locationOutline} className="text-[10px]" />
                             {Number(p.distance).toFixed(1)} km
                           </span>
                         )}
                       </div>
 
                       {p.location && (
-                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">
-                          {p.location}
-                        </p>
+                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">{p.location}</p>
                       )}
                     </div>
                   </div>
