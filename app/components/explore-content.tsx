@@ -147,6 +147,150 @@ function useImpressionTracker(
   return ref;
 }
 
+/* ── Banner Carousel ── */
+
+function BannerCarousel({
+  banners,
+  onBannerClick,
+}: {
+  banners: import("@/services/explore.service").ExploreBanner[];
+  onBannerClick: (banner: import("@/services/explore.service").ExploreBanner) => void;
+}) {
+  const [current, setCurrent] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const touchStartX = useRef(0);
+  const count = banners.length;
+
+  const scrollTo = useCallback(
+    (index: number) => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const child = el.children[index] as HTMLElement | undefined;
+      if (child) {
+        el.scrollTo({ left: child.offsetLeft - 16, behavior: "smooth" });
+      }
+      setCurrent(index);
+    },
+    [],
+  );
+
+  // Auto-advance every 4 seconds
+  useEffect(() => {
+    if (count <= 1) return;
+    autoPlayRef.current = setInterval(() => {
+      setCurrent((prev) => {
+        const next = (prev + 1) % count;
+        scrollTo(next);
+        return next;
+      });
+    }, 4000);
+    return () => {
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    };
+  }, [count, scrollTo]);
+
+  // Reset auto-play on manual interaction
+  const resetAutoPlay = useCallback(() => {
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    if (count <= 1) return;
+    autoPlayRef.current = setInterval(() => {
+      setCurrent((prev) => {
+        const next = (prev + 1) % count;
+        scrollTo(next);
+        return next;
+      });
+    }, 4000);
+  }, [count, scrollTo]);
+
+  // Detect manual scroll end to sync indicator
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollLeft = el.scrollLeft;
+    const childWidth = (el.children[0] as HTMLElement)?.offsetWidth ?? 1;
+    const idx = Math.round(scrollLeft / childWidth);
+    if (idx !== current && idx >= 0 && idx < count) {
+      setCurrent(idx);
+      resetAutoPlay();
+    }
+  }, [current, count, resetAutoPlay]);
+
+  return (
+    <div className="mt-5">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => {
+          const diff = touchStartX.current - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) {
+            const next = diff > 0
+              ? Math.min(current + 1, count - 1)
+              : Math.max(current - 1, 0);
+            scrollTo(next);
+            resetAutoPlay();
+          }
+        }}
+        className="flex gap-3 overflow-x-auto no-scrollbar px-4 snap-x snap-mandatory scroll-smooth"
+        style={{ scrollSnapType: "x mandatory" }}
+      >
+        {banners.map((banner) => (
+          <motion.div
+            key={banner.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onBannerClick(banner)}
+            style={{
+              background: banner.gradient || "linear-gradient(135deg,#7c3aed,#5b21b6)",
+            }}
+            className="rounded-2xl p-4 cursor-pointer relative overflow-hidden flex-shrink-0 w-[calc(100%-32px)] snap-center"
+          >
+            <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/[0.08]" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="flex-1">
+                {banner.tag && (
+                  <span className="text-[9px] font-bold tracking-wider text-white/70 bg-white/15 px-2 py-0.5 rounded-full">
+                    {banner.tag}
+                  </span>
+                )}
+                <h3 className="text-base font-extrabold text-white mt-1 leading-tight">
+                  {banner.title}
+                </h3>
+                {banner.subtitle && (
+                  <p className="text-[11px] text-white/70 mt-0.5">{banner.subtitle}</p>
+                )}
+              </div>
+              {banner.emoji && <span className="text-3xl">{banner.emoji}</span>}
+              <span className="text-[10px] font-bold text-white bg-white/20 px-3 py-1.5 rounded-xl shrink-0">
+                {banner.cta ?? "View →"}
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Dots indicator */}
+      {count > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-3">
+          {banners.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { scrollTo(i); resetAutoPlay(); }}
+              className={`rounded-full transition-all duration-300 ${
+                i === current
+                  ? "w-5 h-1.5 bg-amber-500"
+                  : "w-1.5 h-1.5 bg-gray-300"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Main Component ── */
 
 const ExploreContent = () => {
@@ -519,44 +663,19 @@ const ExploreContent = () => {
         </div>
       )}
 
-      {/* ── 8. Interstitial Banner Ad ── */}
-      {feed?.bannerAd && (
-        <div className="mx-4 mt-5">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              if (feed.bannerAd?.id) {
-                trackAd.mutate({
-                  eventType: "click",
-                  entityType: "promo_banner",
-                  entityId: feed.bannerAd.id,
-                });
-              }
-              if (feed.bannerAd?.linkUrl) router.push(feed.bannerAd.linkUrl);
-            }}
-            style={{ background: feed.bannerAd.gradient || "linear-gradient(135deg,#7c3aed,#5b21b6)" }}
-            className="rounded-2xl p-4 cursor-pointer relative overflow-hidden"
-          >
-            <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/[0.08]" />
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="flex-1">
-                {feed.bannerAd.tag && (
-                  <span className="text-[9px] font-bold tracking-wider text-white/70 bg-white/15 px-2 py-0.5 rounded-full">
-                    {feed.bannerAd.tag}
-                  </span>
-                )}
-                <h3 className="text-base font-extrabold text-white mt-1 leading-tight">{feed.bannerAd.title}</h3>
-                {feed.bannerAd.subtitle && <p className="text-[11px] text-white/70 mt-0.5">{feed.bannerAd.subtitle}</p>}
-              </div>
-              {feed.bannerAd.emoji && <span className="text-3xl">{feed.bannerAd.emoji}</span>}
-              <span className="text-[10px] font-bold text-white bg-white/20 px-3 py-1.5 rounded-xl shrink-0">
-                {feed.bannerAd.cta ?? "View →"}
-              </span>
-            </div>
-          </motion.div>
-        </div>
+      {/* ── 8. Promo Banner Carousel ── */}
+      {(feed?.bannerAds?.length ?? 0) > 0 && (
+        <BannerCarousel
+          banners={feed!.bannerAds}
+          onBannerClick={(banner) => {
+            trackAd.mutate({
+              eventType: "click",
+              entityType: "promo_banner",
+              entityId: banner.id,
+            });
+            if (banner.linkUrl) router.push(banner.linkUrl);
+          }}
+        />
       )}
 
       {/* ── 9. Top Rated ── */}

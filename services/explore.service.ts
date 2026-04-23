@@ -82,7 +82,7 @@ export interface ExploreFeedResponse {
   activeOffers: ProviderWithOffer[];
   quickCategories: ExploreCategory[];
   popularNearby: ExploreProvider[];
-  bannerAd: ExploreBanner | null;
+  bannerAds: ExploreBanner[];
   topRated: ExploreProvider[];
   categorySpotlight: CategorySpotlight | null;
   newArrivals: ExploreProvider[];
