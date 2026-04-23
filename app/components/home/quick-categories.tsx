@@ -257,7 +257,7 @@ const QuickCategories = () => {
               whileTap={{ scale: 0.92 }}
               onClick={() =>
                 router.push(
-                  `${ROUTE_PATH.SERVICE_PROVIDERS}?categoryId=${cat.id}`,
+                  `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}`,
                 )
               }
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
@@ -282,7 +282,7 @@ const QuickCategories = () => {
           <motion.div
             variants={cardItem}
             whileTap={{ scale: 0.92 }}
-            onClick={() => router.push(ROUTE_PATH.ALL_SERVICES)}
+            onClick={() => router.push(ROUTE_PATH.SEARCH)}
             className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
           >
             <div className="w-[62px] h-[62px] rounded-2xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">

@@ -158,12 +158,34 @@ export interface ProviderDetailsCategory {
   slug: string;
 }
 
+export interface ProviderDetailsBadge {
+  id: string;
+  providerId: string;
+  type: string;
+  createdAt: string;
+  isActive: boolean;
+}
+
+export interface ProviderDetailsOffer {
+  id: string;
+  providerId: string;
+  title: string;
+  description: string | null;
+  discountType: string;
+  discountValue: number;
+  startsAt: string;
+  endsAt: string;
+  isActive: boolean;
+}
+
 export interface ProviderDetailsResponse {
   provider: ProviderData;
   categories: ProviderDetailsCategory[];
   photos: ProviderDetailsPhoto[];
   products: ProviderDetailsProduct[];
   reviews: ProviderDetailsReview[];
+  badges: ProviderDetailsBadge[];
+  activeOffers: ProviderDetailsOffer[];
   stats: {
     rating: number;
     reviewCount: number;

@@ -30,6 +30,13 @@ html, body {
   user-select: none;
 }
 
+/* Hide native search clear button across all browsers */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* Smooth scroll for PWA feel */
 * {
   -webkit-overflow-scrolling: touch;

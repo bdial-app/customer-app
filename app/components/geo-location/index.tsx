@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { useReverseGeocode, useSearchGeocode } from "@/hooks/useGeocode";
 import { useUpdateUser } from "@/hooks/useUser";
@@ -6,51 +7,36 @@ import { setProfile } from "@/store/slices/authSlice";
 import { addRecentLocation } from "@/store/slices/locationSlice";
 import {
   SearchGeocodeResult,
-  ReverseGeocodeResponse,
 } from "@/services/geocode.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSavedLocations } from "@/hooks/useSavedLocation";
 import { SavedLocation } from "@/services/saved-location.service";
 import AddressBarNavigation from "./address-bar-navigation";
+import dynamic from "next/dynamic";
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
-  Block,
-  BlockTitle,
-  List,
-  ListInput,
-  ListItem,
-  Navbar,
-  Page,
-  Searchbar,
-  Sheet,
-} from "konsta/react";
-import { IonIcon } from "@ionic/react";
-import {
-  add,
+  addOutline,
   arrowBack,
-  business,
-  home,
-  laptopOutline,
-  location,
+  businessOutline,
+  homeOutline,
+  locationOutline,
   locationSharp,
   navigateCircleOutline,
   notificationsOutline,
-  search,
+  searchOutline,
+  timeOutline,
+  bookmarkOutline,
+  closeOutline,
+  chevronDown,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 
 const GeoLocation = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleClear = () => {
-    setSearchQuery("");
-  };
-
-  const handleInput = (e: any) => {
-    setSearchQuery(e.target.value);
-  };
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dragControls = useDragControls();
 
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
@@ -68,38 +54,33 @@ const GeoLocation = () => {
   const { data: searchResults, isLoading: isSearchLoading } =
     useSearchGeocode(searchQuery);
 
-  console.log({ addressData, user, searchResults });
+  const isSearching = searchQuery.length > 0;
 
-  const handleSelectLocation = (loc: SearchGeocodeResult) => {
-    const { lat, lng, mainText, description, placeId } = loc;
+  // Focus search input on open
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 300);
+    } else {
+      setSearchQuery("");
+    }
+  }, [open]);
 
-    // 1. Clear search text
+  const handleSelectLocation = useCallback((loc: SearchGeocodeResult) => {
+    const { lat, lng } = loc;
     setSearchQuery("");
-
-    // 2. Store in user slice
     if (user) {
       dispatch(setProfile({ ...user, latitude: lat, longitude: lng }));
     }
-
-    // 3. Add to recent locations
     dispatch(addRecentLocation(loc));
-
-    // 4. Call patch user api (BTS)
     updateUserMutation.mutate({ latitude: lat, longitude: lng });
-
-    // 4. Close drawer
     setOpen(false);
-  };
+  }, [user, dispatch, updateUserMutation]);
 
-  const handleSelectSavedLocation = (loc: SavedLocation) => {
+  const handleSelectSavedLocation = useCallback((loc: SavedLocation) => {
     const { latitude, longitude, label, fullAddress, placeId } = loc;
-
-    // 1. Store in user slice
     if (user) {
       dispatch(setProfile({ ...user, latitude, longitude }));
     }
-
-    // 2. Add to recent locations
     dispatch(
       addRecentLocation({
         placeId,
@@ -110,19 +91,16 @@ const GeoLocation = () => {
         lng: longitude,
       }),
     );
-
-    // 3. Call patch user api (BTS)
     updateUserMutation.mutate({ latitude, longitude });
-
-    // 4. Close drawer
     setOpen(false);
-  };
+  }, [user, dispatch, updateUserMutation]);
 
   const handleAddAddress = () => {
     if (!user) {
       router.push("/auth/login");
       return;
     }
+    setOpen(false);
     router.push("/add-location");
   };
 
@@ -132,13 +110,9 @@ const GeoLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-
-        // 1. Store in user slice
         if (user) {
           dispatch(setProfile({ ...user, latitude, longitude }));
         }
-
-        // 2. Add to recent locations if we have address data
         if (addressData) {
           dispatch(
             addRecentLocation({
@@ -151,47 +125,28 @@ const GeoLocation = () => {
             }),
           );
         }
-
-        // 3. Call patch user api (BTS - background update)
         updateUserMutation.mutate({ latitude, longitude });
-
-        // 4. Close drawer
         setOpen(false);
       },
-      (error) => {
-        console.error("Geolocation error:", error);
-      },
+      () => {},
     );
   };
 
-  const mockLocations = [
-    { title: "Camp, Pune", area: "Maharashtra, India" },
-    { title: "MG Road, Pune", area: "Maharashtra, India" },
-    { title: "Koregaon Park, Pune", area: "Maharashtra, India" },
-    { title: "Bohri Ali, Pune", area: "Maharashtra, India" },
-    { title: "Viman Nagar, Pune", area: "Maharashtra, India" },
-    { title: "Kalyani Nagar, Pune", area: "Maharashtra, India" },
-    { title: "Hadapsar, Pune", area: "Maharashtra, India" },
-    { title: "Magarpatta, Pune", area: "Maharashtra, India" },
-    { title: "Kothrud, Pune", area: "Maharashtra, India" },
-    { title: "Bavdhan, Pune", area: "Maharashtra, India" },
-    { title: "Baner, Pune", area: "Maharashtra, India" },
-    { title: "Balewadi High Street, Pune", area: "Maharashtra, India" },
-    { title: "Hinjewadi Phase 1, Pune", area: "Maharashtra, India" },
-    { title: "Hinjewadi Phase 2, Pune", area: "Maharashtra, India" },
-    { title: "Wakad, Pune", area: "Maharashtra, India" },
-    { title: "Pimple Saudagar, Pune", area: "Maharashtra, India" },
-    { title: "Aundh, Pune", area: "Maharashtra, India" },
-    { title: "Shivaji Nagar, Pune", area: "Maharashtra, India" },
-    { title: "FC Road, Pune", area: "Maharashtra, India" },
-    { title: "Deccan Gymkhana, Pune", area: "Maharashtra, India" },
-    { title: "Swargate, Pune", area: "Maharashtra, India" },
-    { title: "Bibwewadi, Pune", area: "Maharashtra, India" },
-    { title: "Kondhwa, Pune", area: "Maharashtra, India" },
-  ];
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
+      setOpen(false);
+    }
+  };
+
+  const savedLocationIcon = (title: string) => {
+    if (title === "home") return homeOutline;
+    if (title === "work") return businessOutline;
+    return locationOutline;
+  };
 
   return (
     <>
+      {/* ── Header Bar ── */}
       <div
         className="sticky top-0 z-40"
         style={{
@@ -199,183 +154,269 @@ const GeoLocation = () => {
           background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
         }}
       >
-        {/* subtle bottom separator */}
         <div className="absolute inset-x-0 bottom-0 h-px bg-white/[0.06]" />
         <div
           onClick={() => setOpen(true)}
           className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer active:bg-white/[0.04] transition-colors"
         >
-          {/* left — location pill */}
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="shrink-0 w-9 h-9 rounded-2xl bg-amber-400/15 border border-amber-400/20 flex items-center justify-center">
-              <IonIcon
-                icon={locationSharp}
-                className="text-amber-400 text-[17px]"
-              />
+              <IonIcon icon={locationSharp} className="text-amber-400 text-[17px]" />
             </div>
             <AddressBarNavigation
-              title={addressData?.label || "Azam Campus"}
-              address={addressData?.fullAddress || "Gulistan-e-Jauhar, Camp"}
+              title={addressData?.label || "Select Location"}
+              address={addressData?.fullAddress || "Tap to set your location"}
               isLoading={isAddressLoading}
               hideIcon
             />
           </div>
-
-          {/* right — notification button */}
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
             className="shrink-0 relative w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:bg-white/[0.12] transition-colors"
           >
             <IonIcon icon={notificationsOutline} className="text-white/75 text-[17px]" />
-            {/* unread dot */}
             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 ring-1 ring-[#0f172a]" />
           </button>
         </div>
       </div>
-      <Sheet opened={open} onBackdropClick={() => setOpen(false)}>
-        <Page
-          className={`relative !rounded-3xl transition-all duration-300 ${
-            isFocused ? "!h-[100dvh]" : "h-auto"
-          }`}
-        >
-          <Navbar
-            title="Select Location"
-            left={<IonIcon icon={arrowBack} />}
-            leftClassName="w-11"
-            subnavbarClassName="mt-4"
-            subnavbar={
-              <Searchbar
-                onInput={handleInput}
-                value={searchQuery}
-                onClear={handleClear}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => {
-                  setTimeout(() => setIsFocused(false), 200);
-                }}
-                disableButton
-                placeholder={"Search for area, street name..."}
-                onDisable={() => {
-                  setIsFocused(false);
-                  setSearchQuery("");
-                }}
-              />
-            }
-          />
 
-          {!isFocused ? (
-            <>
-              <List strong inset>
-                <ListItem
-                  media={
-                    <IonIcon className="w-8 h-8" icon={navigateCircleOutline} />
-                  }
-                  link
-                  title="Use Current Location"
-                  onClick={handleUseCurrentLocation}
-                />
-                <ListItem
-                  media={<IonIcon className="w-8 h-8" icon={add} />}
-                  link
-                  title="Add new address"
-                  onClick={handleAddAddress}
-                />
-              </List>
-              <BlockTitle>Saved Locations</BlockTitle>
-              {savedLocations && savedLocations.length > 0 ? (
-                <List strong inset>
-                  {savedLocations.map((loc) => (
-                    <ListItem
-                      key={loc.id}
-                      media={
-                        <IonIcon
-                          className="w-6 h-6 text-blue-500"
-                          icon={
-                            loc.title === "home"
-                              ? home
-                              : loc.title === "office"
-                                ? business
-                                : location
-                          }
-                        />
-                      }
-                      link
-                      title={
-                        loc.title.charAt(0).toUpperCase() + loc.title.slice(1)
-                      }
-                      text={loc.label}
-                      onClick={() => handleSelectSavedLocation(loc)}
-                    />
-                  ))}
-                </List>
-              ) : (
-                <div className="p-8 text-center text-slate-400 text-sm italic">
-                  No saved locations yet
-                </div>
-              )}
-            </>
-          ) : searchQuery === "" ? (
-            <>
-              <BlockTitle>Recent Locations</BlockTitle>
-              {recentLocations && recentLocations.length > 0 ? (
-                <List strong inset>
-                  {recentLocations.map((loc) => (
-                    <ListItem
-                      key={loc.placeId}
-                      link
-                      title={loc.mainText}
-                      text={loc.description}
-                      onClick={() => handleSelectLocation(loc)}
-                    />
-                  ))}
-                </List>
-              ) : (
-                <div className="p-8 text-center text-slate-500 text-sm">
-                  No recent locations yet
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <BlockTitle>
-                {isSearchLoading ? "Searching..." : "Search Results"}
-              </BlockTitle>
-              {searchResults && searchResults.length > 0 ? (
-                <List strong inset>
-                  {searchResults.map((loc) => (
-                    <ListItem
-                      key={loc.placeId}
-                      link
-                      title={loc.mainText}
-                      text={loc.secondaryText}
-                      onClick={() => handleSelectLocation(loc)}
-                    />
-                  ))}
-                </List>
-              ) : searchQuery.length >= 3 && !isSearchLoading ? (
-                <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500 gap-2">
-                  <IonIcon
-                    icon={search}
-                    className="text-4xl text-slate-300 mb-2"
+      {/* ── Bottom Sheet ── */}
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]"
+            />
+
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              drag="y"
+              dragControls={dragControls}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.4 }}
+              onDragEnd={handleDragEnd}
+              className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              {/* Drag handle */}
+              <div
+                className="flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0"
+                onPointerDown={(e) => dragControls.start(e)}
+              >
+                <div className="w-10 h-1 rounded-full bg-slate-200" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 pb-3 shrink-0">
+                <h2 className="text-lg font-bold text-slate-900">Select Location</h2>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                >
+                  <IonIcon icon={closeOutline} className="text-base text-slate-500" />
+                </motion.button>
+              </div>
+
+              {/* Search Input */}
+              <div className="px-4 pb-3 shrink-0">
+                <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all">
+                  <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Search for area, street name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
                   />
-                  <div className="text-lg font-semibold text-slate-800">
-                    No results found
-                  </div>
-                  <div className="text-sm">
-                    We couldn't find anything matching "{searchQuery}"
-                  </div>
+                  {searchQuery && (
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchQuery("")}>
+                      <IonIcon icon={closeOutline} className="text-base text-slate-400" />
+                    </motion.button>
+                  )}
                 </div>
-              ) : (
-                <div className="p-8 text-center text-slate-500 text-sm">
-                  {searchQuery.length < 3
-                    ? "Type at least 3 characters to search..."
-                    : "No results found"}
-                </div>
-              )}
-            </>
-          )}
-        </Page>
-      </Sheet>
+              </div>
+
+              {/* Content — scrollable */}
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+                {!isSearching ? (
+                  /* ── Default State ── */
+                  <div className="pb-6">
+                    {/* Use Current Location CTA */}
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleUseCurrentLocation}
+                      className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-3.5 text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                        <IonIcon icon={navigateCircleOutline} className="text-xl text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-amber-800">Use Current Location</p>
+                        <p className="text-[11px] text-amber-600/70 mt-0.5">Using GPS</p>
+                      </div>
+                      <IonIcon icon={chevronDown} className="text-sm text-amber-400 -rotate-90" />
+                    </motion.button>
+
+                    {/* Saved Locations */}
+                    {savedLocations && savedLocations.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2 px-4 mb-2">
+                          <IonIcon icon={bookmarkOutline} className="text-sm text-slate-400" />
+                          <h3 className="text-[13px] font-bold text-slate-700">Saved Locations</h3>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
+                          {savedLocations.map((loc) => (
+                            <motion.button
+                              key={loc.id}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleSelectSavedLocation(loc)}
+                              className="shrink-0 flex items-center gap-2 bg-white border border-slate-150 shadow-sm rounded-xl px-3 py-2.5"
+                            >
+                              <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center">
+                                <IonIcon icon={savedLocationIcon(loc.title)} className="text-sm text-slate-500" />
+                              </div>
+                              <div className="text-left">
+                                <p className="text-[12px] font-semibold text-slate-800 capitalize leading-tight">{loc.title}</p>
+                                <p className="text-[10px] text-slate-400 line-clamp-1 max-w-[120px]">{loc.label}</p>
+                              </div>
+                            </motion.button>
+                          ))}
+                          {/* Add New */}
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handleAddAddress}
+                            className="shrink-0 flex items-center gap-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3 py-2.5"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center">
+                              <IonIcon icon={addOutline} className="text-sm text-slate-400" />
+                            </div>
+                            <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">Add New</span>
+                          </motion.button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No saved — show Add Address prominently */}
+                    {(!savedLocations || savedLocations.length === 0) && (
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleAddAddress}
+                        className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-3.5 text-left"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+                          <IonIcon icon={addOutline} className="text-xl text-slate-500" />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-semibold text-slate-800">Add New Address</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Home, Work, or Other</p>
+                        </div>
+                      </motion.button>
+                    )}
+
+                    {/* Recent Locations */}
+                    {recentLocations && recentLocations.length > 0 && (
+                      <div className="mt-4">
+                        <div className="flex items-center gap-2 px-4 mb-2">
+                          <IonIcon icon={timeOutline} className="text-sm text-slate-400" />
+                          <h3 className="text-[13px] font-bold text-slate-700">Recent</h3>
+                        </div>
+                        <div className="mx-4 bg-white border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-50">
+                          {recentLocations.slice(0, 5).map((loc) => (
+                            <motion.button
+                              key={loc.placeId}
+                              whileTap={{ backgroundColor: "rgb(248 250 252)" }}
+                              onClick={() => handleSelectLocation(loc)}
+                              className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+                                <IonIcon icon={timeOutline} className="text-sm text-slate-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-slate-800 line-clamp-1">{loc.mainText}</p>
+                                <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{loc.description}</p>
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ── Search Results ── */
+                  <div className="pb-6">
+                    {isSearchLoading && searchQuery.length >= 3 && (
+                      <div className="mx-4 space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex items-center gap-3 animate-pulse">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 shrink-0" />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-3.5 bg-slate-100 rounded-full w-3/4" />
+                              <div className="h-2.5 bg-slate-50 rounded-full w-1/2" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchQuery.length < 3 && (
+                      <div className="px-4 py-8 text-center">
+                        <p className="text-sm text-slate-400">Type at least 3 characters to search</p>
+                      </div>
+                    )}
+
+                    {searchResults && searchResults.length > 0 && (
+                      <div className="mx-4 bg-white border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-50">
+                        {searchResults.map((loc, i) => (
+                          <motion.button
+                            key={loc.placeId}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.03 }}
+                            whileTap={{ backgroundColor: "rgb(248 250 252)" }}
+                            onClick={() => handleSelectLocation(loc)}
+                            className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                              <IonIcon icon={locationOutline} className="text-sm text-amber-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-medium text-slate-800 line-clamp-1">{loc.mainText}</p>
+                              <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{loc.secondaryText}</p>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchQuery.length >= 3 && !isSearchLoading && searchResults && searchResults.length === 0 && (
+                      <div className="flex flex-col items-center py-12">
+                        <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                          <IonIcon icon={searchOutline} className="text-xl text-slate-300" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">No results found</p>
+                        <p className="text-[12px] text-slate-400 mt-1">Try a different search term</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

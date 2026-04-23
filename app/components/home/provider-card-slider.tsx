@@ -1,7 +1,7 @@
 "use client";
 import { motion, type Variants } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { star, location } from "ionicons/icons";
+import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 
@@ -16,6 +16,7 @@ interface Provider {
   verified?: boolean;
   womenLed?: boolean;
   price?: string;
+  distance?: number;
 }
 
 const container = {
@@ -136,6 +137,15 @@ const ProviderCardSlider = ({
                   ₹{provider.price}
                 </div>
               )}
+              {/* Distance pill */}
+              {provider.distance != null && !provider.price && (
+                <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+                  <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
+                  {provider.distance < 1
+                    ? `${Math.round(provider.distance * 1000)}m`
+                    : `${provider.distance.toFixed(1)} km`}
+                </div>
+              )}
             </div>
 
             {/* Info */}
@@ -165,6 +175,13 @@ const ProviderCardSlider = ({
                   <div className="flex items-center gap-0.5 text-[10px] text-slate-400 truncate">
                     <IonIcon icon={location} className="w-2.5 h-2.5" />
                     <span className="truncate">{provider.location}</span>
+                    {provider.distance != null && (
+                      <span className="shrink-0 ml-auto text-amber-600 font-semibold">
+                        ~{provider.distance < 1
+                          ? `${Math.round(provider.distance * 1000)}m`
+                          : `${provider.distance.toFixed(1)}km`}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

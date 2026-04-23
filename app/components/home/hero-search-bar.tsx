@@ -3,6 +3,8 @@ import { IonIcon } from "@ionic/react";
 import { search, micOutline } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { ROUTE_PATH } from "@/utils/contants";
 
 const PLACEHOLDER_TEXTS = [
   'Search "Tailoring"',
@@ -13,7 +15,8 @@ const PLACEHOLDER_TEXTS = [
   'Search "Mehandi Artist"',
 ];
 
-const HeroSearchBar = ({ onTap }: { onTap: () => void }) => {
+const HeroSearchBar = ({ onTap }: { onTap?: () => void }) => {
+  const router = useRouter();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   useEffect(() => {
@@ -23,12 +26,20 @@ const HeroSearchBar = ({ onTap }: { onTap: () => void }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleTap = () => {
+    if (onTap) {
+      onTap();
+    } else {
+      router.push(ROUTE_PATH.SEARCH);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.05 }}
-      onClick={onTap}
+      onClick={handleTap}
       className="mx-4 mt-3 mb-4"
     >
       <div className="flex items-center gap-3 bg-white/[0.08] backdrop-blur-md rounded-2xl px-4 py-3 border border-white/[0.1] active:bg-white/[0.12] transition-colors">

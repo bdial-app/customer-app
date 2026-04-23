@@ -1,10 +1,8 @@
 "use client";
-import { Sheet } from "konsta/react";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { motion } from "framer-motion";
-import AllServicesContent from "./all-services-content";
 import HeroSearchBar from "./home/hero-search-bar";
 import QuickCategories from "./home/quick-categories";
 import PromoBannerCarousel from "./home/promo-banner-carousel";
@@ -22,7 +20,6 @@ import { useAppSelector } from "@/hooks/useAppStore";
 
 const UserHome = () => {
   const router = useRouter();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
 
@@ -31,10 +28,6 @@ const UserHome = () => {
     lng: user?.longitude ?? undefined,
     city: user?.city ?? undefined,
   });
-
-  const handleSearchTap = () => {
-    setIsSheetOpen(true);
-  };
 
   // Map API providers to the shape expected by slider/grid components
   const mapProvider = (p: any) => ({
@@ -70,7 +63,7 @@ const UserHome = () => {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] rounded-full bg-amber-400/[0.06] blur-[80px] pointer-events-none" />
 
           {/* Search Bar */}
-          <HeroSearchBar onTap={handleSearchTap} />
+          <HeroSearchBar />
 
           {/* Category Scroll */}
           <QuickCategories />
@@ -183,43 +176,8 @@ const UserHome = () => {
           </div>
         </motion.div>
       </div>
-
-      {/* Search Sheet */}
-      <Sheet
-        className="pb-safe h-[90%]"
-        opened={isSheetOpen}
-        onBackdropClick={() => setIsSheetOpen(false)}
-      >
-        <div className="flex flex-col h-full bg-slate-50">
-          <SheetToolbar
-            title="Search Services"
-            onClick={() => setIsSheetOpen(false)}
-          />
-          <div className="flex-1 overflow-y-auto">
-            <AllServicesContent isSheet />
-          </div>
-        </div>
-      </Sheet>
     </>
   );
 };
-
-const SheetToolbar = ({
-  title,
-  onClick,
-}: {
-  title: string;
-  onClick: () => void;
-}) => (
-  <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100">
-    <div className="text-lg font-bold text-slate-800">{title}</div>
-    <button
-      onClick={onClick}
-      className="text-blue-500 font-semibold active:opacity-50 transition-opacity"
-    >
-      Done
-    </button>
-  </div>
-);
 
 export default UserHome;

@@ -19,6 +19,7 @@ import {
   star,
   storefront,
   locationOutline,
+  navigateOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProduct } from "@/hooks/useProduct";
@@ -28,6 +29,7 @@ import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "@/app/context/AppContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
+import { shareContent, openDirections } from "@/utils/sharing";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -130,7 +132,17 @@ export default function ProductDetailsPage() {
                   className={`w-5 h-5 ${liked ? "text-red-400" : "text-white"}`}
                 />
               </button>
-              <button className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
+              <button
+                onClick={async () => {
+                  if (!product) return;
+                  await shareContent({
+                    title: product.name,
+                    text: `Check out ${product.name}${price !== null ? ` - ${currency}${price.toLocaleString()}` : ""}\n${product.description || ""}`,
+                    url: window.location.href,
+                  });
+                }}
+                className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+              >
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
             </div>
@@ -262,6 +274,17 @@ export default function ProductDetailsPage() {
               className="w-4 h-4 text-gray-400 flex-shrink-0"
             />
           </Link>
+        )}
+
+        {/* Get Directions */}
+        {provider && (provider as any)?.latitude && (provider as any)?.longitude && (
+          <button
+            onClick={() => openDirections(Number((provider as any).latitude), Number((provider as any).longitude), provider.brandName)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+          >
+            <IonIcon icon={navigateOutline} className="w-4 h-4" />
+            Get Directions
+          </button>
         )}
 
         {provider?.categories && provider.categories.length > 0 && (

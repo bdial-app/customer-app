@@ -129,7 +129,7 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
               whileTap={{ scale: 0.95 }}
               onClick={() =>
                 router.push(
-                  `${ROUTE_PATH.ALL_SERVICES}?search=${encodeURIComponent(t.label)}`,
+                  `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(t.label)}`,
                 )
               }
               className={`shrink-0 w-[130px] rounded-2xl bg-gradient-to-br ${t.gradient} p-3 cursor-pointer relative overflow-hidden`}

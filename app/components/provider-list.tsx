@@ -64,10 +64,12 @@ const ProviderList = ({
                 </div>
               )}
               {/* Distance pill */}
-              {provider.distance && (
+              {provider.distance != null && (
                 <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm text-white text-[9px] font-medium px-2 py-0.5 rounded-full">
                   {typeof provider.distance === "number"
-                    ? `${provider.distance.toFixed(1)} km`
+                    ? provider.distance < 1
+                      ? `${Math.round(provider.distance * 1000)}m`
+                      : `${provider.distance.toFixed(1)} km`
                     : provider.distance}
                 </div>
               )}

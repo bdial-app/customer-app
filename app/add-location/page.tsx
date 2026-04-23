@@ -100,7 +100,7 @@ const AddLocationPage = () => {
 
   // Google Maps Logic
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyAcciwPVPALEtOh_vhFyELCyMMxFOtf384",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
     libraries,
   });
 
@@ -151,8 +151,9 @@ const AddLocationPage = () => {
   const handleSaveAddress = async () => {
     if (!fullLocation) return;
 
+    const titleMap: Record<string, string> = { Home: "home", Office: "work", Other: "other" };
     const payload = {
-      title: selectedType.toLowerCase(),
+      title: titleMap[selectedType] ?? "other",
       label: fullLocation.label,
       latitude: marker.lat,
       longitude: marker.lng,

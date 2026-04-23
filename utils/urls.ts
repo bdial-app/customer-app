@@ -69,6 +69,16 @@ export const HOME_URLS = {
   CATEGORY_PROVIDERS: '/home/category-providers',
 };
 
+export const EXPLORE_URLS = {
+  FEED: '/explore/feed',
+  TRACK: '/explore/track',
+};
+
+export const INVITE_URLS = {
+  TRACK: '/invite/track',
+  COUNT: '/invite/count',
+};
+
 export const SAVED_ITEM_URLS = {
   TOGGLE: '/saved-items/toggle',
   LIST: '/saved-items',

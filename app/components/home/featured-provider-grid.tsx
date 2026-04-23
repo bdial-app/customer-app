@@ -1,7 +1,7 @@
 "use client";
 import { motion, type Variants } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { star, location } from "ionicons/icons";
+import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 
@@ -17,6 +17,7 @@ interface Provider {
   womenLed?: boolean;
   price?: string;
   description?: string;
+  distance?: number;
 }
 
 const container = {
@@ -123,6 +124,15 @@ const FeaturedProviderGrid = ({
                   ♀ Women-Led
                 </div>
               )}
+              {/* Distance pill */}
+              {provider.distance != null && (
+                <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+                  <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
+                  {provider.distance < 1
+                    ? `${Math.round(provider.distance * 1000)}m`
+                    : `${provider.distance.toFixed(1)} km`}
+                </div>
+              )}
             </div>
             <div className="p-2.5">
               <h4 className="text-sm font-semibold text-slate-800 line-clamp-1">{provider.name}</h4>
@@ -148,6 +158,13 @@ const FeaturedProviderGrid = ({
                 <div className="flex items-center gap-0.5 mt-1 text-[10px] text-slate-400">
                   <IonIcon icon={location} className="w-2.5 h-2.5" />
                   <span className="truncate">{provider.location}</span>
+                  {provider.distance != null && (
+                    <span className="shrink-0 ml-auto text-amber-600 font-semibold">
+                      ~{provider.distance < 1
+                        ? `${Math.round(provider.distance * 1000)}m`
+                        : `${provider.distance.toFixed(1)}km`}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

@@ -25,6 +25,9 @@ import {
   chatbubbleOutline,
   createOutline,
   eyeOutline,
+  navigateOutline,
+  pricetag,
+  peopleOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
@@ -34,6 +37,7 @@ import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "../context/AppContext";
+import { openDirections } from "@/utils/sharing";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -155,6 +159,8 @@ export default function ProviderDetailsPage() {
   const products = (data?.products?.length ?? 0) > 0 ? data!.products : [];
   const reviews = (data?.reviews?.length ?? 0) > 0 ? data!.reviews : [];
   const categories = data?.categories ?? [];
+  const badges = data?.badges ?? [];
+  const activeOffers = data?.activeOffers ?? [];
 
   const galleryImages = useMemo(() => {
     const urls: string[] = [];
@@ -312,7 +318,15 @@ export default function ProviderDetailsPage() {
               <h1 className="text-xl font-bold text-white leading-tight truncate">{provider.brandName}</h1>
               {provider.status === "active" && <IonIcon icon={checkmarkCircle} className="w-5 h-5 text-blue-400 flex-shrink-0" />}
             </div>
-            <p className="text-white/80 text-sm truncate">{categoryLabel}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-white/80 text-sm truncate">{categoryLabel}</p>
+              {badges.length > 0 && badges.slice(0, 3).map((b) => (
+                <span key={b.id} className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white">
+                  {b.type === "gold_seller" ? "🥇" : b.type === "top_rated" ? "⭐" : b.type === "trusted" ? "🛡️" : b.type === "express_service" ? "⚡" : "🌟"}
+                  {b.type.replace(/_/g, " ")}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -380,6 +394,36 @@ export default function ProviderDetailsPage() {
             <InfoChip icon={shieldCheckmark} label="Verified" value={provider.status === "active" ? "Verified" : "Pending"} />
           </div>
 
+          {/* Active Offers */}
+          {activeOffers.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-100/80">
+              <div className="flex items-center gap-2 mb-3">
+                <IonIcon icon={pricetag} className="w-4 h-4 text-amber-600" />
+                <h3 className="text-[15px] font-bold text-gray-900">Active Deals</h3>
+              </div>
+              <div className="space-y-2.5">
+                {activeOffers.map((offer) => (
+                  <div key={offer.id} className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm">
+                    {offer.discountValue && (
+                      <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs font-bold">
+                          {offer.discountType === "percentage" ? `${Number(offer.discountValue)}%` : `₹${Number(offer.discountValue)}`}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">{offer.title}</p>
+                      <p className="text-[11px] text-gray-500 truncate">{offer.description}</p>
+                    </div>
+                    <span className="text-[10px] text-amber-600 font-semibold whitespace-nowrap">
+                      Ends {new Date(offer.endsAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* About */}
           <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <h3 className="text-[15px] font-bold text-gray-900 mb-2">About</h3>
@@ -408,10 +452,34 @@ export default function ProviderDetailsPage() {
                 <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <IonIcon icon={locationOutline} className="w-[18px] h-[18px] text-gray-500" />
                 </div>
-                <p className="text-[13px] text-gray-600 leading-relaxed">{provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}</p>
+                <p className="text-[13px] text-gray-600 leading-relaxed flex-1">{provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}</p>
               </div>
+              {provider.latitude && provider.longitude && (
+                <button
+                  onClick={() => openDirections(Number(provider.latitude), Number(provider.longitude), provider.brandName)}
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+                >
+                  <IonIcon icon={navigateOutline} className="w-4 h-4" />
+                  Get Directions
+                </button>
+              )}
             </div>
           )}
+
+          {/* Invite Friends */}
+          <button
+            onClick={() => router.push("/invite")}
+            className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-100/80 active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-200">
+              <IonIcon icon={peopleOutline} className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-[13px] font-bold text-gray-900">Know someone who&apos;d love this?</p>
+              <p className="text-[11px] text-gray-500">Invite friends to discover local businesses</p>
+            </div>
+            <IonIcon icon={shareSocial} className="w-4 h-4 text-amber-500" />
+          </button>
 
           {/* Business Owner */}
           {owner && (

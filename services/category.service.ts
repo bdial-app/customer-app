@@ -8,6 +8,7 @@ export interface Category {
   slug: string;
   description?: string;
   icon?: string;
+  imageUrl?: string;
   isActive: boolean;
   displayOrder: number;
   children?: Category[];

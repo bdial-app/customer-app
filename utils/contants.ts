@@ -7,4 +7,5 @@ export const ROUTE_PATH = {
     GALLERY: "/gallery",
     PRODUCT_DETAILS: "/product-details",
     HOME: "/",
+    SEARCH: "/search",
 };
