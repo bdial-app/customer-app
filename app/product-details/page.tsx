@@ -30,6 +30,7 @@ import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "@/app/context/AppContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
 import { shareContent, openDirections } from "@/utils/sharing";
+import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -61,6 +62,17 @@ export default function ProductDetailsPage() {
   const isOwnProduct = Boolean(user && provider && user.id === provider.userId);
   const stats = data?.stats;
   const related = data?.related ?? [];
+
+  // ─── Analytics Tracking ─────────────────────────────────────────
+  const source = (searchParams.get("src") as any) || "direct";
+  useTrackProductView(
+    isOwnProduct ? undefined : provider?.id,
+    isOwnProduct ? undefined : id,
+    source,
+  );
+  const { trackShare, trackSave, trackChat, trackCall } = useTrackAction(
+    isOwnProduct ? undefined : provider?.id,
+  );
 
   const photos = useMemo(() => {
     const p: string[] = [];

@@ -95,27 +95,20 @@ function flush() {
   const sessionId = getSessionId();
   const payload = JSON.stringify({ sessionId, events });
 
-  // Prefer sendBeacon for reliability (works on page close)
-  if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-    const blob = new Blob([payload], { type: "application/json" });
-    const sent = navigator.sendBeacon(EVENTS_URL, blob);
-    if (!sent) {
-      // Fallback to fetch
-      fetch(EVENTS_URL, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: payload,
-        keepalive: true,
-      }).catch(() => {});
+  // Always use fetch when possible — sendBeacon can't include auth headers
+  // and some CORS configs block it. Fetch with keepalive survives page nav.
+  fetch(EVENTS_URL, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: payload,
+    keepalive: true,
+  }).catch(() => {
+    // Last resort: sendBeacon (no auth, but at least the event arrives)
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon(EVENTS_URL, blob);
     }
-  } else {
-    fetch(EVENTS_URL, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: payload,
-      keepalive: true,
-    }).catch(() => {});
-  }
+  });
 }
 
 // ─── Setup ──────────────────────────────────────────────────────────
