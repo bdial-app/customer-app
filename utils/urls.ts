@@ -39,6 +39,12 @@ export const PROVIDER_URLS = {
   VERIFY_OTP: "/providers/verify-otp",
   SUBMIT_VERIFICATION: "/providers/submit-verification",
   MY_ANALYTICS: "/providers/my-analytics",
+  MY_OFFERS: "/providers/my-offers",
+  UPDATE_OFFER: (offerId: string) => `/providers/my-offers/${offerId}`,
+  DELETE_OFFER: (offerId: string) => `/providers/my-offers/${offerId}`,
+  SPONSORSHIP_PLANS: "/providers/sponsorship-plans",
+  MY_SPONSORSHIPS: "/providers/my-sponsorships",
+  UPDATE_SPONSORSHIP: (id: string) => `/providers/my-sponsorships/${id}`,
 };
 
 export const PHOTO_URLS = {
@@ -97,4 +103,14 @@ export const CHAT_URLS = {
   UNREAD_COUNT: '/chat/unread-count',
   HEARTBEAT: '/chat/heartbeat',
   PRESENCE: (userId: string) => `/chat/presence/${userId}`,
+};
+
+export const ANALYTICS_URLS = {
+  EVENTS: '/analytics/events',
+  SUMMARY: '/analytics/summary',
+  LEADS: '/analytics/leads',
+  LEAD_DETAIL: (id: string) => `/analytics/leads/${id}`,
+  UNLOCK_LEAD: (id: string) => `/analytics/leads/${id}/unlock`,
+  TOP_PRODUCTS: '/analytics/top-products',
+  PEAK_HOURS: '/analytics/peak-hours',
 };

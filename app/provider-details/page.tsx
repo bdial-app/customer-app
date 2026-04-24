@@ -38,6 +38,7 @@ import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "../context/AppContext";
 import { openDirections } from "@/utils/sharing";
+import { useTrackProviderView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -136,6 +137,7 @@ export default function ProviderDetailsPage() {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const [sheetOpened, setSheetOpened] = useState(false);
+  const [callSheetOpened, setCallSheetOpened] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
@@ -148,12 +150,20 @@ export default function ProviderDetailsPage() {
   const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
 
   const handleToggleSaved = () => {
-    if (!user) return; // Only allow for logged-in users
+    if (!user) return;
+    if (!liked) trackSave();
     toggleSaved.mutate({ itemId: id, itemType: "provider" });
   };
 
   const provider = data?.provider ?? null;
   const isOwnProvider = Boolean(user && provider && user.id === provider.userId);
+
+  // ─── Analytics Tracking ─────────────────────────────────────────
+  const source = (searchParams.get("src") as any) || "direct";
+  useTrackProviderView(isOwnProvider ? undefined : id, source);
+  const { trackChat, trackCall, trackDirection, trackShare, trackSave, trackTabSwitch } = useTrackAction(
+    isOwnProvider ? undefined : id,
+  );
   const stats = data?.stats ?? (provider ? EMPTY_STATS : null);
   const photos = (data?.photos?.length ?? 0) > 0 ? data!.photos : [];
   const products = (data?.products?.length ?? 0) > 0 ? data!.products : [];
@@ -220,6 +230,7 @@ export default function ProviderDetailsPage() {
 
   const handleShare = async () => {
     if (!provider) return;
+    trackShare();
     const shareData = {
       title: provider.brandName,
       text: `Check out ${provider.brandName} – ${categoryLabel}\n⭐ ${stats?.rating ?? 0}\n${provider.description || ""}`,
@@ -358,7 +369,7 @@ export default function ProviderDetailsPage() {
         <div className="bg-white border-b border-gray-100/80 overflow-x-auto no-scrollbar">
           <div className="flex px-1">
             {TABS.map((tab) => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${activeTab === tab ? "text-amber-600" : "text-gray-400"}`}>
+              <button key={tab} onClick={() => { setActiveTab(tab); trackTabSwitch(tab); }} className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${activeTab === tab ? "text-amber-600" : "text-gray-400"}`}>
                 {tab}
                 {activeTab === tab && <span className="absolute bottom-0 left-1/4 right-1/4 h-[2.5px] bg-amber-500 rounded-full" />}
               </button>
@@ -456,7 +467,7 @@ export default function ProviderDetailsPage() {
               </div>
               {provider.latitude && provider.longitude && (
                 <button
-                  onClick={() => openDirections(Number(provider.latitude), Number(provider.longitude), provider.brandName)}
+                  onClick={() => { trackDirection(); openDirections(Number(provider.latitude), Number(provider.longitude), provider.brandName); }}
                   className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
                 >
                   <IonIcon icon={navigateOutline} className="w-4 h-4" />
@@ -660,6 +671,7 @@ export default function ProviderDetailsPage() {
               const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
               if (!token) { router.push('/auth/login'); return; }
               if (!provider?.id) return;
+              trackChat();
               createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
                 onSuccess: (conv) => {
                   dispatch(openChat(conv.id));
@@ -674,13 +686,53 @@ export default function ProviderDetailsPage() {
               <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
               {isCreatingChat ? 'Opening...' : 'Message'}
             </button>
-            <button onClick={() => window.open(`tel:${provider.contactNumber}`)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
+            <button onClick={() => setCallSheetOpened(true)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
               <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
               Call Now
             </button>
           </div>
         )}
       </div>
+
+      {/* Call Sheet */}
+      <Sheet opened={callSheetOpened} onBackdropClick={() => setCallSheetOpened(false)} className="pb-safe !rounded-t-3xl">
+        <div className="px-5 pt-5 pb-8">
+          <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center">
+              <IonIcon icon={callOutline} className="text-3xl text-amber-500" />
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Call</p>
+              <h3 className="text-xl font-bold text-gray-900">{provider?.brandName}</h3>
+            </div>
+            <a
+              href={`tel:${provider?.contactNumber}`}
+              onClick={() => trackCall()}
+              className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
+            >
+              <IonIcon icon={callOutline} className="text-base text-gray-500" />
+              <span className="text-base font-semibold text-gray-800 tracking-wide">
+                {provider?.contactNumber || "Not available"}
+              </span>
+            </a>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => setCallSheetOpened(false)}
+              className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl text-sm font-semibold active:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <a
+              href={`tel:${provider?.contactNumber}`}
+              className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold text-center shadow-sm shadow-amber-200 active:scale-[0.98] transition-all"
+            >
+              Call Now
+            </a>
+          </div>
+        </div>
+      </Sheet>
 
       {/* Review Sheet */}
       <Sheet opened={sheetOpened} onBackdropClick={() => setSheetOpened(false)} className="pb-safe !rounded-t-3xl">

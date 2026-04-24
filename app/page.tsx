@@ -28,6 +28,7 @@ export default function Home() {
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const { userMode, setUserMode } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
@@ -68,6 +69,11 @@ export default function Home() {
       return;
     }
     setActiveTab(tab);
+  };
+
+  const handleNavigateToListings = (subTab: string) => {
+    setListingsSubTab(subTab);
+    setActiveTab("listings");
   };
 
   const getPageTitle = () => {
@@ -123,13 +129,18 @@ export default function Home() {
       {activeTab === "home" && userMode === "customer" && <GeoLocation />}
 
       {activeTab === "home" &&
-        (userMode === "customer" ? <UserHome /> : <ProviderDashboard />)}
+        (userMode === "customer" ? <UserHome /> : <ProviderDashboard onNavigateToListings={handleNavigateToListings} />)}
 
       {activeTab === "explore" && <ExploreContent />}
 
       {activeTab === "saved" && <SavedContent />}
 
-      {activeTab === "listings" && <ProviderListingsManager />}
+      {activeTab === "listings" && (
+        <ProviderListingsManager
+          initialSubTab={listingsSubTab}
+          onSubTabConsumed={() => setListingsSubTab(null)}
+        />
+      )}
 
       {activeTab === "chats" &&
         (userMode === "provider" ? (

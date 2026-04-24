@@ -311,3 +311,131 @@ export const replyToReview = async (
   const { data } = await apiClient.post(`/reviews/${reviewId}/reply`, { replyText });
   return data;
 };
+
+// ─── Offers / Deals ─────────────────────────────────────────────────
+
+export interface ProviderOfferFull {
+  id: string;
+  providerId: string;
+  title: string;
+  description: string | null;
+  discountType: "percentage" | "flat";
+  discountValue: number;
+  minOrderAmount: number | null;
+  maxDiscount: number | null;
+  startsAt: string;
+  endsAt: string;
+  isActive: boolean;
+  usageCount: number;
+  usageLimit: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateOfferPayload {
+  title: string;
+  description?: string;
+  discountType: "percentage" | "flat";
+  discountValue: number;
+  minOrderAmount?: number;
+  maxDiscount?: number;
+  startsAt: string;
+  endsAt: string;
+  usageLimit?: number;
+}
+
+export type UpdateOfferPayload = Partial<CreateOfferPayload>;
+
+export const getMyOffers = async (): Promise<ProviderOfferFull[]> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.MY_OFFERS);
+  return data;
+};
+
+export const createOffer = async (
+  payload: CreateOfferPayload,
+): Promise<ProviderOfferFull> => {
+  const { data } = await apiClient.post(PROVIDER_URLS.MY_OFFERS, payload);
+  return data;
+};
+
+export const updateOffer = async (
+  offerId: string,
+  payload: UpdateOfferPayload,
+): Promise<ProviderOfferFull> => {
+  const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE_OFFER(offerId), payload);
+  return data;
+};
+
+export const deleteOffer = async (offerId: string): Promise<{ deleted: boolean }> => {
+  const { data } = await apiClient.delete(PROVIDER_URLS.DELETE_OFFER(offerId));
+  return data;
+};
+
+// ─── Sponsorship Types ──────────────────────────────────────────────
+
+export interface SponsorshipPlan {
+  id: string;
+  name: string;
+  type: 'carousel' | 'inline' | 'top_result';
+  price: number;
+  duration: number;
+  features: string[];
+  recommended: boolean;
+}
+
+export interface SponsoredListing {
+  id: string;
+  providerId: string;
+  type: 'carousel' | 'inline' | 'top_result';
+  budgetAmount: number;
+  spentAmount: number;
+  costPerClick: number;
+  impressions: number;
+  clicks: number;
+  targetCategoryIds: string[] | null;
+  targetCities: string[] | null;
+  targetRadius: number | null;
+  startsAt: string;
+  endsAt: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CreateSponsorshipPayload {
+  type: 'carousel' | 'inline' | 'top_result';
+  budgetAmount: number;
+  costPerClick?: number;
+  targetCategoryIds?: string[];
+  targetCities?: string[];
+  targetRadius?: number;
+  startsAt: string;
+  endsAt: string;
+}
+
+export interface UpdateSponsorshipPayload {
+  budgetAmount?: number;
+  isActive?: boolean;
+  endsAt?: string;
+}
+
+// ─── Sponsorship API Functions ──────────────────────────────────────
+
+export const getSponsorshipPlans = async (): Promise<SponsorshipPlan[]> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.SPONSORSHIP_PLANS);
+  return data;
+};
+
+export const getMySponsorships = async (): Promise<SponsoredListing[]> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.MY_SPONSORSHIPS);
+  return data;
+};
+
+export const createSponsorship = async (payload: CreateSponsorshipPayload): Promise<SponsoredListing> => {
+  const { data } = await apiClient.post(PROVIDER_URLS.MY_SPONSORSHIPS, payload);
+  return data;
+};
+
+export const updateSponsorship = async (id: string, payload: UpdateSponsorshipPayload): Promise<SponsoredListing> => {
+  const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE_SPONSORSHIP(id), payload);
+  return data;
+};

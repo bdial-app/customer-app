@@ -1,0 +1,363 @@
+"use client";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { IonIcon } from "@ionic/react";
+import {
+  rocketOutline,
+  flashOutline,
+  trendingUpOutline,
+  checkmarkCircle,
+  closeCircleOutline,
+  timeOutline,
+  eyeOutline,
+  fingerPrintOutline,
+  walletOutline,
+  sparklesOutline,
+  arrowForwardOutline,
+  shieldCheckmarkOutline,
+} from "ionicons/icons";
+import {
+  useSponsorshipPlans,
+  useMySponsorships,
+  useCreateSponsorship,
+  useUpdateSponsorship,
+} from "@/hooks/useMyProvider";
+import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
+
+const typeLabels: Record<string, string> = {
+  carousel: "Carousel",
+  inline: "In-Feed",
+  top_result: "Top Result",
+};
+
+const typeIcons: Record<string, string> = {
+  carousel: flashOutline,
+  inline: trendingUpOutline,
+  top_result: rocketOutline,
+};
+
+const typeColors: Record<string, string> = {
+  carousel: "from-blue-500 to-blue-600",
+  inline: "from-emerald-500 to-emerald-600",
+  top_result: "from-amber-500 to-orange-500",
+};
+
+const ProviderSponsorTab = () => {
+  const { data: plans, isLoading: plansLoading } = useSponsorshipPlans();
+  const { data: sponsorships, isLoading: sponsorshipsLoading } = useMySponsorships();
+  const createMutation = useCreateSponsorship();
+  const updateMutation = useUpdateSponsorship();
+  const [selectedPlan, setSelectedPlan] = useState<SponsorshipPlan | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > new Date()) ?? [];
+  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= new Date()) ?? [];
+
+  const handleSelectPlan = (plan: SponsorshipPlan) => {
+    setSelectedPlan(plan);
+    setShowConfirm(true);
+  };
+
+  const handleCreateSponsorship = () => {
+    if (!selectedPlan) return;
+    const now = new Date();
+    const end = new Date(now);
+    end.setDate(end.getDate() + selectedPlan.duration);
+
+    const payload: CreateSponsorshipPayload = {
+      type: selectedPlan.type,
+      budgetAmount: selectedPlan.price,
+      startsAt: now.toISOString(),
+      endsAt: end.toISOString(),
+    };
+
+    createMutation.mutate(payload, {
+      onSuccess: () => {
+        setShowConfirm(false);
+        setSelectedPlan(null);
+      },
+    });
+  };
+
+  const handleToggleActive = (sponsorship: SponsoredListing) => {
+    updateMutation.mutate({
+      id: sponsorship.id,
+      payload: { isActive: !sponsorship.isActive },
+    });
+  };
+
+  const isLoading = plansLoading || sponsorshipsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="px-4 space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-40 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 space-y-6 pb-8">
+      {/* Header */}
+      <div className="text-center pt-2">
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-4 py-1.5 rounded-full text-xs font-semibold border border-amber-100">
+          <IonIcon icon={rocketOutline} className="text-sm" />
+          Boost Your Visibility
+        </div>
+        <p className="text-xs text-slate-500 mt-2">
+          Get more customers by sponsoring your listing
+        </p>
+      </div>
+
+      {/* Active Sponsorships */}
+      {activeSponsorships.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+            <IonIcon icon={checkmarkCircle} className="text-emerald-500" />
+            Active Sponsorships
+          </h3>
+          <div className="space-y-3">
+            {activeSponsorships.map((s) => (
+              <SponsorshipCard key={s.id} sponsorship={s} onToggle={handleToggleActive} isUpdating={updateMutation.isPending} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Plans */}
+      <div>
+        <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+          <IonIcon icon={sparklesOutline} className="text-amber-500" />
+          Choose a Plan
+        </h3>
+        <div className="space-y-3">
+          {plans?.map((plan) => (
+            <PlanCard key={plan.id} plan={plan} onSelect={handleSelectPlan} />
+          ))}
+        </div>
+      </div>
+
+      {/* Payment Notice */}
+      <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center flex-shrink-0">
+            <IonIcon icon={walletOutline} className="text-slate-600 text-lg" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-700">Payment Gateway Coming Soon</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Sponsorship activation will require payment once the gateway is integrated. For now, you can explore plans and see how it works.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Past Sponsorships */}
+      {pastSponsorships.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+            <IonIcon icon={timeOutline} className="text-slate-400" />
+            Past Sponsorships
+          </h3>
+          <div className="space-y-2">
+            {pastSponsorships.map((s) => (
+              <SponsorshipCard key={s.id} sponsorship={s} onToggle={handleToggleActive} isUpdating={updateMutation.isPending} isPast />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Sheet */}
+      <AnimatePresence>
+        {showConfirm && selectedPlan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center"
+            onClick={() => setShowConfirm(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              className="w-full max-w-md bg-white rounded-t-3xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6" />
+              
+              <div className="text-center mb-6">
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${typeColors[selectedPlan.type]} flex items-center justify-center mx-auto mb-3`}>
+                  <IonIcon icon={typeIcons[selectedPlan.type]} className="text-white text-2xl" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">{selectedPlan.name}</h3>
+                <p className="text-xs text-slate-500 mt-1">{selectedPlan.duration} days · {typeLabels[selectedPlan.type]} placement</p>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Total Amount</span>
+                  <span className="text-xl font-bold text-slate-800">₹{selectedPlan.price}</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 mb-6 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                <IonIcon icon={shieldCheckmarkOutline} className="text-amber-500 text-lg flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-700">
+                  Payment gateway is not yet integrated. This will create a sponsorship entry. Actual billing will be enabled soon.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateSponsorship}
+                  disabled={createMutation.isPending}
+                  className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {createMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      Activate <IonIcon icon={arrowForwardOutline} className="text-base" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ─── Plan Card ──────────────────────────────────────────────────────
+
+const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: SponsorshipPlan) => void }) => (
+  <motion.div
+    whileTap={{ scale: 0.98 }}
+    onClick={() => onSelect(plan)}
+    className={`relative bg-white rounded-2xl border p-4 cursor-pointer transition-all ${
+      plan.recommended ? "border-teal-200 shadow-lg shadow-teal-100/50" : "border-slate-100 hover:border-slate-200"
+    }`}
+  >
+    {plan.recommended && (
+      <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+        RECOMMENDED
+      </div>
+    )}
+
+    <div className="flex items-start gap-3">
+      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${typeColors[plan.type]} flex items-center justify-center flex-shrink-0`}>
+        <IonIcon icon={typeIcons[plan.type]} className="text-white text-xl" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-bold text-slate-800">{plan.name}</h4>
+          <span className="text-base font-bold text-teal-600">₹{plan.price}</span>
+        </div>
+        <p className="text-[11px] text-slate-500 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {plan.features.map((f, i) => (
+            <span key={i} className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded-full">
+              <IonIcon icon={checkmarkCircle} className="text-emerald-400 text-[10px]" />
+              {f}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </motion.div>
+);
+
+// ─── Active/Past Sponsorship Card ───────────────────────────────────
+
+const SponsorshipCard = ({
+  sponsorship,
+  onToggle,
+  isUpdating,
+  isPast,
+}: {
+  sponsorship: SponsoredListing;
+  onToggle: (s: SponsoredListing) => void;
+  isUpdating: boolean;
+  isPast?: boolean;
+}) => {
+  const daysLeft = Math.max(0, Math.ceil((new Date(sponsorship.endsAt).getTime() - Date.now()) / 86400000));
+  const spent = sponsorship.spentAmount ?? 0;
+  const budget = sponsorship.budgetAmount ?? 0;
+  const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+  const ctr = sponsorship.impressions > 0 ? ((sponsorship.clicks / sponsorship.impressions) * 100).toFixed(1) : "0.0";
+
+  return (
+    <div className={`bg-white rounded-2xl border p-4 ${isPast ? "border-slate-100 opacity-70" : "border-slate-100"}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${typeColors[sponsorship.type]} flex items-center justify-center`}>
+            <IonIcon icon={typeIcons[sponsorship.type]} className="text-white text-sm" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-800">{typeLabels[sponsorship.type]} Sponsorship</p>
+            <p className="text-[10px] text-slate-500">
+              {isPast ? "Ended" : `${daysLeft} days left`}
+            </p>
+          </div>
+        </div>
+        {!isPast && (
+          <button
+            onClick={() => onToggle(sponsorship)}
+            disabled={isUpdating}
+            className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${
+              sponsorship.isActive
+                ? "bg-red-50 text-red-600 border border-red-100"
+                : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+            }`}
+          >
+            {sponsorship.isActive ? "Pause" : "Resume"}
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="bg-slate-50 rounded-xl p-2 text-center">
+          <IonIcon icon={eyeOutline} className="text-blue-500 text-sm" />
+          <p className="text-xs font-bold text-slate-800 mt-0.5">{sponsorship.impressions}</p>
+          <p className="text-[9px] text-slate-500">Views</p>
+        </div>
+        <div className="bg-slate-50 rounded-xl p-2 text-center">
+          <IonIcon icon={fingerPrintOutline} className="text-emerald-500 text-sm" />
+          <p className="text-xs font-bold text-slate-800 mt-0.5">{sponsorship.clicks}</p>
+          <p className="text-[9px] text-slate-500">Clicks</p>
+        </div>
+        <div className="bg-slate-50 rounded-xl p-2 text-center">
+          <IonIcon icon={trendingUpOutline} className="text-amber-500 text-sm" />
+          <p className="text-xs font-bold text-slate-800 mt-0.5">{ctr}%</p>
+          <p className="text-[9px] text-slate-500">CTR</p>
+        </div>
+      </div>
+
+      {/* Budget Progress */}
+      <div>
+        <div className="flex items-center justify-between text-[10px] mb-1">
+          <span className="text-slate-500">Budget Used</span>
+          <span className="font-semibold text-slate-700">₹{spent} / ₹{budget}</span>
+        </div>
+        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProviderSponsorTab;

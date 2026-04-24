@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
   addOutline,
@@ -12,11 +12,10 @@ import {
   pricetagOutline,
   checkmarkCircleOutline,
   alertCircleOutline,
+  closeCircleOutline,
 } from "ionicons/icons";
-import { Formik, Form } from "formik";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Sheet, Page, Navbar, List, Button, Block } from "konsta/react";
-import { FormikInput } from "../formik-input";
 import { ProviderDetailsProduct } from "@/services/provider.service";
 import { AppDialog } from "../app-dialog";
 import {
@@ -24,6 +23,7 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from "@/hooks/useProduct";
+import { uploadProviderPhotos } from "@/services/photo.service";
 
 interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
@@ -44,23 +44,28 @@ const ProviderProductsTab = ({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<ProviderDetailsProduct | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
 
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const isSaving = createMutation.isPending || updateMutation.isPending || isUploading;
 
   const handleAdd = () => {
     setEditing(null);
-    setPhotoPreview(null);
+    setPhotoFiles([]);
+    setPhotoPreviews([]);
     setSheetOpen(true);
   };
 
   const handleEdit = (p: ProviderDetailsProduct) => {
     setEditing(p);
-    setPhotoPreview(p.photoUrl);
+    setPhotoFiles([]);
+    setPhotoPreviews(p.photoUrl ? [p.photoUrl] : []);
     setSheetOpen(true);
   };
 
@@ -76,6 +81,31 @@ const ProviderProductsTab = ({
 
   const handleToggleActive = (p: ProviderDetailsProduct) => {
     updateMutation.mutate({ id: p.id, isActive: !p.isActive });
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const newFiles = [...photoFiles, ...files].slice(0, 5);
+    setPhotoFiles(newFiles);
+    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
+    // Keep existing server URLs for editing, plus new file previews
+    if (editing?.photoUrl && photoPreviews[0] === editing.photoUrl) {
+      setPhotoPreviews([editing.photoUrl, ...newPreviews]);
+    } else {
+      setPhotoPreviews(newPreviews);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePhoto = (index: number) => {
+    const isServerUrl = editing?.photoUrl && photoPreviews[index] === editing.photoUrl;
+    const newPreviews = photoPreviews.filter((_, i) => i !== index);
+    setPhotoPreviews(newPreviews);
+    if (!isServerUrl) {
+      const fileIndex = editing?.photoUrl ? index - 1 : index;
+      setPhotoFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+    }
   };
 
   const activeCount = products.filter((p) => p.isActive).length;
@@ -239,209 +269,221 @@ const ProviderProductsTab = ({
 
       <div className="h-20" />
 
-      {/* Add/Edit Sheet */}
-      <Sheet
-        opened={sheetOpen}
-        onBackdropClick={() => !isSaving && setSheetOpen(false)}
-        className="pb-safe rounded-t-3xl !h-[88vh]"
-      >
-        <Page className="flex flex-col bg-white">
-          <Navbar
-            title={editing ? "Edit Product" : "New Product"}
-            left={
-              <Button
-                clear
-                onClick={() => !isSaving && setSheetOpen(false)}
-              >
-                <IonIcon icon={closeOutline} className="w-5 h-5" />
-              </Button>
-            }
-            right={
-              editing && (
-                <Button
-                  clear
-                  onClick={() => setDeleteOpen(true)}
-                  className="!text-red-500"
-                >
-                  <IonIcon icon={trashOutline} className="w-5 h-5" />
-                </Button>
-              )
-            }
-          />
-          <div className="overflow-y-auto flex-1 pb-8">
-            <Formik
-              initialValues={{
-                name: editing?.name || "",
-                description: editing?.description || "",
-                price: editing?.price != null ? String(editing.price) : "",
-                currency: editing?.currency || "INR",
-                photoUrl: editing?.photoUrl || "",
-              }}
-              validationSchema={productSchema}
-              enableReinitialize
-              onSubmit={(values) => {
-                const payload = {
-                  name: values.name,
-                  description: values.description || undefined,
-                  price: values.price ? parseFloat(values.price) : undefined,
-                  currency: values.currency || "INR",
-                  photoUrl: values.photoUrl || undefined,
-                };
-                if (editing) {
-                  updateMutation.mutate(
-                    { id: editing.id, ...payload },
-                    {
-                      onSuccess: () => {
-                        setSheetOpen(false);
-                        setEditing(null);
-                      },
-                    },
-                  );
-                } else if (providerId) {
-                  createMutation.mutate(
-                    { providerId, ...payload },
-                    {
-                      onSuccess: () => setSheetOpen(false),
-                    },
-                  );
-                }
-              }}
+      {/* Add/Edit Modal */}
+      <AnimatePresence>
+        {sheetOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center"
+            onClick={() => !isSaving && setSheetOpen(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              className="w-full max-w-md bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              {({ values, setFieldValue, isValid, dirty }) => (
-                <Form className="contents">
-                  {/* Photo upload */}
-                  <label className="block mt-5 mb-4 text-center cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const url = URL.createObjectURL(file);
-                          setPhotoPreview(url);
-                          setFieldValue("photoUrl", url);
-                        }
-                      }}
-                    />
-                    <div className="w-44 h-44 mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center relative transition-all active:scale-[0.97]">
-                      {photoPreview || values.photoUrl ? (
-                        <>
-                          <img
-                            src={photoPreview || values.photoUrl}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                            <span className="text-white text-xs font-semibold px-3 py-1 border border-white/50 rounded-full">
-                              Change Photo
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-2">
-                            <IonIcon
-                              icon={cameraOutline}
-                              className="text-xl text-teal-500"
-                            />
-                          </div>
-                          <span className="text-xs font-semibold text-slate-500">
-                            Upload Photo
-                          </span>
-                          <span className="text-[10px] text-slate-400 mt-0.5">
-                            Recommended: 800×800px
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </label>
-
-                  {/* Fields */}
-                  <div className="px-4 pb-1">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Product Details
-                    </p>
-                  </div>
-                  <List strongIos insetIos className="!mt-0">
-                    <FormikInput
-                      name="name"
-                      label="Name"
-                      type="text"
-                      placeholder="e.g. Bridal Mehendi Package"
-                      media={<IonIcon icon={cubeOutline} />}
-                    />
-                    <FormikInput
-                      name="price"
-                      label="Price (₹)"
-                      type="number"
-                      placeholder="e.g. 2500"
-                      media={<IonIcon icon={pricetagOutline} />}
-                    />
-                    <FormikInput
-                      name="description"
-                      label="Description"
-                      type="textarea"
-                      placeholder="What's included, duration, special features..."
-                      inputClassName="!h-28 resize-none"
-                    />
-                  </List>
-
-                  {/* Currency */}
-                  <div className="px-4 pb-3">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                      Currency
-                    </p>
-                    <div className="flex gap-2">
-                      {(["INR", "USD"] as const).map((c) => (
-                        <motion.button
-                          key={c}
-                          type="button"
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setFieldValue("currency", c)}
-                          className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                            values.currency === c
-                              ? "bg-teal-500 text-white border-teal-500"
-                              : "bg-white text-slate-600 border-slate-200"
-                          }`}
-                        >
-                          {c === "INR" ? "₹ INR" : "$ USD"}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Submit */}
-                  <Block className="px-4 pt-2">
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      type="submit"
-                      disabled={!isValid || (!dirty && !editing) || isSaving}
-                      className="w-full py-3.5 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              {/* Header */}
+              <div className="sticky top-0 bg-white z-10 border-b border-slate-100 px-5 py-4 flex items-center justify-between rounded-t-3xl">
+                <h3 className="text-base font-bold text-slate-800">
+                  {editing ? "Edit Product" : "New Product"}
+                </h3>
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <button
+                      onClick={() => setDeleteOpen(true)}
+                      className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center"
                     >
-                      {isSaving ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          {editing ? "Saving..." : "Adding..."}
-                        </>
-                      ) : editing ? (
-                        "Save Changes"
-                      ) : (
-                        "Add Product"
+                      <IonIcon icon={trashOutline} className="text-sm text-red-500" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => !isSaving && setSheetOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                  >
+                    <IonIcon icon={closeOutline} className="text-lg text-slate-500" />
+                  </button>
+                </div>
+              </div>
+
+              <Formik
+                initialValues={{
+                  name: editing?.name || "",
+                  description: editing?.description || "",
+                  price: editing?.price != null ? String(editing.price) : "",
+                  currency: editing?.currency || "INR",
+                }}
+                validationSchema={productSchema}
+                enableReinitialize
+                onSubmit={async (values) => {
+                  let photoUrl = editing?.photoUrl || undefined;
+
+                  // Upload new photos if any
+                  if (photoFiles.length > 0 && providerId) {
+                    try {
+                      setIsUploading(true);
+                      const uploaded = await uploadProviderPhotos(providerId, photoFiles);
+                      if (uploaded.length > 0) {
+                        photoUrl = uploaded[0].imageUrl;
+                      }
+                    } catch {
+                      // Continue with existing photo
+                    } finally {
+                      setIsUploading(false);
+                    }
+                  }
+
+                  const payload = {
+                    name: values.name,
+                    description: values.description || undefined,
+                    price: values.price ? parseFloat(values.price) : undefined,
+                    currency: values.currency || "INR",
+                    photoUrl,
+                  };
+
+                  if (editing) {
+                    updateMutation.mutate(
+                      { id: editing.id, ...payload },
+                      { onSuccess: () => { setSheetOpen(false); setEditing(null); } },
+                    );
+                  } else if (providerId) {
+                    createMutation.mutate(
+                      { providerId, ...payload },
+                      { onSuccess: () => setSheetOpen(false) },
+                    );
+                  }
+                }}
+              >
+                {({ values, setFieldValue, isValid, dirty }) => (
+                  <Form className="p-5 space-y-5">
+                    {/* Photo Upload Section */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">
+                        Photos <span className="text-slate-400 font-normal">(up to 5)</span>
+                      </label>
+                      <div className="flex gap-2 flex-wrap">
+                        {photoPreviews.map((url, i) => (
+                          <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(i)}
+                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm"
+                            >
+                              <IonIcon icon={closeOutline} className="text-white text-[10px]" />
+                            </button>
+                          </div>
+                        ))}
+                        {photoPreviews.length < 5 && (
+                          <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-300 transition-colors">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={handlePhotoSelect}
+                            />
+                            <IonIcon icon={cameraOutline} className="text-lg text-slate-400" />
+                            <span className="text-[9px] text-slate-400 mt-0.5">Add</span>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Product Name */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">Product Name</label>
+                      <Field
+                        name="name"
+                        placeholder="e.g. Bridal Mehendi Package"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                      />
+                      <ErrorMessage name="name" component="p" className="text-[10px] text-red-500 mt-1" />
+                    </div>
+
+                    {/* Price */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Price ({values.currency === "INR" ? "₹" : "$"})
+                      </label>
+                      <Field
+                        name="price"
+                        type="number"
+                        placeholder="e.g. 2500"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                      />
+                      <ErrorMessage name="price" component="p" className="text-[10px] text-red-500 mt-1" />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">Description</label>
+                      <Field
+                        as="textarea"
+                        name="description"
+                        rows={3}
+                        placeholder="What's included, duration, special features..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors resize-none"
+                      />
+                    </div>
+
+                    {/* Currency */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-2">Currency</label>
+                      <div className="flex gap-2">
+                        {(["INR", "USD"] as const).map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setFieldValue("currency", c)}
+                            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                              values.currency === c
+                                ? "bg-teal-500 text-white border-teal-500"
+                                : "bg-white text-slate-600 border-slate-200"
+                            }`}
+                          >
+                            {c === "INR" ? "₹ INR" : "$ USD"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Submit */}
+                    <div className="pt-2 pb-4">
+                      <button
+                        type="submit"
+                        disabled={!isValid || (!dirty && photoFiles.length === 0 && !editing) || isSaving}
+                        className="w-full py-3.5 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSaving ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            {isUploading ? "Uploading photos..." : editing ? "Saving..." : "Adding..."}
+                          </>
+                        ) : editing ? (
+                          "Save Changes"
+                        ) : (
+                          "Add Product"
+                        )}
+                      </button>
+                      {(createMutation.isError || updateMutation.isError) && (
+                        <p className="text-xs text-red-500 text-center mt-2">
+                          Something went wrong. Please try again.
+                        </p>
                       )}
-                    </motion.button>
-                    {(createMutation.isError || updateMutation.isError) && (
-                      <p className="text-xs text-red-500 text-center mt-2">
-                        Something went wrong. Please try again.
-                      </p>
-                    )}
-                  </Block>
-                </Form>
-              )}
-            </Formik>
-          </div>
-        </Page>
-      </Sheet>
+                    </div>
+                  </Form>
+                )}
+              </Formik>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation */}
       <AppDialog

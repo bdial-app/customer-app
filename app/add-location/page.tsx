@@ -6,28 +6,18 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import {
-  Page,
-  Navbar,
-  Block,
-  BlockTitle,
-  List,
-  ListInput,
-  ListItem,
-  Button,
-  Searchbar,
-  Chip,
-} from "konsta/react";
+import { Page } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
   arrowBack,
   locateOutline,
-  pin,
   search,
-  home,
-  business,
-  ellipsisHorizontal,
-  ellipsisHorizontalCircleOutline,
+  homeOutline,
+  briefcaseOutline,
+  locationOutline,
+  checkmarkCircle,
+  closeCircle,
+  navigateOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { GoogleMap, useLoadScript } from "@react-google-maps/api";
@@ -37,10 +27,10 @@ import {
   reverseGeocode,
   ReverseGeocodeResponse,
 } from "@/services/geocode.service";
-import AddressBarNavigation from "../components/geo-location/address-bar-navigation";
 import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Custom Advanced Marker Component to replace deprecated google.maps.Marker
+// Custom Advanced Marker Component
 const AdvancedMarker = ({
   position,
   map,
@@ -54,15 +44,11 @@ const AdvancedMarker = ({
 
   useEffect(() => {
     if (!map) return;
-
-    // Create the Advanced Marker
     const marker = new google.maps.marker.AdvancedMarkerElement({
       map,
       position,
     });
-
     markerRef.current = marker;
-
     return () => {
       if (markerRef.current) {
         markerRef.current.map = null;
@@ -85,9 +71,15 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-  lat: 18.5204, // Pune
+  lat: 18.5204,
   lng: 73.8567,
 };
+
+const locationTypes = [
+  { key: "Home", icon: homeOutline, label: "Home", value: "home" },
+  { key: "Office", icon: briefcaseOutline, label: "Office", value: "work" },
+  { key: "Other", icon: locationOutline, label: "Other", value: "other" },
+];
 
 const AddLocationPage = () => {
   const router = useRouter();
@@ -95,10 +87,10 @@ const AddLocationPage = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [selectedType, setSelectedType] = useState("Home");
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const libraries: ("marker" | "places")[] = useMemo(() => ["marker"], []);
 
-  // Google Maps Logic
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
     libraries,
@@ -113,11 +105,9 @@ const AddLocationPage = () => {
 
   const createSavedLocationMutation = useCreateSavedLocation();
 
-  // Search Hook
   const { data: searchResults, isLoading: isSearchLoading } =
     useSearchGeocode(searchQuery);
 
-  // Reverse geocode
   const getAddress = async (lat: number, lng: number) => {
     try {
       setIsReverseLoading(true);
@@ -144,14 +134,17 @@ const AddLocationPage = () => {
       map.setZoom(16);
     }
 
-    // Get full details (city, area, label, fullAddress, placeId)
     await getAddress(lat, lng);
   };
 
   const handleSaveAddress = async () => {
     if (!fullLocation) return;
 
-    const titleMap: Record<string, string> = { Home: "home", Office: "work", Other: "other" };
+    const titleMap: Record<string, string> = {
+      Home: "home",
+      Office: "work",
+      Other: "other",
+    };
     const payload = {
       title: titleMap[selectedType] ?? "other",
       label: fullLocation.label,
@@ -170,18 +163,13 @@ const AddLocationPage = () => {
     });
   };
 
-  // On mount, get current location
   useEffect(() => {
     handleLocateMe();
   }, []);
 
-  // Update marker and center map during mount if needed, but handleLocateMe already does this.
-
-  // On map click
   const handleClick = useCallback((e: any) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-
     setMarker({ lat, lng });
     getAddress(lat, lng);
   }, []);
@@ -190,20 +178,13 @@ const AddLocationPage = () => {
     setMap(mapInstance);
   }, []);
 
-  const mockLocations = [
-    // ... (rest)
-    { title: "Camp, Pune", area: "Maharashtra, India" },
-    { title: "MG Road, Pune", area: "Maharashtra, India" },
-    { title: "Koregaon Park, Pune", area: "Maharashtra, India" },
-    { title: "Bohri Ali, Pune", area: "Maharashtra, India" },
-    { title: "Viman Nagar, Pune", area: "Maharashtra, India" },
-    { title: "Kalyani Nagar, Pune", area: "Maharashtra, India" },
-    { title: "Hadapsar, Pune", area: "Maharashtra, India" },
-    { title: "Magarpatta, Pune", area: "Maharashtra, India" },
-  ];
-
   const handleBack = () => {
-    router.back();
+    if (isFocused) {
+      setIsFocused(false);
+      setSearchQuery("");
+    } else {
+      router.back();
+    }
   };
 
   const handleLocateMe = () => {
@@ -226,201 +207,284 @@ const AddLocationPage = () => {
     );
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    searchInputRef.current?.focus();
+  };
+
   return (
-    <Page className="flex flex-col h-full">
-      <Navbar
-        title={isFocused ? "Search Location" : "Add Address"}
-        left={
-          <button onClick={handleBack} className="link">
-            <IonIcon icon={arrowBack} className="text-2xl" />
-          </button>
-        }
-        leftClassName="w-11"
-        className="!pb-4"
-      />
-
-      <div className="flex flex-col flex-1">
-        {/* Hide Map and Form when searching */}
-        {!isFocused && (
-          <div className="flex-1 relative w-full h-80 bg-slate-200 overflow-hidden flex items-center justify-center transition-opacity duration-300">
-            {isLoaded ? (
-              <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={marker}
-                zoom={15}
-                onLoad={onMapLoad}
-                onClick={handleClick}
-                options={{
-                  disableDefaultUI: true,
-                  zoomControl: false,
-                  mapId: "3d186cf47c01e972b8b1486d",
-                }}
-              >
-                <AdvancedMarker map={map} position={marker} />
-              </GoogleMap>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <div className="text-slate-400 text-sm">Loading Map...</div>
-              </div>
-            )}
-
-            {/* Floating "Locate Me" Button */}
+    <Page className="bg-white dark:bg-neutral-950">
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center gap-3 px-4 pt-3 pb-2">
             <button
-              onClick={handleLocateMe}
-              className="absolute bottom-4 w-12 h-12 grid place-content-center right-4 bg-white p-3 rounded-full shadow-lg active:scale-95 transition-transform z-10"
+              onClick={handleBack}
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all"
             >
-              <IonIcon
-                icon={locateOutline}
-                className="text-2xl text-blue-500"
-              />
+              <IonIcon icon={arrowBack} className="text-xl text-neutral-800 dark:text-neutral-200" />
             </button>
+            <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              {isFocused ? "Search Location" : "Add Address"}
+            </h1>
           </div>
-        )}
 
-        <div>
-          <BlockTitle className={!isFocused ? "mt-6" : "mt-2"}>
-            {isFocused ? "Results" : "Location Details"}
-          </BlockTitle>
-
-          <Block>
-            <Searchbar
-              placeholder="Search for your building/area..."
-              onInput={(e: any) => setSearchQuery(e.target.value)}
-              value={searchQuery}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => {
-                setTimeout(() => {
-                  if (!searchQuery) setIsFocused(false);
-                }, 200);
-              }}
-              disableButton
-              onDisable={() => {
-                setIsFocused(false);
-                setSearchQuery("");
-              }}
-            />
-
-            {!isFocused && address && (
-              <div className="mt-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                <AddressBarNavigation
-                  title={locationLabel || "Selected Location"}
-                  address={address}
-                  isLoading={isReverseLoading}
-                  hideIcon
-                  hideChevron
-                />
-              </div>
-            )}
-          </Block>
-
-          {!isFocused ? (
-            <div>
-              <BlockTitle className="mt-6 uppercase text-xs font-bold tracking-widest text-slate-400">
-                Save As
-              </BlockTitle>
-              <Block className="flex gap-2 flex-wrap !mt-2">
-                <Chip
-                  className={`transition-all duration-200 cursor-pointer ${
-                    selectedType === "Home"
-                      ? "bg-blue-500 text-white shadow-md shadow-blue-200"
-                      : "bg-slate-100 text-slate-600 border border-slate-200"
-                  }`}
-                  // media={
-                  //   <IonIcon
-                  //     icon={home}
-                  //     className={`w-8 ${selectedType === "Home" ? "text-white" : "text-slate-400"}`}
-                  //   />
-                  // }
-                  onClick={() => setSelectedType("Home")}
+          {/* Search Bar */}
+          <div className="px-4 pb-3">
+            <div className="relative flex items-center">
+              <IonIcon
+                icon={search}
+                className="absolute left-3.5 text-neutral-400 text-lg z-10 pointer-events-none"
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search for area, street, building..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                className="w-full h-11 pl-10 pr-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 outline-none focus:ring-2 focus:ring-amber-400/50 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 text-neutral-400 hover:text-neutral-600"
                 >
-                  Home
-                </Chip>
-                <Chip
-                  className={`transition-all duration-200 cursor-pointer ${
-                    selectedType === "Office"
-                      ? "bg-blue-500 text-white shadow-md shadow-blue-200"
-                      : "bg-slate-100 text-slate-600 border border-slate-200"
-                  }`}
-                  // media={
-                  //   <IonIcon
-                  //     icon={business}
-                  //     className={`w-8 ${selectedType === "Office" ? "text-white" : "text-slate-400"}`}
-                  //   />
-                  // }
-                  onClick={() => setSelectedType("Office")}
-                >
-                  Office
-                </Chip>
-                <Chip
-                  className={`transition-all duration-200 cursor-pointer ${
-                    selectedType === "Other"
-                      ? "bg-blue-500 text-white shadow-md shadow-blue-200"
-                      : "bg-slate-100 text-slate-600 border border-slate-200"
-                  }`}
-                  // media={
-                  //   <IonIcon
-                  //     icon={ellipsisHorizontalCircleOutline}
-                  //     className={`w-8 ${selectedType === "Other" ? "text-white" : "text-slate-400"}`}
-                  //   />
-                  // }
-                  onClick={() => setSelectedType("Other")}
-                >
-                  Other
-                </Chip>
-              </Block>
-
-              <Block className="mt-8">
-                <Button
-                  large
-                  rounded
-                  onClick={handleSaveAddress}
-                  disabled={!address || createSavedLocationMutation.isPending}
-                >
-                  {createSavedLocationMutation.isPending
-                    ? "Saving..."
-                    : "Save Address"}
-                </Button>
-              </Block>
-            </div>
-          ) : (
-            <>
-              {searchResults && searchResults.length > 0 ? (
-                <List strong inset className="mt-0">
-                  {searchResults.map((loc) => (
-                    <ListItem
-                      key={loc.placeId}
-                      link
-                      title={loc.mainText}
-                      text={loc.secondaryText}
-                      onClick={() => handleSelectLocation(loc)}
-                    />
-                  ))}
-                </List>
-              ) : searchQuery.length >= 3 && !isSearchLoading ? (
-                <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500 gap-2">
-                  <IonIcon
-                    icon={search}
-                    className="text-4xl text-slate-300 mb-2"
-                  />
-                  <div className="text-lg font-semibold text-slate-800">
-                    No results found
-                  </div>
-                  <div className="text-sm">
-                    We couldn't find anything matching "{searchQuery}"
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 text-center text-slate-500 text-sm">
-                  {isSearchLoading
-                    ? "Searching..."
-                    : searchQuery.length < 3
-                      ? "Type at least 3 characters to search..."
-                      : "No results found"}
-                </div>
+                  <IonIcon icon={closeCircle} className="text-lg" />
+                </button>
               )}
-            </>
-          )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            {isFocused ? (
+              /* Search Results */
+              <motion.div
+                key="search"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="pb-8"
+              >
+                {/* Use Current Location Button */}
+                <button
+                  onClick={() => {
+                    handleLocateMe();
+                    setIsFocused(false);
+                    setSearchQuery("");
+                  }}
+                  className="w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 dark:active:bg-neutral-800 transition-colors border-b border-neutral-100 dark:border-neutral-800"
+                >
+                  <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center shrink-0">
+                    <IonIcon icon={navigateOutline} className="text-lg text-amber-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Use current location</p>
+                    <p className="text-xs text-neutral-400">Using GPS</p>
+                  </div>
+                </button>
+
+                {searchResults && searchResults.length > 0 ? (
+                  <div>
+                    <p className="px-5 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                      Search Results
+                    </p>
+                    {searchResults.map((loc, index) => (
+                      <button
+                        key={loc.placeId}
+                        onClick={() => handleSelectLocation(loc)}
+                        className="w-full flex items-start gap-3.5 px-5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 dark:active:bg-neutral-800 transition-colors"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
+                          <IonIcon icon={locationOutline} className="text-base text-neutral-500" />
+                        </div>
+                        <div className="text-left min-w-0 flex-1 border-b border-neutral-50 dark:border-neutral-800 pb-3">
+                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
+                            {loc.mainText}
+                          </p>
+                          <p className="text-xs text-neutral-400 truncate mt-0.5">
+                            {loc.secondaryText}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : searchQuery.length >= 3 && !isSearchLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+                      <IonIcon icon={search} className="text-2xl text-neutral-300" />
+                    </div>
+                    <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
+                      No results found
+                    </p>
+                    <p className="text-sm text-neutral-400 mt-1">
+                      Try a different search term
+                    </p>
+                  </div>
+                ) : isSearchLoading ? (
+                  <div className="flex flex-col items-center py-16">
+                    <div className="w-7 h-7 border-[2.5px] border-amber-400 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs text-neutral-400 mt-3">Searching...</p>
+                  </div>
+                ) : searchQuery.length > 0 && searchQuery.length < 3 ? (
+                  <div className="px-5 py-12 text-center">
+                    <p className="text-sm text-neutral-400">
+                      Type at least 3 characters to search
+                    </p>
+                  </div>
+                ) : null}
+              </motion.div>
+            ) : (
+              /* Map + Details View */
+              <motion.div
+                key="map"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                {/* Map */}
+                <div className="relative w-full h-64 bg-neutral-100 dark:bg-neutral-900">
+                  {isLoaded ? (
+                    <GoogleMap
+                      mapContainerStyle={containerStyle}
+                      center={marker}
+                      zoom={15}
+                      onLoad={onMapLoad}
+                      onClick={handleClick}
+                      options={{
+                        disableDefaultUI: true,
+                        zoomControl: false,
+                        mapId: "3d186cf47c01e972b8b1486d",
+                      }}
+                    >
+                      <AdvancedMarker map={map} position={marker} />
+                    </GoogleMap>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full gap-2">
+                      <div className="w-7 h-7 border-[2.5px] border-amber-400 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-neutral-400">Loading map...</p>
+                    </div>
+                  )}
+
+                  {/* Locate Me */}
+                  <button
+                    onClick={handleLocateMe}
+                    className="absolute bottom-3 right-3 w-11 h-11 bg-white dark:bg-neutral-800 rounded-full shadow-lg shadow-black/10 flex items-center justify-center active:scale-95 transition-transform z-10"
+                  >
+                    <IonIcon icon={locateOutline} className="text-xl text-amber-500" />
+                  </button>
+                </div>
+
+                {/* Location Details Card */}
+                <div className="px-4 pt-5 pb-6">
+                  {/* Selected Address */}
+                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-2xl p-4 border border-neutral-100 dark:border-neutral-800">
+                    {isReverseLoading ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 animate-pulse shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3.5 w-32 bg-neutral-200 dark:bg-neutral-700 animate-pulse rounded-full" />
+                          <div className="h-3 w-48 bg-neutral-200 dark:bg-neutral-700 animate-pulse rounded-full" />
+                        </div>
+                      </div>
+                    ) : address ? (
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <IonIcon icon={locationOutline} className="text-lg text-amber-500" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                            {locationLabel || "Selected Location"}
+                          </p>
+                          <p className="text-xs text-neutral-400 mt-0.5 leading-relaxed">
+                            {address}
+                          </p>
+                        </div>
+                        <div className="shrink-0 mt-0.5">
+                          <IonIcon icon={checkmarkCircle} className="text-lg text-green-500" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 py-1">
+                        <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                          <IonIcon icon={locationOutline} className="text-lg text-neutral-400" />
+                        </div>
+                        <p className="text-sm text-neutral-400">
+                          Tap on the map or search to select a location
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Save As */}
+                  <div className="mt-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 mb-3 px-1">
+                      Save as
+                    </p>
+                    <div className="flex gap-2.5">
+                      {locationTypes.map((type) => {
+                        const isSelected = selectedType === type.key;
+                        return (
+                          <button
+                            key={type.key}
+                            onClick={() => setSelectedType(type.key)}
+                            className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-xl border-2 transition-all active:scale-[0.97] ${
+                              isSelected
+                                ? "border-amber-400 bg-amber-400/5 dark:bg-amber-400/10"
+                                : "border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-600"
+                            }`}
+                          >
+                            <IonIcon
+                              icon={type.icon}
+                              className={`text-xl ${
+                                isSelected
+                                  ? "text-amber-500"
+                                  : "text-neutral-400"
+                              }`}
+                            />
+                            <span
+                              className={`text-xs font-medium ${
+                                isSelected
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-neutral-500"
+                              }`}
+                            >
+                              {type.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <button
+                    onClick={handleSaveAddress}
+                    disabled={!address || createSavedLocationMutation.isPending}
+                    className={`w-full mt-8 h-12 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
+                      !address || createSavedLocationMutation.isPending
+                        ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed"
+                        : "bg-amber-400 text-neutral-900 shadow-lg shadow-amber-400/20 hover:bg-amber-500"
+                    }`}
+                  >
+                    {createSavedLocationMutation.isPending ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      "Save Address"
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </Page>

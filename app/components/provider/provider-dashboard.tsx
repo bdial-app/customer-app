@@ -22,13 +22,18 @@ import {
   shieldCheckmarkOutline,
   searchOutline,
   peopleOutline,
+  pricetagOutline,
+  storefrontOutline,
+  timeOutline,
+  cameraOutline,
+  brushOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import ProviderHeader from "./provider-header";
 import ProviderQuickStats from "./provider-quick-stats";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useProviderDetails } from "@/hooks/useProvider";
-import { ProviderDetailsPhoto, ProviderDetailsProduct, ProviderDetailsReview } from "@/services/provider.service";
+import { ProviderDetailsPhoto, ProviderDetailsProduct, ProviderDetailsReview, ProviderDetailsOffer } from "@/services/provider.service";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
@@ -138,6 +143,7 @@ interface ProviderStats {
   photos: ProviderDetailsPhoto[];
   products: ProviderDetailsProduct[];
   reviews: ProviderDetailsReview[];
+  activeOffers: ProviderDetailsOffer[];
 }
 
 const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
@@ -175,37 +181,90 @@ const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
 };
 
 // ─── Growth Tips ────────────────────────────────────────────────────
-const GrowthTips = ({ stats }: { stats: ProviderStats }) => {
+interface GrowthTipsProps {
+  stats: ProviderStats;
+  provider: any;
+  verificationStatus: string | null;
+  onNavigate: (subTab: string) => void;
+  onVerify: () => void;
+}
+
+const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify }: GrowthTipsProps) => {
   const totalPhotos = stats.photos.length;
   const totalProducts = stats.products.length;
+  const totalOffers = stats.activeOffers.length;
   const unrepliedReviews = stats.reviews.filter((r) => r.status === "active" && !r.replyText).length;
+  const needsVerification = !verificationStatus || verificationStatus === "rejected";
 
   const tips = [
+    (!provider?.description || !provider?.address) && {
+      icon: storefrontOutline,
+      title: "Complete your brand profile",
+      desc: "Add description & address to be found by customers",
+      priority: "high" as const,
+      action: () => onNavigate("details"),
+    },
+    (!provider?.openTime || !provider?.closeTime) && {
+      icon: timeOutline,
+      title: "Add operating hours",
+      desc: "Let customers know when you're open",
+      priority: "high" as const,
+      action: () => onNavigate("details"),
+    },
+    !provider?.profilePhotoUrl && {
+      icon: cameraOutline,
+      title: "Upload a profile photo",
+      desc: "Profiles with photos get 2× more enquiries",
+      priority: "high" as const,
+      action: () => onNavigate("details"),
+    },
     totalPhotos < 5 && {
       icon: imageOutline,
       title: "Add more photos",
-      desc: "Profiles with 5+ photos get 3× more views",
+      desc: `${totalPhotos}/5 photos — profiles with 5+ get 3× more views`,
       priority: "high" as const,
+      action: () => onNavigate("photos"),
     },
     totalProducts === 0 && {
       icon: cubeOutline,
       title: "Add your first product",
       desc: "Show customers what you offer with photos & prices",
       priority: "high" as const,
+      action: () => onNavigate("products"),
+    },
+    totalOffers === 0 && {
+      icon: pricetagOutline,
+      title: "Create a deal",
+      desc: "Attract more customers with special offers",
+      priority: "medium" as const,
+      action: () => onNavigate("deals"),
     },
     unrepliedReviews > 0 && {
       icon: chatbubbleOutline,
       title: `Reply to ${unrepliedReviews} review${unrepliedReviews > 1 ? "s" : ""}`,
       desc: "Responding boosts trust & search ranking",
       priority: "medium" as const,
+      action: () => onNavigate("reviews"),
+    },
+    needsVerification && {
+      icon: shieldCheckmarkOutline,
+      title: "Get verified",
+      desc: "Verified providers rank higher & build more trust",
+      priority: "medium" as const,
+      action: onVerify,
     },
     {
       icon: megaphoneOutline,
       title: "Share your profile",
       desc: "Get 20% more reach with WhatsApp sharing",
       priority: "low" as const,
+      action: () => {
+        if (navigator.share) {
+          navigator.share({ title: provider?.brandName || "My Business", text: "Check out my business!", url: window.location.origin });
+        }
+      },
     },
-  ].filter(Boolean) as { icon: string; title: string; desc: string; priority: "high" | "medium" | "low" }[];
+  ].filter(Boolean) as { icon: string; title: string; desc: string; priority: "high" | "medium" | "low"; action: () => void }[];
 
   if (tips.length === 0) return null;
 
@@ -215,6 +274,8 @@ const GrowthTips = ({ stats }: { stats: ProviderStats }) => {
     low: "bg-slate-50 text-slate-500",
   };
 
+  const urgentCount = tips.filter((t) => t.priority === "high").length;
+
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
@@ -222,18 +283,21 @@ const GrowthTips = ({ stats }: { stats: ProviderStats }) => {
           <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
           <h3 className="text-sm font-bold text-slate-800">Growth Tips</h3>
         </div>
-        <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-          {tips.filter((t) => t.priority === "high").length} urgent
-        </span>
+        {urgentCount > 0 && (
+          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+            {urgentCount} urgent
+          </span>
+        )}
       </div>
       <div className="space-y-2">
-        {tips.slice(0, 3).map((tip, i) => (
+        {tips.slice(0, 4).map((tip, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.06 }}
-            className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 active:bg-slate-50"
+            onClick={tip.action}
+            className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 active:bg-slate-50 cursor-pointer"
           >
             <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
               <IonIcon icon={tip.icon} className="text-base text-teal-600" />
@@ -368,25 +432,29 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
 const ProfileCompleteness = ({
   provider,
   stats,
+  onNavigate,
 }: {
   provider: any;
   stats: ProviderStats;
+  onNavigate: (subTab: string) => void;
 }) => {
   const checks = [
-    { label: "Brand name", done: !!provider?.brandName },
-    { label: "Description", done: !!provider?.description },
-    { label: "Contact number", done: !!provider?.contactNumber },
-    { label: "Address", done: !!provider?.address },
-    { label: "Operating hours", done: !!provider?.openTime && !!provider?.closeTime },
-    { label: "Profile photo", done: !!provider?.profilePhotoUrl },
-    { label: "At least 1 product", done: stats.products.length > 0 },
-    { label: "At least 3 photos", done: stats.photos.length >= 3 },
+    { label: "Brand name", done: !!provider?.brandName, target: "details" },
+    { label: "Description", done: !!provider?.description, target: "details" },
+    { label: "Contact number", done: !!provider?.contactNumber, target: "details" },
+    { label: "Address", done: !!provider?.address, target: "details" },
+    { label: "Operating hours", done: !!provider?.openTime && !!provider?.closeTime, target: "details" },
+    { label: "Profile photo", done: !!provider?.profilePhotoUrl, target: "details" },
+    { label: "At least 1 product", done: stats.products.length > 0, target: "products" },
+    { label: "At least 3 photos", done: stats.photos.length >= 3, target: "photos" },
   ];
 
   const done = checks.filter((c) => c.done).length;
   const pct = Math.round((done / checks.length) * 100);
 
   if (pct === 100) return null;
+
+  const incomplete = checks.filter((c) => !c.done);
 
   return (
     <div className="px-4 mb-4">
@@ -415,24 +483,133 @@ const ProfileCompleteness = ({
             </div>
           </div>
           <div className="space-y-1.5">
-            {checks
-              .filter((c) => !c.done)
-              .slice(0, 3)
-              .map((c, i) => (
-                <div key={i} className="flex items-center gap-2 text-white/70 text-[11px]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+            {incomplete.slice(0, 3).map((c, i) => (
+              <motion.div
+                key={i}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => onNavigate(c.target)}
+                className="flex items-center justify-between gap-2 text-white/80 text-[11px] bg-white/10 rounded-lg px-2.5 py-1.5 cursor-pointer active:bg-white/20 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
                   {c.label}
                 </div>
-              ))}
+                <IonIcon icon={chevronForwardOutline} className="text-white/40 text-xs" />
+              </motion.div>
+            ))}
           </div>
+          {incomplete.length > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onNavigate(incomplete[0].target)}
+              className="w-full mt-3 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-bold border border-white/20 active:bg-white/30 transition-colors"
+            >
+              Complete Now
+            </motion.button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+// ─── Deals Overview Card ────────────────────────────────────────────
+const DealsOverview = ({
+  offers,
+  onManage,
+}: {
+  offers: ProviderDetailsOffer[];
+  onManage: () => void;
+}) => {
+  if (offers.length === 0) {
+    return (
+      <div className="px-4 mb-4">
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 text-center">
+          <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
+            <IonIcon icon={pricetagOutline} className="text-xl text-amber-400" />
+          </div>
+          <h4 className="text-sm font-bold text-slate-800 mb-1">No active deals</h4>
+          <p className="text-xs text-slate-500 mb-3">
+            Create deals to attract more customers and boost sales
+          </p>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={onManage}
+            className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-semibold"
+          >
+            <IonIcon icon={pricetagOutline} className="text-sm" />
+            Create First Deal
+          </motion.button>
+        </div>
+      </div>
+    );
+  }
+
+  const nextExpiring = [...offers].sort(
+    (a, b) => new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime()
+  )[0];
+
+  const daysLeft = nextExpiring
+    ? Math.max(0, Math.ceil((new Date(nextExpiring.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  return (
+    <div className="px-4 mb-4">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1.5">
+          <IonIcon icon={pricetagOutline} className="text-amber-500 text-sm" />
+          <h3 className="text-sm font-bold text-slate-800">Active Deals</h3>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={onManage}
+          className="text-[10px] font-semibold text-teal-600"
+        >
+          Manage All
+        </motion.button>
+      </div>
+      <div className="bg-white rounded-2xl p-4 border border-slate-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+              <IonIcon icon={flashOutline} className="text-lg text-amber-500" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">
+                {offers.length} active deal{offers.length > 1 ? "s" : ""}
+              </p>
+              {nextExpiring && (
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Next expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+          </div>
+          <IonIcon icon={chevronForwardOutline} className="text-slate-300 text-sm" />
+        </div>
+        {nextExpiring && (
+          <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+            <span className="text-[11px] text-slate-600 truncate flex-1">
+              {nextExpiring.title}
+            </span>
+            <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full ml-2 shrink-0">
+              {nextExpiring.discountType === "percentage"
+                ? `${Number(nextExpiring.discountValue)}% OFF`
+                : `₹${Number(nextExpiring.discountValue)} OFF`}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Dashboard (Home Tab) ──────────────────────────────────────
-const ProviderDashboard = () => {
+interface ProviderDashboardProps {
+  onNavigateToListings?: (subTab: string) => void;
+}
+
+const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => {
   const router = useRouter();
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
 
@@ -446,9 +623,16 @@ const ProviderDashboard = () => {
     photos: details?.photos ?? [],
     products: details?.products ?? [],
     reviews: details?.reviews ?? [],
+    activeOffers: details?.activeOffers ?? [],
   };
 
   const needsVerification = !verificationStatus || verificationStatus === "rejected";
+
+  const handleNavigate = (subTab: string) => {
+    onNavigateToListings?.(subTab);
+  };
+
+  const handleVerify = () => router.push("/provider-onboarding/verify");
 
   if (isLoading) {
     return (
@@ -489,7 +673,7 @@ const ProviderDashboard = () => {
       <ProviderHeader provider={provider} verificationStatus={verificationStatus} />
       <ProviderQuickStats stats={providerStats} />
       {needsVerification && (
-        <VerificationPrompt onVerify={() => router.push("/provider-onboarding/verify")} />
+        <VerificationPrompt onVerify={handleVerify} />
       )}
       {verificationStatus && verificationStatus !== "approved" && !needsVerification && (
         <VerificationStatusCard status={verificationStatus} />
@@ -497,9 +681,16 @@ const ProviderDashboard = () => {
       {verificationStatus === "approved" && (
         <VerificationStatusCard status={verificationStatus} />
       )}
-      <ProfileCompleteness provider={provider} stats={providerStats} />
+      <ProfileCompleteness provider={provider} stats={providerStats} onNavigate={handleNavigate} />
       <TodayActivity stats={providerStats} />
-      <GrowthTips stats={providerStats} />
+      <GrowthTips
+        stats={providerStats}
+        provider={provider}
+        verificationStatus={verificationStatus}
+        onNavigate={handleNavigate}
+        onVerify={handleVerify}
+      />
+      <DealsOverview offers={providerStats.activeOffers} onManage={() => handleNavigate("deals")} />
       <ProductsOverview stats={providerStats} />
       <RecentReviewsList stats={providerStats} />
     </div>
