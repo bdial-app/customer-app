@@ -18,13 +18,17 @@ export const useProduct = (id: string) => {
   });
 };
 
+/** Invalidate both provider-status and provider-details so the products list refreshes */
+const invalidateProductQueries = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
+  qc.invalidateQueries({ queryKey: ["provider-details"] });
+};
+
 export const useCreateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateProductPayload) => createProduct(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
-    },
+    onSuccess: () => invalidateProductQueries(qc),
   });
 };
 
@@ -33,9 +37,7 @@ export const useUpdateProduct = () => {
   return useMutation({
     mutationFn: ({ id, ...payload }: UpdateProductPayload & { id: string }) =>
       updateProduct(id, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
-    },
+    onSuccess: () => invalidateProductQueries(qc),
   });
 };
 
@@ -43,8 +45,6 @@ export const useDeleteProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteProduct(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
-    },
+    onSuccess: () => invalidateProductQueries(qc),
   });
 };

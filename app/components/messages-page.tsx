@@ -29,7 +29,9 @@ import {
   usePresence,
   useArchiveConversation,
 } from "@/hooks/useChat";
+import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 
 interface MessagesPageProps {
@@ -119,6 +121,20 @@ export default function MessagesPage({
   // Online presence for the other user
   const otherUserId = convDetail?.otherParticipant?.userId || null;
   const { data: presenceData } = usePresence(otherUserId);
+
+  // Fetch provider phone number when customer is chatting with a provider
+  const isCustomerView = convDetail?.myRole === "customer";
+  const otherProviderId =
+    convDetail?.otherParticipant?.role === "provider"
+      ? convDetail.otherParticipant.providerId
+      : null;
+  const { data: providerData } = useQuery({
+    queryKey: ["provider", otherProviderId],
+    queryFn: () => getProviderById(otherProviderId!),
+    enabled: isCustomerView && !!otherProviderId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const providerPhone: string | null = providerData?.contactNumber ?? null;
 
   // Flatten paginated messages
   const allMessages = useMemo(() => {
@@ -337,12 +353,16 @@ export default function MessagesPage({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100"
-            >
-              <IonIcon icon={callOutline} className="text-lg text-slate-600" />
-            </motion.button>
+            {isCustomerView && providerPhone && (
+              <motion.a
+                href={`tel:${providerPhone}`}
+                whileTap={{ scale: 0.9 }}
+                className="w-9 h-9 rounded-full flex items-center justify-center active:bg-emerald-50"
+                title={`Call ${displayName}`}
+              >
+                <IonIcon icon={callOutline} className="text-lg text-emerald-600" />
+              </motion.a>
+            )}
             <div className="relative">
               <motion.button
                 whileTap={{ scale: 0.9 }}

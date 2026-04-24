@@ -40,6 +40,9 @@ import {
   shareOutline,
   bugOutline,
   arrowBack,
+  pauseCircleOutline,
+  downloadOutline,
+  folderOpenOutline,
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
@@ -61,6 +64,7 @@ import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
 import { getMyProviderStatus } from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
+import { deleteMyAccount, pauseMyAccount, exportMyData } from "@/services/user.service";
 
 interface UserProfile {
   mobileNumber: string;
@@ -219,6 +223,9 @@ const ProfileContent = () => {
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pauseSheetOpen, setPauseSheetOpen] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
@@ -301,8 +308,7 @@ const ProfileContent = () => {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      // TODO: Call actual delete account API when available
-      // await deleteMyAccount();
+      await deleteMyAccount();
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       dispatch(clearUser());
@@ -311,7 +317,7 @@ const ProfileContent = () => {
       router.push("/auth/login");
       notify({
         title: "Account Deleted",
-        subtitle: "Your account has been removed.",
+        subtitle: "Your account has been archived. We're sorry to see you go.",
         variant: "success",
       });
     } catch {
@@ -322,6 +328,61 @@ const ProfileContent = () => {
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handlePauseAccount = async () => {
+    setIsPausing(true);
+    try {
+      await pauseMyAccount();
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      dispatch(clearUser());
+      resetProviderState();
+      setPauseSheetOpen(false);
+      router.push("/auth/login");
+      notify({
+        title: "Account Paused",
+        subtitle: "Your account is paused. Log in anytime to reactivate.",
+        variant: "success",
+      });
+    } catch {
+      notify({
+        title: "Error",
+        subtitle: "Failed to pause account. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsPausing(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const data = await exportMyData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `my-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      notify({
+        title: "Data Exported",
+        subtitle: "Your data has been downloaded.",
+        variant: "success",
+      });
+    } catch {
+      notify({
+        title: "Error",
+        subtitle: "Failed to export data. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -626,6 +687,33 @@ const ProfileContent = () => {
         />
       </MenuSection>
 
+      {/* ── Data & Privacy Section ───────────────────────────── */}
+      <MenuSection title="Data & Privacy">
+        <MenuRow
+          icon={downloadOutline}
+          iconColor="text-indigo-500"
+          iconBg="bg-indigo-50"
+          label="Download My Data"
+          sublabel="Export all your data as JSON"
+          onClick={handleExportData}
+          trailing={
+            isExporting ? (
+              <Preloader className="w-5 h-5" />
+            ) : (
+              <IonIcon icon={chevronForward} className="text-slate-300 text-sm" />
+            )
+          }
+        />
+        <MenuRow
+          icon={folderOpenOutline}
+          iconColor="text-teal-500"
+          iconBg="bg-teal-50"
+          label="Manage Saved Data"
+          sublabel="Locations, favourites, history"
+          onClick={() => router.push("/add-location")}
+        />
+      </MenuSection>
+
       {/* ── Danger Zone ──────────────────────────────────────── */}
       <MenuSection title="">
         <MenuRow
@@ -634,6 +722,15 @@ const ProfileContent = () => {
           iconBg="bg-orange-50"
           label="Log Out"
           onClick={() => setLogoutActionSheetOpen(true)}
+          trailing={null}
+        />
+        <MenuRow
+          icon={pauseCircleOutline}
+          iconColor="text-amber-500"
+          iconBg="bg-amber-50"
+          label="Pause Account"
+          sublabel="Temporarily freeze your account"
+          onClick={() => setPauseSheetOpen(true)}
           trailing={null}
         />
         <MenuRow
@@ -1135,6 +1232,22 @@ const ProfileContent = () => {
         confirmColor="red"
         isLoading={isDeleting}
         loadingLabel="Deleting..."
+      />
+
+      <AppDialog
+        open={pauseSheetOpen}
+        onClose={() => setPauseSheetOpen(false)}
+        icon={pauseCircleOutline}
+        iconColor="text-amber-500"
+        iconBg="bg-amber-50"
+        title="Pause Account?"
+        description="Your profile won't be visible, you won't receive messages, and your provider listing (if any) will be hidden. You can reactivate anytime by logging in again."
+        confirmLabel="Yes, Pause My Account"
+        cancelLabel="Cancel"
+        onConfirm={handlePauseAccount}
+        confirmColor="red"
+        isLoading={isPausing}
+        loadingLabel="Pausing..."
       />
     </>
   );

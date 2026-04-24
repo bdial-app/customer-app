@@ -131,6 +131,7 @@ export interface ProviderDetailsProduct {
   price: number | null;
   currency: string;
   photoUrl: string | null;
+  photoUrls: string[];
   isActive: boolean;
   displayOrder: number;
 }
@@ -346,8 +347,21 @@ export interface CreateOfferPayload {
 
 export type UpdateOfferPayload = Partial<CreateOfferPayload>;
 
+export interface OfferLimits {
+  totalDeals: number;
+  maxTotalDeals: number;
+  activeDeals: number;
+  maxActiveDeals: number;
+  requiresPayment: boolean;
+}
+
 export const getMyOffers = async (): Promise<ProviderOfferFull[]> => {
   const { data } = await apiClient.get(PROVIDER_URLS.MY_OFFERS);
+  return data;
+};
+
+export const getOfferLimits = async (): Promise<OfferLimits> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.OFFER_LIMITS);
   return data;
 };
 

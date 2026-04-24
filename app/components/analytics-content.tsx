@@ -404,44 +404,48 @@ const AnalyticsContent = () => {
 
           {/* ═══ KPI CARDS ═══ */}
           {summaryLoading ? (
-            <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1 mb-5">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex-shrink-0 w-[140px] h-[120px] bg-slate-100 rounded-2xl animate-pulse" />
-              ))}
+            <div className="px-4 mb-4">
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-[76px] bg-slate-100 rounded-2xl animate-pulse" />
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="mb-5">
+            <div className="px-4 mb-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={period}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.25 }}
-                  className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="grid grid-cols-3 gap-2"
                 >
                   {kpis.map((k, i) => (
                     <motion.div
                       key={k.label}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      className="flex-shrink-0 w-[140px] bg-white rounded-2xl p-3.5 border border-slate-100 relative overflow-hidden"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="bg-white rounded-2xl p-3 border border-slate-100 relative overflow-hidden"
                     >
-                      <div className={`absolute top-0 left-0 right-0 h-[3px] ${k.bg} rounded-t-2xl`} />
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center mb-2.5">
-                        <IonIcon icon={k.icon} className={`text-base ${k.accent}`} />
-                      </div>
-                      <div className="text-[22px] font-black text-slate-800 leading-none tracking-tight">{k.value}</div>
-                      <div className="text-[10px] text-slate-500 mt-1">{k.sub}</div>
-                      {k.change !== 0 && (
-                        <div className={`inline-flex items-center gap-0.5 mt-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
-                          k.change >= 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
-                        }`}>
-                          <IonIcon icon={k.change >= 0 ? arrowUpOutline : arrowDownOutline} className="text-[7px]" />
-                          {Math.abs(k.change)}%
+                      <div className={`absolute top-0 left-0 right-0 h-[2px] ${k.bg} rounded-t-2xl`} />
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center">
+                          <IonIcon icon={k.icon} className={`text-xs ${k.accent}`} />
                         </div>
-                      )}
+                        {k.change !== 0 && (
+                          <div className={`flex items-center gap-0.5 text-[8px] font-bold px-1 py-0.5 rounded ${
+                            k.change >= 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
+                          }`}>
+                            <IonIcon icon={k.change >= 0 ? arrowUpOutline : arrowDownOutline} className="text-[6px]" />
+                            {Math.abs(k.change)}%
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-[18px] font-black text-slate-800 leading-none">{k.value}</div>
+                      <div className="text-[9px] text-slate-400 mt-0.5 font-medium">{k.sub}</div>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -451,27 +455,24 @@ const AnalyticsContent = () => {
 
           {/* ═══ VIEWS & ENQUIRIES CHART ═══ */}
           {chartData.length > 1 && (
-            <div className="px-4 mb-5">
-              <div className="bg-white rounded-2xl p-4 border border-slate-100">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-[13px] font-bold text-slate-800">Views & Enquiries</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Visitor activity over time</p>
-                  </div>
+            <div className="px-4 mb-4">
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold text-slate-800">Views & Enquiries</h3>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-400" />
-                      <span className="text-[9px] text-slate-500">Views</span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                      <span className="text-[8px] text-slate-400">Views</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <span className="text-[9px] text-slate-500">Enquiries</span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span className="text-[8px] text-slate-400">Enquiries</span>
                     </div>
                   </div>
                 </div>
-                <div className="h-[140px] -mx-2">
+                <div className="h-[120px] -mx-1">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
                       <defs>
                         <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.3} />
@@ -482,11 +483,11 @@ const AnalyticsContent = () => {
                           <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "#94a3b8" }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "#94a3b8" }} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "#94a3b8" }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "#94a3b8" }} />
                       <Tooltip content={<ChartTooltip />} />
-                      <Area type="monotone" dataKey="views" stroke="#60a5fa" strokeWidth={2} fill="url(#viewsGrad)" dot={false} />
-                      <Area type="monotone" dataKey="enquiries" stroke="#34d399" strokeWidth={2} fill="url(#enqGrad)" dot={false} />
+                      <Area type="monotone" dataKey="views" stroke="#60a5fa" strokeWidth={1.5} fill="url(#viewsGrad)" dot={false} />
+                      <Area type="monotone" dataKey="enquiries" stroke="#34d399" strokeWidth={1.5} fill="url(#enqGrad)" dot={false} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -496,26 +497,26 @@ const AnalyticsContent = () => {
 
           {/* ═══ LEAD FUNNEL ═══ */}
           {summary && (summary.leads.hot + summary.leads.warm + summary.leads.soft + summary.leads.cold) > 0 && (
-            <div className="px-4 mb-5">
-              <div className="bg-white rounded-2xl p-4 border border-slate-100">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <IonIcon icon={flameOutline} className="text-lg text-orange-500" />
-                    <h3 className="text-[13px] font-bold text-slate-800">Lead Funnel</h3>
+            <div className="px-4 mb-4">
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <IonIcon icon={flameOutline} className="text-sm text-orange-500" />
+                    <h3 className="text-xs font-bold text-slate-800">Lead Funnel</h3>
                   </div>
                   <button onClick={() => setView("leads")} className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
                     View all <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {(["hot", "warm", "soft", "cold"] as const).map((tier) => {
                     const total = summary.leads.hot + summary.leads.warm + summary.leads.soft + summary.leads.cold;
                     const pct = total > 0 ? Math.round((summary.leads[tier] / total) * 100) : 0;
                     const colors = { hot: "bg-red-500", warm: "bg-orange-400", soft: "bg-yellow-400", cold: "bg-blue-400" };
                     return (
                       <div key={tier} className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-slate-500 w-10 capitalize">{tier}</span>
-                        <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
+                        <span className="text-[10px] font-semibold text-slate-500 w-9 capitalize">{tier}</span>
+                        <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
                           <motion.div
                             className={`h-full rounded-full ${colors[tier]}`}
                             initial={{ width: 0 }}
@@ -523,7 +524,7 @@ const AnalyticsContent = () => {
                             transition={{ duration: 0.6, ease: "easeOut" }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-slate-700 w-8 text-right">{summary.leads[tier]}</span>
+                        <span className="text-[11px] font-bold text-slate-700 w-7 text-right">{summary.leads[tier]}</span>
                       </div>
                     );
                   })}
@@ -534,30 +535,27 @@ const AnalyticsContent = () => {
 
           {/* ═══ PEAK HOURS ═══ */}
           {peakHoursData.length > 0 && peakMax > 0 && (
-            <div className="px-4 mb-5">
-              <div className="bg-white rounded-2xl p-4 border border-slate-100">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-[13px] font-bold text-slate-800">Peak Activity Hours</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">When your customers visit most</p>
-                  </div>
-                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
-                    <IonIcon icon={flashOutline} className="text-amber-600 text-[10px]" />
-                    <span className="text-[9px] font-bold text-amber-700">{peakLabel}</span>
+            <div className="px-4 mb-4">
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold text-slate-800">Peak Hours</h3>
+                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg">
+                    <IonIcon icon={flashOutline} className="text-amber-600 text-[9px]" />
+                    <span className="text-[8px] font-bold text-amber-700">{peakLabel}</span>
                   </div>
                 </div>
-                <div className="h-[100px] -mx-1">
+                <div className="h-[80px] -mx-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={peakHoursData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                       <XAxis
                         dataKey="hour"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 8, fill: "#94a3b8" }}
+                        tick={{ fontSize: 7, fill: "#94a3b8" }}
                         interval={5}
                       />
                       <YAxis hide />
-                      <Bar dataKey="val" radius={[4, 4, 0, 0]} maxBarSize={20}>
+                      <Bar dataKey="val" radius={[3, 3, 0, 0]} maxBarSize={16}>
                         {peakHoursData.map((entry, idx) => (
                           <Cell key={idx} fill={entry.val >= peakMax * 0.8 ? "#f59e0b" : "#e2e8f0"} />
                         ))}
@@ -571,26 +569,26 @@ const AnalyticsContent = () => {
 
           {/* ═══ TOP PRODUCTS ═══ */}
           {topProducts && topProducts.length > 0 && (
-            <div className="px-4 mb-5">
-              <div className="bg-white rounded-2xl p-4 border border-slate-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <IonIcon icon={cubeOutline} className="text-lg text-teal-500" />
-                  <h3 className="text-[13px] font-bold text-slate-800">Top Products</h3>
+            <div className="px-4 mb-4">
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <IonIcon icon={cubeOutline} className="text-sm text-teal-500" />
+                  <h3 className="text-xs font-bold text-slate-800">Top Products</h3>
                 </div>
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {topProducts.slice(0, 5).map((p, i) => (
-                    <div key={p.productId} className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-slate-300 w-4">#{i + 1}</span>
+                    <div key={p.productId} className="flex items-center gap-2.5">
+                      <span className="text-[10px] font-bold text-slate-300 w-3">#{i + 1}</span>
                       {p.photoUrl ? (
-                        <img src={p.photoUrl} alt="" className="w-9 h-9 rounded-lg object-cover bg-slate-100" />
+                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100" />
                       ) : (
-                        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                          <IonIcon icon={cubeOutline} className="text-slate-300" />
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                          <IonIcon icon={cubeOutline} className="text-xs text-slate-300" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{p.name}</p>
-                        <p className="text-[11px] text-slate-400">{p.views} views · {p.uniqueVisitors} visitors</p>
+                        <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+                        <p className="text-[10px] text-slate-400">{p.views} views · {p.uniqueVisitors} visitors</p>
                       </div>
                     </div>
                   ))}
@@ -600,26 +598,26 @@ const AnalyticsContent = () => {
           )}
 
           {/* ═══ SMART INSIGHTS ═══ */}
-          <div className="mb-5">
-            <div className="flex items-center justify-between px-4 mb-2.5">
-              <h3 className="text-[13px] font-bold text-slate-800">Smart Insights</h3>
+          <div className="px-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-slate-800">Smart Insights</h3>
               <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
             </div>
-            <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 pb-1">
+            <div className="grid grid-cols-2 gap-2">
               {[
                 {
                   icon: trendingUpOutline,
                   color: "from-blue-500 to-indigo-600",
                   title: "Growth",
                   value: `${(summary?.profileViews.trend ?? 0) >= 0 ? "+" : ""}${summary?.profileViews.trend ?? 0}%`,
-                  desc: "Views vs previous period",
+                  desc: "vs previous period",
                 },
                 {
                   icon: walletOutline,
                   color: "from-amber-500 to-orange-600",
                   title: "Conversion",
                   value: `${summary?.conversionRate?.toFixed(1) ?? 0}%`,
-                  desc: "Views → enquiries/calls",
+                  desc: "Views → actions",
                 },
                 {
                   icon: peopleOutline,
@@ -633,43 +631,43 @@ const AnalyticsContent = () => {
                   color: "from-emerald-500 to-teal-600",
                   title: "Rating",
                   value: avgRating.toFixed(1),
-                  desc: `${totalReviews} total reviews`,
+                  desc: `${totalReviews} reviews`,
                 },
               ].map((insight, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  className={`flex-shrink-0 w-[155px] rounded-2xl bg-gradient-to-br ${insight.color} p-3.5 relative overflow-hidden`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`rounded-2xl bg-gradient-to-br ${insight.color} p-3 relative overflow-hidden`}
                 >
-                  <div className="absolute -right-3 -top-3 w-16 h-16 rounded-full bg-white/10" />
-                  <IonIcon icon={insight.icon} className="text-white/40 text-lg mb-2" />
-                  <div className="text-white font-black text-xl leading-none">{insight.value}</div>
-                  <div className="text-white/90 text-[10px] font-bold mt-1">{insight.title}</div>
-                  <div className="text-white/50 text-[9px] mt-0.5 leading-snug">{insight.desc}</div>
+                  <div className="absolute -right-2 -top-2 w-10 h-10 rounded-full bg-white/10" />
+                  <IonIcon icon={insight.icon} className="text-white/40 text-sm mb-1" />
+                  <div className="text-white font-black text-lg leading-none">{insight.value}</div>
+                  <div className="text-white/90 text-[9px] font-bold mt-0.5">{insight.title}</div>
+                  <div className="text-white/50 text-[8px] mt-0.5">{insight.desc}</div>
                 </motion.div>
               ))}
             </div>
           </div>
 
           {/* ═══ ENGAGEMENT STRIP ═══ */}
-          <div className="px-4 mb-5">
+          <div className="px-4 mb-4">
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-              <div className="px-4 pt-3.5 pb-2">
-                <h3 className="text-[13px] font-bold text-slate-800">Engagement</h3>
+              <div className="px-3.5 pt-3 pb-1.5">
+                <h3 className="text-xs font-bold text-slate-800">Engagement</h3>
               </div>
               <div className="flex divide-x divide-slate-100">
                 {[
                   { icon: heartOutline, label: "Saves", value: String(summary?.saves.count ?? 0), color: "text-pink-500" },
                   { icon: shareSocialOutline, label: "Shares", value: String(summary?.shares.count ?? 0), color: "text-blue-500" },
-                  { icon: navigateOutline, label: "Directions", value: String(summary?.directions.count ?? 0), color: "text-violet-500" },
+                  { icon: navigateOutline, label: "Dirs", value: String(summary?.directions.count ?? 0), color: "text-violet-500" },
                   { icon: callOutline, label: "Calls", value: String(summary?.calls.count ?? 0), color: "text-emerald-500" },
                 ].map((e) => (
-                  <div key={e.label} className="flex-1 py-3 text-center">
-                    <IonIcon icon={e.icon} className={`text-lg ${e.color}`} />
-                    <div className="text-base font-bold text-slate-800 mt-0.5">{e.value}</div>
-                    <div className="text-[8px] text-slate-400 font-medium">{e.label}</div>
+                  <div key={e.label} className="flex-1 py-2.5 text-center">
+                    <IonIcon icon={e.icon} className={`text-base ${e.color}`} />
+                    <div className="text-sm font-bold text-slate-800 mt-0.5">{e.value}</div>
+                    <div className="text-[7px] text-slate-400 font-medium">{e.label}</div>
                   </div>
                 ))}
               </div>

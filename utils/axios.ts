@@ -7,6 +7,17 @@ const apiClient = axios.create({
   },
 });
 
+// Event emitter for account paused state
+type AccountPausedListener = () => void;
+const pausedListeners: AccountPausedListener[] = [];
+export const onAccountPaused = (listener: AccountPausedListener) => {
+  pausedListeners.push(listener);
+  return () => {
+    const idx = pausedListeners.indexOf(listener);
+    if (idx >= 0) pausedListeners.splice(idx, 1);
+  };
+};
+
 // Request interceptor — attach token if present
 apiClient.interceptors.request.use((config) => {
   const token =
@@ -21,7 +32,13 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Central error handling can go here (e.g. redirect on 401)
+    // Detect paused account response
+    if (
+      error?.response?.status === 403 &&
+      error?.response?.data?.code === "ACCOUNT_PAUSED"
+    ) {
+      pausedListeners.forEach((fn) => fn());
+    }
     return Promise.reject(error);
   }
 );

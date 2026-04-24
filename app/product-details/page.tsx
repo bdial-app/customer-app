@@ -75,10 +75,10 @@ export default function ProductDetailsPage() {
   );
 
   const photos = useMemo(() => {
-    const p: string[] = [];
-    if (product?.photoUrl) p.push(product.photoUrl);
-    return p.length > 0 ? p : [FALLBACK_IMAGE];
-  }, [product?.photoUrl]);
+    if (product?.photoUrls?.length) return product.photoUrls;
+    if (product?.photoUrl) return [product.photoUrl];
+    return [FALLBACK_IMAGE];
+  }, [product?.photoUrls, product?.photoUrl]);
 
   if (!id) {
     return (
@@ -167,18 +167,23 @@ export default function ProductDetailsPage() {
           )}
 
           {photos.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {photos.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPhoto(i)}
-                  className={`rounded-full transition-all duration-200 ${
-                    i === currentPhoto
-                      ? "w-5 h-1.5 bg-white"
-                      : "w-1.5 h-1.5 bg-white/50"
-                  }`}
-                />
-              ))}
+            <div className="absolute bottom-3 inset-x-0 flex items-center justify-between px-4">
+              <div className="flex gap-1.5">
+                {photos.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPhoto(i)}
+                    className={`rounded-full transition-all duration-200 ${
+                      i === currentPhoto
+                        ? "w-5 h-1.5 bg-white"
+                        : "w-1.5 h-1.5 bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {currentPhoto + 1}/{photos.length}
+              </div>
             </div>
           )}
         </div>

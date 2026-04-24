@@ -23,7 +23,7 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from "@/hooks/useProduct";
-import { uploadProviderPhotos } from "@/services/photo.service";
+import { uploadProductImage } from "@/services/product.service";
 
 interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
@@ -59,13 +59,17 @@ const ProviderProductsTab = ({
     setEditing(null);
     setPhotoFiles([]);
     setPhotoPreviews([]);
+    setPhotoError(null);
     setSheetOpen(true);
   };
 
   const handleEdit = (p: ProviderDetailsProduct) => {
     setEditing(p);
     setPhotoFiles([]);
-    setPhotoPreviews(p.photoUrl ? [p.photoUrl] : []);
+    // Load existing photos from photoUrls (or fallback to photoUrl)
+    const existing = p.photoUrls?.length ? [...p.photoUrls] : p.photoUrl ? [p.photoUrl] : [];
+    setPhotoPreviews(existing);
+    setPhotoError(null);
     setSheetOpen(true);
   };
 
@@ -83,29 +87,45 @@ const ProviderProductsTab = ({
     updateMutation.mutate({ id: p.id, isActive: !p.isActive });
   };
 
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    const newFiles = [...photoFiles, ...files].slice(0, 5);
-    setPhotoFiles(newFiles);
-    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
-    // Keep existing server URLs for editing, plus new file previews
-    if (editing?.photoUrl && photoPreviews[0] === editing.photoUrl) {
-      setPhotoPreviews([editing.photoUrl, ...newPreviews]);
-    } else {
-      setPhotoPreviews(newPreviews);
+    setPhotoError(null);
+
+    // Validate 5MB limit
+    const oversized = files.find((f) => f.size > 5 * 1024 * 1024);
+    if (oversized) {
+      setPhotoError(`"${oversized.name}" exceeds 5 MB. Please choose a smaller image.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
+
+    // Cap at 5 total
+    const slotsLeft = 5 - photoPreviews.length;
+    if (slotsLeft <= 0) {
+      setPhotoError("Maximum 5 photos allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    const toAdd = files.slice(0, slotsLeft);
+
+    setPhotoFiles((prev) => [...prev, ...toAdd]);
+    setPhotoPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removePhoto = (index: number) => {
-    const isServerUrl = editing?.photoUrl && photoPreviews[index] === editing.photoUrl;
-    const newPreviews = photoPreviews.filter((_, i) => i !== index);
-    setPhotoPreviews(newPreviews);
-    if (!isServerUrl) {
-      const fileIndex = editing?.photoUrl ? index - 1 : index;
-      setPhotoFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+    const url = photoPreviews[index];
+    const isBlob = url.startsWith("blob:");
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+    if (isBlob) {
+      // Find the index within photoFiles (blob urls are appended after server urls)
+      const blobIndex = photoPreviews.slice(0, index).filter((u) => u.startsWith("blob:")).length;
+      setPhotoFiles((prev) => prev.filter((_, i) => i !== blobIndex));
     }
+    setPhotoError(null);
   };
 
   const activeCount = products.filter((p) => p.isActive).length;
@@ -148,7 +168,7 @@ const ProviderProductsTab = ({
             >
               {/* Photo */}
               <div
-                className="w-[88px] h-[88px] shrink-0 bg-slate-100 cursor-pointer"
+                className="w-[88px] h-[88px] shrink-0 bg-slate-100 cursor-pointer relative"
                 onClick={() => handleEdit(p)}
               >
                 {p.photoUrl ? (
@@ -164,6 +184,11 @@ const ProviderProductsTab = ({
                       className="text-2xl text-slate-300"
                     />
                   </div>
+                )}
+                {(p.photoUrls?.length ?? 0) > 1 && (
+                  <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                    +{(p.photoUrls?.length ?? 1) - 1}
+                  </span>
                 )}
               </div>
 
@@ -320,29 +345,34 @@ const ProviderProductsTab = ({
                 validationSchema={productSchema}
                 enableReinitialize
                 onSubmit={async (values) => {
-                  let photoUrl = editing?.photoUrl || undefined;
+                  // Collect server URLs that the user kept
+                  const keptServerUrls = photoPreviews.filter((u) => !u.startsWith("blob:"));
 
-                  // Upload new photos if any
-                  if (photoFiles.length > 0 && providerId) {
+                  // Upload new files
+                  let newUrls: string[] = [];
+                  if (photoFiles.length > 0) {
                     try {
                       setIsUploading(true);
-                      const uploaded = await uploadProviderPhotos(providerId, photoFiles);
-                      if (uploaded.length > 0) {
-                        photoUrl = uploaded[0].imageUrl;
-                      }
+                      const results = await Promise.all(
+                        photoFiles.map((f) => uploadProductImage(f)),
+                      );
+                      newUrls = results.map((r) => r.url);
                     } catch {
-                      // Continue with existing photo
+                      // Continue with what we have
                     } finally {
                       setIsUploading(false);
                     }
                   }
+
+                  const photoUrls = [...keptServerUrls, ...newUrls];
 
                   const payload = {
                     name: values.name,
                     description: values.description || undefined,
                     price: values.price ? parseFloat(values.price) : undefined,
                     currency: values.currency || "INR",
-                    photoUrl,
+                    photoUrl: photoUrls[0] || undefined,
+                    photoUrls,
                   };
 
                   if (editing) {
@@ -363,7 +393,7 @@ const ProviderProductsTab = ({
                     {/* Photo Upload Section */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-2">
-                        Photos <span className="text-slate-400 font-normal">(up to 5)</span>
+                        Photos <span className="text-slate-400 font-normal">(up to 5, max 5 MB each)</span>
                       </label>
                       <div className="flex gap-2 flex-wrap">
                         {photoPreviews.map((url, i) => (
@@ -376,6 +406,11 @@ const ProviderProductsTab = ({
                             >
                               <IonIcon icon={closeOutline} className="text-white text-[10px]" />
                             </button>
+                            {i === 0 && (
+                              <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] text-center py-0.5 font-bold">
+                                Cover
+                              </span>
+                            )}
                           </div>
                         ))}
                         {photoPreviews.length < 5 && (
@@ -393,6 +428,12 @@ const ProviderProductsTab = ({
                           </label>
                         )}
                       </div>
+                      {photoError && (
+                        <p className="text-[10px] text-red-500 mt-1.5 flex items-center gap-1">
+                          <IonIcon icon={closeCircleOutline} className="text-xs" />
+                          {photoError}
+                        </p>
+                      )}
                     </div>
 
                     {/* Product Name */}

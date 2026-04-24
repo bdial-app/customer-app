@@ -9,6 +9,7 @@ export interface ProductDetail {
   price: number | null;
   currency: string;
   photoUrl: string | null;
+  photoUrls: string[];
   isActive: boolean;
   displayOrder: number;
 }
@@ -65,6 +66,7 @@ export interface CreateProductPayload {
   price?: number;
   currency?: string;
   photoUrl?: string;
+  photoUrls?: string[];
 }
 
 export interface UpdateProductPayload {
@@ -73,6 +75,7 @@ export interface UpdateProductPayload {
   price?: number;
   currency?: string;
   photoUrl?: string;
+  photoUrls?: string[];
   isActive?: boolean;
   displayOrder?: number;
 }
@@ -89,4 +92,15 @@ export const updateProduct = async (id: string, payload: UpdateProductPayload): 
 
 export const deleteProduct = async (id: string): Promise<void> => {
   await apiClient.delete(PRODUCT_URLS.DELETE(id));
+};
+
+export const uploadProductImage = async (
+  file: File,
+): Promise<{ url: string; storageKey: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await apiClient.post(PRODUCT_URLS.UPLOAD_IMAGE, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
 };

@@ -10,8 +10,11 @@ import {
   calendarOutline,
   timeOutline,
   flashOutline,
+  lockClosedOutline,
+  diamondOutline,
+  alertCircleOutline,
 } from "ionicons/icons";
-import { Formik, Form, Field, ErrorMessage, useFormikContext } from "formik";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { AppDialog } from "../app-dialog";
 import {
@@ -19,6 +22,7 @@ import {
   useCreateOffer,
   useUpdateOffer,
   useDeleteOffer,
+  useOfferLimits,
 } from "@/hooks/useMyProvider";
 import { ProviderOfferFull } from "@/services/provider.service";
 
@@ -62,15 +66,24 @@ const ProviderDealsTab = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<ProviderOfferFull | null>(null);
+  const [paymentPrompt, setPaymentPrompt] = useState(false);
 
   const { data: offers = [], isLoading } = useMyOffers();
+  const { data: limits } = useOfferLimits();
   const createMutation = useCreateOffer();
   const updateMutation = useUpdateOffer();
   const deleteMutation = useDeleteOffer();
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
+  const canCreateDeal = !limits?.requiresPayment && (limits ? limits.totalDeals < limits.maxTotalDeals : true);
+  const canCreateActive = limits ? limits.activeDeals < limits.maxActiveDeals : true;
+
   const handleAdd = () => {
+    if (limits?.requiresPayment) {
+      setPaymentPrompt(true);
+      return;
+    }
     setEditing(null);
     setSheetOpen(true);
   };
@@ -109,6 +122,79 @@ const ProviderDealsTab = () => {
 
   return (
     <div className="relative min-h-[60vh]">
+      {/* Limits Banner */}
+      {limits && (
+        <div className="px-4 mb-3">
+          <div className={`rounded-2xl p-3.5 border ${
+            limits.requiresPayment
+              ? "bg-amber-50 border-amber-200"
+              : "bg-slate-50 border-slate-100"
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                limits.requiresPayment ? "bg-amber-100" : "bg-white"
+              }`}>
+                <IonIcon
+                  icon={limits.requiresPayment ? lockClosedOutline : pricetagOutline}
+                  className={`text-base ${limits.requiresPayment ? "text-amber-600" : "text-slate-500"}`}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-slate-700">
+                      {limits.totalDeals}/{limits.maxTotalDeals}
+                    </span>
+                    <span className="text-[10px] text-slate-400">deals</span>
+                  </div>
+                  <div className="w-px h-3 bg-slate-200" />
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-slate-700">
+                      {limits.activeDeals}/{limits.maxActiveDeals}
+                    </span>
+                    <span className="text-[10px] text-slate-400">active</span>
+                  </div>
+                </div>
+                {/* Progress bars */}
+                <div className="flex gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        limits.totalDeals >= limits.maxTotalDeals ? "bg-amber-500" : "bg-teal-500"
+                      }`}
+                      style={{ width: `${(limits.totalDeals / limits.maxTotalDeals) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        limits.activeDeals >= limits.maxActiveDeals ? "bg-red-400" : "bg-emerald-500"
+                      }`}
+                      style={{ width: `${(limits.activeDeals / limits.maxActiveDeals) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            {limits.requiresPayment && (
+              <button
+                onClick={() => setPaymentPrompt(true)}
+                className="mt-3 w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <IonIcon icon={diamondOutline} className="text-sm" />
+                Upgrade to Add More Deals
+              </button>
+            )}
+            {!limits.requiresPayment && !canCreateActive && (
+              <p className="mt-2 text-[10px] text-red-500 flex items-center gap-1">
+                <IonIcon icon={alertCircleOutline} className="text-xs" />
+                Max 3 active deals reached. Deactivate one or wait for it to expire.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {offers.length === 0 ? (
         <div className="px-4">
           <div className="bg-white rounded-2xl p-8 border border-slate-100 text-center">
@@ -278,6 +364,20 @@ const ProviderDealsTab = () => {
               >
                 {({ values, setFieldValue }) => (
                   <Form className="p-5 space-y-5">
+                    {/* Active deals limit warning */}
+                    {!editing && !canCreateActive && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
+                        <IonIcon icon={alertCircleOutline} className="text-red-500 text-base mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs font-semibold text-red-700">Active limit reached</p>
+                          <p className="text-[10px] text-red-500 mt-0.5">
+                            You already have 3 active deals. Your new deal will be created but
+                            it will only go live when another deal expires or is deactivated.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Title */}
                     <DealFormField name="title" label="Deal Title" placeholder="e.g. 20% off all services" />
 
@@ -356,6 +456,13 @@ const ProviderDealsTab = () => {
                           Delete Deal
                         </button>
                       )}
+
+                      {(createMutation.isError || updateMutation.isError) && (
+                        <p className="text-xs text-red-500 text-center mt-1">
+                          {((createMutation.error || updateMutation.error) as any)?.response?.data?.message ||
+                            "Something went wrong. Please try again."}
+                        </p>
+                      )}
                     </div>
                   </Form>
                 )}
@@ -378,6 +485,57 @@ const ProviderDealsTab = () => {
         loadingLabel="Deleting..."
         onConfirm={() => editing && handleDelete(editing.id)}
       />
+
+      {/* Payment / Upgrade Prompt */}
+      <AnimatePresence>
+        {paymentPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-6"
+            onClick={() => setPaymentPrompt(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <IonIcon icon={diamondOutline} className="text-3xl text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                Upgrade Your Plan
+              </h3>
+              <p className="text-sm text-slate-500 mb-2">
+                You&apos;ve reached the free limit of{" "}
+                <span className="font-bold text-slate-700">5 deals</span>.
+              </p>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                Upgrade to our Pro plan to create unlimited deals, unlock advanced
+                analytics, and get featured placement.
+              </p>
+              <div className="space-y-2.5">
+                <button
+                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                  onClick={() => setPaymentPrompt(false)}
+                >
+                  <IonIcon icon={diamondOutline} className="text-base" />
+                  Coming Soon
+                </button>
+                <button
+                  onClick={() => setPaymentPrompt(false)}
+                  className="w-full py-3 text-sm text-slate-500 font-medium"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

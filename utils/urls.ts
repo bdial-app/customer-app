@@ -8,6 +8,10 @@ export const AUTH_URLS = {
 
 export const USER_URLS = {
   ME: "/users/me",
+  DELETE_ME: "/users/me",
+  PAUSE_ME: "/users/me/pause",
+  RESUME_ME: "/users/me/resume",
+  DATA_EXPORT: "/users/me/data-export",
 };
 
 export const CATEGORY_URLS = {
@@ -40,6 +44,7 @@ export const PROVIDER_URLS = {
   SUBMIT_VERIFICATION: "/providers/submit-verification",
   MY_ANALYTICS: "/providers/my-analytics",
   MY_OFFERS: "/providers/my-offers",
+  OFFER_LIMITS: "/providers/my-offers/limits",
   UPDATE_OFFER: (offerId: string) => `/providers/my-offers/${offerId}`,
   DELETE_OFFER: (offerId: string) => `/providers/my-offers/${offerId}`,
   SPONSORSHIP_PLANS: "/providers/sponsorship-plans",
@@ -63,6 +68,7 @@ export const PRODUCT_URLS = {
   CREATE: "/products",
   UPDATE: (id: string) => `/products/${id}`,
   DELETE: (id: string) => `/products/${id}`,
+  UPLOAD_IMAGE: "/products/upload-image",
 };
 
 export const HOME_URLS = {

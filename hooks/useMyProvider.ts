@@ -5,6 +5,7 @@ import {
   getMyAnalytics,
   replyToReview,
   getMyOffers,
+  getOfferLimits,
   createOffer,
   updateOffer,
   deleteOffer,
@@ -18,6 +19,7 @@ import {
   ProviderOfferFull,
   CreateOfferPayload,
   UpdateOfferPayload,
+  OfferLimits,
   SponsorshipPlan,
   SponsoredListing,
   CreateSponsorshipPayload,
@@ -69,11 +71,20 @@ export const useReplyToReview = () => {
 // ─── Offers / Deals ─────────────────────────────────────────────────
 
 export const MY_OFFERS_KEY = ["my-provider-offers"];
+const OFFER_LIMITS_KEY = ["my-offer-limits"];
 
 export const useMyOffers = () => {
   return useQuery<ProviderOfferFull[]>({
     queryKey: MY_OFFERS_KEY,
     queryFn: getMyOffers,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useOfferLimits = () => {
+  return useQuery<OfferLimits>({
+    queryKey: OFFER_LIMITS_KEY,
+    queryFn: getOfferLimits,
     staleTime: 1000 * 60 * 2,
   });
 };
@@ -84,6 +95,7 @@ export const useCreateOffer = () => {
     mutationFn: (payload: CreateOfferPayload) => createOffer(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: MY_OFFERS_KEY });
+      qc.invalidateQueries({ queryKey: OFFER_LIMITS_KEY });
       qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },
   });
@@ -96,6 +108,7 @@ export const useUpdateOffer = () => {
       updateOffer(offerId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: MY_OFFERS_KEY });
+      qc.invalidateQueries({ queryKey: OFFER_LIMITS_KEY });
       qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },
   });
@@ -107,6 +120,7 @@ export const useDeleteOffer = () => {
     mutationFn: (offerId: string) => deleteOffer(offerId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: MY_OFFERS_KEY });
+      qc.invalidateQueries({ queryKey: OFFER_LIMITS_KEY });
       qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },
   });
