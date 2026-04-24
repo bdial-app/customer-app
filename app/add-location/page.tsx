@@ -2,7 +2,6 @@
 import React, {
   useState,
   useCallback,
-  useMemo,
   useEffect,
   useRef,
 } from "react";
@@ -18,9 +17,10 @@ import {
   checkmarkCircle,
   closeCircle,
   navigateOutline,
+  warningOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { GoogleMap, useLoadScript } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
 import { useSearchGeocode } from "@/hooks/useGeocode";
 import {
   SearchGeocodeResult,
@@ -30,40 +30,10 @@ import {
 import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Custom Advanced Marker Component
-const AdvancedMarker = ({
-  position,
-  map,
-}: {
-  position: google.maps.LatLngLiteral;
-  map: google.maps.Map | null;
-}) => {
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (!map) return;
-    const marker = new google.maps.marker.AdvancedMarkerElement({
-      map,
-      position,
-    });
-    markerRef.current = marker;
-    return () => {
-      if (markerRef.current) {
-        markerRef.current.map = null;
-      }
-    };
-  }, [map]);
-
-  useEffect(() => {
-    if (markerRef.current) {
-      markerRef.current.position = position;
-    }
-  }, [position]);
-
-  return null;
-};
+// Defined at module level — @react-google-maps/api uses reference equality
+// to detect changes. Defining inside the component (even with useMemo) can
+// cause the script to reload or throw on every render.
+const GOOGLE_MAPS_LIBRARIES: ("places")[] = [];
 
 const containerStyle = {
   width: "100%",
@@ -86,14 +56,12 @@ const AddLocationPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedType, setSelectedType] = useState("Home");
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const libraries: ("marker" | "places")[] = useMemo(() => ["marker"], []);
-
-  const { isLoaded } = useLoadScript({
+  const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
-    libraries,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const [marker, setMarker] = useState(defaultCenter);
@@ -129,9 +97,9 @@ const AddLocationPage = () => {
     setIsFocused(false);
     setSearchQuery("");
 
-    if (map) {
-      map.panTo(newPos);
-      map.setZoom(16);
+    if (mapRef.current) {
+      mapRef.current.panTo(newPos);
+      mapRef.current.setZoom(16);
     }
 
     await getAddress(lat, lng);
@@ -167,7 +135,8 @@ const AddLocationPage = () => {
     handleLocateMe();
   }, []);
 
-  const handleClick = useCallback((e: any) => {
+  const handleClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
     setMarker({ lat, lng });
@@ -175,7 +144,15 @@ const AddLocationPage = () => {
   }, []);
 
   const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
-    setMap(mapInstance);
+    mapRef.current = mapInstance;
+    // If geolocation resolved before map loaded, pan to the updated marker now
+    setMarker((current) => {
+      if (current.lat !== defaultCenter.lat || current.lng !== defaultCenter.lng) {
+        mapInstance.panTo(current);
+        mapInstance.setZoom(16);
+      }
+      return current;
+    });
   }, []);
 
   const handleBack = () => {
@@ -187,7 +164,7 @@ const AddLocationPage = () => {
     }
   };
 
-  const handleLocateMe = () => {
+  const handleLocateMe = useCallback(() => {
     if (typeof window === "undefined" || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -196,16 +173,17 @@ const AddLocationPage = () => {
         const newPos = { lat: latitude, lng: longitude };
         setMarker(newPos);
         getAddress(latitude, longitude);
-        if (map) {
-          map.panTo(newPos);
-          map.setZoom(16);
+        if (mapRef.current) {
+          mapRef.current.panTo(newPos);
+          mapRef.current.setZoom(16);
         }
       },
       (error) => {
         console.error("Geolocation error:", error);
       },
+      { timeout: 10000, maximumAge: 60000 },
     );
-  };
+  }, []);
 
   const handleClearSearch = () => {
     setSearchQuery("");
@@ -348,8 +326,20 @@ const AddLocationPage = () => {
                 transition={{ duration: 0.15 }}
               >
                 {/* Map */}
-                <div className="relative w-full h-64 bg-neutral-100 dark:bg-neutral-900">
-                  {isLoaded ? (
+                <div className="relative w-full h-72 bg-neutral-100 dark:bg-neutral-900">
+                  {loadError ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
+                      <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <IonIcon icon={warningOutline} className="text-xl text-red-500" />
+                      </div>
+                      <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                        Map failed to load
+                      </p>
+                      <p className="text-xs text-neutral-400">
+                        Check your internet connection and try again
+                      </p>
+                    </div>
+                  ) : isLoaded ? (
                     <GoogleMap
                       mapContainerStyle={containerStyle}
                       center={marker}
@@ -359,10 +349,12 @@ const AddLocationPage = () => {
                       options={{
                         disableDefaultUI: true,
                         zoomControl: false,
-                        mapId: "3d186cf47c01e972b8b1486d",
+                        // "greedy" lets the map scroll on single-finger drag on mobile
+                        // without showing the "use two fingers" overlay
+                        gestureHandling: "greedy",
                       }}
                     >
-                      <AdvancedMarker map={map} position={marker} />
+                      <MarkerF position={marker} />
                     </GoogleMap>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full gap-2">
