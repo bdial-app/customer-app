@@ -33,6 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
+import ReportSheet from "./report-sheet";
 
 interface MessagesPageProps {
   onBack: () => void;
@@ -99,6 +100,7 @@ export default function MessagesPage({
 
   // Menu state
   const [showMenu, setShowMenu] = useState(false);
+  const [reportSheetOpen, setReportSheetOpen] = useState(false);
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -391,7 +393,7 @@ export default function MessagesPage({
                         }},
                         { icon: alertCircleOutline, label: "Report", color: "text-amber-600", action: () => {
                           setShowMenu(false);
-                          alert("Report submitted. We'll review this conversation.");
+                          setReportSheetOpen(true);
                         }},
                         { icon: banOutline, label: "Block User", color: "text-red-500", action: () => {
                           setShowMenu(false);
@@ -693,6 +695,16 @@ export default function MessagesPage({
           </motion.button>
         </div>
       </div>
+
+      {/* Report Sheet */}
+      {conversationId && (
+        <ReportSheet
+          entityType="message"
+          entityId={conversationId}
+          isOpen={reportSheetOpen}
+          onClose={() => setReportSheetOpen(false)}
+        />
+      )}
     </div>
   );
 }

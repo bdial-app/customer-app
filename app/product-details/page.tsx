@@ -20,6 +20,7 @@ import {
   storefront,
   locationOutline,
   navigateOutline,
+  flagOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProduct } from "@/hooks/useProduct";
@@ -31,6 +32,7 @@ import { useAppContext } from "@/app/context/AppContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
 import { shareContent, openDirections } from "@/utils/sharing";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
+import ReportSheet from "../components/report-sheet";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -43,6 +45,7 @@ export default function ProductDetailsPage() {
   const { data, isLoading, isError } = useProduct(id);
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
+  const [reportSheetOpen, setReportSheetOpen] = useState(false);
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -157,6 +160,14 @@ export default function ProductDetailsPage() {
               >
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
+              {!isOwnProduct && user && (
+                <button
+                  onClick={() => setReportSheetOpen(true)}
+                  className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -457,6 +468,16 @@ export default function ProductDetailsPage() {
           </button>
         )}
       </div>
+
+      {/* Report Sheet */}
+      {id && (
+        <ReportSheet
+          entityType="product"
+          entityId={id}
+          isOpen={reportSheetOpen}
+          onClose={() => setReportSheetOpen(false)}
+        />
+      )}
     </Page>
   );
 }

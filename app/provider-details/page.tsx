@@ -28,6 +28,7 @@ import {
   navigateOutline,
   pricetag,
   peopleOutline,
+  flagOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
@@ -39,6 +40,7 @@ import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "../context/AppContext";
 import { openDirections } from "@/utils/sharing";
 import { useTrackProviderView, useTrackAction } from "@/hooks/useAnalyticsTrack";
+import ReportSheet from "../components/report-sheet";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -140,6 +142,7 @@ export default function ProviderDetailsPage() {
   const [callSheetOpened, setCallSheetOpened] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [reportSheetOpen, setReportSheetOpen] = useState(false);
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -312,6 +315,11 @@ export default function ProviderDetailsPage() {
               <button onClick={handleShare} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
+              {!isOwnProvider && user && (
+                <button onClick={() => setReportSheetOpen(true)} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
+                  <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -755,6 +763,16 @@ export default function ProviderDetailsPage() {
           </div>
         </div>
       </Sheet>
+
+      {/* Report Sheet */}
+      {id && (
+        <ReportSheet
+          entityType="provider"
+          entityId={id}
+          isOpen={reportSheetOpen}
+          onClose={() => setReportSheetOpen(false)}
+        />
+      )}
     </Page>
   );
 }
