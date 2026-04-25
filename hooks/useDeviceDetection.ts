@@ -18,7 +18,14 @@ export function useDeviceDetection() {
 
   useEffect(() => {
     const info = getDeviceInfo();
-    setDeviceInfo(info as { device_type: "mobile" | "tablet" | "desktop"; screen_width: number; screen_height: number; user_agent: string });
+    setDeviceInfo(
+      info as {
+        device_type: "mobile" | "tablet" | "desktop";
+        screen_width: number;
+        screen_height: number;
+        user_agent: string;
+      },
+    );
 
     // Update PostHog with device info
     if (posthog) {
