@@ -120,3 +120,14 @@ export const ANALYTICS_URLS = {
   TOP_PRODUCTS: '/analytics/top-products',
   PEAK_HOURS: '/analytics/peak-hours',
 };
+
+export const NOTIFICATION_URLS = {
+  LIST: '/notifications',
+  UNREAD_COUNT: '/notifications/unread-count',
+  MARK_READ: (id: string) => `/notifications/${id}/read`,
+  MARK_ALL_READ: '/notifications/read-all',
+  DELETE: (id: string) => `/notifications/${id}`,
+  PREFERENCES: '/notifications/preferences',
+  REGISTER_DEVICE: '/notifications/devices',
+  UNREGISTER_DEVICE: '/notifications/devices',
+};

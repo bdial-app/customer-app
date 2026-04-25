@@ -230,5 +230,6 @@
       ]
     }
   ],
-  "permissions": ["geolocation", "file_upload"]
+  "permissions": ["geolocation", "file_upload"],
+  "gcm_sender_id": "103953800507"
 }

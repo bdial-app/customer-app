@@ -16,10 +16,43 @@ import { resumeMyAccount } from "@/services/user.service";
 import { useRouter } from "next/navigation";
 import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 function LanguageSyncBridge() {
   useLanguageSync();
   useServiceWorker();
+  return null;
+}
+
+function PushNotificationBridge() {
+  usePushNotifications();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Listen for foreground push notification events (dispatched by usePushNotifications)
+    const handlePush = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.title) {
+        // Could integrate with NotificationContext here if needed
+        // For now, foreground messages are handled by the onMessage callback in usePushNotifications
+      }
+    };
+    window.addEventListener("push-notification", handlePush);
+
+    // Listen for notification click messages from service worker (deep link navigation)
+    const handleSWMessage = (e: MessageEvent) => {
+      if (e.data?.type === "NOTIFICATION_CLICK" && e.data?.url) {
+        router.push(e.data.url);
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handleSWMessage);
+
+    return () => {
+      window.removeEventListener("push-notification", handlePush);
+      navigator.serviceWorker?.removeEventListener("message", handleSWMessage);
+    };
+  }, [router]);
+
   return null;
 }
 
@@ -96,6 +129,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         <LanguageProvider>
           <AppProvider>
             <LanguageSyncBridge />
+            <PushNotificationBridge />
             <NotificationProvider>
               <App theme="ios">
                 <AppToast />

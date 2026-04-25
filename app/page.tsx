@@ -22,6 +22,9 @@ import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useChatSubscription } from "@/hooks/useChatSubscription";
 import { useHeartbeat } from "@/hooks/useChat";
 import { clearPendingChat } from "@/store/slices/chatSlice";
+import NotificationBell from "./components/notification-center/NotificationBell";
+import NotificationList from "./components/notification-center/NotificationList";
+import { useUnreadCount } from "@/hooks/useNotifications";
 
 export default function Home() {
   const router = useRouter();
@@ -29,6 +32,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
+  const [notifListOpen, setNotifListOpen] = useState(false);
   const { userMode, setUserMode } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
@@ -39,6 +43,8 @@ export default function Home() {
   useChatSubscription();
   // Heartbeat for online presence
   useHeartbeat();
+  // Poll notification unread count
+  useUnreadCount();
 
   // Open a specific chat when dispatched from another page (e.g. provider-details, product-details)
   useEffect(() => {
@@ -120,8 +126,9 @@ export default function Home() {
           className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100/60"
           style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
         >
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 flex items-center justify-between">
             <h1 className="text-xl font-bold text-slate-800">{getPageTitle()}</h1>
+            <NotificationBell onClick={() => setNotifListOpen(true)} className="!text-slate-600 [&_ion-icon]:!text-slate-600" />
           </div>
         </div>
       )}
@@ -186,6 +193,9 @@ export default function Home() {
       </AnimatePresence>
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
+
+      {/* Notification list slide panel */}
+      <NotificationList open={notifListOpen} onClose={() => setNotifListOpen(false)} />
     </Page>
   );
 }

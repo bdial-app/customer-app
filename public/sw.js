@@ -157,5 +157,113 @@ self.addEventListener("message", (event) => {
   }
 });
 
+// ──────────────────────────────────────────────
+// Push Notifications (Firebase Cloud Messaging)
+// ──────────────────────────────────────────────
+
+// Handle push events — display system notification
+self.addEventListener("push", (event) => {
+  console.log("[SW] Push event received");
+
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    try {
+      payload = { notification: { title: event.data?.text() || "New notification" } };
+    } catch {
+      payload = { notification: { title: "New notification" } };
+    }
+  }
+
+  // FCM sends data in either notification or data field
+  const notifData = payload.notification || {};
+  const fcmData = payload.data || {};
+
+  const title = notifData.title || fcmData.title || "Bohri Connect";
+  const body = notifData.body || fcmData.body || "";
+  const icon = "/cloth-icon.png";
+  const badge = "/cloth-icon.png";
+  const image = notifData.image || notifData.imageUrl || fcmData.imageUrl || undefined;
+
+  // Use type as collapse tag so multiple chat notifications from same conversation collapse
+  const tag = fcmData.type || "general";
+
+  const options = {
+    body,
+    icon,
+    badge,
+    image,
+    tag,
+    renotify: true,
+    data: fcmData, // Pass through for notificationclick handler
+    actions: [],
+    vibrate: [100, 50, 100],
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Handle notification click — deep link navigation
+self.addEventListener("notificationclick", (event) => {
+  console.log("[SW] Notification clicked");
+  event.notification.close();
+
+  const data = event.notification.data || {};
+  let targetUrl = "/";
+
+  // Build deep link URL from notification data
+  if (data.route) {
+    const params = data.params ? JSON.parse(data.params) : {};
+
+    switch (data.route) {
+      case "/provider-details":
+        if (params.id) {
+          targetUrl = `/provider-details?id=${params.id}`;
+          if (params.tab) targetUrl += `&tab=${params.tab}`;
+        }
+        break;
+      case "/product-details":
+        if (params.id) targetUrl = `/product-details?id=${params.id}`;
+        break;
+      case "/chat":
+        if (params.conversationId) {
+          targetUrl = `/?tab=chats&conversationId=${params.conversationId}`;
+        } else {
+          targetUrl = "/?tab=chats";
+        }
+        break;
+      case "/provider-onboarding/verify":
+        targetUrl = "/provider-onboarding/verify";
+        break;
+      default:
+        targetUrl = data.route.startsWith("/") ? data.route : "/";
+    }
+  }
+
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        // If the app is already open, focus it and navigate
+        for (const client of windowClients) {
+          if ("focus" in client) {
+            client.focus();
+            client.postMessage({
+              type: "NOTIFICATION_CLICK",
+              url: targetUrl,
+              data: data,
+            });
+            return;
+          }
+        }
+        // Otherwise open a new window
+        if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
+        }
+      })
+  );
+});
+
 // Log when service worker is ready
 console.log("[SW] Service worker script loaded");

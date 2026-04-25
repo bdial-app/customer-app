@@ -65,6 +65,7 @@ import { useDispatch } from "react-redux";
 import { getMyProviderStatus } from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
 import { deleteMyAccount, pauseMyAccount, exportMyData } from "@/services/user.service";
+import NotificationSettings from "./notification-center/NotificationSettings";
 
 interface UserProfile {
   mobileNumber: string;
@@ -229,7 +230,7 @@ const ProfileContent = () => {
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
-    "about" | "terms" | "privacy" | "help" | "editProfile" | "language" | null
+    "about" | "terms" | "privacy" | "help" | "editProfile" | "language" | "notificationSettings" | null
   >(null);
 
   const [profile, setProfile] = useState<any>(user || {});
@@ -626,14 +627,7 @@ const ProfileContent = () => {
           iconBg="bg-amber-50"
           label="Notifications"
           sublabel="Push & in-app alerts"
-          trailing={
-            <Toggle
-              component="label"
-              checked={true}
-              onChange={() => {}}
-              className="konsta-color-primary"
-            />
-          }
+          onClick={() => setActivePage("notificationSettings")}
         />
         <LanguageMenuButton onClick={() => setActivePage("language")} />
       </MenuSection>
@@ -781,6 +775,12 @@ const ProfileContent = () => {
           }}
         />
       </SlidePage>
+
+      {/* Notification Settings */}
+      <NotificationSettings
+        open={activePage === "notificationSettings"}
+        onClose={() => setActivePage(null)}
+      />
 
       {/* Edit Profile Page */}
       <SlidePage
