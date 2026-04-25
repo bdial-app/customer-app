@@ -262,12 +262,13 @@ function LoginContent() {
 
       {/* ── Logo area ── */}
       <div className="flex flex-col items-center pt-10 pb-6 shrink-0">
-        <div className="w-16 h-16 rounded-[18px] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-3">
-          <span className="text-2xl font-black text-white leading-none">T</span>
+        <div className="w-16 h-16 rounded-[18px] overflow-hidden mb-3">
+          <img
+            src="/icons/512.png"
+            alt="Tijarah Logo"
+            className="w-full h-full object-cover"
+          />
         </div>
-        <p className="text-[13px] font-semibold text-gray-800 tracking-wide">
-          TIJARAH CONNECT
-        </p>
       </div>
 
       {/* ── Card ── */}
@@ -524,8 +525,12 @@ export default function LoginPage() {
   if (!ready) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
-        <div className="w-16 h-16 rounded-[18px] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center animate-pulse">
-          <span className="text-2xl font-black text-white">T</span>
+        <div className="w-16 h-16 rounded-[18px] overflow-hidden animate-pulse">
+          <img
+            src="/icons/512.png"
+            alt="Loading"
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
     );
