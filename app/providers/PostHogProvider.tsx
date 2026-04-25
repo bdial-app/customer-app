@@ -35,7 +35,6 @@ function PostHogInit({ children }: { children: React.ReactNode }) {
           ph.capture("app_loaded");
         },
       });
-      console.log("PostHog init called, window.posthog =", window?.posthog);
     } catch (err) {
       console.error("Failed to initialize PostHog:", err);
     }
