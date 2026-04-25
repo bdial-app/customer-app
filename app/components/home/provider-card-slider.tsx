@@ -1,5 +1,5 @@
 "use client";
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
@@ -18,16 +18,6 @@ interface Provider {
   price?: string;
   distance?: number;
 }
-
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
-
-const cardVariant: Variants = {
-  hidden: { opacity: 0, x: 30 },
-  show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 20 } },
-};
 
 const ProviderCardSlider = ({
   title,
@@ -87,17 +77,17 @@ const ProviderCardSlider = ({
         </div>
       ) : (
       /* Card Slider */
-      <motion.div
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-50px" }}
+      <div
         className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {providers.map((provider) => (
+        {providers.map((provider, idx) => (
           <motion.div
             key={provider.id}
-            variants={cardVariant}
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 200, damping: 20, delay: idx * 0.06 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
             className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
@@ -188,7 +178,7 @@ const ProviderCardSlider = ({
             </div>
           </motion.div>
         ))}
-      </motion.div>
+      </div>
       )}
     </div>
   );
