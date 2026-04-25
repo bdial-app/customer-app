@@ -98,10 +98,10 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
     <div className="mb-2">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div>
-          <h2 className="text-base font-bold text-slate-800 leading-tight">
+          <h2 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
             What people say
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Real reviews from our community
           </p>
         </div>
@@ -150,7 +150,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="shrink-0 w-[260px] bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm"
+            className="shrink-0 w-[260px] bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700 shadow-sm"
           >
             <div className="flex items-center gap-2.5 mb-2.5">
               <div
@@ -163,7 +163,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-slate-800 leading-tight">
+                <p className="text-[13px] font-semibold text-slate-800 dark:text-white leading-tight">
                   {review.name}
                 </p>
                 <p className="text-[10px] text-slate-400">{review.service} • {review.timeAgo}</p>
@@ -174,7 +174,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
                 ))}
               </div>
             </div>
-            <p className="text-[12px] text-slate-600 leading-relaxed line-clamp-3">
+            <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
               &ldquo;{review.text}&rdquo;
             </p>
           </motion.div>

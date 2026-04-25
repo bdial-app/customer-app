@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Tailwind v4: class-based dark mode toggle */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* import Konsta UI theme */
 @import 'konsta/react/theme.css';
 
@@ -105,3 +108,31 @@ body {
 .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
 .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
 .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* ─── Dark Mode Global Overrides ─────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+}
+
+/* Body & page background */
+.dark body,
+.dark .k-page {
+  background-color: #0f172a !important;
+  color: #e2e8f0;
+}
+
+/* Konsta App / Page containers */
+.dark .k-ios,
+.dark .k-page-content {
+  background-color: #0f172a !important;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200px 100%;
+}
+
+/* Konsta overrides for dark mode */
+.dark .k-button {
+  @apply !text-white;
+}

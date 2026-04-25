@@ -51,9 +51,9 @@ const ProviderCardSlider = ({
       {/* Section Header */}
       <div className="flex items-end justify-between px-4 pt-4 pb-2">
         <div>
-          <h2 className="text-base font-bold text-slate-800 leading-tight">{title}</h2>
+          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">{title}</h2>
           {subtitle && (
-            <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
           )}
         </div>
         {viewAllLink && (
@@ -100,7 +100,7 @@ const ProviderCardSlider = ({
             variants={cardVariant}
             whileTap={{ scale: 0.97 }}
             onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
-            className="shrink-0 w-[150px] bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50"
+            className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
           >
             {/* Image */}
             <div className="relative h-[120px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
@@ -150,7 +150,7 @@ const ProviderCardSlider = ({
 
             {/* Info */}
             <div className="p-2.5">
-              <h4 className="text-sm font-semibold text-slate-800 line-clamp-1 leading-tight">
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 leading-tight">
                 {provider.name}
               </h4>
               {provider.service && (

@@ -1,5 +1,5 @@
 import apiClient from "@/utils/axios";
-import { PROVIDER_URLS } from "@/utils/urls";
+import { PROVIDER_URLS, REVIEW_URLS } from "@/utils/urls";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -68,7 +68,7 @@ export interface ProviderData {
   isAvailable: boolean;
   profilePhotoUrl: string | null;
   bannerImageUrl: string | null;
-  status: "pending" | "in_review" | "active" | "suspended" | "unverified";
+  status: "pending" | "in_review" | "active" | "suspended" | "unverified" | "disabled";
   isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
@@ -76,7 +76,7 @@ export interface ProviderData {
 }
 
 export interface ProviderStatusResponse {
-  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected";
+  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted";
   verificationStatus: string | null;
   provider: ProviderData | null;
   verification: any | null;
@@ -313,6 +313,17 @@ export const replyToReview = async (
   return data;
 };
 
+export interface SubmitReviewPayload {
+  providerId: string;
+  starRating: number;
+  reviewText?: string;
+}
+
+export const submitReview = async (payload: SubmitReviewPayload): Promise<any> => {
+  const { data } = await apiClient.post(REVIEW_URLS.CREATE, payload);
+  return data;
+};
+
 // ─── Offers / Deals ─────────────────────────────────────────────────
 
 export interface ProviderOfferFull {
@@ -451,5 +462,22 @@ export const createSponsorship = async (payload: CreateSponsorshipPayload): Prom
 
 export const updateSponsorship = async (id: string, payload: UpdateSponsorshipPayload): Promise<SponsoredListing> => {
   const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE_SPONSORSHIP(id), payload);
+  return data;
+};
+
+// ─── Provider Disable / Enable / Delete ─────────────────────────────
+
+export const disableMyProvider = async (): Promise<{ message: string; status: string }> => {
+  const { data } = await apiClient.post(PROVIDER_URLS.DISABLE_PROVIDER);
+  return data;
+};
+
+export const enableMyProvider = async (): Promise<{ message: string; status: string }> => {
+  const { data } = await apiClient.post(PROVIDER_URLS.ENABLE_PROVIDER);
+  return data;
+};
+
+export const deleteMyProvider = async (): Promise<{ message: string }> => {
+  const { data } = await apiClient.delete(PROVIDER_URLS.DELETE_PROVIDER);
   return data;
 };

@@ -60,7 +60,7 @@ export default function NotificationItemCard({
       whileTap={{ scale: 0.98 }}
       onClick={() => onPress(notification)}
       className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
-        notification.isRead ? "bg-white" : "bg-amber-50/40"
+        notification.isRead ? "bg-white dark:bg-slate-900" : "bg-amber-50/40 dark:bg-amber-900/10"
       }`}
     >
       {/* Icon */}
@@ -73,7 +73,7 @@ export default function NotificationItemCard({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-semibold truncate ${notification.isRead ? "text-slate-600" : "text-slate-800"}`}>
+          <span className={`text-sm font-semibold truncate ${notification.isRead ? "text-slate-600 dark:text-slate-400" : "text-slate-800 dark:text-white"}`}>
             {notification.title}
           </span>
           {!notification.isRead && (

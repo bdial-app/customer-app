@@ -7,7 +7,9 @@ export type ProviderStatus =
   | "pending"
   | "in_review"
   | "approved"
-  | "rejected";
+  | "rejected"
+  | "disabled"
+  | "deleted";
 export type UserMode = "customer" | "provider";
 
 const USER_MODE_KEY = "tijarah_user_mode";

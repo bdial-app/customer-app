@@ -26,13 +26,13 @@ const GreetingCard = () => {
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[22px] font-extrabold text-slate-800 leading-tight">
+          <p className="text-[22px] font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
             {greeting.text},{" "}
             <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
               {firstName}
             </span>
           </p>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             What service do you need today?
           </p>
         </div>

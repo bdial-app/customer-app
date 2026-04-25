@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -7,10 +8,11 @@ import {
   checkmarkCircle,
   timeOutline,
   alertCircleOutline,
-  notificationsOutline,
 } from "ionicons/icons";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
+import NotificationBell from "../notification-center/NotificationBell";
+import NotificationDropdown from "../notification-center/NotificationDropdown";
 
 interface ProviderHeaderProps {
   provider: ProviderData | null;
@@ -27,6 +29,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
 
 const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) => {
   const updateMutation = useUpdateProvider();
+  const [notifOpen, setNotifOpen] = useState(false);
 
   if (!provider) return null;
 
@@ -46,6 +49,7 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
   };
 
   return (
+    <>
     <div className="relative overflow-hidden">
       {/* Teal gradient hero */}
       <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 px-5 pt-3 pb-5">
@@ -57,12 +61,12 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
-            >
-              <IonIcon icon={notificationsOutline} className="text-white text-lg" />
-            </motion.button>
+            <div onClick={(e) => e.stopPropagation()}>
+              <NotificationBell
+                onClick={() => setNotifOpen((v) => !v)}
+                className="!w-9 !h-9 !rounded-full !bg-white/15 !backdrop-blur-sm !p-0 [&_ion-icon]:!text-white [&_ion-icon]:!text-lg"
+              />
+            </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
               className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
@@ -143,6 +147,9 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
         </div>
       </div>
     </div>
+
+    <NotificationDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
+    </>
   );
 };
 

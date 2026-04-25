@@ -49,9 +49,9 @@ const FeaturedProviderGrid = ({
     <div className="mb-2">
       <div className="flex items-end justify-between px-4 pt-4 pb-2">
         <div>
-          <h2 className="text-base font-bold text-slate-800 leading-tight">{title}</h2>
+          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">{title}</h2>
           {subtitle && (
-            <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
           )}
         </div>
         {viewAllLink && (
@@ -96,7 +96,7 @@ const FeaturedProviderGrid = ({
             variants={cardVariant}
             whileTap={{ scale: 0.97 }}
             onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
-            className="bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50"
+            className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
           >
             <div className="relative h-[130px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
               {provider.image ? (
@@ -135,7 +135,7 @@ const FeaturedProviderGrid = ({
               )}
             </div>
             <div className="p-2.5">
-              <h4 className="text-sm font-semibold text-slate-800 line-clamp-1">{provider.name}</h4>
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">{provider.name}</h4>
               {provider.service && (
                 <p className="text-[10px] text-slate-500 mt-0.5">{provider.service}</p>
               )}

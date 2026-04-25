@@ -51,7 +51,7 @@ function SettingRow({
 export default function NotificationSettings({ open, onClose }: NotificationSettingsProps) {
   const { data: prefs, isLoading } = useNotificationPreferences();
   const updatePrefs = useUpdatePreferences();
-  const { permissionStatus, requestPermission, isSupported } = usePushNotifications();
+  const { permissionStatus, requestPermission, isSupported, pushError, isIOSNotStandalone } = usePushNotifications();
 
   const handleToggle = (field: string, value: boolean) => {
     updatePrefs.mutate({ [field]: value });
@@ -101,6 +101,24 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
             </div>
           ) : (
             <div className="px-4 py-4 space-y-3">
+              {/* iOS not-standalone guidance */}
+              {isIOSNotStandalone && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-2">
+                  <h3 className="text-sm font-semibold text-blue-800 mb-1">
+                    Add to Home Screen Required
+                  </h3>
+                  <p className="text-xs text-blue-600 mb-2">
+                    On iPhone and iPad, push notifications only work when the app is installed to your Home Screen.
+                  </p>
+                  <ol className="text-xs text-blue-600 list-decimal list-inside space-y-1">
+                    <li>Tap the <strong>Share</strong> button (square with arrow) in Safari</li>
+                    <li>Scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong></li>
+                    <li>Open the app from your Home Screen</li>
+                    <li>Come back here to enable push notifications</li>
+                  </ol>
+                </div>
+              )}
+
               {/* Push Permission Banner */}
               {isSupported && permissionStatus !== "granted" && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-2">
@@ -122,6 +140,11 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                   {permissionStatus === "denied" && (
                     <p className="text-[10px] text-amber-500 mt-2 text-center">
                       You previously blocked notifications. Please enable them in your browser settings.
+                    </p>
+                  )}
+                  {pushError && (
+                    <p className="text-[11px] text-red-600 mt-2 text-center bg-red-50 rounded-lg p-2">
+                      {pushError}
                     </p>
                   )}
                 </div>

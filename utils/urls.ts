@@ -50,6 +50,9 @@ export const PROVIDER_URLS = {
   SPONSORSHIP_PLANS: "/providers/sponsorship-plans",
   MY_SPONSORSHIPS: "/providers/my-sponsorships",
   UPDATE_SPONSORSHIP: (id: string) => `/providers/my-sponsorships/${id}`,
+  DISABLE_PROVIDER: "/providers/my-provider/disable",
+  ENABLE_PROVIDER: "/providers/my-provider/enable",
+  DELETE_PROVIDER: "/providers/my-provider",
 };
 
 export const PHOTO_URLS = {
@@ -61,6 +64,8 @@ export const PHOTO_URLS = {
 export const REVIEW_URLS = {
   BY_PROVIDER: (providerId: string) => `/reviews/provider/${providerId}`,
   REPLY: (reviewId: string) => `/reviews/${reviewId}/reply`,
+  CREATE: "/reviews",
+  REPORT: (reviewId: string) => `/reviews/${reviewId}/report`,
 };
 
 export const PRODUCT_URLS = {

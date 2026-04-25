@@ -12,6 +12,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSavedLocations } from "@/hooks/useSavedLocation";
 import { SavedLocation } from "@/services/saved-location.service";
 import AddressBarNavigation from "./address-bar-navigation";
+import NotificationBell from "../notification-center/NotificationBell";
+import NotificationDropdown from "../notification-center/NotificationDropdown";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
@@ -22,7 +24,6 @@ import {
   locationOutline,
   locationSharp,
   navigateCircleOutline,
-  notificationsOutline,
   searchOutline,
   timeOutline,
   bookmarkOutline,
@@ -34,6 +35,7 @@ import { useRouter } from "next/navigation";
 const GeoLocation = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const dragControls = useDragControls();
@@ -170,16 +172,14 @@ const GeoLocation = () => {
               hideIcon
             />
           </div>
-          <button
-            type="button"
-            onClick={(e) => e.stopPropagation()}
-            className="shrink-0 relative w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:bg-white/[0.12] transition-colors"
-          >
-            <IonIcon icon={notificationsOutline} className="text-white/75 text-[17px]" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 ring-1 ring-[#0f172a]" />
-          </button>
+          <div onClick={(e) => e.stopPropagation()}>
+            <NotificationBell onClick={() => setNotifOpen((v) => !v)} className="!w-9 !h-9 !rounded-2xl !bg-white/[0.07] !border !border-white/[0.08] !p-0 [&_ion-icon]:!text-white/75 [&_ion-icon]:!text-[17px]" />
+          </div>
         </div>
       </div>
+
+      {/* Notification dropdown */}
+      <NotificationDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
 
       {/* ── Bottom Sheet ── */}
       <AnimatePresence>
@@ -206,7 +206,7 @@ const GeoLocation = () => {
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.4 }}
               onDragEnd={handleDragEnd}
-              className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
+              className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-slate-900 rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               {/* Drag handle */}
@@ -214,16 +214,16 @@ const GeoLocation = () => {
                 className="flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0"
                 onPointerDown={(e) => dragControls.start(e)}
               >
-                <div className="w-10 h-1 rounded-full bg-slate-200" />
+                <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
               </div>
 
               {/* Header */}
               <div className="flex items-center justify-between px-4 pb-3 shrink-0">
-                <h2 className="text-lg font-bold text-slate-900">Select Location</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Select Location</h2>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
                 >
                   <IonIcon icon={closeOutline} className="text-base text-slate-500" />
                 </motion.button>
@@ -231,7 +231,7 @@ const GeoLocation = () => {
 
               {/* Search Input */}
               <div className="px-4 pb-3 shrink-0">
-                <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all">
+                <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all">
                   <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
                   <input
                     ref={inputRef}

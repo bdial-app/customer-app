@@ -34,6 +34,7 @@ import {
   logOutOutline,
   trashOutline,
   moonOutline,
+  sunnyOutline,
   notificationsOutline,
   lockClosedOutline,
   heartOutline,
@@ -43,10 +44,14 @@ import {
   pauseCircleOutline,
   downloadOutline,
   folderOpenOutline,
+  eyeOffOutline,
+  eyeOutline,
+  powerOutline,
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 import { LanguageSelector, LanguageMenuButton } from "./language-selector";
 import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
@@ -62,7 +67,7 @@ import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
-import { getMyProviderStatus } from "@/services/provider.service";
+import { getMyProviderStatus, disableMyProvider, enableMyProvider, deleteMyProvider } from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
 import { deleteMyAccount, pauseMyAccount, exportMyData } from "@/services/user.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
@@ -116,7 +121,7 @@ const MenuRow = ({
   <motion.div
     whileTap={{ scale: 0.98, backgroundColor: "#f8fafc" }}
     onClick={onClick}
-    className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 transition-colors"
+    className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
   >
     <div
       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
@@ -125,7 +130,7 @@ const MenuRow = ({
     </div>
     <div className="flex-1 min-w-0">
       <span
-        className={`text-sm font-medium ${danger ? "text-red-500" : "text-slate-800"}`}
+        className={`text-sm font-medium ${danger ? "text-red-500" : "text-slate-800 dark:text-white"}`}
       >
         {label}
       </span>
@@ -155,7 +160,7 @@ const MenuSection = ({
         </span>
       </div>
     )}
-    <div className="mx-4 bg-white rounded-2xl overflow-hidden border border-slate-100 divide-y divide-slate-50">
+    <div className="mx-4 bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-700">
       {children}
     </div>
   </div>
@@ -180,11 +185,11 @@ const SlidePage = ({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[100] bg-white overflow-y-auto"
+        className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div
-          className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100"
+          className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
           style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
         >
           <div className="flex items-center justify-between px-4 py-3">
@@ -195,7 +200,7 @@ const SlidePage = ({
               <IonIcon icon={arrowBack} className="text-lg" />
               Back
             </button>
-            <h2 className="text-base font-bold text-slate-800">{title}</h2>
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">{title}</h2>
             <div className="w-12" />
           </div>
         </div>
@@ -220,6 +225,7 @@ const ProfileContent = () => {
   const user = useAppSelector((state) => state.auth.user as any);
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
+  const { isDark, toggleTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
@@ -227,6 +233,10 @@ const ProfileContent = () => {
   const [pauseSheetOpen, setPauseSheetOpen] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [disableProviderSheetOpen, setDisableProviderSheetOpen] = useState(false);
+  const [deleteProviderSheetOpen, setDeleteProviderSheetOpen] = useState(false);
+  const [isDisablingProvider, setIsDisablingProvider] = useState(false);
+  const [isDeletingProvider, setIsDeletingProvider] = useState(false);
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
@@ -391,6 +401,74 @@ const ProfileContent = () => {
     setProviderStatus("approved");
   };
 
+  const handleDisableProvider = async () => {
+    setIsDisablingProvider(true);
+    try {
+      await disableMyProvider();
+      setProviderStatus("disabled");
+      setUserMode("customer");
+      setDisableProviderSheetOpen(false);
+      notify({
+        title: "Provider Disabled",
+        subtitle: "Your provider profile is hidden from all listings. You can re-enable it anytime.",
+        variant: "success",
+      });
+    } catch {
+      notify({
+        title: "Error",
+        subtitle: "Failed to disable provider. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsDisablingProvider(false);
+    }
+  };
+
+  const handleEnableProvider = async () => {
+    setIsDisablingProvider(true);
+    try {
+      const result = await enableMyProvider();
+      setProviderStatus("approved");
+      notify({
+        title: "Provider Enabled",
+        subtitle: "Your provider profile is now visible again.",
+        variant: "success",
+      });
+    } catch {
+      notify({
+        title: "Error",
+        subtitle: "Failed to enable provider. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsDisablingProvider(false);
+    }
+  };
+
+  const handleDeleteProvider = async () => {
+    setIsDeletingProvider(true);
+    try {
+      await deleteMyProvider();
+      setProviderStatus("deleted");
+      setUserMode("customer");
+      resetProviderState();
+      setDeleteProviderSheetOpen(false);
+      notify({
+        title: "Provider Deleted",
+        subtitle: "Your provider profile has been removed.",
+        variant: "success",
+      });
+    } catch {
+      notify({
+        title: "Error",
+        subtitle: "Failed to delete provider. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsDeletingProvider(false);
+    }
+  };
+
   // ─── Avatar + Header ──────────────────────────────────────────
   const initials = profile.name
     ? profile.name
@@ -408,14 +486,14 @@ const ProfileContent = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mx-4 mt-4 mb-3 bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+        className="mx-4 mt-4 mb-3 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm"
       >
         <div className="flex items-center gap-3.5">
           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-sm">
             <span className="text-lg font-bold text-white">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-slate-800 truncate">
+            <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
               {profile.name || "User"}
             </h2>
             <p className="text-xs text-slate-500 truncate">
@@ -443,9 +521,9 @@ const ProfileContent = () => {
         providerStatus === "pending" ||
         providerStatus === "in_review") && (
         <div className="mx-4 mb-3">
-          <div className="bg-white rounded-2xl p-4 border border-slate-100 flex gap-4 justify-between items-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
             <div>
-              <div className="text-sm font-bold text-slate-800">
+              <div className="text-sm font-bold text-slate-800 dark:text-white">
                 Provider Mode
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">
@@ -592,6 +670,100 @@ const ProfileContent = () => {
           </motion.div>
         )}
 
+      {/* Provider Disabled Card */}
+      {providerStatus === "disabled" && (
+        <div className="mx-4 mb-3">
+          <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl">
+                <IonIcon icon={eyeOffOutline} className="text-xl text-slate-500" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-sm text-slate-800 dark:text-white">
+                  Provider Disabled
+                </div>
+                <div className="text-slate-500 text-xs mt-0.5">
+                  Your provider profile is hidden from all listings. Re-enable it anytime.
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleEnableProvider}
+                  disabled={isDisablingProvider}
+                  className="mt-3 px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl disabled:opacity-50"
+                >
+                  {isDisablingProvider ? "Enabling..." : "Re-enable Provider"}
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Provider Deleted Card */}
+      {providerStatus === "deleted" && (
+        <div className="mx-4 mb-3">
+          <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
+                <IonIcon icon={trashOutline} className="text-xl text-red-500" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-sm text-red-900 dark:text-red-300">
+                  Provider Deleted
+                </div>
+                <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
+                  Your provider profile has been removed. You can apply again as a new provider.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Provider Management Section (when provider mode is active) ── */}
+      {(providerStatus === "approved" ||
+        providerStatus === "pending" ||
+        providerStatus === "in_review" ||
+        providerStatus === "disabled") && (
+        <MenuSection title="Provider Management">
+          {providerStatus === "disabled" ? (
+            <MenuRow
+              icon={eyeOutline}
+              iconColor="text-teal-500"
+              iconBg="bg-teal-50"
+              label="Re-enable Provider"
+              sublabel="Make your profile visible again"
+              onClick={handleEnableProvider}
+              trailing={
+                isDisablingProvider ? (
+                  <Preloader className="w-5 h-5" />
+                ) : (
+                  <IonIcon icon={chevronForward} className="text-slate-300 text-sm" />
+                )
+              }
+            />
+          ) : (
+            <MenuRow
+              icon={eyeOffOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Disable Provider"
+              sublabel="Hide your profile from listings"
+              onClick={() => setDisableProviderSheetOpen(true)}
+            />
+          )}
+          <MenuRow
+            icon={trashOutline}
+            iconColor="text-red-500"
+            iconBg="bg-red-50"
+            label="Delete Provider"
+            sublabel="Permanently remove your provider profile"
+            danger
+            onClick={() => setDeleteProviderSheetOpen(true)}
+          />
+        </MenuSection>
+      )}
+
       {/* ── Account Section ──────────────────────────────────── */}
       <MenuSection title="Account">
         <MenuRow
@@ -628,6 +800,22 @@ const ProfileContent = () => {
           label="Notifications"
           sublabel="Push & in-app alerts"
           onClick={() => setActivePage("notificationSettings")}
+        />
+        <MenuRow
+          icon={isDark ? sunnyOutline : moonOutline}
+          iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
+          iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
+          label="Dark Mode"
+          sublabel={isDark ? "On" : "Off"}
+          trailing={
+            <div
+              onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+            </div>
+          }
+          onClick={toggleTheme}
         />
         <LanguageMenuButton onClick={() => setActivePage("language")} />
       </MenuSection>
@@ -1248,6 +1436,38 @@ const ProfileContent = () => {
         confirmColor="red"
         isLoading={isPausing}
         loadingLabel="Pausing..."
+      />
+
+      <AppDialog
+        open={disableProviderSheetOpen}
+        onClose={() => setDisableProviderSheetOpen(false)}
+        icon={eyeOffOutline}
+        iconColor="text-amber-500"
+        iconBg="bg-amber-50"
+        title="Disable Provider?"
+        description="Your provider profile will be hidden from all listings and search results. Customers won't be able to find you. You can re-enable it anytime from your profile."
+        confirmLabel="Yes, Disable Provider"
+        cancelLabel="Cancel"
+        onConfirm={handleDisableProvider}
+        confirmColor="red"
+        isLoading={isDisablingProvider}
+        loadingLabel="Disabling..."
+      />
+
+      <AppDialog
+        open={deleteProviderSheetOpen}
+        onClose={() => setDeleteProviderSheetOpen(false)}
+        icon={trashOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title="Delete Provider Profile?"
+        description="This will permanently remove your provider profile, including all your products, photos, and reviews. You will switch back to customer mode. This action cannot be undone."
+        confirmLabel="Yes, Delete Provider"
+        cancelLabel="Cancel"
+        onConfirm={handleDeleteProvider}
+        confirmColor="red"
+        isLoading={isDeletingProvider}
+        loadingLabel="Deleting..."
       />
     </>
   );

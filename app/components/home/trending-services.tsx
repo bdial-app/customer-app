@@ -84,7 +84,7 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
     <div className="mb-2">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-slate-800 leading-tight">
+          <h2 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
             Trending Now
           </h2>
           <motion.span

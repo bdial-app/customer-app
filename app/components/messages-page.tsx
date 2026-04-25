@@ -18,6 +18,7 @@ import {
   banOutline,
   volumeMuteOutline,
 } from "ionicons/icons";
+import { checkContent } from "@/utils/content-sanitizer";
 import {
   useMessages,
   useSendMessage,
@@ -101,6 +102,7 @@ export default function MessagesPage({
   // Menu state
   const [showMenu, setShowMenu] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -220,6 +222,13 @@ export default function MessagesPage({
   const handleSend = async () => {
     const text = messageText.trim();
     if (!text && !attachedFile) return;
+    setSendError("");
+
+    // Content moderation check (client-side first)
+    if (text && !checkContent(text).clean) {
+      setSendError("Your message contains inappropriate language. Please revise.");
+      return;
+    }
 
     stopTyping();
 
@@ -238,7 +247,15 @@ export default function MessagesPage({
       setAttachedFile(null);
       setAttachedPreview(null);
     } else {
-      sendMutation.mutate({ content: text, messageType: "text" });
+      sendMutation.mutate(
+        { content: text, messageType: "text" },
+        {
+          onError: (err: any) => {
+            const msg = err?.response?.data?.message || err?.message || "Failed to send";
+            setSendError(Array.isArray(msg) ? msg.join(", ") : msg);
+          },
+        },
+      );
     }
 
     setMessageText("");
@@ -630,7 +647,13 @@ export default function MessagesPage({
           </div>
         </div>
       )}
-
+      {/* Send error banner */}
+      {sendError && (
+        <div className="px-4 py-2 bg-red-50 border-t border-red-100 flex items-center justify-between gap-2">
+          <p className="text-xs text-red-600 flex-1">{sendError}</p>
+          <button onClick={() => setSendError("")} className="text-xs text-red-400 font-medium shrink-0">Dismiss</button>
+        </div>
+      )}
       {/* Input bar */}
       <div
         className="shrink-0 bg-white border-t border-slate-100 px-3 py-2"

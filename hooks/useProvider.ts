@@ -1,10 +1,12 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getNearbyProviders,
   getProviderById,
   getProviderDetails,
+  submitReview,
   ProviderDetailsResponse,
   ProviderNearbyParams,
+  SubmitReviewPayload,
 } from "@/services/provider.service";
 
 export const useNearbyProviders = (params: Omit<ProviderNearbyParams, "page">) => {
@@ -34,5 +36,15 @@ export const useProviderDetails = (id: string) => {
     queryKey: ["provider-details", id],
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
+  });
+};
+
+export const useSubmitReview = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: SubmitReviewPayload) => submitReview(payload),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["provider-details", variables.providerId] });
+    },
   });
 };

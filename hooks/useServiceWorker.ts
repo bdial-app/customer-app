@@ -7,7 +7,11 @@ export function useServiceWorker() {
     if (typeof window === "undefined") return;
 
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", async () => {
+      // Register immediately — do NOT wait for "load" event.
+      // Waiting causes a race condition where usePushNotifications
+      // calls navigator.serviceWorker.ready before the SW is registered,
+      // which can hang indefinitely on iOS PWA.
+      (async () => {
         try {
           console.log("[PWA] Attempting to register service worker...");
 
@@ -65,7 +69,7 @@ export function useServiceWorker() {
             console.error("Error details:", error.message);
           }
         }
-      });
+      })();
 
       // Listen for controller changes
       navigator.serviceWorker.addEventListener("controllerchange", () => {

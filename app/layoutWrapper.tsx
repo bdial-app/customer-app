@@ -7,13 +7,15 @@ import { useState, useEffect, useCallback } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "@/store";
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { AppToast } from "./components/app-toast";
 import { hydrateAuth, clearUser, setProfile } from "@/store/slices/authSlice";
 import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
-import { onAccountPaused } from "@/utils/axios";
+import { onAccountPaused, onInappropriateContent } from "@/utils/axios";
 import { resumeMyAccount } from "@/services/user.service";
 import { useRouter } from "next/navigation";
+import { useNotification } from "./context/NotificationContext";
 import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -52,6 +54,18 @@ function PushNotificationBridge() {
       navigator.serviceWorker?.removeEventListener("message", handleSWMessage);
     };
   }, [router]);
+
+  return null;
+}
+
+function InappropriateContentHandler() {
+  const { notify } = useNotification();
+
+  useEffect(() => {
+    return onInappropriateContent((message) => {
+      notify({ title: "Inappropriate Language", subtitle: message, variant: "error" });
+    });
+  }, [notify]);
 
   return null;
 }
@@ -126,6 +140,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <ReduxProvider store={store}>
       <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
         <LanguageProvider>
           <AppProvider>
             <LanguageSyncBridge />
@@ -133,12 +148,14 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             <NotificationProvider>
               <App theme="ios">
                 <AppToast />
+                <InappropriateContentHandler />
                 <AccountPausedHandler />
                 {children}
               </App>
             </NotificationProvider>
           </AppProvider>
         </LanguageProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ReduxProvider>
   );

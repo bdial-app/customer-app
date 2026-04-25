@@ -40,7 +40,7 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
       transition={{ delay: 0.2 }}
       className="mx-4 mb-3"
     >
-      <div className="flex items-center gap-2.5 bg-emerald-50/80 rounded-xl px-3.5 py-2.5 border border-emerald-100/60">
+      <div className="flex items-center gap-2.5 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl px-3.5 py-2.5 border border-emerald-100/60 dark:border-emerald-800/40">
         {/* Pulsing dot */}
         <div className="relative shrink-0">
           <div className="w-2 h-2 rounded-full bg-emerald-500" />

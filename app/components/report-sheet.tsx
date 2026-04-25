@@ -9,6 +9,7 @@ import {
   submitReport,
 } from "@/services/report.service";
 import { useNotification } from "../context/NotificationContext";
+import { checkContent } from "@/utils/content-sanitizer";
 
 const IonIcon = dynamic(
   () => import("@ionic/react").then((m) => m.IonIcon),
@@ -57,6 +58,20 @@ export default function ReportSheet({
 
   const handleSubmit = async () => {
     if (!selectedReason) return;
+
+    // Sanitize the description
+    if (selectedReason === "other" && description.trim()) {
+      const contentCheck = checkContent(description);
+      if (contentCheck.flagged) {
+        notify({
+          title: "Inappropriate language",
+          subtitle: "Please remove inappropriate language from your description.",
+          variant: "error",
+        });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await submitReport(

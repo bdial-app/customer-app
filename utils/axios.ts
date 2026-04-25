@@ -18,6 +18,17 @@ export const onAccountPaused = (listener: AccountPausedListener) => {
   };
 };
 
+// Event emitter for inappropriate content errors (400 from sanitizer)
+type InappropriateContentListener = (message: string) => void;
+const inappropriateContentListeners: InappropriateContentListener[] = [];
+export const onInappropriateContent = (listener: InappropriateContentListener) => {
+  inappropriateContentListeners.push(listener);
+  return () => {
+    const idx = inappropriateContentListeners.indexOf(listener);
+    if (idx >= 0) inappropriateContentListeners.splice(idx, 1);
+  };
+};
+
 // Request interceptor — attach token if present
 apiClient.interceptors.request.use((config) => {
   const token =
@@ -39,6 +50,15 @@ apiClient.interceptors.response.use(
     ) {
       pausedListeners.forEach((fn) => fn());
     }
+
+    // Detect inappropriate language error (400 from ContentSanitizerService)
+    if (error?.response?.status === 400) {
+      const msg: string = error?.response?.data?.message ?? "";
+      if (typeof msg === "string" && msg.toLowerCase().includes("inappropriate language")) {
+        inappropriateContentListeners.forEach((fn) => fn(msg));
+      }
+    }
+
     return Promise.reject(error);
   }
 );

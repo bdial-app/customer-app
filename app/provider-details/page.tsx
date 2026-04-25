@@ -32,7 +32,7 @@ import {
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
-import { useProviderDetails } from "@/hooks/useProvider";
+import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
@@ -41,6 +41,7 @@ import { useAppContext } from "../context/AppContext";
 import { openDirections } from "@/utils/sharing";
 import { useTrackProviderView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
+import { checkContent } from "@/utils/content-sanitizer";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -142,6 +143,8 @@ export default function ProviderDetailsPage() {
   const [callSheetOpened, setCallSheetOpened] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
 
   const user = useAppSelector((state) => state.auth.user);
@@ -151,6 +154,7 @@ export default function ProviderDetailsPage() {
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
   const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
+  const { mutate: submitReviewMutation, isPending: isSubmittingReview } = useSubmitReview();
 
   const handleToggleSaved = () => {
     if (!user) return;
@@ -174,6 +178,12 @@ export default function ProviderDetailsPage() {
   const categories = data?.categories ?? [];
   const badges = data?.badges ?? [];
   const activeOffers = data?.activeOffers ?? [];
+
+  // Check if current user already reviewed this provider
+  const hasAlreadyReviewed = useMemo(() => {
+    if (!user || !reviews.length) return false;
+    return reviews.some((r: any) => r.reviewerId === user.id);
+  }, [user, reviews]);
 
   const galleryImages = useMemo(() => {
     const urls: string[] = [];
@@ -579,11 +589,21 @@ export default function ProviderDetailsPage() {
             ))
           )}
 
-          {/* Write Review — hidden for own provider */}
-          {!isOwnProvider && (
-            <button onClick={() => setSheetOpened(true)} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
+          {/* Write Review — hidden for own provider, and if already reviewed */}
+          {!isOwnProvider && !hasAlreadyReviewed && user && (
+            <button onClick={() => { setReviewError(""); setReviewSuccess(false); setSheetOpened(true); }} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
               <IonIcon icon={star} className="w-4 h-4" />
               Write a Review
+            </button>
+          )}
+          {!isOwnProvider && hasAlreadyReviewed && (
+            <div className="bg-green-50 rounded-2xl p-4 border border-green-100 text-center">
+              <p className="text-sm text-green-700 font-medium">You&apos;ve already reviewed this provider</p>
+            </div>
+          )}
+          {!isOwnProvider && !user && (
+            <button onClick={() => router.push("/auth/login")} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-gray-200 text-gray-500 rounded-2xl text-sm font-semibold active:bg-gray-50 transition-colors">
+              Sign in to write a review
             </button>
           )}
         </div>
@@ -756,10 +776,45 @@ export default function ProviderDetailsPage() {
               </button>
             ))}
           </div>
-          <textarea className="w-full h-28 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all" placeholder="Share your experience with this provider..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+          <textarea className="w-full h-28 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all" placeholder="Share your experience with this provider..." value={reviewComment} onChange={(e) => { setReviewComment(e.target.value); setReviewError(""); }} />
+          {reviewError && (
+            <p className="text-xs text-red-500 mt-2 px-1">{reviewError}</p>
+          )}
+          {reviewSuccess && (
+            <p className="text-xs text-green-600 mt-2 px-1">Review submitted successfully!</p>
+          )}
           <div className="flex gap-3 mt-5">
             <button onClick={() => setSheetOpened(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl text-sm font-semibold active:bg-gray-200 transition-colors">Cancel</button>
-            <button disabled={!reviewComment.trim()} onClick={() => { console.log("Submitting review:", { rating: reviewRating, comment: reviewComment }); setSheetOpened(false); setReviewRating(5); setReviewComment(""); }} className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-sm shadow-amber-200">Submit Review</button>
+            <button
+              disabled={!reviewComment.trim() || isSubmittingReview}
+              onClick={() => {
+                setReviewError("");
+                // Frontend profanity check
+                const contentCheck = checkContent(reviewComment);
+                if (contentCheck.flagged) {
+                  setReviewError("Your review contains inappropriate language. Please revise and try again.");
+                  return;
+                }
+                submitReviewMutation(
+                  { providerId: id, starRating: reviewRating, reviewText: reviewComment.trim() },
+                  {
+                    onSuccess: () => {
+                      setReviewSuccess(true);
+                      setReviewComment("");
+                      setReviewRating(5);
+                      setTimeout(() => { setSheetOpened(false); setReviewSuccess(false); }, 1500);
+                    },
+                    onError: (err: any) => {
+                      const msg = err?.response?.data?.message || err?.message || "Failed to submit review";
+                      setReviewError(Array.isArray(msg) ? msg.join(", ") : msg);
+                    },
+                  }
+                );
+              }}
+              className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-sm shadow-amber-200"
+            >
+              {isSubmittingReview ? "Submitting..." : "Submit Review"}
+            </button>
           </div>
         </div>
       </Sheet>
