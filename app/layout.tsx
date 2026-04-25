@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { LayoutWrapper } from "./layoutWrapper";
+import { CSPostHogProvider } from "./providers/PostHogProvider";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -56,7 +57,9 @@ export default async function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <CSPostHogProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </CSPostHogProvider>
       </body>
     </html>
   );
