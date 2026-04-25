@@ -136,3 +136,7 @@ export const NOTIFICATION_URLS = {
   REGISTER_DEVICE: '/notifications/devices',
   UNREGISTER_DEVICE: '/notifications/devices',
 };
+
+export const BUG_REPORT_URLS = {
+  CREATE: '/bug-reports',
+};
