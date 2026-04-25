@@ -85,7 +85,7 @@ export default function Home() {
   const getPageTitle = () => {
     switch (activeTab) {
       case "home":
-        return userMode === "customer" ? "Bohri Connect" : "Dashboard";
+        return userMode === "customer" ? "Tijarah" : "Dashboard";
       case "explore":
         return "Explore";
       case "saved":
@@ -99,7 +99,7 @@ export default function Home() {
       case "analytics":
         return "Analytics";
       default:
-        return "Bohri Connect";
+        return "Tijarah";
     }
   };
 

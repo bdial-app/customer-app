@@ -11,23 +11,23 @@ const openSans = Open_Sans({
 });
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Bohri Connect",
+    title: "Tijarah",
     description:
       "Community-driven marketplace connecting customers with trusted local service providers",
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,
       statusBarStyle: "default",
-      title: "Bohri Connect",
+      title: "Tijarah",
     },
     formatDetection: {
       telephone: false,
     },
     icons: {
-      icon: "/icon-192x192.png",
-      apple: "/icon-192x192.png",
+      icon: "/icons/196.png",
+      apple: "/icons/196.png",
     },
-    metadataBase: new URL("https://www.bohriconnect.com"),
+    metadataBase: new URL("https://www.tijarah.com"),
   };
 }
 
@@ -51,9 +51,9 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Bohri Connect" />
-        <link rel="icon" href="/icon-192x192.png" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <meta name="apple-mobile-web-app-title" content="Tijarah" />
+        <link rel="icon" href="/icons/196.png" />
+        <link rel="apple-touch-icon" href="/icons/196.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
