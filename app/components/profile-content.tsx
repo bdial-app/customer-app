@@ -120,12 +120,12 @@ const MenuRow = ({
   onClick?: () => void;
 }) => (
   <motion.div
-    whileTap={{ scale: 0.98, backgroundColor: "#f8fafc" }}
+    whileTap={{ scale: 0.98 }}
     onClick={onClick}
     className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
   >
     <div
-      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
+      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg} dark:bg-slate-700`}
     >
       <IonIcon icon={icon} className={`text-lg ${iconColor}`} />
     </div>
@@ -510,7 +510,7 @@ const ProfileContent = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setActivePage("editProfile")}
-            className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"
           >
             <IonIcon icon={createOutline} className="text-amber-600 text-lg" />
           </motion.button>
@@ -574,19 +574,19 @@ const ProfileContent = () => {
 
       {providerStatus === "pending" && userMode === "customer" && (
         <div className="mx-4 mb-3">
-          <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 p-4">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-amber-100 rounded-xl">
+              <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-xl">
                 <IonIcon
                   icon={timeOutline}
                   className="text-xl text-amber-600"
                 />
               </div>
               <div className="flex-1">
-                <div className="font-bold text-sm text-amber-900">
+                <div className="font-bold text-sm text-amber-900 dark:text-amber-300">
                   Verification Pending
                 </div>
-                <div className="text-amber-700 text-xs mt-0.5">
+                <div className="text-amber-700 dark:text-amber-400 text-xs mt-0.5">
                   Under review. You can still manage your business.
                 </div>
               </div>
@@ -597,19 +597,19 @@ const ProfileContent = () => {
 
       {providerStatus === "rejected" && (
         <div className="mx-4 mb-3">
-          <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
+          <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-red-100 rounded-xl">
+              <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
                 <IonIcon
                   icon={alertCircleOutline}
                   className="text-xl text-red-600"
                 />
               </div>
               <div className="flex-1">
-                <div className="font-bold text-sm text-red-900">
+                <div className="font-bold text-sm text-red-900 dark:text-red-300">
                   Application Rejected
                 </div>
-                <div className="text-red-700 text-xs mt-0.5">
+                <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
                   Please review your documents and try again.
                 </div>
                 <motion.button
@@ -1067,7 +1067,7 @@ const ProfileContent = () => {
                 <button
                   type="button"
                   onClick={() => setActivePage(null)}
-                  className="py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm active:bg-slate-200"
+                  className="py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-sm active:bg-slate-200 dark:active:bg-slate-600"
                 >
                   Cancel
                 </button>
@@ -1090,12 +1090,12 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="About Us"
       >
-        <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <div className="text-center mb-6">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
               <span className="text-2xl font-bold text-white">BC</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Bohri Connect</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Bohri Connect</h3>
             <p className="text-xs text-slate-400">Version {APP_VERSION}</p>
           </div>
           <p>
@@ -1110,7 +1110,7 @@ const ProfileContent = () => {
             and customers can find reliable services — from tailoring and beauty
             to home repairs and catering.
           </p>
-          <h4 className="font-bold text-slate-800 pt-2">Our Values</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white pt-2">Our Values</h4>
           <ul className="space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">●</span>
@@ -1140,7 +1140,7 @@ const ProfileContent = () => {
               </span>
             </li>
           </ul>
-          <h4 className="font-bold text-slate-800 pt-2">Contact</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white pt-2">Contact</h4>
           <p>
             Email: support@bohriconnect.com
             <br />
@@ -1158,27 +1158,27 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="Terms & Conditions"
       >
-        <div className="space-y-5 text-sm text-slate-600 leading-relaxed">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <p className="text-xs text-amber-700 font-medium">Effective Date: 1 May 2026 · Last Updated: April 2026</p>
+        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Effective Date: 1 May 2026 · Last Updated: April 2026</p>
           </div>
 
           <p>Welcome to Tijarah (BohriConnect). These Terms govern your use of the Tijarah app and all related services. By using Tijarah, you confirm you have read, understood, and agreed to these Terms.</p>
 
-          <h4 className="font-bold text-slate-800">1. About Tijarah — What We Are and Are Not</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">1. About Tijarah — What We Are and Are Not</h4>
           <p>Tijarah is a community-driven business discovery platform. We provide a digital space where Bohra-owned businesses can be listed and discovered.</p>
-          <div className="bg-slate-50 border-l-4 border-amber-400 px-4 py-3 rounded-r-xl">
-            <p className="text-xs font-semibold text-slate-700">IMPORTANT</p>
-            <p className="text-xs mt-1 text-slate-600">Tijarah is an intermediary platform only. We do not own, operate, or control any listed business. We do not handle payments, bookings, or any transaction. Any arrangement between a User and a Business Owner is strictly between those two parties. Tijarah accepts no liability arising from it.</p>
+          <div className="bg-slate-50 dark:bg-slate-800 border-l-4 border-amber-400 px-4 py-3 rounded-r-xl">
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">IMPORTANT</p>
+            <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">Tijarah is an intermediary platform only. We do not own, operate, or control any listed business. We do not handle payments, bookings, or any transaction. Any arrangement between a User and a Business Owner is strictly between those two parties. Tijarah accepts no liability arising from it.</p>
           </div>
 
-          <h4 className="font-bold text-slate-800">2. Eligibility</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">2. Eligibility</h4>
           <p>You may use Tijarah if you are at least 13 years of age and capable of entering a legally binding agreement. Users between 13–18 should have a parent or guardian review these Terms.</p>
 
-          <h4 className="font-bold text-slate-800">3. User Accounts</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">3. User Accounts</h4>
           <p>You must provide accurate registration information, keep credentials secure, and notify us of any unauthorised access. You are responsible for all activity through your account.</p>
 
-          <h4 className="font-bold text-slate-800">4. Business Listings</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">4. Business Listings</h4>
           <p>By submitting a listing, you confirm all information is accurate and the business is genuinely owned by a member of the Dawoodi Bohra community. The following are not permitted and will be removed without notice:</p>
           <ul className="list-disc pl-5 space-y-1 text-xs">
             <li>Businesses not owned by a Bohra community member</li>
@@ -1187,30 +1187,30 @@ const ProfileContent = () => {
             <li>Content violating third-party intellectual property rights</li>
           </ul>
 
-          <h4 className="font-bold text-slate-800">5. Verified Badge</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">5. Verified Badge</h4>
           <p>The 'Verified' badge indicates Tijarah reviewed an identity or community document. It does <strong>not</strong> guarantee quality, reliability, or safety of the business. Users must conduct their own due diligence.</p>
 
-          <h4 className="font-bold text-slate-800">6. User Conduct</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">6. User Conduct</h4>
           <p>You agree not to post false or offensive content, impersonate others, spam, scrape data, upload malware, or use the platform for any unlawful purpose. We may suspend accounts that violate these rules without prior notice.</p>
 
-          <h4 className="font-bold text-slate-800">7. Reviews & Community Content</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">7. Reviews & Community Content</h4>
           <p>Reviews must be honest and based on genuine first-hand experience. Reviews in exchange for payment, discounts, or gifts are prohibited. You retain ownership of your content and grant Tijarah a non-exclusive licence to display it within the Platform.</p>
 
-          <h4 className="font-bold text-slate-800">8. Reporting & Blocking</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">8. Reporting & Blocking</h4>
           <p>You may report or block any business or user. Submitting a report does not guarantee removal — Tijarah reviews each case individually and takes action where a clear violation is identified.</p>
 
-          <h4 className="font-bold text-slate-800">9. Disclaimer of Warranties</h4>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-            <p className="text-xs text-slate-600">The Platform is provided on an "AS IS" basis without warranties of any kind. Tijarah makes no warranty that the Platform will be uninterrupted, error-free, or that any listing is accurate or reliable.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">9. Disclaimer of Warranties</h4>
+          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3">
+            <p className="text-xs text-slate-600 dark:text-slate-400">The Platform is provided on an "AS IS" basis without warranties of any kind. Tijarah makes no warranty that the Platform will be uninterrupted, error-free, or that any listing is accurate or reliable.</p>
           </div>
 
-          <h4 className="font-bold text-slate-800">10. Limitation of Liability</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">10. Limitation of Liability</h4>
           <p className="text-xs">To the fullest extent permitted by law, Tijarah shall not be liable for any loss arising from reliance on listings, any transaction between users and businesses, or any indirect or consequential damages. Our maximum aggregate liability is zero for users who have not paid anything.</p>
 
-          <h4 className="font-bold text-slate-800">11. Governing Law</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">11. Governing Law</h4>
           <p>These Terms are governed by the laws of India. Disputes shall be subject to the exclusive jurisdiction of the courts in Pune, Maharashtra.</p>
 
-          <h4 className="font-bold text-slate-800">12. Contact</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">12. Contact</h4>
           <p>Legal enquiries: <span className="text-blue-600 font-medium">legal@tijarah.app</span></p>
 
           <p className="text-xs text-slate-400 pt-2 text-center">© 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May 2026</p>
@@ -1223,14 +1223,14 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="Privacy Policy"
       >
-        <div className="space-y-5 text-sm text-slate-600 leading-relaxed">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <p className="text-xs text-amber-700 font-medium">Effective Date: 1 May 2026 · Last Updated: April 2026</p>
+        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Effective Date: 1 May 2026 · Last Updated: April 2026</p>
           </div>
 
           <p>Tijarah (BohriConnect) connects users with Bohra-owned businesses across food, fashion, retail, and local services. This Privacy Policy explains what personal information we collect, how we use it, and your rights over it.</p>
 
-          <h4 className="font-bold text-slate-800">1. Information We Collect</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">1. Information We Collect</h4>
           <p className="font-medium text-slate-700">A. Information You Provide</p>
           <ul className="list-disc pl-5 space-y-1 text-xs">
             <li><strong>Name</strong> — optional, to personalise your experience</li>
@@ -1251,7 +1251,7 @@ const ProfileContent = () => {
             <li><strong>Crash reports</strong> — anonymous technical data</li>
           </ul>
 
-          <h4 className="font-bold text-slate-800">2. How We Use Your Information</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">2. How We Use Your Information</h4>
           <ul className="list-disc pl-5 space-y-1 text-xs">
             <li>Create and manage your account</li>
             <li>Display and operate Bohra business listings</li>
@@ -1265,13 +1265,13 @@ const ProfileContent = () => {
           </ul>
           <p className="text-xs italic">We do not use your information for advertising targeting or sale to any third party.</p>
 
-          <h4 className="font-bold text-slate-800">3. Data Storage — Supabase</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">3. Data Storage — Supabase</h4>
           <p className="text-xs">All data in transit is encrypted via HTTPS/TLS. Data at rest — including identity documents — is encrypted by Supabase. Identity documents are stored in a restricted, separately scoped Supabase Storage bucket. Supabase is hosted on AWS infrastructure and is GDPR-compliant.</p>
 
-          <h4 className="font-bold text-slate-800">4. How We Share Your Information</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">4. How We Share Your Information</h4>
           <p className="text-xs">We do not sell, rent, or trade your personal data. Information is shared only in these limited circumstances: when you initiate contact with a business through the app, with trusted third-party service providers (Supabase, Apple, Google) under confidentiality obligations, and where required by law.</p>
 
-          <h4 className="font-bold text-slate-800">5. Your Rights</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">5. Your Rights</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {[
               ["Access", "Request a summary of your data"],
@@ -1281,23 +1281,23 @@ const ProfileContent = () => {
               ["Location Withdrawal", "Revoke via device Settings"],
               ["Data Portability", "Request a copy of your data"],
             ].map(([right, desc]) => (
-              <div key={right} className="bg-slate-50 rounded-xl p-2.5">
-                <p className="font-semibold text-slate-800">{right}</p>
+              <div key={right} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-2.5">
+                <p className="font-semibold text-slate-800 dark:text-white">{right}</p>
                 <p className="text-slate-500 mt-0.5">{desc}</p>
               </div>
             ))}
           </div>
 
-          <h4 className="font-bold text-slate-800">6. Children's Privacy</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">6. Children's Privacy</h4>
           <p className="text-xs">Tijarah is not intended for users under 13. We do not knowingly collect data from children. If you believe a child under 13 has submitted information, contact us immediately.</p>
 
-          <h4 className="font-bold text-slate-800">7. Data Retention</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">7. Data Retention</h4>
           <p className="text-xs">Account data is retained while your account is active. Identity documents are deleted within 30 days of a written request. You may request full account and data deletion at any time.</p>
 
-          <h4 className="font-bold text-slate-800">8. Changes to This Policy</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">8. Changes to This Policy</h4>
           <p className="text-xs">We will notify you of material changes via in-app notification and update the 'Last Updated' date. Continued use after changes constitutes acceptance.</p>
 
-          <h4 className="font-bold text-slate-800">9. Contact</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">9. Contact</h4>
           <p>Privacy enquiries: <span className="text-blue-600 font-medium">privacy@tijarah.app</span></p>
 
           <p className="text-xs text-slate-400 pt-2 text-center">© 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May 2026</p>
@@ -1310,7 +1310,7 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="Help & FAQ"
       >
-        <div className="space-y-3 text-sm text-slate-600 leading-relaxed">
+        <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <p className="text-xs text-slate-400 pb-1">Can't find your answer? Contact us at <span className="text-blue-500 font-medium">support@tijarah.app</span></p>
 
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-1">General</p>
@@ -1344,7 +1344,7 @@ const ProfileContent = () => {
           <FAQItem q="How do I turn off location access?" a="Go to Settings > Privacy > Location Services > Tijarah and set to 'Never'. The app still works for browsing — nearby discovery will not be available." />
           <FAQItem q="I found a bug. What do I do?" a="Use the 'Report a Bug' option in your profile to send us details. Include your device type and what happened — we'll investigate and follow up as quickly as possible." />
 
-          <div className="pt-4 text-center border-t border-slate-100 mt-2">
+          <div className="pt-4 text-center border-t border-slate-100 dark:border-slate-700 mt-2">
             <p className="text-xs text-slate-400">Still need help?</p>
             <p className="text-sm font-semibold text-blue-500 mt-1">support@tijarah.app</p>
             <p className="text-xs text-slate-400 mt-0.5">WhatsApp: +91 XXXXXXXXXX</p>
@@ -1443,13 +1443,13 @@ const ProfileContent = () => {
 // ─── Contact Us Slide ───────────────────────────────────────────────
 const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void }) => (
   <SlidePage open={open} onClose={onClose} title="Contact Us">
-    <div className="space-y-5 text-sm text-slate-600">
+    <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300">
       {/* Hero */}
       <div className="text-center pb-2">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
           <IonIcon icon={mailOutline} className="text-2xl text-white" />
         </div>
-        <h3 className="text-base font-bold text-slate-800">Get in Touch</h3>
+        <h3 className="text-base font-bold text-slate-800 dark:text-white">Get in Touch</h3>
         <p className="text-xs text-slate-400 mt-1">We typically respond within 7 business days</p>
       </div>
 
@@ -1457,13 +1457,13 @@ const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
       <div className="space-y-3">
         <a
           href="mailto:support@tijarah.app"
-          className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3.5 active:bg-blue-100 transition-colors"
+          className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-2xl px-4 py-3.5 active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
             <IonIcon icon={mailOutline} className="text-white text-lg" />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-700">General Support</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">General Support</p>
             <p className="text-sm font-semibold text-blue-600">support@tijarah.app</p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
@@ -1471,13 +1471,13 @@ const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
 
         <a
           href="mailto:privacy@tijarah.app"
-          className="flex items-center gap-3 bg-green-50 border border-green-100 rounded-2xl px-4 py-3.5 active:bg-green-100 transition-colors"
+          className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded-2xl px-4 py-3.5 active:bg-green-100 dark:active:bg-green-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
             <IonIcon icon={shieldCheckmarkOutline} className="text-white text-lg" />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-700">Privacy & Data Requests</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Privacy & Data Requests</p>
             <p className="text-sm font-semibold text-green-600">privacy@tijarah.app</p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
@@ -1485,13 +1485,13 @@ const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
 
         <a
           href="mailto:legal@tijarah.app"
-          className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-2xl px-4 py-3.5 active:bg-purple-100 transition-colors"
+          className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/40 rounded-2xl px-4 py-3.5 active:bg-purple-100 dark:active:bg-purple-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center shrink-0">
             <IonIcon icon={documentTextOutline} className="text-white text-lg" />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-700">Legal & Terms</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Legal & Terms</p>
             <p className="text-sm font-semibold text-purple-600">legal@tijarah.app</p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
@@ -1499,8 +1499,8 @@ const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
       </div>
 
       {/* Location */}
-      <div className="bg-slate-50 rounded-2xl px-4 py-4 space-y-1">
-        <p className="text-xs font-bold text-slate-700">Registered Address</p>
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-4 space-y-1">
+        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Registered Address</p>
         <p className="text-xs text-slate-500">Tijarah (BohriConnect)</p>
         <p className="text-xs text-slate-500">Pune, Maharashtra, India</p>
       </div>
@@ -1558,11 +1558,11 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
     <SlidePage open={open} onClose={handleClose} title="Report a Bug">
       {submitted ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
             <IonIcon icon={checkmarkCircleOutline} className="text-4xl text-green-500" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Report Submitted!</h3>
-          <p className="text-sm text-slate-500 max-w-xs">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Report Submitted!</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
             Thank you for helping improve Tijarah. We've received your bug report and will investigate it.
           </p>
           <button
@@ -1574,13 +1574,13 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Found something broken? Tell us what happened and we'll fix it as quickly as possible.
           </p>
 
           {/* Category */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Bug Category</label>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Bug Category</label>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(BUG_CATEGORY_LABELS) as BugCategory[]).map((key) => (
                 <button
@@ -1589,7 +1589,7 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
                   className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors text-left ${
                     category === key
                       ? "bg-orange-500 text-white border-orange-500"
-                      : "bg-slate-50 text-slate-700 border-slate-200 active:bg-slate-100"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 active:bg-slate-100 dark:active:bg-slate-700"
                   }`}
                 >
                   {BUG_CATEGORY_LABELS[key]}
@@ -1600,7 +1600,7 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
 
           {/* Description */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
               Describe the Bug <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -1609,14 +1609,14 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
               placeholder="What went wrong? What did you expect to happen?"
               rows={4}
               maxLength={1000}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-3 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
             />
             <p className="text-[10px] text-slate-400 text-right mt-0.5">{description.length}/1000</p>
           </div>
 
           {/* Steps */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
               Steps to Reproduce <span className="text-slate-400 font-normal">(optional)</span>
             </label>
             <textarea
@@ -1625,7 +1625,7 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
               placeholder="1. Open the app&#10;2. Tap on...&#10;3. Bug appears"
               rows={3}
               maxLength={500}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-3 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
             />
           </div>
 
@@ -1650,12 +1650,12 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
 const FAQItem = ({ q, a }: { q: string; a: string }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border border-slate-100 rounded-xl overflow-hidden">
+    <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-slate-50"
+        className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-slate-50 dark:active:bg-slate-700"
       >
-        <span className="text-sm font-semibold text-slate-800 pr-2">{q}</span>
+        <span className="text-sm font-semibold text-slate-800 dark:text-white pr-2">{q}</span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
@@ -1673,7 +1673,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <p className="px-4 pb-3 text-sm text-slate-500">{a}</p>
+            <p className="px-4 pb-3 text-sm text-slate-500 dark:text-slate-400">{a}</p>
           </motion.div>
         )}
       </AnimatePresence>

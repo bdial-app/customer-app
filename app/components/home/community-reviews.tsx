@@ -106,8 +106,8 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
           </p>
         </div>
         {Number(avgRating) > 0 && (
-          <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full">
-            <span className="text-xs font-bold text-amber-700">{avgRating}</span>
+          <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">{avgRating}</span>
             <span className="text-[10px] text-amber-600">★★★★★</span>
           </div>
         )}
@@ -116,9 +116,9 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
       {isLoading ? (
         <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="shrink-0 w-[260px] bg-white rounded-2xl p-3.5 border border-slate-100 animate-pulse">
+            <div key={i} className="shrink-0 w-[260px] bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700 animate-pulse">
               <div className="flex items-center gap-2.5 mb-2.5">
-                <div className="w-9 h-9 rounded-full bg-slate-100" />
+                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700" />
                 <div className="flex-1 space-y-1.5">
                   <div className="h-3 bg-slate-100 rounded-full w-24" />
                   <div className="h-2 bg-slate-50 rounded-full w-32" />

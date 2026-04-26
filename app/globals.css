@@ -136,3 +136,15 @@ body {
 .dark .k-button {
   @apply !text-white;
 }
+
+/* Trust banner dark background */
+.dark {
+  --trust-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+  --cta-bg-from: rgba(15, 23, 42, 1);
+  --cta-bg-to: rgba(15, 23, 42, 0);
+}
+
+/* Live activity pulse dark text */
+.dark .text-emerald-800 {
+  color: #6ee7b7;
+}

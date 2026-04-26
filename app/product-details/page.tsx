@@ -85,7 +85,7 @@ export default function ProductDetailsPage() {
 
   if (!id) {
     return (
-      <Page className="!bg-gray-50/80">
+      <Page className="!bg-gray-50/80 dark:!bg-slate-900">
         <div className="p-10 text-center text-sm text-gray-500">
           Product not found.
         </div>
@@ -95,13 +95,13 @@ export default function ProductDetailsPage() {
 
   if (isLoading) {
     return (
-      <Page className="!bg-gray-50/80">
-        <div className="h-80 bg-gray-200 animate-pulse" />
+      <Page className="!bg-gray-50/80 dark:!bg-slate-900">
+        <div className="h-80 bg-gray-200 dark:bg-slate-700 animate-pulse" />
         <div className="px-5 pt-5 space-y-4">
-          <div className="h-5 w-2/3 bg-gray-200 rounded animate-pulse" />
-          <div className="h-7 w-1/3 bg-gray-200 rounded animate-pulse" />
-          <div className="h-24 bg-gray-200 rounded-2xl animate-pulse" />
-          <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
+          <div className="h-5 w-2/3 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-7 w-1/3 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-24 bg-gray-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
+          <div className="h-32 bg-gray-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
         </div>
       </Page>
     );
@@ -109,7 +109,7 @@ export default function ProductDetailsPage() {
 
   if (isError || !product) {
     return (
-      <Page className="!bg-gray-50/80">
+      <Page className="!bg-gray-50/80 dark:!bg-slate-900">
         <div className="p-10 text-center text-sm text-gray-500">
           Could not load this product.
         </div>
@@ -121,9 +121,9 @@ export default function ProductDetailsPage() {
   const currency = product.currency === "INR" ? "₹" : product.currency;
 
   return (
-    <Page className="!bg-gray-50/80">
+    <Page className="!bg-gray-50/80 dark:!bg-slate-900">
       <div className="relative">
-        <div className="relative h-80 overflow-hidden bg-white">
+        <div className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
           <img
             src={photos[currentPhoto]}
             alt={product.name}
@@ -200,7 +200,7 @@ export default function ProductDetailsPage() {
         </div>
 
         {photos.length > 1 && (
-          <div className="flex gap-2 px-5 py-3 bg-white border-b border-gray-100/80 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 px-5 py-3 bg-white dark:bg-slate-800 border-b border-gray-100/80 dark:border-slate-700 overflow-x-auto no-scrollbar">
             {photos.map((photo, i) => (
               <button
                 key={i}
@@ -224,7 +224,7 @@ export default function ProductDetailsPage() {
 
       <div className="px-5 pt-5 pb-28 space-y-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
           <div className="flex items-center gap-3">
@@ -234,12 +234,12 @@ export default function ProductDetailsPage() {
                 {price.toLocaleString()}
               </span>
             ) : (
-              <span className="text-sm font-semibold text-gray-500">
+              <span className="text-sm font-semibold text-gray-500 dark:text-slate-400">
                 Price on request
               </span>
             )}
             {stats && stats.reviewCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 bg-amber-50 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
                 <IonIcon icon={star} className="w-3 h-3 text-amber-500" />
                 {stats.rating.toFixed(1)} ({stats.reviewCount})
               </span>
@@ -262,9 +262,9 @@ export default function ProductDetailsPage() {
         {provider && (
           <Link
             href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
-            className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100/80 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-transform"
+            className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
           >
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden flex-shrink-0">
               {provider.profilePhotoUrl ? (
                 <img
                   src={provider.profilePhotoUrl}
@@ -277,7 +277,7 @@ export default function ProductDetailsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <h4 className="text-[13px] font-bold text-gray-900 truncate">
+                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white truncate">
                   {provider.brandName}
                 </h4>
                 {provider?.communityVerified && (
@@ -288,7 +288,7 @@ export default function ProductDetailsPage() {
                 )}
               </div>
               {(provider.area || provider.city) && (
-                <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                <p className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
                   <IonIcon icon={locationOutline} className="w-3 h-3" />
                   {[provider.area, provider.city].filter(Boolean).join(", ")}
                 </p>
@@ -313,7 +313,7 @@ export default function ProductDetailsPage() {
                   provider.brandName,
                 )
               }
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[13px] font-semibold active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
             >
               <IonIcon icon={navigateOutline} className="w-4 h-4" />
               Get Directions
@@ -325,7 +325,7 @@ export default function ProductDetailsPage() {
             {provider.categories.map((cat: any) => (
               <span
                 key={cat.id}
-                className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full"
+                className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full"
               >
                 {cat.name}
               </span>
@@ -334,11 +334,11 @@ export default function ProductDetailsPage() {
         )}
 
         {product.description && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[15px] font-bold text-gray-900 mb-2">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
               Description
             </h3>
-            <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-line">
+            <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
               {product.description}
             </p>
           </div>
@@ -347,7 +347,7 @@ export default function ProductDetailsPage() {
         {related.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[15px] font-bold text-gray-900">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
                 You May Also Like
               </h3>
               {provider && (
@@ -372,8 +372,8 @@ export default function ProductDetailsPage() {
                     href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${item.id}`}
                     className="flex-shrink-0 w-36"
                   >
-                    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform">
-                      <div className="relative aspect-square overflow-hidden bg-gray-100">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-700">
                         <img
                           src={item.photoUrl ?? FALLBACK_IMAGE}
                           alt={item.name}
@@ -381,7 +381,7 @@ export default function ProductDetailsPage() {
                         />
                       </div>
                       <div className="p-2.5">
-                        <h4 className="text-[12px] font-semibold text-gray-900 mb-0.5 line-clamp-1">
+                        <h4 className="text-[12px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
                           {item.name}
                         </h4>
                         {itemPrice !== null ? (
@@ -390,7 +390,7 @@ export default function ProductDetailsPage() {
                             {itemPrice.toLocaleString()}
                           </span>
                         ) : (
-                          <span className="text-[11px] font-semibold text-gray-500">
+                          <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">
                             On request
                           </span>
                         )}
@@ -408,7 +408,7 @@ export default function ProductDetailsPage() {
         className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
         style={{
           background:
-            "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",
+            "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
         }}
       >
         {isOwnProduct ? (

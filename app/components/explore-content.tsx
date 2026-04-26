@@ -83,7 +83,7 @@ const formatOfferLabel = (type: string, value: number) =>
 const SectionSkeleton = ({ rows = 3 }: { rows?: number }) => (
   <div className="px-4 space-y-3">
     {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100 animate-pulse">
+      <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 animate-pulse">
         <div className="flex gap-3">
           <div className="w-[90px] h-[90px] rounded-xl bg-slate-100 shrink-0" />
           <div className="flex-1 space-y-2 py-1">
@@ -101,7 +101,7 @@ const SectionSkeleton = ({ rows = 3 }: { rows?: number }) => (
 const CardCarouselSkeleton = ({ cards = 3 }: { cards?: number }) => (
   <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
     {Array.from({ length: cards }).map((_, i) => (
-      <div key={i} className="shrink-0 w-[170px] bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 animate-pulse">
+      <div key={i} className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 animate-pulse">
         <div className="h-[115px] bg-slate-100" />
         <div className="p-2.5 space-y-2">
           <div className="h-3 bg-slate-100 rounded-full w-4/5" />
@@ -427,7 +427,7 @@ const ExploreContent = () => {
         >
           <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
           <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
-          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">Search</span>
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">Search</span>
         </motion.div>
       </div>
 
@@ -453,8 +453,8 @@ const ExploreContent = () => {
       {feedLoading && (
         <div className="mt-4">
           <div className="flex items-center gap-2 px-4 mb-2.5">
-            <div className="w-4 h-4 rounded bg-slate-100 animate-pulse" />
-            <div className="h-4 w-20 rounded bg-slate-100 animate-pulse" />
+            <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
+            <div className="h-4 w-20 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
           </div>
           <CardCarouselSkeleton cards={3} />
         </div>
@@ -497,8 +497,8 @@ const ExploreContent = () => {
                   )}
                 </div>
                 <div className="p-2.5">
-                  <h4 className="text-[13px] font-semibold text-slate-800 line-clamp-1">{p.name}</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{p.services || p.location}</p>
+                  <h4 className="text-[13px] font-semibold text-slate-800 dark:text-white line-clamp-1">{p.name}</h4>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{p.services || p.location}</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     {p.rating > 0 ? (
                       <div className="flex items-center gap-0.5 bg-green-50 px-1.5 py-0.5 rounded-md">
@@ -521,8 +521,8 @@ const ExploreContent = () => {
       {feedLoading && (
         <div className="mt-5">
           <div className="flex items-center gap-2 px-4 mb-2.5">
-            <div className="w-4 h-4 rounded bg-slate-100 animate-pulse" />
-            <div className="h-4 w-28 rounded bg-slate-100 animate-pulse" />
+            <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
+            <div className="h-4 w-28 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
           </div>
           <CardCarouselSkeleton cards={3} />
         </div>
@@ -563,13 +563,13 @@ const ExploreContent = () => {
                   </div>
                 </div>
                 <div className="p-2.5">
-                  <h4 className="text-[12px] font-semibold text-slate-800 line-clamp-1">{p.name}</h4>
+                  <h4 className="text-[12px] font-semibold text-slate-800 dark:text-white line-clamp-1">{p.name}</h4>
                   <p className="text-[10px] text-rose-600 font-medium mt-0.5 line-clamp-1">{p.offerTitle}</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     {p.rating > 0 && (
                       <div className="flex items-center gap-0.5">
                         <IonIcon icon={star} className="w-2.5 h-2.5 text-amber-500" />
-                        <span className="text-[10px] font-bold text-slate-700">{p.rating.toFixed(1)}</span>
+                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{p.rating.toFixed(1)}</span>
                       </div>
                     )}
                     {p.distance != null && (
@@ -626,12 +626,12 @@ const ExploreContent = () => {
                 transition={{ delay: i * 0.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push(`${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}&categoryIds=${cat.id}`)}
-                className="shrink-0 flex items-center gap-1.5 bg-white border border-slate-100 shadow-sm px-3 py-2 rounded-xl"
+                className="shrink-0 flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm px-3 py-2 rounded-xl"
               >
                 {cat.icon && <span className="text-base">{cat.icon}</span>}
-                <span className="text-[12px] font-semibold text-slate-700 whitespace-nowrap">{cat.name}</span>
+                <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">{cat.name}</span>
                 {cat.providerCount > 0 && (
-                  <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md">{cat.providerCount}</span>
+                  <span className="text-[9px] text-slate-400 bg-slate-50 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{cat.providerCount}</span>
                 )}
               </motion.button>
             ))}
@@ -645,7 +645,7 @@ const ExploreContent = () => {
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
               <IonIcon icon={locationOutline} className="text-sm text-blue-500" />
-              <h2 className="text-[15px] font-bold text-slate-800">Popular Nearby</h2>
+              <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Popular Nearby</h2>
             </div>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
@@ -683,7 +683,7 @@ const ExploreContent = () => {
         <div className="mt-5">
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={star} className="text-sm text-amber-500" />
-            <h2 className="text-[15px] font-bold text-slate-800">Top Rated</h2>
+            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
             {feed!.topRated.map((p, i) => (
@@ -708,7 +708,7 @@ const ExploreContent = () => {
               {feed.categorySpotlight.category.icon && (
                 <span className="text-base">{feed.categorySpotlight.category.icon}</span>
               )}
-              <h2 className="text-[15px] font-bold text-slate-800">
+              <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">
                 Explore {feed.categorySpotlight.category.name}
               </h2>
             </div>
@@ -744,7 +744,7 @@ const ExploreContent = () => {
         <div className="mt-5">
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={rocketOutline} className="text-sm text-indigo-500" />
-            <h2 className="text-[15px] font-bold text-slate-800">New Arrivals</h2>
+            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">New Arrivals</h2>
             <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full ml-auto">
               Last 30 Days
             </span>
@@ -820,7 +820,7 @@ const ExploreContent = () => {
           <AnimatePresence>
             {nearbyProviders.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16">
-                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
                   <IonIcon icon={searchOutline} className="text-2xl text-slate-300" />
                 </div>
                 <p className="text-sm font-medium text-slate-400">No providers found nearby</p>
@@ -869,19 +869,19 @@ const ExploreContent = () => {
                       <div className="flex items-center gap-1.5">
                         <h3 className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1 flex-1">{p.name}</h3>
                         {p.distance != null && (
-                          <span className="shrink-0 flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                          <span className="shrink-0 flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-md">
                             <IonIcon icon={navigateOutline} className="text-[9px]" />
                             {formatDistance(p.distance)}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{p.service}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{p.service}</p>
 
                       <div className="flex items-center gap-2.5 mt-1.5">
                         {p.rating > 0 ? (
-                          <div className="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                          <div className="flex items-center gap-0.5 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-md">
                             <IonIcon icon={star} className="text-[10px] text-amber-500" />
-                            <span className="text-[10px] font-bold text-amber-700">{p.rating.toFixed(1)}</span>
+                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">{p.rating.toFixed(1)}</span>
                             {p.reviews > 0 && <span className="text-[9px] text-amber-600/60">({p.reviews})</span>}
                           </div>
                         ) : (
@@ -910,7 +910,7 @@ const ExploreContent = () => {
 
           {!hasNextPage && nearbyProviders.length > 0 && !isLoading && (
             <div className="flex flex-col items-center py-6 text-center">
-              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center mb-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-2">
                 <IonIcon icon={checkmarkCircleOutline} className="text-sm text-slate-300" />
               </div>
               <p className="text-[11px] text-slate-400 font-medium">You've seen all nearby providers</p>
@@ -946,7 +946,7 @@ function ProviderCard({
       transition={{ delay: index * 0.05 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className="shrink-0 w-[160px] bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-100"
+      className="shrink-0 w-[160px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-100 dark:border-slate-700"
     >
       <div className="relative h-[110px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
         {p.image ? (
@@ -985,13 +985,13 @@ function ProviderCard({
         )}
       </div>
       <div className="p-2.5">
-        <h4 className="text-[12px] font-semibold text-slate-800 line-clamp-1">{p.name}</h4>
-        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{p.services || p.location}</p>
+        <h4 className="text-[12px] font-semibold text-slate-800 dark:text-white line-clamp-1">{p.name}</h4>
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{p.services || p.location}</p>
         <div className="flex items-center gap-1.5 mt-1.5">
           {p.rating > 0 ? (
-            <div className="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-md">
+            <div className="flex items-center gap-0.5 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-md">
               <IonIcon icon={star} className="w-2.5 h-2.5 text-amber-500" />
-              <span className="text-[10px] font-bold text-amber-700">{p.rating.toFixed(1)}</span>
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">{p.rating.toFixed(1)}</span>
               {p.reviewCount > 0 && <span className="text-[9px] text-amber-600/60">({p.reviewCount})</span>}
             </div>
           ) : (

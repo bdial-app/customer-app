@@ -70,14 +70,14 @@ export const AppDialog = ({
             className="fixed bottom-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 inset-x-0 sm:inset-x-auto z-[9999] sm:max-w-sm sm:w-full"
           >
             <div
-              className="bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-xl"
+              className="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-xl"
               style={{
                 paddingBottom: "max(env(safe-area-inset-bottom), 16px)",
               }}
             >
               {/* Handle bar (mobile) */}
               <div className="flex justify-center pt-3 pb-1 sm:hidden">
-                <div className="w-10 h-1 bg-gray-200 rounded-full" />
+                <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full" />
               </div>
 
               <div className="px-6 pt-4 sm:pt-6 pb-5">
@@ -93,7 +93,7 @@ export const AppDialog = ({
                       />
                     </div>
                   )}
-                  <h3 className="text-[17px] font-bold text-gray-900 leading-tight">
+                  <h3 className="text-[17px] font-bold text-gray-900 dark:text-white leading-tight">
                     {title}
                   </h3>
                 </div>
@@ -101,7 +101,7 @@ export const AppDialog = ({
                 {/* Description */}
                 {description && (
                   <p
-                    className={`text-[13px] text-gray-500 leading-relaxed mt-1 ${icon ? "ml-[56px]" : ""}`}
+                    className={`text-[13px] text-gray-500 dark:text-slate-400 leading-relaxed mt-1 ${icon ? "ml-[56px]" : ""}`}
                   >
                     {description}
                   </p>
@@ -130,7 +130,7 @@ export const AppDialog = ({
                   <button
                     onClick={onClose}
                     disabled={isLoading}
-                    className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-600 text-sm font-semibold transition-colors active:scale-[0.98] active:bg-gray-200 disabled:opacity-50"
+                    className="flex-1 py-3 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-sm font-semibold transition-colors active:scale-[0.98] active:bg-gray-200 dark:active:bg-slate-600 disabled:opacity-50"
                   >
                     {cancelLabel}
                   </button>

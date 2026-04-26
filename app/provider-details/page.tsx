@@ -120,19 +120,19 @@ function RatingBar({
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="w-3 text-right text-gray-500 font-medium">
+      <span className="w-3 text-right text-gray-500 dark:text-slate-400 font-medium">
         {starCount}
       </span>
       <svg width={10} height={10} viewBox="0 0 20 20" fill="#FBBF24">
         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
       </svg>
-      <div className="flex-1 h-[6px] bg-gray-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-[6px] bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-amber-400 rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-5 text-right text-gray-400">{count}</span>
+      <span className="w-5 text-right text-gray-400 dark:text-slate-500">{count}</span>
     </div>
   );
 }
@@ -147,15 +147,15 @@ function InfoChip({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-2.5 bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+    <div className="flex items-center gap-2.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-4 py-3 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+      <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
         <IonIcon icon={icon} className="w-[18px] h-[18px] text-amber-600" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">
+        <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold">
           {label}
         </p>
-        <p className="text-[13px] font-semibold text-gray-800 truncate">
+        <p className="text-[13px] font-semibold text-gray-800 dark:text-white truncate">
           {value}
         </p>
       </div>
@@ -307,15 +307,15 @@ export default function ProviderDetailsPage() {
   // -- Loading --
   if (isLoading) {
     return (
-      <Page className="bg-gray-50">
+      <Page className="bg-gray-50 dark:!bg-slate-900">
         <div className="animate-pulse">
-          <div className="h-72 bg-gray-200" />
+          <div className="h-72 bg-gray-200 dark:bg-slate-700" />
           <div className="p-5 space-y-4">
-            <div className="h-6 bg-gray-200 rounded-lg w-3/4" />
-            <div className="h-4 bg-gray-200 rounded-lg w-1/2" />
+            <div className="h-6 bg-gray-200 dark:bg-slate-700 rounded-lg w-3/4" />
+            <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded-lg w-1/2" />
             <div className="flex gap-3 mt-4">
-              <div className="h-20 flex-1 bg-gray-200 rounded-2xl" />
-              <div className="h-20 flex-1 bg-gray-200 rounded-2xl" />
+              <div className="h-20 flex-1 bg-gray-200 dark:bg-slate-700 rounded-2xl" />
+              <div className="h-20 flex-1 bg-gray-200 dark:bg-slate-700 rounded-2xl" />
             </div>
           </div>
         </div>
@@ -342,10 +342,10 @@ export default function ProviderDetailsPage() {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
           Something went wrong
         </h3>
-        <p className="text-sm text-gray-500 mb-6 text-center">
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-6 text-center">
           We couldn&apos;t load this provider. Please try again.
         </p>
         <button
@@ -364,7 +364,7 @@ export default function ProviderDetailsPage() {
   const owner = (provider as any)?.user;
 
   return (
-    <Page className="!bg-gray-50/80">
+    <Page className="!bg-gray-50/80 dark:!bg-slate-900">
       {/* Hero */}
       <div
         className="relative"
@@ -472,28 +472,28 @@ export default function ProviderDetailsPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="flex items-center justify-between bg-white px-5 py-3 border-b border-gray-100/80">
+        <div className="flex items-center justify-between bg-white dark:bg-slate-800 px-5 py-3 border-b border-gray-100/80 dark:border-slate-700">
           <div className="flex items-center gap-1.5">
             {reviewCount > 0 ? (
               <>
                 <svg width={16} height={16} viewBox="0 0 20 20" fill="#FBBF24">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
                 </svg>
-                <span className="text-sm font-bold text-gray-900">
+                <span className="text-sm font-bold text-gray-900 dark:text-white">
                   {rating.toFixed(1)}
                 </span>
-                <span className="text-xs text-gray-400">({reviewCount})</span>
+                <span className="text-xs text-gray-400 dark:text-slate-500">({reviewCount})</span>
               </>
             ) : (
               <span className="text-sm font-semibold text-indigo-600">New</span>
             )}
           </div>
-          <div className="w-px h-5 bg-gray-200" />
+          <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
           <span className="text-sm font-semibold text-amber-600">
             {priceLabel || "Contact for price"}
           </span>
-          <div className="w-px h-5 bg-gray-200" />
-          <div className="flex items-center gap-1 text-gray-500">
+          <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
+          <div className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
             <IonIcon icon={locationOutline} className="w-3.5 h-3.5" />
             <span className="text-xs truncate max-w-[100px]">
               {provider.city}
@@ -503,7 +503,7 @@ export default function ProviderDetailsPage() {
         </div>
 
         {/* Tab Bar */}
-        <div className="bg-white border-b border-gray-100/80 overflow-x-auto no-scrollbar">
+        <div className="bg-white dark:bg-slate-800 border-b border-gray-100/80 dark:border-slate-700 overflow-x-auto no-scrollbar">
           <div className="flex px-1">
             {TABS.map((tab) => (
               <button
@@ -512,7 +512,7 @@ export default function ProviderDetailsPage() {
                   setActiveTab(tab);
                   trackTabSwitch(tab);
                 }}
-                className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${activeTab === tab ? "text-amber-600" : "text-gray-400"}`}
+                className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${activeTab === tab ? "text-amber-600" : "text-gray-400 dark:text-slate-500"}`}
               >
                 {tab}
                 {activeTab === tab && (
@@ -575,10 +575,10 @@ export default function ProviderDetailsPage() {
 
           {/* Active Offers */}
           {activeOffers.length > 0 && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-100/80">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40">
               <div className="flex items-center gap-2 mb-3">
                 <IonIcon icon={pricetag} className="w-4 h-4 text-amber-600" />
-                <h3 className="text-[15px] font-bold text-gray-900">
+                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
                   Active Deals
                 </h3>
               </div>
@@ -586,7 +586,7 @@ export default function ProviderDetailsPage() {
                 {activeOffers.map((offer) => (
                   <div
                     key={offer.id}
-                    className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm"
+                    className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none"
                   >
                     {offer.discountValue && (
                       <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
@@ -598,10 +598,10 @@ export default function ProviderDetailsPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-gray-900 truncate">
+                      <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
                         {offer.title}
                       </p>
-                      <p className="text-[11px] text-gray-500 truncate">
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
                         {offer.description}
                       </p>
                     </div>
@@ -619,24 +619,24 @@ export default function ProviderDetailsPage() {
           )}
 
           {/* About */}
-          <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[15px] font-bold text-gray-900 mb-2">About</h3>
-            <p className="text-[13px] text-gray-600 leading-relaxed">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">About</h3>
+            <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed">
               {provider.description || "No description provided yet."}
             </p>
           </div>
 
           {/* Categories */}
           {categories.length > 0 && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <h3 className="text-[15px] font-bold text-gray-900 mb-3">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
                 Services ({categories.length})
               </h3>
               <div className="flex flex-wrap gap-2">
                 {categories.map((c) => (
                   <span
                     key={c.id}
-                    className="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-[12px] font-medium"
+                    className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[12px] font-medium"
                   >
                     {c.name}
                   </span>
@@ -647,18 +647,18 @@ export default function ProviderDetailsPage() {
 
           {/* Address */}
           {provider.address && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <h3 className="text-[15px] font-bold text-gray-900 mb-2">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
                 Location
               </h3>
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <IonIcon
                     icon={locationOutline}
                     className="w-[18px] h-[18px] text-gray-500"
                   />
                 </div>
-                <p className="text-[13px] text-gray-600 leading-relaxed flex-1">
+                <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed flex-1">
                   {provider.address}
                   {provider.city ? `, ${provider.city}` : ""}
                   {provider.pincode ? ` - ${provider.pincode}` : ""}
@@ -674,7 +674,7 @@ export default function ProviderDetailsPage() {
                       provider.brandName,
                     );
                   }}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[13px] font-semibold active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
                 >
                   <IonIcon icon={navigateOutline} className="w-4 h-4" />
                   Get Directions
@@ -686,16 +686,16 @@ export default function ProviderDetailsPage() {
           {/* Invite Friends */}
           <button
             onClick={() => router.push("/invite")}
-            className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-100/80 active:scale-[0.98] transition-transform"
+            className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40 active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-200">
               <IonIcon icon={peopleOutline} className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-[13px] font-bold text-gray-900">
+              <p className="text-[13px] font-bold text-gray-900 dark:text-white">
                 Know someone who&apos;d love this?
               </p>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">
                 Invite friends to discover local businesses
               </p>
             </div>
@@ -704,8 +704,8 @@ export default function ProviderDetailsPage() {
 
           {/* Business Owner */}
           {owner && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <h3 className="text-[15px] font-bold text-gray-900 mb-3">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
                 Business Owner
               </h3>
               <div className="flex items-center gap-3">
@@ -713,10 +713,10 @@ export default function ProviderDetailsPage() {
                   {initialsOf(owner.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-gray-900 truncate">
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
                     {owner.name}
                   </h4>
-                  <p className="text-xs text-gray-500">{owner.mobileNumber}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{owner.mobileNumber}</p>
                 </div>
               </div>
             </div>
@@ -729,14 +729,14 @@ export default function ProviderDetailsPage() {
         <div className="px-5 pt-5 pb-28 space-y-4">
           {/* Rating Summary */}
           {reviewCount > 0 ? (
-            <div className="bg-white rounded-2xl p-5 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
               <div className="flex gap-5">
-                <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100">
-                  <span className="text-4xl font-extrabold text-gray-900 leading-none">
+                <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100 dark:border-slate-700">
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white leading-none">
                     {rating.toFixed(1)}
                   </span>
                   <StarRow rating={Math.round(rating)} size={13} />
-                  <span className="text-[11px] text-gray-400 mt-1.5 font-medium">
+                  <span className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">
                     {reviewCount} reviews
                   </span>
                 </div>
@@ -753,11 +753,11 @@ export default function ProviderDetailsPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl p-5 border border-gray-100/80 text-center">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 text-center">
               <p className="text-lg font-bold text-indigo-600 mb-1">
                 New Provider
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-slate-500">
                 No ratings yet — be the first to review!
               </p>
             </div>
@@ -765,8 +765,8 @@ export default function ProviderDetailsPage() {
 
           {/* Review Cards */}
           {reviews.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 border border-gray-100/80 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
                 No reviews yet. Be the first to share your experience!
               </p>
             </div>
@@ -774,7 +774,7 @@ export default function ProviderDetailsPage() {
             reviews.map((review) => (
               <div
                 key={review.id}
-                className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
               >
                 <div className="flex items-start justify-between mb-2.5">
                   <div className="flex items-center gap-2.5">
@@ -783,7 +783,7 @@ export default function ProviderDetailsPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-semibold text-gray-900">
+                        <span className="text-[13px] font-semibold text-gray-900 dark:text-white">
                           {review.reviewer?.name || "Anonymous"}
                         </span>
                         <IonIcon
@@ -799,7 +799,7 @@ export default function ProviderDetailsPage() {
                   <StarRow rating={review.starRating} size={12} />
                 </div>
                 {review.reviewText && (
-                  <p className="text-[13px] text-gray-600 leading-relaxed mb-3">
+                  <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
                     {review.reviewText}
                   </p>
                 )}
@@ -827,15 +827,15 @@ export default function ProviderDetailsPage() {
                 setReviewSuccess(false);
                 setSheetOpened(true);
               }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-white dark:bg-slate-800 border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 rounded-2xl text-sm font-semibold active:bg-amber-50 dark:active:bg-amber-900/20 transition-colors"
             >
               <IonIcon icon={star} className="w-4 h-4" />
               Write a Review
             </button>
           )}
           {!isOwnProvider && hasAlreadyReviewed && (
-            <div className="bg-green-50 rounded-2xl p-4 border border-green-100 text-center">
-              <p className="text-sm text-green-700 font-medium">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
+              <p className="text-sm text-green-700 dark:text-green-400 font-medium">
                 You&apos;ve already reviewed this provider
               </p>
             </div>
@@ -843,7 +843,7 @@ export default function ProviderDetailsPage() {
           {!isOwnProvider && !user && (
             <button
               onClick={() => router.push("/auth/login")}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-gray-200 text-gray-500 rounded-2xl text-sm font-semibold active:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-white dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 rounded-2xl text-sm font-semibold active:bg-gray-50 dark:active:bg-slate-700 transition-colors"
             >
               Sign in to write a review
             </button>
@@ -855,13 +855,13 @@ export default function ProviderDetailsPage() {
       {activeTab === "Products" && (
         <div className="px-5 pt-5 pb-28">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[15px] font-bold text-gray-900">
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
               {products.length} Products
             </h3>
           </div>
           {products.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 border border-gray-100/80 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
                 This provider hasn&apos;t added any products yet.
               </p>
             </div>
@@ -875,8 +875,8 @@ export default function ProviderDetailsPage() {
                     key={product.id}
                     href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}
                   >
-                    <div className="group bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform">
-                      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                    <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-slate-700">
                         {product.photoUrl ? (
                           <img
                             src={product.photoUrl}
@@ -890,10 +890,10 @@ export default function ProviderDetailsPage() {
                         )}
                       </div>
                       <div className="p-3">
-                        <h4 className="text-[13px] font-semibold text-gray-900 mb-0.5 line-clamp-1">
+                        <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
                           {product.name}
                         </h4>
-                        <p className="text-[11px] text-gray-400 mb-2 line-clamp-1">
+                        <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2 line-clamp-1">
                           {product.description || ""}
                         </p>
                         <span className="text-[15px] font-bold text-amber-600">
@@ -915,8 +915,8 @@ export default function ProviderDetailsPage() {
       {activeTab === "Photos" && (
         <div className="pt-2 pb-28">
           {galleryImages.length === 0 ? (
-            <div className="bg-white mx-5 rounded-2xl p-8 border border-gray-100/80 text-center mt-4">
-              <p className="text-sm text-gray-500">No photos uploaded yet.</p>
+            <div className="bg-white dark:bg-slate-800 mx-5 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center mt-4">
+              <p className="text-sm text-gray-500 dark:text-slate-400">No photos uploaded yet.</p>
             </div>
           ) : (
             <PhotoGallary ref={photoGalleryRef} images={galleryItems} />
@@ -929,7 +929,7 @@ export default function ProviderDetailsPage() {
         className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
         style={{
           background:
-            "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",
+            "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
           display: isLightboxOpen ? "none" : "block",
         }}
       >
@@ -1006,7 +1006,7 @@ export default function ProviderDetailsPage() {
                   },
                 );
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm font-semibold text-gray-700 dark:text-slate-200 shadow-sm dark:shadow-none active:scale-[0.98] transition-transform disabled:opacity-50"
             >
               <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
               {isCreatingChat ? "Opening..." : "Message"}
@@ -1029,26 +1029,26 @@ export default function ProviderDetailsPage() {
         className="pb-safe !rounded-t-3xl"
       >
         <div className="px-5 pt-5 pb-8">
-          <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+          <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
           <div className="flex flex-col items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center">
               <IonIcon icon={callOutline} className="text-3xl text-amber-500" />
             </div>
             <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">
                 Call
               </p>
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {provider?.brandName}
               </h3>
             </div>
             <a
               href={`tel:${provider?.contactNumber}`}
               onClick={() => trackCall()}
-              className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
+              className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 rounded-2xl"
             >
               <IonIcon icon={callOutline} className="text-base text-gray-500" />
-              <span className="text-base font-semibold text-gray-800 tracking-wide">
+              <span className="text-base font-semibold text-gray-800 dark:text-white tracking-wide">
                 {provider?.contactNumber || "Not available"}
               </span>
             </a>
@@ -1056,7 +1056,7 @@ export default function ProviderDetailsPage() {
           <div className="flex gap-3 mt-6">
             <button
               onClick={() => setCallSheetOpened(false)}
-              className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl text-sm font-semibold active:bg-gray-200 transition-colors"
+              className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
             >
               Cancel
             </button>
@@ -1077,8 +1077,8 @@ export default function ProviderDetailsPage() {
         className="pb-safe !rounded-t-3xl"
       >
         <div className="px-5 pt-5 pb-8">
-          <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
-          <h3 className="text-lg font-bold text-gray-900 mb-5">
+          <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">
             Write a Review
           </h3>
           <div className="flex justify-center gap-3 mb-6">
@@ -1100,7 +1100,7 @@ export default function ProviderDetailsPage() {
             ))}
           </div>
           <textarea
-            className="w-full h-28 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
+            className="w-full h-28 px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
             placeholder="Share your experience with this provider..."
             value={reviewComment}
             onChange={(e) => {
@@ -1119,7 +1119,7 @@ export default function ProviderDetailsPage() {
           <div className="flex gap-3 mt-5">
             <button
               onClick={() => setSheetOpened(false)}
-              className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl text-sm font-semibold active:bg-gray-200 transition-colors"
+              className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
             >
               Cancel
             </button>

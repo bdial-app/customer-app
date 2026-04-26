@@ -653,8 +653,8 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         <div className="px-4 py-4 grid grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100 flex flex-col items-center gap-1.5">
-              <div className="w-8 h-8 rounded-xl bg-slate-100 animate-pulse" />
-              <div className="h-4 w-8 bg-slate-100 rounded animate-pulse" />
+              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 animate-pulse" />
+              <div className="h-4 w-8 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
               <div className="h-2 w-12 bg-slate-50 rounded animate-pulse" />
             </div>
           ))}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { motion } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -216,10 +216,10 @@ const PromoBannerCarousel = ({
   if (isLoading) {
     return (
       <div className="px-4 pt-1 pb-3">
-        <div className="h-[140px] rounded-2xl bg-slate-100 animate-pulse" />
+        <div className="h-[140px] rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
         <div className="flex justify-center gap-1.5 mt-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-[5px] w-6 rounded-full bg-slate-200" />
+            <div key={i} className="h-[5px] w-6 rounded-full bg-slate-200 dark:bg-slate-700" />
           ))}
         </div>
       </div>
