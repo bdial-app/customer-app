@@ -19,10 +19,16 @@ import { useNotification } from "./context/NotificationContext";
 import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 
 function LanguageSyncBridge() {
   useLanguageSync();
   useServiceWorker();
+  return null;
+}
+
+function PostHogIdentifyBridge() {
+  usePostHogIdentify();
   return null;
 }
 
@@ -148,6 +154,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             <NotificationProvider>
               <App theme="ios">
                 <AppToast />
+                <PostHogIdentifyBridge />
                 <InappropriateContentHandler />
                 <AccountPausedHandler />
                 {children}
