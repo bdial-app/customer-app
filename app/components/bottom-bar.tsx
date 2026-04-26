@@ -108,7 +108,7 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
       )}
 
       {/* Frosted glass bar */}
-      <div className="mx-3 mb-2 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/50 shadow-[0_-2px_20px_rgba(0,0,0,0.06)]">
+      <div className="mx-3 mb-2 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-[0_-2px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.3)]">
         <div className="flex items-center justify-around py-1.5">
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -122,7 +122,7 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
                 {isActive && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className={`absolute inset-0 rounded-xl ${isProvider ? "bg-teal-50" : "bg-amber-50"}`}
+                    className={`absolute inset-0 rounded-xl ${isProvider ? "bg-teal-50 dark:bg-teal-900/30" : "bg-amber-50 dark:bg-amber-900/30"}`}
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -133,7 +133,7 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
                     className={`text-[22px] transition-colors duration-200 ${
                       isActive
                         ? isProvider ? "text-teal-600" : "text-amber-600"
-                        : "text-slate-400"
+                        : "text-slate-400 dark:text-slate-500"
                     }`}
                   />
                   {/* Unread badge */}
@@ -150,7 +150,7 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
                   className={`relative z-10 text-[10px] font-semibold transition-colors duration-200 ${
                     isActive
                       ? isProvider ? "text-teal-600" : "text-amber-600"
-                      : "text-slate-400"
+                      : "text-slate-400 dark:text-slate-500"
                   }`}
                 >
                   {tab.label}

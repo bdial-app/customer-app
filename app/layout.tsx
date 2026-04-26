@@ -56,7 +56,7 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href="/icons/196.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-[#FAFAFA] dark:bg-slate-900 transition-colors duration-300" suppressHydrationWarning>
         <CSPostHogProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </CSPostHogProvider>

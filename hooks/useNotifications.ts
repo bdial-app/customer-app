@@ -94,7 +94,20 @@ export function useUpdatePreferences() {
 
   return useMutation({
     mutationFn: (prefs: Partial<NotificationPreferences>) => updatePreferences(prefs),
-    onSuccess: () => {
+    onMutate: async (newPrefs) => {
+      await qc.cancelQueries({ queryKey: notificationKeys.preferences });
+      const previous = qc.getQueryData<NotificationPreferences>(notificationKeys.preferences);
+      qc.setQueryData<NotificationPreferences>(notificationKeys.preferences, (old) =>
+        old ? { ...old, ...newPrefs } : (newPrefs as NotificationPreferences),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(notificationKeys.preferences, context.previous);
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.preferences });
     },
   });

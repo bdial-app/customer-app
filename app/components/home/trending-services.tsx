@@ -49,20 +49,6 @@ interface TrendingServicesProps {
   isLoading?: boolean;
 }
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
-
-const item = {
-  hidden: { opacity: 0, x: 30 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: { type: "spring" as const, stiffness: 200, damping: 20 },
-  },
-};
-
 const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
   const router = useRouter();
 
@@ -84,7 +70,7 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
     <div className="mb-2">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-slate-800 leading-tight">
+          <h2 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
             Trending Now
           </h2>
           <motion.span
@@ -115,17 +101,17 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
           ))}
         </div>
       ) : (
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-40px" }}
+        <div
           className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {trendingItems.map((t) => (
+          {trendingItems.map((t, idx) => (
             <motion.div
               key={t.id}
-              variants={item}
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 200, damping: 20, delay: idx * 0.06 }}
               whileTap={{ scale: 0.95 }}
               onClick={() =>
                 router.push(
@@ -162,7 +148,7 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );

@@ -423,7 +423,7 @@ const ExploreContent = () => {
         <motion.div
           whileTap={{ scale: 0.98 }}
           onClick={() => router.push(ROUTE_PATH.SEARCH)}
-          className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer"
+          className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer"
         >
           <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
           <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
@@ -463,7 +463,7 @@ const ExploreContent = () => {
         <div className="mt-4" ref={sponsoredRef}>
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={megaphoneOutline} className="text-sm text-amber-500" />
-            <h2 className="text-[15px] font-bold text-slate-800">Sponsored</h2>
+            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Sponsored</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
             {feed!.sponsoredCarousel.map((p, i) => (
@@ -475,7 +475,7 @@ const ExploreContent = () => {
                 transition={{ delay: i * 0.06 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => handleSponsoredClick(p)}
-                className="shrink-0 w-[170px] bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer border-2 border-amber-200/60"
+                className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border-2 border-amber-200/60 dark:border-amber-700/40"
               >
                 <div className="relative h-[115px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
                   {p.image ? (
@@ -533,7 +533,7 @@ const ExploreContent = () => {
             <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
               <IonIcon icon={pricetagOutline} className="text-base text-rose-500" />
             </motion.div>
-            <h2 className="text-[15px] font-bold text-slate-800">Deals & Offers</h2>
+            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Deals & Offers</h2>
             <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full ml-auto">
               Limited Time
             </span>
@@ -548,7 +548,7 @@ const ExploreContent = () => {
                 transition={{ delay: i * 0.06 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => handleOfferClick(p)}
-                className="shrink-0 w-[170px] bg-white rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-rose-100"
+                className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-rose-100 dark:border-rose-900/40"
               >
                 <div className="relative h-[100px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
                   {p.image ? (
@@ -791,11 +791,11 @@ const ExploreContent = () => {
         </div>
       )}
 
-      <div className="h-2 bg-slate-50 mx-0 mt-5" />
+      <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0 mt-5" />
 
       {/* ── 13. Discover Nearby — infinite scroll list ── */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-        <h2 className="text-[15px] font-bold text-slate-800 mr-auto">Discover Nearby</h2>
+        <h2 className="text-[15px] font-bold text-slate-800 dark:text-white mr-auto">Discover Nearby</h2>
         <div className="flex gap-1.5">
           {SORT_OPTIONS.map((opt) => (
             <motion.button
@@ -803,7 +803,7 @@ const ExploreContent = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => setSort(opt.key)}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-colors ${
-                sort === opt.key ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500"
+                sort === opt.key ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
               }`}
             >
               <IonIcon icon={opt.icon} className="text-xs" />
@@ -836,7 +836,7 @@ const ExploreContent = () => {
                   layout
                   whileTap={{ scale: 0.98 }}
                   onClick={() => goToProvider(p.id)}
-                  className="bg-white rounded-2xl overflow-hidden border border-slate-100 cursor-pointer"
+                  className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 cursor-pointer"
                 >
                   <div className="flex gap-3 p-3">
                     <div className="relative w-[90px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-slate-100 to-slate-50">
@@ -867,7 +867,7 @@ const ExploreContent = () => {
 
                     <div className="flex-1 min-w-0 py-0.5">
                       <div className="flex items-center gap-1.5">
-                        <h3 className="text-[13px] font-bold text-slate-800 leading-tight line-clamp-1 flex-1">{p.name}</h3>
+                        <h3 className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1 flex-1">{p.name}</h3>
                         {p.distance != null && (
                           <span className="shrink-0 flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">
                             <IonIcon icon={navigateOutline} className="text-[9px]" />

@@ -69,7 +69,7 @@ const UserHome = () => {
           <QuickCategories />
 
           {/* Curved bottom transition */}
-          <div className="h-6 bg-[#FAFAFA] rounded-t-[28px] -mb-px" />
+          <div className="h-6 bg-[#FAFAFA] dark:bg-slate-900 rounded-t-[28px] -mb-px" />
         </div>
 
         {/* Personalized Greeting */}
@@ -89,13 +89,13 @@ const UserHome = () => {
         <ReorderRibbon lastBooking={feed?.lastBooking ?? null} />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 mx-0" />
+        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
 
         {/* 🔥 Trending Now */}
         <TrendingServices categories={feed?.trendingCategories} isLoading={isLoading} />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 mx-0" />
+        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
 
         {/* Near You - Horizontal Scroll */}
         <ProviderCardSlider
@@ -111,7 +111,7 @@ const UserHome = () => {
         <ReferEarnCard />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 mx-0 mt-2" />
+        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0 mt-2" />
 
         {/* Featured Grid */}
         <FeaturedProviderGrid

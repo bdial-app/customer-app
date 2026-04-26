@@ -1,6 +1,7 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { PromoBanner as PromoBannerType } from "@/services/home.service";
 
 interface Banner {
@@ -12,6 +13,7 @@ interface Banner {
   emoji: string;
   cta: string;
   tag: string;
+  linkUrl: string | null;
 }
 
 const GRADIENT_MAP: Record<string, string> = {
@@ -27,6 +29,22 @@ const GRADIENT_MAP: Record<string, string> = {
     "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
   "from-fuchsia-500 to-pink-600":
     "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
+  "from-teal-500 to-emerald-600":
+    "linear-gradient(135deg, #14b8a6 0%, #059669 100%)",
+  "from-purple-500 to-indigo-600":
+    "linear-gradient(135deg, #a855f7 0%, #4f46e5 100%)",
+  "from-sky-500 to-blue-600":
+    "linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)",
+  "from-rose-500 to-pink-600":
+    "linear-gradient(135deg, #f43f5e 0%, #ec4899 100%)",
+};
+
+const DEFAULT_GRADIENT = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+
+const resolveGradient = (g: string | null | undefined): string => {
+  if (!g) return DEFAULT_GRADIENT;
+  if (g.startsWith("linear-gradient") || g.startsWith("radial-gradient")) return g;
+  return GRADIENT_MAP[g] ?? DEFAULT_GRADIENT;
 };
 
 const FALLBACK_BANNERS: Banner[] = [
@@ -39,6 +57,7 @@ const FALLBACK_BANNERS: Banner[] = [
     emoji: "🧵",
     cta: "Order Now",
     tag: "NEW USER",
+    linkUrl: null,
   },
   {
     id: "fb2",
@@ -49,6 +68,7 @@ const FALLBACK_BANNERS: Banner[] = [
     emoji: "❄️",
     cta: "Book Now",
     tag: "SUMMER DEAL",
+    linkUrl: null,
   },
   {
     id: "fb3",
@@ -59,6 +79,7 @@ const FALLBACK_BANNERS: Banner[] = [
     emoji: "💅",
     cta: "Explore",
     tag: "TRENDING",
+    linkUrl: null,
   },
   {
     id: "fb4",
@@ -69,6 +90,7 @@ const FALLBACK_BANNERS: Banner[] = [
     emoji: "🍛",
     cta: "View Menu",
     tag: "POPULAR",
+    linkUrl: null,
   },
 ];
 
@@ -81,23 +103,24 @@ const PromoBannerCarousel = ({
   banners,
   isLoading,
 }: PromoBannerCarouselProps) => {
+  const router = useRouter();
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   const displayBanners: Banner[] = useMemo(() => {
     if (!banners || banners.length === 0) return FALLBACK_BANNERS;
-    console.log("Received banners:", banners);
     return banners.map((b) => ({
       id: b.id,
       title: b.title,
       subtitle: b.subtitle || "",
-      gradient:
-        GRADIENT_MAP[b.gradient || ""] ||
-        `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
+      gradient: resolveGradient(b.gradient),
       image_url: b.imageUrl || "/path/to/default/image.jpg",
       emoji: b.emoji || "✨",
       cta: b.cta || "View",
       tag: b.tag || "",
+      linkUrl: b.linkUrl ?? null,
     }));
   }, [banners]);
 
@@ -106,19 +129,50 @@ const PromoBannerCarousel = ({
     setCurrent((prev) => (prev + 1) % displayBanners.length);
   }, [displayBanners.length]);
 
+  const prev = useCallback(() => {
+    setDirection(-1);
+    setCurrent((prev) => (prev - 1 + displayBanners.length) % displayBanners.length);
+  }, [displayBanners.length]);
+
+  const pauseAndResume = useCallback(() => {
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 8000);
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    setIsPaused(true);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(delta) > 48) {
+      delta > 0 ? next() : prev();
+    }
+    touchStartX.current = null;
+    setTimeout(() => setIsPaused(false), 8000);
+  };
+
   useEffect(() => {
-    // const timer = setInterval(next, 4000);
-    // return () => clearInterval(timer);
-  }, [next]);
+    if (isPaused) return;
+    const timer = setInterval(next, 4000);
+    return () => clearInterval(timer);
+  }, [next, isPaused]);
 
   const handleDot = (i: number) => {
     setDirection(i > current ? 1 : -1);
     setCurrent(i);
+    pauseAndResume();
   };
 
   return (
     <div className="px-4 pt-1 pb-3">
-      <div className="relative overflow-hidden rounded-2xl h-[140px] shadow-lg shadow-black/[0.06]">
+      <div
+        className="relative overflow-hidden rounded-2xl h-[140px] shadow-lg shadow-black/[0.06] select-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={displayBanners[current].id}
@@ -148,13 +202,22 @@ const PromoBannerCarousel = ({
               <p className="text-white/80 text-[13px]">
                 {displayBanners[current].subtitle}
               </p>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="mt-2 self-start px-5 py-2 bg-white rounded-xl text-xs font-bold shadow-sm"
-                style={{ color: "#1a1a2e" }}
-              >
-                {displayBanners[current].cta}
-              </motion.button>
+              {displayBanners[current].cta && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const link = displayBanners[current].linkUrl;
+                    if (link) router.push(link);
+                  }}
+                  className="mt-2 self-start px-5 py-2 bg-white rounded-xl text-xs font-bold shadow-sm"
+                  style={{
+                    color: "#1a1a2e",
+                    cursor: displayBanners[current].linkUrl ? "pointer" : "default",
+                  }}
+                >
+                  {displayBanners[current].cta}
+                </motion.button>
+              )}
             </div>
 
             {/* Decorative circles */}

@@ -114,28 +114,28 @@ const SavedContent = () => {
 
       {/* ── Search + View Toggle ── */}
       <div className="px-4 mb-3 flex items-center gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2">
+        <div className="flex-1 flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2">
           <IonIcon icon={searchOutline} className="text-sm text-slate-400" />
           <input
             type="text"
             placeholder="Search saved items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+            className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none"
           />
         </div>
-        <div className="flex bg-slate-100 rounded-xl p-0.5">
+        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5">
           <button
             onClick={() => setViewMode("list")}
-            className={`p-2 rounded-lg ${viewMode === "list" ? "bg-white shadow-sm" : ""}`}
+            className={`p-2 rounded-lg ${viewMode === "list" ? "bg-white dark:bg-slate-700 shadow-sm" : ""}`}
           >
-            <IonIcon icon={listOutline} className={`text-sm ${viewMode === "list" ? "text-slate-800" : "text-slate-400"}`} />
+            <IonIcon icon={listOutline} className={`text-sm ${viewMode === "list" ? "text-slate-800 dark:text-white" : "text-slate-400"}`} />
           </button>
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-white shadow-sm" : ""}`}
+            className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-white dark:bg-slate-700 shadow-sm" : ""}`}
           >
-            <IonIcon icon={gridOutline} className={`text-sm ${viewMode === "grid" ? "text-slate-800" : "text-slate-400"}`} />
+            <IonIcon icon={gridOutline} className={`text-sm ${viewMode === "grid" ? "text-slate-800 dark:text-white" : "text-slate-400"}`} />
           </button>
         </div>
       </div>
@@ -153,8 +153,8 @@ const SavedContent = () => {
               onClick={() => setFilter(tab.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
                 filter === tab.key
-                  ? "bg-slate-800 text-white"
-                  : "bg-slate-100 text-slate-500"
+                  ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
               }`}
             >
               {tab.icon && <IonIcon icon={tab.icon} className="text-xs" />}
@@ -195,7 +195,7 @@ const SavedContent = () => {
             <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
               <IonIcon icon={bookmarkOutline} className="text-3xl text-slate-300" />
             </div>
-            <h3 className="text-base font-bold text-slate-800 mb-1">No saved items</h3>
+            <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">No saved items</h3>
             <p className="text-[12px] text-slate-500 text-center max-w-[240px]">
               {search ? "No items match your search." : "Bookmark providers and products while exploring to find them here."}
             </p>
@@ -210,7 +210,7 @@ const SavedContent = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
                 transition={{ delay: i * 0.04 }}
-                className="bg-white rounded-2xl overflow-hidden border border-slate-100 active:bg-slate-50"
+                className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700"
               >
                 <div className="flex gap-3 p-3">
                   {/* Image */}
@@ -246,7 +246,7 @@ const SavedContent = () => {
                   {/* Info */}
                   <div className="flex-1 min-w-0 py-0.5">
                     <div className="flex items-start justify-between gap-1.5">
-                      <h3 className="text-[13px] font-bold text-slate-800 leading-tight line-clamp-1">{item.name}</h3>
+                      <h3 className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1">{item.name}</h3>
                       <motion.button
                         whileTap={{ scale: 0.8 }}
                         onClick={() => handleUnsave(item)}

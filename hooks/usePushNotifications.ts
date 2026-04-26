@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import {
   setPermissionStatus,
@@ -11,6 +11,8 @@ import {
   onForegroundMessage,
   getPermissionStatus,
   isMessagingSupported,
+  isIOS,
+  isStandalone,
 } from "@/utils/firebase-messaging";
 import {
   registerDevice,
@@ -31,10 +33,18 @@ export function usePushNotifications() {
   const { permissionStatus, fcmToken } = useAppSelector((s) => s.notification);
   const isAuthenticated = useAppSelector((s) => s.auth.token !== null);
   const unsubRef = useRef<(() => void) | null>(null);
+  const [pushError, setPushError] = useState<string | null>(null);
+
+  // Derived: iOS but not installed as PWA
+  const isIOSNotStandalone = isIOS() && !isStandalone();
 
   // Check support & current permission on mount
   useEffect(() => {
     (async () => {
+      if (isIOSNotStandalone) {
+        dispatch(setPermissionStatus("unsupported"));
+        return;
+      }
       const supported = await isMessagingSupported();
       if (!supported) {
         dispatch(setPermissionStatus("unsupported"));
@@ -42,19 +52,19 @@ export function usePushNotifications() {
       }
       dispatch(setPermissionStatus(getPermissionStatus() as any));
     })();
-  }, [dispatch]);
+  }, [dispatch, isIOSNotStandalone]);
 
   // Auto-register token if permission already granted & authenticated
   useEffect(() => {
     if (permissionStatus === "granted" && isAuthenticated && !fcmToken) {
       (async () => {
-        const token = await requestFCMToken();
-        if (token) {
-          dispatch(setFcmToken(token));
+        const result = await requestFCMToken();
+        if (result.token) {
+          dispatch(setFcmToken(result.token));
           try {
-            await registerDevice(token, detectPlatform(), getDeviceInfo());
+            await registerDevice(result.token, detectPlatform(), getDeviceInfo());
           } catch (err) {
-            console.warn("Failed to register device token:", err);
+            console.warn("[Push] Failed to register device token:", err);
           }
         }
       })();
@@ -71,11 +81,7 @@ export function usePushNotifications() {
         qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
         qc.invalidateQueries({ queryKey: ["notifications"] });
 
-        // Show in-app notification via Notification API (optional visual)
         if (payload.notification?.title) {
-          // The service worker handles background; for foreground we can use
-          // the existing NotificationContext toast system.
-          // We dispatch a custom event that the layout can listen to.
           window.dispatchEvent(
             new CustomEvent("push-notification", {
               detail: {
@@ -101,20 +107,22 @@ export function usePushNotifications() {
    * Call this after user interaction (e.g., from settings or soft prompt).
    */
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    const token = await requestFCMToken();
+    setPushError(null);
+    const result = await requestFCMToken();
 
-    if (token) {
+    if (result.token) {
       dispatch(setPermissionStatus("granted"));
-      dispatch(setFcmToken(token));
+      dispatch(setFcmToken(result.token));
       try {
-        await registerDevice(token, detectPlatform(), getDeviceInfo());
+        await registerDevice(result.token, detectPlatform(), getDeviceInfo());
       } catch (err) {
-        console.warn("Failed to register device token:", err);
+        console.warn("[Push] Failed to register device token:", err);
       }
       return true;
     }
 
-    // Permission was denied or unsupported
+    // Show the error to the user
+    setPushError(result.error);
     dispatch(setPermissionStatus(getPermissionStatus() as any));
     return false;
   }, [dispatch]);
@@ -136,9 +144,11 @@ export function usePushNotifications() {
   return {
     permissionStatus,
     fcmToken,
+    pushError,
     requestPermission,
     unregisterPush,
     isSupported: permissionStatus !== "unsupported",
+    isIOSNotStandalone,
   };
 }
 

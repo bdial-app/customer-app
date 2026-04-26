@@ -60,12 +60,12 @@ export default function NotificationList({ open, onClose }: NotificationListProp
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed inset-0 z-[100] bg-white overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           {/* Header */}
           <div
-            className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100"
+            className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
             style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
           >
             <div className="flex items-center justify-between px-4 py-3">
@@ -76,7 +76,7 @@ export default function NotificationList({ open, onClose }: NotificationListProp
                 <IonIcon icon={arrowBack} className="text-lg" />
                 Back
               </button>
-              <h2 className="text-base font-bold text-slate-800">
+              <h2 className="text-base font-bold text-slate-800 dark:text-white">
                 Notifications
               </h2>
               <button
