@@ -69,7 +69,11 @@ function InappropriateContentHandler() {
 
   useEffect(() => {
     return onInappropriateContent((message) => {
-      notify({ title: "Inappropriate Language", subtitle: message, variant: "error" });
+      notify({
+        title: "Inappropriate Language",
+        subtitle: message,
+        variant: "error",
+      });
     });
   }, [notify]);
 
@@ -97,7 +101,9 @@ function AccountPausedHandler() {
       }
       setShowDialog(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to reactivate. Please try again.";
+      const msg =
+        err?.response?.data?.message ||
+        "Failed to reactivate. Please try again.";
       setResumeError(msg);
     } finally {
       setIsResuming(false);
@@ -147,21 +153,21 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     <ReduxProvider store={store}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-        <LanguageProvider>
-          <AppProvider>
-            <LanguageSyncBridge />
-            <PushNotificationBridge />
-            <NotificationProvider>
-              <App theme="ios">
-                <AppToast />
-                <PostHogIdentifyBridge />
-                <InappropriateContentHandler />
-                <AccountPausedHandler />
-                {children}
-              </App>
-            </NotificationProvider>
-          </AppProvider>
-        </LanguageProvider>
+          <LanguageProvider>
+            <AppProvider>
+              <LanguageSyncBridge />
+              <PushNotificationBridge />
+              <NotificationProvider>
+                <App theme="ios">
+                  <AppToast />
+                  <PostHogIdentifyBridge />
+                  <InappropriateContentHandler />
+                  <AccountPausedHandler />
+                  {children}
+                </App>
+              </NotificationProvider>
+            </AppProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ReduxProvider>

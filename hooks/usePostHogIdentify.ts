@@ -28,7 +28,7 @@ export function usePostHogIdentify() {
       gender: user.gender,
       role: user.role,
       ssoProvider: user.ssoProvider,
-      
+
       // Device properties
       device_type: deviceInfo.device_type,
       screen_width: deviceInfo.screen_width,
