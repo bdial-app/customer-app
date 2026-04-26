@@ -19,10 +19,16 @@ import { useNotification } from "./context/NotificationContext";
 import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 
 function LanguageSyncBridge() {
   useLanguageSync();
   useServiceWorker();
+  return null;
+}
+
+function PostHogIdentifyBridge() {
+  usePostHogIdentify();
   return null;
 }
 
@@ -63,7 +69,11 @@ function InappropriateContentHandler() {
 
   useEffect(() => {
     return onInappropriateContent((message) => {
-      notify({ title: "Inappropriate Language", subtitle: message, variant: "error" });
+      notify({
+        title: "Inappropriate Language",
+        subtitle: message,
+        variant: "error",
+      });
     });
   }, [notify]);
 
@@ -91,7 +101,9 @@ function AccountPausedHandler() {
       }
       setShowDialog(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to reactivate. Please try again.";
+      const msg =
+        err?.response?.data?.message ||
+        "Failed to reactivate. Please try again.";
       setResumeError(msg);
     } finally {
       setIsResuming(false);
@@ -141,20 +153,21 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     <ReduxProvider store={store}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-        <LanguageProvider>
-          <AppProvider>
-            <LanguageSyncBridge />
-            <PushNotificationBridge />
-            <NotificationProvider>
-              <App theme="ios">
-                <AppToast />
-                <InappropriateContentHandler />
-                <AccountPausedHandler />
-                {children}
-              </App>
-            </NotificationProvider>
-          </AppProvider>
-        </LanguageProvider>
+          <LanguageProvider>
+            <AppProvider>
+              <LanguageSyncBridge />
+              <PushNotificationBridge />
+              <NotificationProvider>
+                <App theme="ios">
+                  <AppToast />
+                  <PostHogIdentifyBridge />
+                  <InappropriateContentHandler />
+                  <AccountPausedHandler />
+                  {children}
+                </App>
+              </NotificationProvider>
+            </AppProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ReduxProvider>
