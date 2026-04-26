@@ -1,5 +1,5 @@
-"use client";
-import { motion, AnimatePresence } from "framer-motion";
+﻿"use client";
+import { motion } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { PromoBanner as PromoBannerType } from "@/services/home.service";
@@ -105,9 +105,10 @@ const PromoBannerCarousel = ({
 }: PromoBannerCarouselProps) => {
   const router = useRouter();
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const liveOffset = useRef(0);
 
   const displayBanners: Banner[] = useMemo(() => {
     if (!banners || banners.length === 0) return FALLBACK_BANNERS;
@@ -116,22 +117,45 @@ const PromoBannerCarousel = ({
       title: b.title,
       subtitle: b.subtitle || "",
       gradient: resolveGradient(b.gradient),
-      image_url: b.imageUrl || "/path/to/default/image.jpg",
+      image_url: b.imageUrl || "",
       emoji: b.emoji || "✨",
-      cta: b.cta || "View",
+      cta: b.cta || "",
       tag: b.tag || "",
       linkUrl: b.linkUrl ?? null,
     }));
   }, [banners]);
 
+  const slideTo = useCallback((idx: number) => {
+    setCurrent(idx);
+    if (trackRef.current) {
+      trackRef.current.style.transition =
+        "transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+      trackRef.current.style.transform = `translateX(-${idx * 100}%)`;
+    }
+  }, []);
+
   const next = useCallback(() => {
-    setDirection(1);
-    setCurrent((prev) => (prev + 1) % displayBanners.length);
+    setCurrent((prev) => {
+      const n = (prev + 1) % displayBanners.length;
+      if (trackRef.current) {
+        trackRef.current.style.transition =
+          "transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        trackRef.current.style.transform = `translateX(-${n * 100}%)`;
+      }
+      return n;
+    });
   }, [displayBanners.length]);
 
   const prev = useCallback(() => {
-    setDirection(-1);
-    setCurrent((prev) => (prev - 1 + displayBanners.length) % displayBanners.length);
+    setCurrent((prev) => {
+      const n = (prev - 1 + displayBanners.length) % displayBanners.length;
+      if (trackRef.current) {
+        trackRef.current.style.transition =
+          "transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        trackRef.current.style.transform = `translateX(-${n * 100}%)`;
+      }
+      return n;
+    });
   }, [displayBanners.length]);
 
   const pauseAndResume = useCallback(() => {
@@ -139,92 +163,145 @@ const PromoBannerCarousel = ({
     setTimeout(() => setIsPaused(false), 8000);
   }, []);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    setIsPaused(true);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const delta = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(delta) > 48) {
-      delta > 0 ? next() : prev();
-    }
-    touchStartX.current = null;
-    setTimeout(() => setIsPaused(false), 8000);
-  };
-
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(next, 4000);
     return () => clearInterval(timer);
   }, [next, isPaused]);
 
+  /* ── Touch / swipe ────────────────────────────── */
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    liveOffset.current = 0;
+    setIsPaused(true);
+    if (trackRef.current) {
+      trackRef.current.style.transition = "none";
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || !trackRef.current) return;
+    const offset = e.touches[0].clientX - touchStartX.current;
+    liveOffset.current = offset;
+    // Follow finger live — feels native
+    trackRef.current.style.transform = `translateX(calc(-${current * 100}% + ${offset}px))`;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null) return;
+    const offset = liveOffset.current;
+    touchStartX.current = null;
+    liveOffset.current = 0;
+
+    if (offset < -60) {
+      next();
+    } else if (offset > 60) {
+      prev();
+    } else {
+      // Snap back to current
+      if (trackRef.current) {
+        trackRef.current.style.transition =
+          "transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        trackRef.current.style.transform = `translateX(-${current * 100}%)`;
+      }
+    }
+    setTimeout(() => setIsPaused(false), 8000);
+  };
+
   const handleDot = (i: number) => {
-    setDirection(i > current ? 1 : -1);
-    setCurrent(i);
+    slideTo(i);
     pauseAndResume();
   };
 
+  if (isLoading) {
+    return (
+      <div className="px-4 pt-1 pb-3">
+        <div className="h-[140px] rounded-2xl bg-slate-100 animate-pulse" />
+        <div className="flex justify-center gap-1.5 mt-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-[5px] w-6 rounded-full bg-slate-200" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 pt-1 pb-3">
+      {/* Viewport — clips the sliding track */}
       <div
-        className="relative overflow-hidden rounded-2xl h-[140px] shadow-lg shadow-black/[0.06] select-none"
+        className="relative overflow-hidden rounded-2xl h-[140px] shadow-lg shadow-black/[0.06]"
+        style={{ touchAction: "pan-y" }}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={displayBanners[current].id}
-            custom={direction}
-            initial={{ opacity: 0, x: direction * 80, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: direction * -80, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="absolute inset-0 flex items-center"
-            style={{ background: displayBanners[current].gradient }}
-          >
+        {/* Sliding track — all banners side by side */}
+        <div
+          ref={trackRef}
+          className="flex h-full"
+          style={{
+            transform: `translateX(-${current * 100}%)`,
+            willChange: "transform",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+          }}
+        >
+          {displayBanners.map((banner) => (
             <div
-              className="flex flex-col gap-1 z-10 flex-1 px-5 py-4"
-              style={{
-                backgroundImage: `url('${displayBanners[current].image_url}')`,
-                backgroundSize: "contain",
-                backgroundPosition: "center right",
-                backgroundRepeat: "no-repeat",
-              }}
+              key={banner.id}
+              className="relative min-w-full h-full flex items-center shrink-0 overflow-hidden"
+              style={{ background: banner.gradient }}
             >
-              <span className="text-[9px] font-bold tracking-[0.15em] text-white/70 bg-white/15 self-start px-2 py-0.5 rounded-full">
-                {displayBanners[current].tag}
-              </span>
-              <h3 className="text-white text-xl font-extrabold leading-tight mt-1">
-                {displayBanners[current].title}
-              </h3>
-              <p className="text-white/80 text-[13px]">
-                {displayBanners[current].subtitle}
-              </p>
-              {displayBanners[current].cta && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const link = displayBanners[current].linkUrl;
-                    if (link) router.push(link);
-                  }}
-                  className="mt-2 self-start px-5 py-2 bg-white rounded-xl text-xs font-bold shadow-sm"
+              {/* Background image */}
+              {banner.image_url && !banner.image_url.includes("/path/to/") && (
+                <div
+                  className="absolute inset-0 pointer-events-none"
                   style={{
-                    color: "#1a1a2e",
-                    cursor: displayBanners[current].linkUrl ? "pointer" : "default",
+                    backgroundImage: `url('${banner.image_url}')`,
+                    backgroundSize: "contain",
+                    backgroundPosition: "center right",
+                    backgroundRepeat: "no-repeat",
                   }}
-                >
-                  {displayBanners[current].cta}
-                </motion.button>
+                />
               )}
-            </div>
 
-            {/* Decorative circles */}
-            <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/[0.08]" />
-            <div className="absolute right-12 -bottom-6 w-20 h-20 rounded-full bg-white/[0.06]" />
-          </motion.div>
-        </AnimatePresence>
+              {/* Content */}
+              <div className="relative z-10 flex flex-col gap-1 flex-1 px-5 py-4">
+                {banner.tag ? (
+                  <span className="text-[9px] font-bold tracking-[0.15em] text-white/70 bg-white/15 self-start px-2 py-0.5 rounded-full">
+                    {banner.tag}
+                  </span>
+                ) : null}
+                <h3 className="text-white text-xl font-extrabold leading-tight mt-1">
+                  {banner.title}
+                </h3>
+                {banner.subtitle ? (
+                  <p className="text-white/80 text-[13px]">{banner.subtitle}</p>
+                ) : null}
+                {banner.cta ? (
+                  <button
+                    onTouchEnd={(e) => {
+                      // Only fire if it wasn't a swipe
+                      if (Math.abs(liveOffset.current) < 10 && banner.linkUrl) {
+                        e.stopPropagation();
+                        router.push(banner.linkUrl);
+                      }
+                    }}
+                    className="mt-2 self-start px-5 py-2 bg-white rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-transform"
+                    style={{ color: "#1a1a2e" }}
+                  >
+                    {banner.cta}
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Decorative circles */}
+              <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/[0.08] pointer-events-none" />
+              <div className="absolute right-12 -bottom-6 w-20 h-20 rounded-full bg-white/[0.06] pointer-events-none" />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Dots */}

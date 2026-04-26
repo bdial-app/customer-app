@@ -13,6 +13,7 @@ import UserHome from "./components/user-home";
 import ProviderDashboard from "./components/provider/provider-dashboard";
 import ProviderListingsManager from "./components/provider/provider-listings-manager";
 import ProviderMessagesContent from "./components/provider/provider-messages-content";
+import ProviderSuspendedOverlay from "./components/provider/provider-suspended-overlay";
 import AnalyticsContent from "./components/analytics-content";
 import ExploreContent from "./components/explore-content";
 import SavedContent from "./components/saved-content";
@@ -30,7 +31,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
-  const { userMode, setUserMode } = useAppContext();
+  const { userMode, setUserMode, providerStatus } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
   const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
@@ -155,6 +156,11 @@ export default function Home() {
       {activeTab === "profile" && <ProfileContent />}
 
       {activeTab === "analytics" && <AnalyticsContent />}
+
+      {/* Provider Suspended Overlay — covers all provider views */}
+      {userMode === "provider" && providerStatus === "suspended" && (
+        <ProviderSuspendedOverlay />
+      )}
 
       {/* Spacer for floating bottom bar */}
       <div className="h-24"></div>

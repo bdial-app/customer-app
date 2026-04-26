@@ -520,7 +520,8 @@ const ProfileContent = () => {
       {/* Provider Status Cards */}
       {(providerStatus === "approved" ||
         providerStatus === "pending" ||
-        providerStatus === "in_review") && (
+        providerStatus === "in_review" ||
+        providerStatus === "suspended") && (
         <div className="mx-4 mb-3">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
             <div>
@@ -671,6 +672,33 @@ const ProfileContent = () => {
           </motion.div>
         )}
 
+      {/* Provider Suspended Card */}
+      {providerStatus === "suspended" && (
+        <div className="mx-4 mb-3">
+          <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
+                <IonIcon icon={alertCircleOutline} className="text-xl text-red-500" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-sm text-red-900 dark:text-red-300">
+                  Provider Suspended
+                </div>
+                <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
+                  Your provider profile has been suspended by our moderation team. Please contact support to request a review.
+                </div>
+                <a
+                  href="mailto:support@tijarahconnect.com?subject=Provider%20Suspension%20Review%20Request"
+                  className="inline-block mt-3 px-4 py-2 bg-red-500 text-white text-xs font-bold rounded-xl"
+                >
+                  Contact Support
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Provider Disabled Card */}
       {providerStatus === "disabled" && (
         <div className="mx-4 mb-3">
@@ -725,7 +753,8 @@ const ProfileContent = () => {
       {(providerStatus === "approved" ||
         providerStatus === "pending" ||
         providerStatus === "in_review" ||
-        providerStatus === "disabled") && (
+        providerStatus === "disabled" ||
+        providerStatus === "suspended") && (
         <MenuSection title="Provider Management">
           {providerStatus === "disabled" ? (
             <MenuRow

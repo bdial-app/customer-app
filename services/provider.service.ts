@@ -76,7 +76,7 @@ export interface ProviderData {
 }
 
 export interface ProviderStatusResponse {
-  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted";
+  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted" | "suspended";
   verificationStatus: string | null;
   provider: ProviderData | null;
   verification: any | null;
