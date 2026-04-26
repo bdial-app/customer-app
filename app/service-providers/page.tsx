@@ -1,5 +1,15 @@
-"use client"
-import { Block, Navbar, Searchbar, Button, Card, Page, List, ListItem, Chip } from "konsta/react";
+"use client";
+import {
+  Block,
+  Navbar,
+  Searchbar,
+  Button,
+  Card,
+  Page,
+  List,
+  ListItem,
+  Chip,
+} from "konsta/react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,7 +36,14 @@ export default function ServiceProvidersPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Categories for filtering
-  const categories = ["All", "Verified", "Top Rated", "Nearby", "Budget Friendly", "Premium"];
+  const categories = [
+    "All",
+    "Verified",
+    "Top Rated",
+    "Nearby",
+    "Budget Friendly",
+    "Premium",
+  ];
 
   // Mock data - this would come from API based on service type
   const providers: ServiceProvider[] = [
@@ -39,9 +56,11 @@ export default function ServiceProvidersPage() {
       price: "₹500-2000",
       location: "Downtown, 2.5 km",
       phone: "+91 98765 43210",
-      description: "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience.",
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
-      verified: true
+      description:
+        "Expert tailor specializing in traditional and modern clothing designs. Over 10 years of experience.",
+      image:
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+      verified: true,
     },
     {
       id: 2,
@@ -52,9 +71,10 @@ export default function ServiceProvidersPage() {
       price: "₹800-3000",
       location: "City Center, 3.2 km",
       phone: "+91 98765 43211",
-      description: "Premium clothing services with custom designs and alterations.",
+      description:
+        "Premium clothing services with custom designs and alterations.",
       image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400",
-      verified: true
+      verified: true,
     },
     {
       id: 3,
@@ -65,9 +85,11 @@ export default function ServiceProvidersPage() {
       price: "₹600-2500",
       location: "West End, 1.8 km",
       phone: "+91 98765 43212",
-      description: "Professional stitching and alteration services for all types of garments.",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-      verified: false
+      description:
+        "Professional stitching and alteration services for all types of garments.",
+      image:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+      verified: false,
     },
     {
       id: 4,
@@ -78,18 +100,21 @@ export default function ServiceProvidersPage() {
       price: "₹1000-5000",
       location: "Old Town, 4.1 km",
       phone: "+91 98765 43213",
-      description: "Luxury tailoring services for special occasions and traditional wear.",
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400",
-      verified: true
-    }
+      description:
+        "Luxury tailoring services for special occasions and traditional wear.",
+      image:
+        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400",
+      verified: true,
+    },
   ];
 
-  const filteredProviders = providers.filter(provider => {
+  const filteredProviders = providers.filter((provider) => {
     // First apply search filter
-    const matchesSearch = provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         provider.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         provider.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const matchesSearch =
+      provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.description.toLowerCase().includes(searchQuery.toLowerCase());
+
     if (!matchesSearch) return false;
 
     // Then apply category filter
@@ -99,11 +124,19 @@ export default function ServiceProvidersPage() {
       case "Top Rated":
         return provider.rating >= 4.7;
       case "Nearby":
-        return provider.location.includes("1.") || provider.location.includes("2.");
+        return (
+          provider.location.includes("1.") || provider.location.includes("2.")
+        );
       case "Budget Friendly":
-        return provider.price.includes("500") || provider.price.includes("600") || provider.price.includes("800");
+        return (
+          provider.price.includes("500") ||
+          provider.price.includes("600") ||
+          provider.price.includes("800")
+        );
       case "Premium":
-        return provider.price.includes("3000") || provider.price.includes("5000");
+        return (
+          provider.price.includes("3000") || provider.price.includes("5000")
+        );
       default:
         return true; // "All" category
     }
@@ -112,9 +145,11 @@ export default function ServiceProvidersPage() {
   const router = useRouter();
 
   return (
-    <Page style={{
-      background: 'radial-gradient(at 0% 10%, #f0eff4, #f0ecff)',
-    }}>
+    <Page
+      style={{
+        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
+      }}
+    >
       <Navbar
         centerTitle={false}
         title="Service Providers"
@@ -122,7 +157,10 @@ export default function ServiceProvidersPage() {
         innerClassName="justify-start"
         leftClassName="w-11"
         left={
-          <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full active:scale-90 transition-transform">
+          <button
+            onClick={() => router.back()}
+            className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full active:scale-90 transition-transform"
+          >
             <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
           </button>
         }
@@ -153,9 +191,9 @@ export default function ServiceProvidersPage() {
       </Block>
 
       <Block className="my-0">
-          <p className="text-sm text-gray-600">
-            {filteredProviders.length} providers found
-          </p>
+        <p className="text-sm text-gray-600">
+          {filteredProviders.length} providers found
+        </p>
       </Block>
 
       <List strongIos outlineIos className="mt-4">
@@ -167,55 +205,65 @@ export default function ServiceProvidersPage() {
               title={
                 <div className="flex items-center gap-2">
                   <span>{provider.name}</span>
-                {/* {provider.verified && (
+                  {/* {provider.verified && (
                   <span className="absolute- left-[-8em] top-4 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                     ✓ Verified
                   </span>
                 )} */}
-              </div>
-            }
-            subtitle={
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-1">
-                  <IonIcon icon={star} className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm font-medium">{provider.rating}</span>
-                  <span className="text-sm text-gray-500">({provider.reviews})</span>
                 </div>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <IonIcon icon={location} className="w-4 h-4" />
-                  <span className="text-sm">{provider.location}</span>
+              }
+              subtitle={
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1">
+                    <IonIcon icon={star} className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-medium">
+                      {provider.rating}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      ({provider.reviews})
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <IonIcon icon={location} className="w-4 h-4" />
+                    <span className="text-sm">{provider.location}</span>
+                  </div>
                 </div>
-              </div>
-            }
-            text={
-              <div className="flex flex-col">
-                <p className="line-clamp-2 overflow-hidden text-ellipsis">{provider.description}</p>
-                 <div className="flex gap-2 mt-2">
-                   <Button outline className="p-0 min-w-0">
-                    <IonIcon icon={chatbubble}  className="w-4 h-4" /> <span className="ml-2">Chat</span>
-                  </Button>
-                  <Button className="p-0 min-w-0">
-                    <IonIcon icon={call} className="w-4 h-4" /> <span className="ml-2">Call</span>
-                  </Button>
+              }
+              text={
+                <div className="flex flex-col">
+                  <p className="line-clamp-2 overflow-hidden text-ellipsis">
+                    {provider.description}
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <Button outline className="p-0 min-w-0">
+                      <IonIcon icon={chatbubble} className="w-4 h-4" />{" "}
+                      <span className="ml-2">Chat</span>
+                    </Button>
+                    <Button className="p-0 min-w-0">
+                      <IonIcon icon={call} className="w-4 h-4" />{" "}
+                      <span className="ml-2">Call</span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            }
-            media={
-              <img
-                className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
-                src={provider.image}
-                width="80"
-                alt={provider.name}
-              />
-            }
-          />
+              }
+              media={
+                <img
+                  className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
+                  src={provider.image}
+                  width="80"
+                  alt={provider.name}
+                />
+              }
+            />
           </Link>
         ))}
       </List>
 
       {filteredProviders.length === 0 && (
         <Block className="text-center py-8">
-          <p className="text-gray-500">No providers found matching your search.</p>
+          <p className="text-gray-500">
+            No providers found matching your search.
+          </p>
           <Button clear onClick={() => setSearchQuery("")}>
             Clear Search
           </Button>

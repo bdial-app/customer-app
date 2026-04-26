@@ -53,7 +53,7 @@ export default function InviteFriendsPage() {
   const handleWhatsApp = async () => {
     const link = buildInviteLink();
     const text = encodeURIComponent(
-      `Hey! Check out Tijarah Connect — discover amazing local businesses near you! ${link}`
+      `Hey! Check out Tijarah Connect — discover amazing local businesses near you! ${link}`,
     );
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
     try {
@@ -82,10 +82,7 @@ export default function InviteFriendsPage() {
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-200">
-            <IonIcon
-              icon={peopleOutline}
-              className="w-10 h-10 text-white"
-            />
+            <IonIcon icon={peopleOutline} className="w-10 h-10 text-white" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">
@@ -126,9 +123,7 @@ export default function InviteFriendsPage() {
             },
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-3">
-              <span className="text-xl flex-shrink-0 mt-0.5">
-                {item.emoji}
-              </span>
+              <span className="text-xl flex-shrink-0 mt-0.5">{item.emoji}</span>
               <div>
                 <p className="text-[13px] font-semibold text-gray-900">
                   {item.title}
@@ -151,10 +146,7 @@ export default function InviteFriendsPage() {
             className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform"
           >
             <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center flex-shrink-0">
-              <IonIcon
-                icon={logoWhatsapp}
-                className="w-6 h-6 text-green-600"
-              />
+              <IonIcon icon={logoWhatsapp} className="w-6 h-6 text-green-600" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-gray-900">

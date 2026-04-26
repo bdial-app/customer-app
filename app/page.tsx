@@ -4,7 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { Page } from "konsta/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { chatbubblesOutline, arrowForwardOutline, storefrontOutline } from "ionicons/icons";
+import {
+  chatbubblesOutline,
+  arrowForwardOutline,
+  storefrontOutline,
+} from "ionicons/icons";
 import BottomBar from "./components/bottom-bar";
 import ProfileContent from "./components/profile-content";
 import MessagesContent from "./components/messages-content";
@@ -32,7 +36,9 @@ export default function Home() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const { userMode, setUserMode, providerStatus } = useAppContext();
-  const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
+  const providerUnreadCount = useAppSelector(
+    (state) => state.chat.providerUnreadCount,
+  );
   const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
   const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
   const prevUserMode = useRef(userMode);
@@ -103,7 +109,10 @@ export default function Home() {
 
   if (activeTab === "chats" && activeChat) {
     return (
-      <MessagesPage conversationId={activeChat} onBack={() => setActiveChat(null)} />
+      <MessagesPage
+        conversationId={activeChat}
+        onBack={() => setActiveChat(null)}
+      />
     );
   }
 
@@ -119,21 +128,30 @@ export default function Home() {
     >
       {/* Modern header for non-home tabs (skip for provider views which have own headers) */}
       {activeTab !== "home" &&
-        !(userMode === "provider" && (activeTab === "listings" || activeTab === "analytics")) && (
-        <div
-          className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
-        >
-          <div className="px-4 py-3 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white">{getPageTitle()}</h1>
+        !(
+          userMode === "provider" &&
+          (activeTab === "listings" || activeTab === "analytics")
+        ) && (
+          <div
+            className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
+            style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          >
+            <div className="px-4 py-3 flex items-center justify-between">
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+                {getPageTitle()}
+              </h1>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {activeTab === "home" && userMode === "customer" && <GeoLocation />}
 
       {activeTab === "home" &&
-        (userMode === "customer" ? <UserHome /> : <ProviderDashboard onNavigateToListings={handleNavigateToListings} />)}
+        (userMode === "customer" ? (
+          <UserHome />
+        ) : (
+          <ProviderDashboard onNavigateToListings={handleNavigateToListings} />
+        ))}
 
       {activeTab === "explore" && <ExploreContent />}
 

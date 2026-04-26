@@ -4,10 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
-const IonIcon = dynamic(
-  () => import("@ionic/react").then((m) => m.IonIcon),
-  { ssr: false }
-);
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
+  ssr: false,
+});
 import {
   arrowBack,
   heartOutline,
@@ -53,7 +52,8 @@ export default function ProductDetailsPage() {
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
-  const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
+  const { mutate: createConversation, isPending: isCreatingChat } =
+    useCreateConversation();
 
   const handleToggleSaved = () => {
     if (!user) return;
@@ -272,10 +272,7 @@ export default function ProductDetailsPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <IonIcon
-                  icon={storefront}
-                  className="w-5 h-5 text-amber-600"
-                />
+                <IonIcon icon={storefront} className="w-5 h-5 text-amber-600" />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -305,15 +302,23 @@ export default function ProductDetailsPage() {
         )}
 
         {/* Get Directions */}
-        {provider && (provider as any)?.latitude && (provider as any)?.longitude && (
-          <button
-            onClick={() => openDirections(Number((provider as any).latitude), Number((provider as any).longitude), provider.brandName)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
-          >
-            <IonIcon icon={navigateOutline} className="w-4 h-4" />
-            Get Directions
-          </button>
-        )}
+        {provider &&
+          (provider as any)?.latitude &&
+          (provider as any)?.longitude && (
+            <button
+              onClick={() =>
+                openDirections(
+                  Number((provider as any).latitude),
+                  Number((provider as any).longitude),
+                  provider.brandName,
+                )
+              }
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+            >
+              <IonIcon icon={navigateOutline} className="w-4 h-4" />
+              Get Directions
+            </button>
+          )}
 
         {provider?.categories && provider.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -410,11 +415,18 @@ export default function ProductDetailsPage() {
           <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
               <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
-                <IonIcon icon={storefrontOutline} className="text-white text-sm" />
+                <IonIcon
+                  icon={storefrontOutline}
+                  className="text-white text-sm"
+                />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">Your Product</p>
-                <p className="text-[10px] text-violet-500 truncate">You&apos;re viewing your own listing</p>
+                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+                  Your Product
+                </p>
+                <p className="text-[10px] text-violet-500 truncate">
+                  You&apos;re viewing your own listing
+                </p>
               </div>
               <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
                 <IonIcon icon={eyeOutline} className="text-xs" />
@@ -423,7 +435,10 @@ export default function ProductDetailsPage() {
             </div>
             <div className="px-4 py-3">
               <button
-                onClick={() => { setUserMode('provider'); router.push('/'); }}
+                onClick={() => {
+                  setUserMode("provider");
+                  router.push("/");
+                }}
                 className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
               >
                 <IonIcon icon={createOutline} className="text-base" />
@@ -434,37 +449,49 @@ export default function ProductDetailsPage() {
         ) : (
           <button
             onClick={() => {
-              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-              if (!token) { router.push('/auth/login'); return; }
+              const token =
+                typeof window !== "undefined"
+                  ? localStorage.getItem("token")
+                  : null;
+              if (!token) {
+                router.push("/auth/login");
+                return;
+              }
               if (!provider?.id) return;
-              createConversation({
-                providerId: provider.id,
-                contextType: 'product',
-                contextId: product?.id,
-                initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
-                initialMessageMetadata: {
-                  productId: product?.id,
-                  productName: product?.name,
-                  productImage: product?.photoUrl,
-                  productPrice: product?.price,
-                  currency: product?.currency,
+              createConversation(
+                {
+                  providerId: provider.id,
+                  contextType: "product",
+                  contextId: product?.id,
+                  initialMessage: `Hi! I'm interested in ${product?.name || "this product"}. Could you share more details?`,
+                  initialMessageMetadata: {
+                    productId: product?.id,
+                    productName: product?.name,
+                    productImage: product?.photoUrl,
+                    productPrice: product?.price,
+                    currency: product?.currency,
+                  },
                 },
-              }, {
-                onSuccess: (conv) => {
-                  dispatch(openChat(conv.id));
-                  router.push('/');
+                {
+                  onSuccess: (conv) => {
+                    dispatch(openChat(conv.id));
+                    router.push("/");
+                  },
+                  onError: (err: any) => {
+                    const msg =
+                      err?.response?.data?.message ||
+                      err?.message ||
+                      "Could not start conversation";
+                    alert(Array.isArray(msg) ? msg.join(", ") : msg);
+                  },
                 },
-                onError: (err: any) => {
-                  const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
-                },
-              });
+              );
             }}
             disabled={isCreatingChat}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? 'Opening Chat...' : 'Send Enquiry'}
+            {isCreatingChat ? "Opening Chat..." : "Send Enquiry"}
           </button>
         )}
       </div>
