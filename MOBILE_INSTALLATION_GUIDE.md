@@ -1,10 +1,10 @@
-# How to Install Bohri Connect App on Mobile
+# How to Install Tijarah App on Mobile
 
 ## Android (Chrome, Edge, Samsung Internet)
 
 ### Method 1: Auto Install Prompt (Recommended)
 
-1. Open Bohri Connect in your browser
+1. Open Tijarah in your browser
 2. Wait 30 seconds for the app to fully load
 3. You should see an **"Install"** or **"Add to Home Screen"** prompt at the bottom
 4. Tap the prompt
@@ -13,7 +13,7 @@
 
 ### Method 2: Manual Installation (If prompt doesn't appear)
 
-1. Open Bohri Connect in Chrome/Edge
+1. Open Tijarah in Chrome/Edge
 2. Tap the **menu icon** (3 dots) at the top right
 3. Select **"Install app"** or **"Add to Home Screen"**
 4. Tap **"Install"** to confirm
@@ -23,7 +23,7 @@
 
 1. Long-press on your home screen
 2. Select **"Widgets"** or **"Add app shortcut"**
-3. Find **"Bohri Connect"**
+3. Find **"Tijarah"**
 4. Tap and drag to your home screen
 
 ---
@@ -32,10 +32,10 @@
 
 ### Installation Steps
 
-1. Open Bohri Connect (https://) in Safari
+1. Open Tijarah (https://) in Safari
 2. Tap the **Share** icon at the bottom center of screen
 3. Scroll down and tap **"Add to Home Screen"**
-4. Enter the app name (or keep "Bohri Connect")
+4. Enter the app name (or keep "Tijarah")
 5. Tap **"Add"** in the top right
 6. The app will be added to your home screen
 
@@ -127,13 +127,13 @@ After installing, on first open:
 
 ### Android
 
-1. Long-press the Bohri Connect app icon
+1. Long-press the Tijarah app icon
 2. Select **"Uninstall"**
 3. Confirm uninstall
 
 ### iOS
 
-1. Long-press the Bohri Connect app icon
+1. Long-press the Tijarah app icon
 2. Select **"Remove App"**
 3. Select **"Remove from Home Screen"** or **"Delete App"**
 
@@ -188,7 +188,7 @@ Your data is safe:
 - ✓ No tracking cookies
 - ✓ Location data only used to find nearby services
 - ✓ Apps work offline without sending data
-- ✓ You can revoke permissions anytime (Settings → Apps → Bohri Connect)
+- ✓ You can revoke permissions anytime (Settings → Apps → Tijarah)
 
 ---
 

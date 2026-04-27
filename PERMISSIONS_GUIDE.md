@@ -28,8 +28,8 @@ if (navigator.geolocation) {
 
 ### Browser Prompt:
 
-- iOS: "Allow 'Bohri Connect' to access your location?"
-- Android: "Allow Bohri Connect to access your location?"
+- iOS: "Allow 'Tijarah' to access your location?"
+- Android: "Allow Tijarah to access your location?"
 
 **First permission request**: When user tries to access location-based features
 **Persistent**: Permission persists until user revokes it in settings
@@ -77,7 +77,7 @@ if (navigator.geolocation) {
 
 - **Geolocation**: User grants/denies with system popup
 - **File Access**: Native file picker or Storage permission
-- **Status**: Check Settings → Apps → Bohri Connect → Permissions
+- **Status**: Check Settings → Apps → Tijarah → Permissions
 
 ---
 
@@ -106,11 +106,11 @@ if (navigator.geolocation) {
 
 ### iOS
 
-Settings → Privacy → Location Services → Bohri Connect → [Allow/Don't Allow]
+Settings → Privacy → Location Services → Tijarah → [Allow/Don't Allow]
 
 ### Android
 
-Settings → Apps → Bohri Connect → Permissions → Location → [Allow/Don't Allow]
+Settings → Apps → Tijarah → Permissions → Location → [Allow/Don't Allow]
 
 ---
 
