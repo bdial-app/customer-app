@@ -7,14 +7,14 @@ import HeroSearchBar from "./home/hero-search-bar";
 import QuickCategories from "./home/quick-categories";
 import PromoBannerCarousel from "./home/promo-banner-carousel";
 import ProviderCardSlider from "./home/provider-card-slider";
-import FeaturedProviderGrid from "./home/featured-provider-grid";
-import ReorderRibbon from "./home/reorder-ribbon";
 import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
 import CommunityReviews from "./home/community-reviews";
 import ReferEarnCard from "./home/refer-earn-card";
 import BecomeProviderCTA from "./home/become-provider-cta";
+import CitySpotlight from "./home/city-spotlight";
+import RecentlyAdded from "./home/recently-added";
 import { useHomeFeed } from "@/hooks/useHomeFeed";
 import { useAppSelector } from "@/hooks/useAppStore";
 
@@ -45,7 +45,12 @@ const UserHome = () => {
   });
 
   const nearbyProviders = (feed?.nearbyProviders || []).map(mapProvider);
-  const beautyProviders = (feed?.beautyProviders || []).map(mapProvider);
+  const featuredCategory = feed?.featuredCategory;
+  const featuredProviders = (featuredCategory?.providers || []).map(mapProvider);
+  const topRatedProviders = (feed?.topRatedProviders || []).map(mapProvider);
+  const cityData = feed?.cityProviders;
+  const cityProviders = (cityData?.providers || []).map(mapProvider);
+  const newArrivals = (feed?.newArrivals || []).map(mapProvider);
   const stats = feed?.platformStats;
 
   return (
@@ -63,7 +68,7 @@ const UserHome = () => {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] rounded-full bg-amber-400/[0.06] blur-[80px] pointer-events-none" />
 
           {/* Search Bar */}
-          <HeroSearchBar />
+          <HeroSearchBar prompts={feed?.searchPrompts} />
 
           {/* Category Scroll */}
           <QuickCategories />
@@ -85,9 +90,6 @@ const UserHome = () => {
         {/* Promo Banner Carousel */}
         <PromoBannerCarousel banners={feed?.promoBanners} isLoading={isLoading} />
 
-        {/* Reorder / Your last booking */}
-        <ReorderRibbon lastBooking={feed?.lastBooking ?? null} />
-
         {/* Divider */}
         <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
 
@@ -102,7 +104,7 @@ const UserHome = () => {
           title="Near You"
           subtitle="Top-rated providers nearby"
           providers={nearbyProviders}
-          viewAllLink={ROUTE_PATH.ALL_SERVICES}
+          viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=5`}
           accentColor="#F8CB45"
           isLoading={isLoading}
         />
@@ -113,17 +115,33 @@ const UserHome = () => {
         {/* Divider */}
         <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0 mt-2" />
 
-        {/* Featured Grid */}
-        <FeaturedProviderGrid
-          title="Beauty & Wellness"
-          subtitle="Pamper yourself today"
-          providers={beautyProviders}
-          viewAllLink={ROUTE_PATH.ALL_SERVICES}
-          isLoading={isLoading}
-        />
+        {/* Featured Category — dynamic random category as slider */}
+        {featuredCategory && featuredProviders.length > 0 && (
+          <>
+            <ProviderCardSlider
+              title={featuredCategory.name}
+              subtitle={`Explore ${featuredCategory.name.toLowerCase()} services`}
+              providers={featuredProviders}
+              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?search=${encodeURIComponent(featuredCategory.name)}`}
+              accentColor="#E91E63"
+              isLoading={isLoading}
+            />
+            <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+          </>
+        )}
 
-        {/* Divider */}
-        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+        {/* City Spotlight */}
+        {cityData && cityProviders.length > 0 && (
+          <>
+            <CitySpotlight
+              city={cityData.city}
+              providers={cityProviders}
+              isLoading={isLoading}
+              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=rating`}
+            />
+            <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+          </>
+        )}
 
         {/* Community Reviews */}
         <CommunityReviews reviews={feed?.communityReviews} isLoading={isLoading} />
@@ -131,14 +149,24 @@ const UserHome = () => {
         {/* Divider */}
         <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
 
-        {/* Popular in Tailoring */}
+        {/* Top Rated Providers */}
         <ProviderCardSlider
-          title="Popular in Tailoring"
-          subtitle="Most booked this week"
-          providers={nearbyProviders.slice(0, 4)}
-          viewAllLink={ROUTE_PATH.ALL_SERVICES}
+          title="Top Rated"
+          subtitle="Highest rated by our community"
+          providers={topRatedProviders}
+          viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=rating&minRating=4`}
           accentColor="#9C27B0"
           isLoading={isLoading}
+        />
+
+        {/* Divider */}
+        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+
+        {/* Recently Added — new arrivals */}
+        <RecentlyAdded
+          providers={newArrivals}
+          isLoading={isLoading}
+          viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
         />
 
         {/* Become a Provider CTA */}
@@ -165,8 +193,8 @@ const UserHome = () => {
             </div>
             <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
             <div>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stats?.totalBookings ?? 0}+</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Happy Customers</p>
+              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stats?.totalCategories ?? 0}+</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Service Categories</p>
             </div>
             <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
             <div>

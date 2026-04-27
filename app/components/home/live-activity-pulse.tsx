@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLiveActivity } from "@/hooks/useHomeFeed";
 
 const FALLBACK_ACTIVITIES = [
-  { count: 0, text: "bookings completed near you today" },
-  { count: 0, text: "providers online in your area" },
-  { count: 0, text: "services booked in the last hour" },
+  { count: 0, text: "providers available in your area" },
+  { count: 0, text: "services completed near you today" },
+  { count: 0, text: "new requests in the last hour" },
 ];
 
 interface LiveActivityPulseProps {

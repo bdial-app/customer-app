@@ -1,16 +1,24 @@
 "use client";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import type { LastBooking } from "@/services/home.service";
 
-interface ReorderRibbonProps {
-  lastBooking: LastBooking | null;
+interface LastVisited {
+  id: string;
+  providerId: string;
+  providerName: string;
+  providerImage: string | null;
+  categories: string | null;
+  location: string;
 }
 
-const ReorderRibbon = ({ lastBooking }: ReorderRibbonProps) => {
+interface ReorderRibbonProps {
+  lastVisited: LastVisited | null;
+}
+
+const ReorderRibbon = ({ lastVisited }: ReorderRibbonProps) => {
   const router = useRouter();
 
-  if (!lastBooking) return null;
+  if (!lastVisited) return null;
 
   return (
     <motion.div
@@ -24,22 +32,22 @@ const ReorderRibbon = ({ lastBooking }: ReorderRibbonProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold uppercase tracking-wider">
-              Your last booking
+              Recently visited
             </p>
             <h3 className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">
-              {lastBooking.providerName}
+              {lastVisited.providerName}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {lastBooking.categories || lastBooking.providerName}
-              {lastBooking.location ? ` • ${lastBooking.location}` : ""}
+              {lastVisited.categories || lastVisited.providerName}
+              {lastVisited.location ? ` • ${lastVisited.location}` : ""}
             </p>
           </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
             className="bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm"
-            onClick={() => router.push(`/provider-details/${lastBooking.providerId}`)}
+            onClick={() => router.push(`/provider-details/${lastVisited.providerId}`)}
           >
-            Rebook
+            View
           </motion.button>
         </div>
         {/* Decorative circle */}

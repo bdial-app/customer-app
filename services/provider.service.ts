@@ -12,6 +12,10 @@ export interface ProviderNearbyParams {
   search?: string;
   city?: string;
   categoryIds?: string[];
+  sortBy?: 'distance' | 'rating' | 'newest' | 'reviews';
+  minRating?: number;
+  verifiedOnly?: boolean;
+  womenLedOnly?: boolean;
 }
 
 export interface NearbyProviderResponse {
