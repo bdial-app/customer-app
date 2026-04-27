@@ -46,7 +46,9 @@ const UserHome = () => {
 
   const nearbyProviders = (feed?.nearbyProviders || []).map(mapProvider);
   const featuredCategory = feed?.featuredCategory;
-  const featuredProviders = (featuredCategory?.providers || []).map(mapProvider);
+  const featuredProviders = (featuredCategory?.providers || []).map(
+    mapProvider,
+  );
   const topRatedProviders = (feed?.topRatedProviders || []).map(mapProvider);
   const cityData = feed?.cityProviders;
   const cityProviders = (cityData?.providers || []).map(mapProvider);
@@ -74,7 +76,7 @@ const UserHome = () => {
           <QuickCategories />
 
           {/* Curved bottom transition */}
-          <div className="h-6 bg-[#FAFAFA] dark:bg-slate-900 rounded-t-[28px] -mb-px" />
+          <div className="h-6 bg-[#efeff4] dark:bg-slate-900 rounded-t-[28px] -mb-px" />
         </div>
 
         {/* Personalized Greeting */}
@@ -88,16 +90,22 @@ const UserHome = () => {
         />
 
         {/* Promo Banner Carousel */}
-        <PromoBannerCarousel banners={feed?.promoBanners} isLoading={isLoading} />
+        <PromoBannerCarousel
+          banners={feed?.promoBanners}
+          isLoading={isLoading}
+        />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+        <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
         {/* 🔥 Trending Now */}
-        <TrendingServices categories={feed?.trendingCategories} isLoading={isLoading} />
+        <TrendingServices
+          categories={feed?.trendingCategories}
+          isLoading={isLoading}
+        />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+        <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
         {/* Near You - Horizontal Scroll */}
         <ProviderCardSlider
@@ -113,7 +121,7 @@ const UserHome = () => {
         <ReferEarnCard />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0 mt-2" />
+        <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700 mt-2" />
 
         {/* Featured Category — dynamic random category as slider */}
         {featuredCategory && featuredProviders.length > 0 && (
@@ -126,7 +134,7 @@ const UserHome = () => {
               accentColor="#E91E63"
               isLoading={isLoading}
             />
-            <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
           </>
         )}
 
@@ -139,15 +147,18 @@ const UserHome = () => {
               isLoading={isLoading}
               viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=rating`}
             />
-            <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
           </>
         )}
 
         {/* Community Reviews */}
-        <CommunityReviews reviews={feed?.communityReviews} isLoading={isLoading} />
+        <CommunityReviews
+          reviews={feed?.communityReviews}
+          isLoading={isLoading}
+        />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+        <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
         {/* Top Rated Providers */}
         <ProviderCardSlider
@@ -160,7 +171,7 @@ const UserHome = () => {
         />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
+        <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
         {/* Recently Added — new arrivals */}
         <RecentlyAdded
@@ -180,7 +191,8 @@ const UserHome = () => {
           transition={{ duration: 0.4 }}
           className="mx-4 mt-3 mb-2 p-5 rounded-2xl border border-slate-100 dark:border-slate-800"
           style={{
-            background: "var(--trust-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%))",
+            background:
+              "var(--trust-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%))",
           }}
         >
           <p className="text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
@@ -188,18 +200,30 @@ const UserHome = () => {
           </p>
           <div className="flex items-center justify-around text-center">
             <div>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stats?.verifiedProviders ?? 0}+</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Verified Providers</p>
+              <p className="text-xl font-extrabold text-slate-800 dark:text-white">
+                {stats?.verifiedProviders ?? 0}+
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Verified Providers
+              </p>
             </div>
             <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
             <div>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stats?.totalCategories ?? 0}+</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Service Categories</p>
+              <p className="text-xl font-extrabold text-slate-800 dark:text-white">
+                {stats?.totalCategories ?? 0}+
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Service Categories
+              </p>
             </div>
             <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
             <div>
-              <p className="text-xl font-extrabold text-amber-500">{stats?.avgRating ? `${stats.avgRating}★` : '—'}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Average Rating</p>
+              <p className="text-xl font-extrabold text-amber-500">
+                {stats?.avgRating ? `${stats.avgRating}★` : "—"}
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Average Rating
+              </p>
             </div>
           </div>
         </motion.div>
