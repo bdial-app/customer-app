@@ -11,10 +11,9 @@ import {
 import { useNotification } from "../context/NotificationContext";
 import { checkContent } from "@/utils/content-sanitizer";
 
-const IonIcon = dynamic(
-  () => import("@ionic/react").then((m) => m.IonIcon),
-  { ssr: false },
-);
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
+  ssr: false,
+});
 import { closeOutline, alertCircleOutline } from "ionicons/icons";
 
 interface ReportSheetProps {
@@ -65,7 +64,8 @@ export default function ReportSheet({
       if (contentCheck.flagged) {
         notify({
           title: "Inappropriate language",
-          subtitle: "Please remove inappropriate language from your description.",
+          subtitle:
+            "Please remove inappropriate language from your description.",
           variant: "error",
         });
         return;
@@ -131,21 +131,21 @@ export default function ReportSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 inset-x-0 z-[101] bg-white rounded-t-2xl max-h-[85vh] flex flex-col safe-area-bottom"
+            className="fixed bottom-0 inset-x-0 z-[101] bg-white dark:bg-slate-900 rounded-t-2xl max-h-[85vh] flex flex-col safe-area-bottom"
           >
             {/* Handle + Header */}
-            <div className="flex-shrink-0 px-5 pt-3 pb-4 border-b border-slate-100">
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+            <div className="flex-shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                     <IonIcon
                       icon={alertCircleOutline}
                       className="w-5 h-5 text-red-500"
                     />
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-semibold text-slate-900">
+                    <h3 className="text-[15px] font-semibold text-slate-900 dark:text-white">
                       Report {entityLabel}
                     </h3>
                     <p className="text-[12px] text-slate-400">
@@ -155,7 +155,7 @@ export default function ReportSheet({
                 </div>
                 <button
                   onClick={handleClose}
-                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
                 >
                   <IonIcon
                     icon={closeOutline}
@@ -173,8 +173,8 @@ export default function ReportSheet({
                   onClick={() => setSelectedReason(r.value)}
                   className={`w-full text-left px-4 py-3 rounded-xl text-[14px] font-medium transition-all border ${
                     selectedReason === r.value
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-slate-100 bg-slate-50 text-slate-700 active:bg-slate-100"
+                      ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                      : "border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-700"
                   }`}
                 >
                   {r.label}
@@ -195,7 +195,7 @@ export default function ReportSheet({
                     }
                     placeholder="Please describe the issue (max 500 characters)"
                     rows={3}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-[14px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] text-slate-700 dark:text-white bg-transparent dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 resize-none"
                   />
                   <p className="text-[11px] text-slate-400 text-right mt-1">
                     {description.length}/500
@@ -205,14 +205,14 @@ export default function ReportSheet({
             </div>
 
             {/* Submit */}
-            <div className="flex-shrink-0 px-5 py-4 border-t border-slate-100">
+            <div className="flex-shrink-0 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={handleSubmit}
                 disabled={!selectedReason || isSubmitting}
                 className={`w-full py-3 rounded-xl text-[15px] font-semibold transition-all ${
                   selectedReason && !isSubmitting
                     ? "bg-red-500 text-white active:bg-red-600 shadow-sm shadow-red-200"
-                    : "bg-slate-100 text-slate-400"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                 }`}
               >
                 {isSubmitting ? "Submitting…" : "Submit Report"}

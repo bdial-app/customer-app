@@ -312,15 +312,15 @@ export default function ProviderDetailsPage() {
   // -- Loading --
   if (isLoading) {
     return (
-      <Page className="bg-gray-50 dark:!bg-slate-900">
+      <Page className="bg-white dark:bg-slate-900">
         <div className="animate-pulse">
-          <div className="h-72 bg-gray-200 dark:bg-slate-700" />
+          <div className="h-72 bg-slate-200 dark:bg-slate-700" />
           <div className="p-5 space-y-4">
-            <div className="h-6 bg-gray-200 dark:bg-slate-700 rounded-lg w-3/4" />
-            <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded-lg w-1/2" />
+            <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-lg w-3/4" />
+            <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded-lg w-1/2" />
             <div className="flex gap-3 mt-4">
-              <div className="h-20 flex-1 bg-gray-200 dark:bg-slate-700 rounded-2xl" />
-              <div className="h-20 flex-1 bg-gray-200 dark:bg-slate-700 rounded-2xl" />
+              <div className="h-20 flex-1 bg-slate-150 dark:bg-slate-700 rounded-2xl" />
+              <div className="h-20 flex-1 bg-slate-150 dark:bg-slate-700 rounded-2xl" />
             </div>
           </div>
         </div>
@@ -331,10 +331,10 @@ export default function ProviderDetailsPage() {
   // -- Error --
   if (isError || !provider) {
     return (
-      <Page className="flex flex-col items-center justify-center p-8">
-        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+      <Page className="flex flex-col items-center justify-center p-8 bg-white dark:bg-slate-900">
+        <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
           <svg
-            className="w-8 h-8 text-red-400"
+            className="w-8 h-8 text-red-400 dark:text-red-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -355,9 +355,9 @@ export default function ProviderDetailsPage() {
         </p>
         <button
           onClick={() => router.back()}
-          className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+          className="w-9 h-9 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center active:scale-90 transition-transform"
         >
-          <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
+          <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
         </button>
       </Page>
     );
@@ -369,7 +369,7 @@ export default function ProviderDetailsPage() {
   const owner = (provider as any)?.user;
 
   return (
-    <Page className="!bg-gray-50/80 dark:!bg-slate-900">
+    <Page className="!bg-white dark:!bg-slate-900">
       {/* Hero */}
       <div
         className="relative"
