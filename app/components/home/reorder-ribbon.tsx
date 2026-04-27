@@ -20,16 +20,16 @@ const ReorderRibbon = ({ lastBooking }: ReorderRibbonProps) => {
       transition={{ duration: 0.4 }}
       className="mx-4 my-3"
     >
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 px-4 py-3.5">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800/40 px-4 py-3.5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-amber-700 font-semibold uppercase tracking-wider">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold uppercase tracking-wider">
               Your last booking
             </p>
-            <h3 className="text-sm font-bold text-slate-800 mt-0.5">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">
               {lastBooking.providerName}
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {lastBooking.categories || lastBooking.providerName}
               {lastBooking.location ? ` • ${lastBooking.location}` : ""}
             </p>

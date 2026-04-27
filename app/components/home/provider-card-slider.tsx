@@ -62,11 +62,11 @@ const ProviderCardSlider = ({
       {isLoading ? (
         <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="shrink-0 w-[150px] bg-white rounded-2xl overflow-hidden border border-slate-50 animate-pulse">
-              <div className="h-[120px] bg-slate-100" />
+            <div key={i} className="shrink-0 w-[150px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-50 dark:border-slate-700 animate-pulse">
+              <div className="h-[120px] bg-slate-100 dark:bg-slate-700" />
               <div className="p-2.5 space-y-2">
-                <div className="h-3.5 bg-slate-100 rounded-full w-4/5" />
-                <div className="h-2.5 bg-slate-50 rounded-full w-3/5" />
+                <div className="h-3.5 bg-slate-100 dark:bg-slate-700 rounded-full w-4/5" />
+                <div className="h-2.5 bg-slate-50 dark:bg-slate-700/50 rounded-full w-3/5" />
                 <div className="flex gap-2">
                   <div className="h-5 w-12 bg-slate-100 rounded-md" />
                   <div className="h-3 w-14 bg-slate-50 rounded-full mt-1" />
@@ -93,7 +93,7 @@ const ProviderCardSlider = ({
             className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
           >
             {/* Image */}
-            <div className="relative h-[120px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
+            <div className="relative h-[120px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800">
               {provider.image ? (
                 <img
                   src={provider.image}
@@ -150,15 +150,15 @@ const ProviderCardSlider = ({
               )}
               <div className="flex items-center gap-2 mt-1.5">
                 {provider.rating ? (
-                  <div className="flex items-center gap-0.5 bg-green-50 px-1.5 py-0.5 rounded-md">
+                  <div className="flex items-center gap-0.5 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded-md">
                     <IonIcon icon={star} className="w-3 h-3 text-green-600" />
-                    <span className="text-[10px] font-bold text-green-700">
+                    <span className="text-[10px] font-bold text-green-700 dark:text-green-400">
                       {provider.rating}
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-0.5 bg-indigo-50 px-1.5 py-0.5 rounded-md">
-                    <span className="text-[10px] font-bold text-indigo-600">New</span>
+                  <div className="flex items-center gap-0.5 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">New</span>
                   </div>
                 )}
                 {provider.location && (

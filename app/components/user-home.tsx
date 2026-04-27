@@ -123,13 +123,13 @@ const UserHome = () => {
         />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 mx-0" />
+        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
 
         {/* Community Reviews */}
         <CommunityReviews reviews={feed?.communityReviews} isLoading={isLoading} />
 
         {/* Divider */}
-        <div className="h-2 bg-slate-50 mx-0" />
+        <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0" />
 
         {/* Popular in Tailoring */}
         <ProviderCardSlider
@@ -150,28 +150,28 @@ const UserHome = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="mx-4 mt-3 mb-2 p-5 rounded-2xl border border-slate-100"
+          className="mx-4 mt-3 mb-2 p-5 rounded-2xl border border-slate-100 dark:border-slate-800"
           style={{
-            background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)",
+            background: "var(--trust-bg, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%))",
           }}
         >
-          <p className="text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <p className="text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
             Trusted by thousands
           </p>
           <div className="flex items-center justify-around text-center">
             <div>
-              <p className="text-xl font-extrabold text-slate-800">{stats?.verifiedProviders ?? 0}+</p>
-              <p className="text-[10px] text-slate-500 mt-0.5">Verified Providers</p>
+              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stats?.verifiedProviders ?? 0}+</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Verified Providers</p>
             </div>
-            <div className="w-px h-10 bg-slate-200/80" />
+            <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
             <div>
-              <p className="text-xl font-extrabold text-slate-800">{stats?.totalBookings ?? 0}+</p>
-              <p className="text-[10px] text-slate-500 mt-0.5">Happy Customers</p>
+              <p className="text-xl font-extrabold text-slate-800 dark:text-white">{stats?.totalBookings ?? 0}+</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Happy Customers</p>
             </div>
-            <div className="w-px h-10 bg-slate-200/80" />
+            <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
             <div>
               <p className="text-xl font-extrabold text-amber-500">{stats?.avgRating ? `${stats.avgRating}★` : '—'}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5">Average Rating</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Average Rating</p>
             </div>
           </div>
         </motion.div>

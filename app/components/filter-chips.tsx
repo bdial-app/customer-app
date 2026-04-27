@@ -39,7 +39,7 @@ const FilterChips = ({
         <button
           key={filterId}
           onClick={() => onRemoveFilter(filterId)}
-          className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200/60 active:bg-amber-100 transition-colors"
+          className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-700/40 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors"
         >
           {getLabel(filterId)}
           <IonIcon icon={close} className="w-3.5 h-3.5" />
@@ -48,7 +48,7 @@ const FilterChips = ({
       {selectedFilters.size > 1 && (
         <button
           onClick={onClearAll}
-          className="text-[11px] font-semibold text-gray-400 whitespace-nowrap px-2 py-1 active:text-gray-600"
+          className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 whitespace-nowrap px-2 py-1 active:text-gray-600 dark:active:text-slate-300"
         >
           Clear all
         </button>

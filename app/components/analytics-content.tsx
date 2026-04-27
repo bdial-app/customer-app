@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
@@ -97,7 +97,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
     return (
       <div className="p-4 space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-16 bg-slate-100 rounded-2xl animate-pulse" />
+          <div key={i} className="h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -407,7 +407,7 @@ const AnalyticsContent = () => {
             <div className="px-4 mb-4">
               <div className="grid grid-cols-3 gap-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-[76px] bg-slate-100 rounded-2xl animate-pulse" />
+                  <div key={i} className="h-[76px] bg-slate-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
                 ))}
               </div>
             </div>
@@ -724,7 +724,7 @@ const AnalyticsContent = () => {
           {leadsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-slate-100 rounded-2xl animate-pulse" />
+                <div key={i} className="h-32 bg-slate-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : !leadsData?.data.length ? (
