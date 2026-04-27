@@ -13,6 +13,8 @@ import { hydrateAuth, clearUser, setProfile } from "@/store/slices/authSlice";
 import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent } from "@/utils/axios";
+import { AuthGateProvider } from "./context/AuthGateContext";
+import AuthGateSheet from "./components/auth-gate-sheet";
 import { resumeMyAccount } from "@/services/user.service";
 import { useRouter } from "next/navigation";
 import { useNotification } from "./context/NotificationContext";
@@ -116,7 +118,7 @@ function AccountPausedHandler() {
     store.dispatch(clearUser());
     setShowDialog(false);
     setResumeError(null);
-    router.push("/auth/login");
+    router.push("/");
   }, [router]);
 
   return (
@@ -155,6 +157,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         <ThemeProvider>
           <LanguageProvider>
             <AppProvider>
+              <AuthGateProvider>
               <LanguageSyncBridge />
               <PushNotificationBridge />
               <NotificationProvider>
@@ -163,9 +166,11 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />
                   <AccountPausedHandler />
+                  <AuthGateSheet />
                   {children}
                 </App>
               </NotificationProvider>
+              </AuthGateProvider>
             </AppProvider>
           </LanguageProvider>
         </ThemeProvider>

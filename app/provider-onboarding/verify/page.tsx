@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { submitVerification, getMyProviderStatus } from "@/services/provider.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
@@ -38,6 +39,14 @@ type DocTypeId = (typeof DOC_TYPES)[number]["id"];
 
 export default function VerifyPage() {
   const router = useRouter();
+  const { isAuthenticated, requireAuth } = useAuthGate();
+
+  // Prompt login immediately if unauthenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      requireAuth(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
 

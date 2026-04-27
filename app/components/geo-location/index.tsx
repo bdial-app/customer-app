@@ -4,16 +4,19 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { useReverseGeocode, useSearchGeocode } from "@/hooks/useGeocode";
 import { useUpdateUser } from "@/hooks/useUser";
 import { setProfile } from "@/store/slices/authSlice";
-import { addRecentLocation } from "@/store/slices/locationSlice";
+import { addRecentLocation, setGuestCoords } from "@/store/slices/locationSlice";
 import {
   SearchGeocodeResult,
+  reverseGeocode as reverseGeocodeApi,
 } from "@/services/geocode.service";
+import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSavedLocations } from "@/hooks/useSavedLocation";
 import { SavedLocation } from "@/services/saved-location.service";
 import AddressBarNavigation from "./address-bar-navigation";
 import NotificationBell from "../notification-center/NotificationBell";
 import NotificationDropdown from "../notification-center/NotificationDropdown";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
@@ -29,28 +32,58 @@ import {
   bookmarkOutline,
   closeOutline,
   chevronDown,
+  logInOutline,
+  mapOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+
+// Must be at module level for @react-google-maps/api reference equality
+const GOOGLE_MAPS_LIBRARIES: ("places")[] = [];
+const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
+const DEFAULT_MAP_CENTER = { lat: 18.5204, lng: 73.8567 };
 
 const GeoLocation = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showMap, setShowMap] = useState(false);
+  const [mapMarker, setMapMarker] = useState(DEFAULT_MAP_CENTER);
+  const [mapAddress, setMapAddress] = useState("");
+  const [isMapReverseLoading, setIsMapReverseLoading] = useState(false);
+  const [mapSearchQuery, setMapSearchQuery] = useState("");
+  const [mapSearchResults, setMapSearchResults] = useState<SearchGeocodeResult[]>([]);
+  const [isMapSearching, setIsMapSearching] = useState(false);
+  const mapSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapSearchInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const dragControls = useDragControls();
+
+  const { isLoaded: isMapLoaded } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
+    libraries: GOOGLE_MAPS_LIBRARIES,
+  });
 
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const updateUserMutation = useUpdateUser();
   const { data: savedLocations } = useSavedLocations();
-  const { recentLocations } = useAppSelector((state) => state.location);
+  const { recentLocations, guestCoords } = useAppSelector((state) => state.location);
   const user = useAppSelector((state) => state.auth.user as any);
+  const { requireAuth } = useAuthGate();
+
+  // Resolve coordinates: logged-in uses user profile, guest uses persisted Redux state.
+  // Force Number() because TypeORM/pg returns numeric columns as strings from PostgreSQL.
+  const activeCoords: { lat: number; lng: number } | null =
+    user?.latitude && user?.longitude
+      ? { lat: Number(user.latitude), lng: Number(user.longitude) }
+      : guestCoords
+      ? { lat: Number(guestCoords.lat), lng: Number(guestCoords.lng) }
+      : null;
 
   const { data: addressData, isLoading: isAddressLoading } = useReverseGeocode(
-    user?.latitude && user?.longitude
-      ? { lat: user.latitude, lng: user.longitude }
-      : null,
+    activeCoords,
   );
 
   const { data: searchResults, isLoading: isSearchLoading } =
@@ -68,13 +101,16 @@ const GeoLocation = () => {
   }, [open]);
 
   const handleSelectLocation = useCallback((loc: SearchGeocodeResult) => {
-    const { lat, lng } = loc;
+    const lat = Number(loc.lat);
+    const lng = Number(loc.lng);
     setSearchQuery("");
     if (user) {
       dispatch(setProfile({ ...user, latitude: lat, longitude: lng }));
+      updateUserMutation.mutate({ latitude: lat, longitude: lng });
+    } else {
+      dispatch(setGuestCoords({ lat, lng }));
     }
     dispatch(addRecentLocation(loc));
-    updateUserMutation.mutate({ latitude: lat, longitude: lng });
     setOpen(false);
   }, [user, dispatch, updateUserMutation]);
 
@@ -82,6 +118,9 @@ const GeoLocation = () => {
     const { latitude, longitude, label, fullAddress, placeId } = loc;
     if (user) {
       dispatch(setProfile({ ...user, latitude, longitude }));
+      updateUserMutation.mutate({ latitude, longitude });
+    } else {
+      dispatch(setGuestCoords({ lat: latitude, lng: longitude }));
     }
     dispatch(
       addRecentLocation({
@@ -93,17 +132,14 @@ const GeoLocation = () => {
         lng: longitude,
       }),
     );
-    updateUserMutation.mutate({ latitude, longitude });
     setOpen(false);
   }, [user, dispatch, updateUserMutation]);
 
   const handleAddAddress = () => {
-    if (!user) {
-      router.push("/auth/login");
-      return;
-    }
-    setOpen(false);
-    router.push("/add-location");
+    requireAuth(() => {
+      setOpen(false);
+      router.push("/add-location");
+    });
   };
 
   const handleUseCurrentLocation = () => {
@@ -114,6 +150,9 @@ const GeoLocation = () => {
         const { latitude, longitude } = position.coords;
         if (user) {
           dispatch(setProfile({ ...user, latitude, longitude }));
+          updateUserMutation.mutate({ latitude, longitude });
+        } else {
+          dispatch(setGuestCoords({ lat: latitude, lng: longitude }));
         }
         if (addressData) {
           dispatch(
@@ -127,7 +166,6 @@ const GeoLocation = () => {
             }),
           );
         }
-        updateUserMutation.mutate({ latitude, longitude });
         setOpen(false);
       },
       () => {},
@@ -139,6 +177,143 @@ const GeoLocation = () => {
       setOpen(false);
     }
   };
+
+  // ── Map Picker Handlers ──
+  const handleOpenMap = useCallback(() => {
+    const center = activeCoords
+      ? { lat: Number(activeCoords.lat), lng: Number(activeCoords.lng) }
+      : DEFAULT_MAP_CENTER;
+    setMapMarker(center);
+    setMapAddress("");
+    setMapSearchQuery("");
+    setMapSearchResults([]);
+    setShowMap(true);
+  }, [activeCoords]);
+
+  const handleMapClick = useCallback(async (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setMapMarker({ lat, lng });
+    setMapSearchQuery("");
+    setMapSearchResults([]);
+    setIsMapReverseLoading(true);
+    try {
+      const geo = await reverseGeocodeApi({ lat, lng });
+      setMapAddress(geo.fullAddress || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    } catch {
+      setMapAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    } finally {
+      setIsMapReverseLoading(false);
+    }
+  }, []);
+
+  const handleMapLocateMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const newPos = { lat, lng };
+        setMapMarker(newPos);
+        setMapSearchQuery("");
+        setMapSearchResults([]);
+        if (mapRef.current) {
+          mapRef.current.panTo(newPos);
+          mapRef.current.setZoom(16);
+        }
+        setIsMapReverseLoading(true);
+        try {
+          const geo = await reverseGeocodeApi({ lat, lng });
+          setMapAddress(geo.fullAddress || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        } catch {
+          setMapAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        } finally {
+          setIsMapReverseLoading(false);
+        }
+      },
+      () => {},
+      { timeout: 10000 },
+    );
+  }, []);
+
+  const handleMapSearch = useCallback((query: string) => {
+    setMapSearchQuery(query);
+    setMapSearchResults([]);
+    if (mapSearchDebounceRef.current) clearTimeout(mapSearchDebounceRef.current);
+    if (!query.trim()) return;
+    mapSearchDebounceRef.current = setTimeout(async () => {
+      setIsMapSearching(true);
+      try {
+        // Import lazily to avoid circular dep
+        const { searchGeocode } = await import("@/services/geocode.service");
+        const results = await searchGeocode(query.trim());
+        setMapSearchResults(results.filter((r) => r.lat && r.lng));
+      } catch {
+        // silent
+      } finally {
+        setIsMapSearching(false);
+      }
+    }, 350);
+  }, []);
+
+  const handleMapSelectResult = useCallback(async (result: SearchGeocodeResult) => {
+    const lat = Number(result.lat);
+    const lng = Number(result.lng);
+    const pos = { lat, lng };
+    setMapMarker(pos);
+    setMapSearchQuery("");
+    setMapSearchResults([]);
+    if (mapRef.current) {
+      mapRef.current.panTo(pos);
+      mapRef.current.setZoom(16);
+    }
+    setIsMapReverseLoading(true);
+    try {
+      const geo = await reverseGeocodeApi({ lat, lng });
+      setMapAddress(geo.fullAddress || result.description);
+    } catch {
+      setMapAddress(result.description);
+    } finally {
+      setIsMapReverseLoading(false);
+    }
+  }, []);
+
+  const handleConfirmMapLocation = useCallback(async () => {
+    const { lat, lng } = mapMarker;
+    if (user) {
+      dispatch(setProfile({ ...user, latitude: lat, longitude: lng }));
+      updateUserMutation.mutate({ latitude: lat, longitude: lng });
+    } else {
+      dispatch(setGuestCoords({ lat, lng }));
+    }
+    // Try to create a recent entry
+    try {
+      const geo = await reverseGeocodeApi({ lat, lng });
+      dispatch(addRecentLocation({
+        placeId: geo.placeId || `${lat},${lng}`,
+        description: geo.fullAddress || "",
+        mainText: geo.label || "Map Pin",
+        secondaryText: geo.area || "",
+        lat,
+        lng,
+      }));
+    } catch {
+      dispatch(addRecentLocation({
+        placeId: `${lat},${lng}`,
+        description: mapAddress || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+        mainText: "Map Pin",
+        secondaryText: "",
+        lat,
+        lng,
+      }));
+    }
+    setShowMap(false);
+    setOpen(false);
+  }, [mapMarker, mapAddress, user, dispatch, updateUserMutation]);
+
+  const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
+    mapRef.current = mapInstance;
+  }, []);
 
   const savedLocationIcon = (title: string) => {
     if (title === "home") return homeOutline;
@@ -173,7 +348,16 @@ const GeoLocation = () => {
             />
           </div>
           <div onClick={(e) => e.stopPropagation()}>
-            <NotificationBell onClick={() => setNotifOpen((v) => !v)} className="!w-9 !h-9 !rounded-2xl !bg-white/[0.07] !border !border-white/[0.08] !p-0 [&_ion-icon]:!text-white/75 [&_ion-icon]:!text-[17px]" />
+            {user ? (
+              <NotificationBell onClick={() => setNotifOpen((v) => !v)} className="!w-9 !h-9 !rounded-2xl !bg-white/[0.07] !border !border-white/[0.08] !p-0 [&_ion-icon]:!text-white/75 [&_ion-icon]:!text-[17px]" />
+            ) : (
+              <button
+                onClick={() => requireAuth()}
+                className="w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:scale-90 transition-transform"
+              >
+                <IonIcon icon={logInOutline} className="text-[17px] text-white/75" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -270,8 +454,24 @@ const GeoLocation = () => {
                       <IonIcon icon={chevronDown} className="text-sm text-amber-400 -rotate-90" />
                     </motion.button>
 
-                    {/* Saved Locations */}
-                    {savedLocations && savedLocations.length > 0 && (
+                    {/* Pick on Map CTA */}
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleOpenMap}
+                      className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                        <IonIcon icon={mapOutline} className="text-xl text-blue-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-slate-800 dark:text-white">Pick on Map</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Tap the map to choose a location</p>
+                      </div>
+                      <IonIcon icon={chevronDown} className="text-sm text-slate-400 -rotate-90" />
+                    </motion.button>
+
+                    {/* Saved Locations — only for logged-in users */}
+                    {user && savedLocations && savedLocations.length > 0 && (
                       <div className="mt-2">
                         <div className="flex items-center gap-2 px-4 mb-2">
                           <IonIcon icon={bookmarkOutline} className="text-sm text-slate-400" />
@@ -309,8 +509,8 @@ const GeoLocation = () => {
                       </div>
                     )}
 
-                    {/* No saved — show Add Address prominently */}
-                    {(!savedLocations || savedLocations.length === 0) && (
+                    {/* No saved — show Add Address prominently (only for logged-in users) */}
+                    {user && (!savedLocations || savedLocations.length === 0) && (
                       <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={handleAddAddress}
@@ -415,6 +615,132 @@ const GeoLocation = () => {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Map Picker Overlay ── */}
+      <AnimatePresence>
+        {showMap && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-white dark:bg-slate-900 flex flex-col"
+          >
+            {/* Map Header — back button + search bar */}
+            <div
+              className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 shrink-0"
+              style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+            >
+              <div className="flex items-center gap-2 px-3 py-2">
+                <button
+                  onClick={() => setShowMap(false)}
+                  className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                >
+                  <IonIcon icon={arrowBack} className="text-lg text-slate-700 dark:text-white" />
+                </button>
+
+                {/* Search input */}
+                <div className="flex-1 relative">
+                  <div className={`flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-2xl px-3 py-2 transition-all ${
+                    mapSearchQuery ? "ring-2 ring-amber-400/40" : ""
+                  }`}>
+                    {isMapSearching
+                      ? <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                      : <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />}
+                    <input
+                      ref={mapSearchInputRef}
+                      type="text"
+                      value={mapSearchQuery}
+                      onChange={(e) => handleMapSearch(e.target.value)}
+                      placeholder="Search landmark, area, address…"
+                      className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none"
+                    />
+                    {mapSearchQuery && (
+                      <button onClick={() => { setMapSearchQuery(""); setMapSearchResults([]); }}
+                        className="text-slate-400 active:text-slate-600 text-lg leading-none shrink-0">
+                        &times;
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Suggestions dropdown */}
+                  {mapSearchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-2xl z-20 max-h-64 overflow-y-auto">
+                      {mapSearchResults.map((r) => (
+                        <button
+                          key={r.placeId}
+                          onClick={() => handleMapSelectResult(r)}
+                          className="w-full flex items-start gap-3 px-3.5 py-3 text-left border-b border-slate-50 dark:border-slate-700/50 last:border-0 active:bg-amber-50 dark:active:bg-slate-700 transition-colors"
+                        >
+                          <div className="mt-0.5 shrink-0 w-7 h-7 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                            <IonIcon icon={locationOutline} className="text-xs text-amber-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-semibold text-slate-800 dark:text-white leading-tight truncate">{r.mainText}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5 leading-tight truncate">{r.secondaryText || r.description}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Map */}
+            <div className="flex-1 relative">
+              {isMapLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={MAP_CONTAINER_STYLE}
+                  center={mapMarker}
+                  zoom={15}
+                  onClick={handleMapClick}
+                  onLoad={onMapLoad}
+                  options={{
+                    disableDefaultUI: true,
+                    zoomControl: true,
+                    gestureHandling: "greedy",
+                  }}
+                >
+                  <MarkerF position={{ lat: Number(mapMarker.lat), lng: Number(mapMarker.lng) }} />
+                </GoogleMap>
+              ) : (
+                <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                  <p className="text-sm text-slate-400">Loading map...</p>
+                </div>
+              )}
+
+              {/* Locate Me FAB */}
+              <button
+                onClick={handleMapLocateMe}
+                className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center active:scale-90 transition-transform"
+              >
+                <IonIcon icon={navigateCircleOutline} className="text-xl text-amber-600" />
+              </button>
+            </div>
+
+            {/* Bottom Confirm Bar */}
+            <div
+              className="shrink-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-4 py-3"
+              style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
+            >
+              {mapAddress ? (
+                <p className="text-[13px] text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">
+                  {isMapReverseLoading ? "Finding address..." : mapAddress}
+                </p>
+              ) : (
+                <p className="text-[13px] text-slate-400 mb-2">Tap the map or search to pin a location</p>
+              )}
+              <button
+                onClick={handleConfirmMapLocation}
+                disabled={!mapAddress || isMapReverseLoading}
+                className="w-full py-3.5 rounded-2xl bg-amber-500 text-white font-bold text-sm active:bg-amber-600 disabled:opacity-40 transition-opacity"
+              >
+                Confirm Location
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

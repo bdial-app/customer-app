@@ -52,6 +52,7 @@ import { reverseGeocode } from "@/services/geocode.service";
 import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -298,7 +299,7 @@ const MapLocationPicker = ({
   const [mapCenter, setMapCenter] = useState(coords || DEFAULT_CENTER);
   const [markerPos, setMarkerPos] = useState(coords || null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Array<{ placeId: string; description: string; lat: number; lng: number }>>([]);
+  const [searchResults, setSearchResults] = useState<Array<{ placeId: string; description: string; mainText: string; secondaryText: string; lat: number; lng: number }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -316,15 +317,20 @@ const MapLocationPicker = ({
       try {
         const results = await searchGeocode(query.trim());
         setSearchResults(results.filter(r => r.lat && r.lng).map(r => ({
-          placeId: r.placeId, description: r.description, lat: r.lat, lng: r.lng
+          placeId: r.placeId,
+          description: r.description,
+          mainText: r.mainText || r.description,
+          secondaryText: r.secondaryText || "",
+          lat: Number(r.lat),
+          lng: Number(r.lng),
         })));
       } catch { setSearchResults([]); }
       finally { setIsSearching(false); }
     }, 400);
   }, []);
 
-  const selectResult = (result: { lat: number; lng: number; description: string }) => {
-    const pos = { lat: result.lat, lng: result.lng };
+  const selectResult = (result: { lat: number; lng: number; description: string; mainText?: string; secondaryText?: string }) => {
+    const pos = { lat: Number(result.lat), lng: Number(result.lng) };
     setMarkerPos(pos);
     setMapCenter(pos);
     setSearchQuery(result.description);
@@ -372,11 +378,17 @@ const MapLocationPicker = ({
           className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
         {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /></div>}
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-56 overflow-y-auto">
             {searchResults.map((r) => (
               <button key={r.placeId} type="button" onClick={() => selectResult(r)}
-                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0">
-                <p className="text-xs text-slate-700 leading-snug">{r.description}</p>
+                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0 flex items-start gap-2.5">
+                <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-xs text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-700 leading-snug truncate">{r.mainText}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-snug truncate">{r.secondaryText}</p>
+                </div>
               </button>
             ))}
           </div>
@@ -1203,6 +1215,14 @@ const ProviderOnboardingPage = () => {
   const { notify } = useNotification();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const { isAuthenticated, requireAuth } = useAuthGate();
+
+  // Prompt login immediately if unauthenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      requireAuth(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(
@@ -1288,6 +1308,7 @@ const ProviderOnboardingPage = () => {
         if (geo.city) setFieldValue("city", geo.city);
         if (geo.area) setFieldValue("area", geo.area);
         if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+        if (geo.pincode) setFieldValue("pincode", geo.pincode);
         setDetectedLocationLabel(
           geo.label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
         );
@@ -1355,6 +1376,7 @@ const ProviderOnboardingPage = () => {
       if (geo.city) setFieldValue("city", geo.city);
       if (geo.area) setFieldValue("area", geo.area);
       if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+      if (geo.pincode) setFieldValue("pincode", geo.pincode);
       setDetectedLocationLabel(geo.label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     } catch {
       setDetectedLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
@@ -1695,35 +1717,36 @@ const ProviderOnboardingPage = () => {
                     <SectionHeader
                       icon={locationOutline}
                       title="Address Details"
-                      subtitle="Auto-filled from pin — adjust if needed"
+                      subtitle="Auto-filled from map pin — cannot be edited manually"
                     />
                     <List strongIos insetIos>
                       <FormikInput
                         name="address"
                         label="Full Address"
                         type="text"
-                        placeholder="Shop address or locality"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="city"
                         label="City"
                         type="text"
-                        placeholder="e.g. Pune"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="area"
                         label="Area / Locality"
                         type="text"
-                        placeholder="e.g. Yerawada"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="pincode"
                         label="Pincode"
                         type="text"
-                        placeholder="e.g. 411001"
-                        formatValue={(val) =>
-                          val.replace(/\D/g, "").slice(0, 6)
-                        }
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                     </List>
                   </>

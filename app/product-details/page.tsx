@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useProduct } from "@/hooks/useProduct";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "@/app/context/AppContext";
@@ -49,6 +50,7 @@ export default function ProductDetailsPage() {
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
+  const { requireAuth } = useAuthGate();
   const { setUserMode } = useAppContext();
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
@@ -56,8 +58,9 @@ export default function ProductDetailsPage() {
   const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
 
   const handleToggleSaved = () => {
-    if (!user) return;
-    toggleSaved.mutate({ itemId: id, itemType: "product" });
+    requireAuth(() => {
+      toggleSaved.mutate({ itemId: id, itemType: "product" });
+    });
   };
 
   const product = data?.product;
@@ -160,9 +163,9 @@ export default function ProductDetailsPage() {
               >
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
-              {!isOwnProduct && user && (
+              {!isOwnProduct && (
                 <button
-                  onClick={() => setReportSheetOpen(true)}
+                  onClick={() => requireAuth(() => setReportSheetOpen(true))}
                   className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
                 >
                   <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
@@ -434,30 +437,30 @@ export default function ProductDetailsPage() {
         ) : (
           <button
             onClick={() => {
-              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-              if (!token) { router.push('/auth/login'); return; }
-              if (!provider?.id) return;
-              createConversation({
-                providerId: provider.id,
-                contextType: 'product',
-                contextId: product?.id,
-                initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
-                initialMessageMetadata: {
-                  productId: product?.id,
-                  productName: product?.name,
-                  productImage: product?.photoUrl,
-                  productPrice: product?.price,
-                  currency: product?.currency,
-                },
-              }, {
-                onSuccess: (conv) => {
-                  dispatch(openChat(conv.id));
-                  router.push('/');
-                },
-                onError: (err: any) => {
-                  const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
-                },
+              requireAuth(() => {
+                if (!provider?.id) return;
+                createConversation({
+                  providerId: provider.id,
+                  contextType: 'product',
+                  contextId: product?.id,
+                  initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
+                  initialMessageMetadata: {
+                    productId: product?.id,
+                    productName: product?.name,
+                    productImage: product?.photoUrl,
+                    productPrice: product?.price,
+                    currency: product?.currency,
+                  },
+                }, {
+                  onSuccess: (conv) => {
+                    dispatch(openChat(conv.id));
+                    router.push('/');
+                  },
+                  onError: (err: any) => {
+                    const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                    alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                  },
+              });
               });
             }}
             disabled={isCreatingChat}

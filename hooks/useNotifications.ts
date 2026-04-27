@@ -9,7 +9,7 @@ import {
   updatePreferences,
 } from "@/services/notification.service";
 import type { NotificationPreferences } from "@/services/notification.service";
-import { useAppDispatch } from "@/hooks/useAppStore";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { setUnreadCount, decrementUnread, clearUnread } from "@/store/slices/notificationSlice";
 
 const notificationKeys = {
@@ -29,6 +29,7 @@ export function useNotifications(page = 1, type?: string, status?: "all" | "read
 
 export function useUnreadCount() {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
 
   return useQuery({
     queryKey: notificationKeys.unreadCount,
@@ -39,6 +40,7 @@ export function useUnreadCount() {
     },
     refetchInterval: 60_000, // Poll every 60s
     refetchOnWindowFocus: true,
+    enabled: !!user,
   });
 }
 

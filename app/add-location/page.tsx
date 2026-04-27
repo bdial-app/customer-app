@@ -29,6 +29,7 @@ import {
 } from "@/services/geocode.service";
 import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 // Defined at module level — @react-google-maps/api uses reference equality
 // to detect changes. Defining inside the component (even with useMemo) can
@@ -53,6 +54,15 @@ const locationTypes = [
 
 const AddLocationPage = () => {
   const router = useRouter();
+  const { isAuthenticated, requireAuth } = useAuthGate();
+
+  // Prompt login immediately if unauthenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      requireAuth(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedType, setSelectedType] = useState("Home");

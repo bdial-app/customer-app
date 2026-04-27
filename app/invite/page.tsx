@@ -11,13 +11,22 @@ import {
   logoWhatsapp,
   checkmarkCircle,
 } from "ionicons/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { shareInvite, buildInviteLink } from "@/utils/sharing";
 import { trackInvite } from "@/services/invite.service";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 export default function InviteFriendsPage() {
   const router = useRouter();
+  const { isAuthenticated, requireAuth } = useAuthGate();
   const [copied, setCopied] = useState(false);
+
+  // Prompt login immediately if unauthenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      requireAuth(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShare = async (method: string) => {
     const result = await shareInvite();

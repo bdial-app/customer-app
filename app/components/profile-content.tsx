@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   List,
   ListItem,
@@ -72,6 +72,7 @@ import { AppDialog } from "./app-dialog";
 import { deleteMyAccount, pauseMyAccount, exportMyData } from "@/services/user.service";
 import { submitBugReport, BUG_CATEGORY_LABELS, type BugCategory } from "@/services/bug-report.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 interface UserProfile {
   mobileNumber: string;
@@ -314,7 +315,7 @@ const ProfileContent = () => {
     dispatch(clearUser());
     resetProviderState();
     setLogoutActionSheetOpen(false);
-    router.push("/auth/login");
+    router.push("/");
   };
 
   const handleDeleteAccount = async () => {
@@ -326,7 +327,7 @@ const ProfileContent = () => {
       dispatch(clearUser());
       resetProviderState();
       setDeleteSheetOpen(false);
-      router.push("/auth/login");
+      router.push("/");
       notify({
         title: "Account Deleted",
         subtitle: "Your account has been archived. We're sorry to see you go.",
@@ -352,7 +353,7 @@ const ProfileContent = () => {
       dispatch(clearUser());
       resetProviderState();
       setPauseSheetOpen(false);
-      router.push("/auth/login");
+      router.push("/");
       notify({
         title: "Account Paused",
         subtitle: "Your account is paused. Log in anytime to reactivate.",
@@ -480,8 +481,86 @@ const ProfileContent = () => {
         .slice(0, 2)
     : "BC";
 
+  const { requireAuth } = useAuthGate();
+  const guestAction = useCallback(() => requireAuth(), [requireAuth]);
+
+  // ─── Guest Profile View ───────────────────────────────────────
+  // Instead of early return, we render guest content conditionally
+  // so that all SlidePage components at the bottom are shared.
+
   return (
     <>
+      {!user ? (
+        <>
+          {/* Guest Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mx-4 mt-4 mb-3 bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center mx-auto mb-3">
+              <IonIcon icon={personOutline} className="text-2xl text-slate-400 dark:text-slate-500" />
+            </div>
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">Guest User</h2>
+            <p className="text-xs text-slate-400 mt-1">Sign in to access your profile</p>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={guestAction}
+              className="mt-3 px-6 py-2.5 bg-amber-500 text-white font-bold text-sm rounded-xl active:bg-amber-600"
+            >
+              Sign In / Sign Up
+            </motion.button>
+          </motion.div>
+
+          {/* Account Section — all gated */}
+          <MenuSection title="Account">
+            <MenuRow icon={personOutline} iconColor="text-blue-500" iconBg="bg-blue-50" label="Edit Profile" sublabel="Name, gender, location" onClick={guestAction} />
+            <MenuRow icon={locationOutline} iconColor="text-green-500" iconBg="bg-green-50" label="Saved Addresses" sublabel="Home, office, and more" onClick={guestAction} />
+            <MenuRow icon={heartOutline} iconColor="text-pink-500" iconBg="bg-pink-50" label="Saved Providers" sublabel="Your favourites" onClick={guestAction} />
+          </MenuSection>
+
+          {/* Preferences — theme & language work without login */}
+          <MenuSection title="Preferences">
+            <MenuRow icon={notificationsOutline} iconColor="text-amber-500" iconBg="bg-amber-50" label="Notifications" sublabel="Push & in-app alerts" onClick={guestAction} />
+            <MenuRow
+              icon={isDark ? sunnyOutline : moonOutline}
+              iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
+              iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
+              label="Dark Mode"
+              sublabel={isDark ? "On" : "Off"}
+              trailing={
+                <div onClick={(e) => { e.stopPropagation(); toggleTheme(); }} className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}>
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+                </div>
+              }
+              onClick={toggleTheme}
+            />
+            <LanguageMenuButton onClick={() => setActivePage("language")} />
+          </MenuSection>
+
+          {/* Support */}
+          <MenuSection title="Support">
+            <MenuRow icon={helpCircleOutline} iconColor="text-indigo-500" iconBg="bg-indigo-50" label="Help & FAQ" onClick={() => setActivePage("help")} />
+            <MenuRow icon={mailOutline} iconColor="text-cyan-500" iconBg="bg-cyan-50" label="Contact Us" sublabel="support@tijarah.app" onClick={() => setActivePage("contactUs")} />
+            <MenuRow icon={bugOutline} iconColor="text-orange-500" iconBg="bg-orange-50" label="Report a Bug" onClick={() => setActivePage("reportBug")} />
+          </MenuSection>
+
+          {/* Legal */}
+          <MenuSection title="Legal">
+            <MenuRow icon={informationCircleOutline} iconColor="text-blue-500" iconBg="bg-blue-50" label="About Us" onClick={() => setActivePage("about")} />
+            <MenuRow icon={documentTextOutline} iconColor="text-slate-500" iconBg="bg-slate-100" label="Terms & Conditions" onClick={() => setActivePage("terms")} />
+            <MenuRow icon={shieldCheckmarkOutline} iconColor="text-green-500" iconBg="bg-green-50" label="Privacy Policy" onClick={() => setActivePage("privacy")} />
+          </MenuSection>
+
+          {/* App Version */}
+          <div className="text-center py-6">
+            <p className="text-[11px] text-slate-300 font-medium">Bohri Connect v{APP_VERSION}</p>
+            <p className="text-[10px] text-slate-300 mt-0.5">Made with ♥ in India</p>
+          </div>
+        </>
+      ) : (
+        <>
       {/* Profile Header Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -968,8 +1047,10 @@ const ProfileContent = () => {
           Made with ♥ in India
         </p>
       </div>
+        </>
+      )}
 
-      {/* ── Slide Pages ──────────────────────────────────────── */}
+      {/* ── Slide Pages (shared between guest and logged-in) ── */}
 
       {/* Language Page */}
       <SlidePage

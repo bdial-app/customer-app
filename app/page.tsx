@@ -20,6 +20,7 @@ import SavedContent from "./components/saved-content";
 import { useAppContext } from "./context/AppContext";
 import GeoLocation from "./components/geo-location";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import { useChatSubscription } from "@/hooks/useChatSubscription";
 import { useHeartbeat } from "@/hooks/useChat";
 import { clearPendingChat } from "@/store/slices/chatSlice";
@@ -33,7 +34,8 @@ export default function Home() {
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const { userMode, setUserMode, providerStatus } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
-  const { user, hasSkippedAuth } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state) => state.auth);
+  const { requireAuth } = useAuthGate();
   const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
   const prevUserMode = useRef(userMode);
 
@@ -44,6 +46,17 @@ export default function Home() {
   // Poll notification unread count
   useUnreadCount();
 
+  // Force customer mode for guests — provider mode requires authentication
+  // Also reset to home tab when user logs out while on a protected tab
+  useEffect(() => {
+    if (!user) {
+      if (userMode === "provider") setUserMode("customer");
+      if (activeTab === "chats" || activeTab === "saved" || activeTab === "listings" || activeTab === "analytics") {
+        setActiveTab("home");
+      }
+    }
+  }, [user, userMode, setUserMode, activeTab]);
+
   // Open a specific chat when dispatched from another page (e.g. provider-details, product-details)
   useEffect(() => {
     if (pendingChatOpen) {
@@ -52,12 +65,6 @@ export default function Home() {
       dispatch(clearPendingChat());
     }
   }, [pendingChatOpen, dispatch]);
-
-  useEffect(() => {
-    if (!user && !hasSkippedAuth) {
-      router.push("/auth/login");
-    }
-  }, [user, hasSkippedAuth, router]);
 
   // When provider/customer mode CHANGES (not on initial mount), go to home tab
   useEffect(() => {
@@ -68,8 +75,8 @@ export default function Home() {
   }, [userMode]);
 
   const handleTabChange = (tab: string) => {
-    if (!user && (tab === "chats" || tab === "profile" || tab === "saved")) {
-      router.push("/auth/login");
+    if (!user && (tab === "chats" || tab === "saved")) {
+      requireAuth(() => setActiveTab(tab));
       return;
     }
     setActiveTab(tab);
@@ -165,9 +172,9 @@ export default function Home() {
       {/* Spacer for floating bottom bar */}
       <div className="h-24"></div>
 
-      {/* Provider notification nudge — only shown in customer mode */}
+      {/* Provider notification nudge — only shown in customer mode for logged-in users */}
       <AnimatePresence>
-        {userMode === "customer" && providerUnreadCount > 0 && (
+        {user && userMode === "customer" && providerUnreadCount > 0 && (
           <motion.button
             key="provider-nudge"
             initial={{ opacity: 0, y: 16, scale: 0.92 }}

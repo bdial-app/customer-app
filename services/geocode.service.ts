@@ -10,6 +10,7 @@ export interface ReverseGeocodeResponse {
   label: string;
   city: string;
   area: string;
+  pincode: string | null;
   fullAddress: string;
   placeId: string;
 }

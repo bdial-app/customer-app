@@ -29,6 +29,8 @@ import {
   pricetag,
   peopleOutline,
   flagOutline,
+  lockClosedOutline,
+  logInOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
@@ -36,6 +38,7 @@ import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "../context/AppContext";
 import { openDirections } from "@/utils/sharing";
@@ -149,6 +152,7 @@ export default function ProviderDetailsPage() {
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
+  const { requireAuth } = useAuthGate();
   const { setUserMode } = useAppContext();
   const { data: savedData } = useIsSaved(id, "provider");
   const toggleSaved = useToggleSaved();
@@ -157,9 +161,10 @@ export default function ProviderDetailsPage() {
   const { mutate: submitReviewMutation, isPending: isSubmittingReview } = useSubmitReview();
 
   const handleToggleSaved = () => {
-    if (!user) return;
-    if (!liked) trackSave();
-    toggleSaved.mutate({ itemId: id, itemType: "provider" });
+    requireAuth(() => {
+      if (!liked) trackSave();
+      toggleSaved.mutate({ itemId: id, itemType: "provider" });
+    });
   };
 
   const provider = data?.provider ?? null;
@@ -325,8 +330,8 @@ export default function ProviderDetailsPage() {
               <button onClick={handleShare} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
-              {!isOwnProvider && user && (
-                <button onClick={() => setReportSheetOpen(true)} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
+              {!isOwnProvider && (
+                <button onClick={() => requireAuth(() => setReportSheetOpen(true))} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
                   <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
                 </button>
               )}
@@ -477,19 +482,46 @@ export default function ProviderDetailsPage() {
           {provider.address && (
             <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <h3 className="text-[15px] font-bold text-gray-900 mb-2">Location</h3>
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <IonIcon icon={locationOutline} className="w-[18px] h-[18px] text-gray-500" />
-                </div>
-                <p className="text-[13px] text-gray-600 leading-relaxed flex-1">{provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}</p>
-              </div>
-              {provider.latitude && provider.longitude && (
-                <button
-                  onClick={() => { trackDirection(); openDirections(Number(provider.latitude), Number(provider.longitude), provider.brandName); }}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
-                >
-                  <IonIcon icon={navigateOutline} className="w-4 h-4" />
-                  Get Directions
+
+              {user ? (
+                /* Logged-in: show full address + directions */
+                <>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <IonIcon icon={locationOutline} className="w-[18px] h-[18px] text-gray-500" />
+                    </div>
+                    <p className="text-[13px] text-gray-600 leading-relaxed flex-1">{provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}</p>
+                  </div>
+                  {provider.latitude && provider.longitude && (
+                    <button
+                      onClick={() => { trackDirection(); openDirections(Number(provider.latitude), Number(provider.longitude), provider.brandName); }}
+                      className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+                    >
+                      <IonIcon icon={navigateOutline} className="w-4 h-4" />
+                      Get Directions
+                    </button>
+                  )}
+                </>
+              ) : (
+                /* Guest: blurred lock overlay */
+                <button onClick={() => requireAuth()} className="w-full relative rounded-xl overflow-hidden">
+                  {/* Blurred address text behind */}
+                  <div className="flex items-start gap-3 select-none pointer-events-none" aria-hidden>
+                    <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <IonIcon icon={locationOutline} className="w-[18px] h-[18px] text-gray-400" />
+                    </div>
+                    <p className="text-[13px] text-gray-400 leading-relaxed flex-1 blur-[5px]">
+                      {provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}
+                    </p>
+                  </div>
+                  {/* Frosted overlay */}
+                  <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
+                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
+                      <IonIcon icon={lockClosedOutline} className="text-sm" />
+                      <span className="text-[12px] font-bold">Sign in to see location</span>
+                      <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
+                    </div>
+                  </div>
                 </button>
               )}
             </div>
@@ -520,7 +552,20 @@ export default function ProviderDetailsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-gray-900 truncate">{owner.name}</h4>
-                  <p className="text-xs text-gray-500">{owner.mobileNumber}</p>
+                  {user ? (
+                    <p className="text-xs text-gray-500">{owner.mobileNumber}</p>
+                  ) : (
+                    <button
+                      onClick={() => requireAuth(() => {})}
+                      className="flex items-center gap-1 mt-0.5"
+                    >
+                      <p className="text-xs text-gray-400 blur-[4px] select-none pointer-events-none">+91 98765 43210</p>
+                      <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5 ml-1">
+                        <IonIcon icon={logInOutline} className="text-xs" />
+                        Sign in
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -590,8 +635,8 @@ export default function ProviderDetailsPage() {
           )}
 
           {/* Write Review — hidden for own provider, and if already reviewed */}
-          {!isOwnProvider && !hasAlreadyReviewed && user && (
-            <button onClick={() => { setReviewError(""); setReviewSuccess(false); setSheetOpened(true); }} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
+          {!isOwnProvider && !hasAlreadyReviewed && (
+            <button onClick={() => requireAuth(() => { setReviewError(""); setReviewSuccess(false); setSheetOpened(true); })} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
               <IonIcon icon={star} className="w-4 h-4" />
               Write a Review
             </button>
@@ -600,11 +645,6 @@ export default function ProviderDetailsPage() {
             <div className="bg-green-50 rounded-2xl p-4 border border-green-100 text-center">
               <p className="text-sm text-green-700 font-medium">You&apos;ve already reviewed this provider</p>
             </div>
-          )}
-          {!isOwnProvider && !user && (
-            <button onClick={() => router.push("/auth/login")} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-gray-200 text-gray-500 rounded-2xl text-sm font-semibold active:bg-gray-50 transition-colors">
-              Sign in to write a review
-            </button>
           )}
         </div>
       )}
@@ -696,28 +736,48 @@ export default function ProviderDetailsPage() {
           /* Customer mode — message & call */
           <div className="flex gap-3">
             <button disabled={isCreatingChat} onClick={() => {
-              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-              if (!token) { router.push('/auth/login'); return; }
-              if (!provider?.id) return;
-              trackChat();
-              createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
-                onSuccess: (conv) => {
-                  dispatch(openChat(conv.id));
-                  router.push('/');
-                },
-                onError: (err: any) => {
-                  const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
-                },
+              requireAuth(() => {
+                if (!provider?.id) return;
+                trackChat();
+                createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
+                  onSuccess: (conv) => {
+                    dispatch(openChat(conv.id));
+                    router.push('/');
+                  },
+                  onError: (err: any) => {
+                    const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                    alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                  },
+                });
               });
             }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50">
               <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
               {isCreatingChat ? 'Opening...' : 'Message'}
             </button>
-            <button onClick={() => setCallSheetOpened(true)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
-              <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
-              Call Now
-            </button>
+
+            {/* Call button — blurred + gated for guests */}
+            {user ? (
+              <button onClick={() => setCallSheetOpened(true)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
+                <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
+                Call Now
+              </button>
+            ) : (
+              <button
+                onClick={() => requireAuth()}
+                className="flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold overflow-hidden"
+              >
+                {/* Blurred background */}
+                <div className="absolute inset-0 bg-amber-500 blur-[2px] opacity-40 rounded-2xl" />
+                {/* Frosted glass overlay */}
+                <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5">
+                  <IonIcon icon={lockClosedOutline} className="text-white text-base" />
+                  <span className="text-white text-[10px] font-bold">Sign in to call</span>
+                </div>
+                {/* Hidden content behind (creates correct height) */}
+                <IonIcon icon={callOutline} className="w-[18px] h-[18px] opacity-0" />
+                <span className="opacity-0">Call Now</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -734,17 +794,41 @@ export default function ProviderDetailsPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Call</p>
               <h3 className="text-xl font-bold text-gray-900">{provider?.brandName}</h3>
             </div>
-            <a
-              href={`tel:${provider?.contactNumber}`}
-              onClick={() => trackCall()}
-              className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
-            >
-              <IonIcon icon={callOutline} className="text-base text-gray-500" />
-              <span className="text-base font-semibold text-gray-800 tracking-wide">
-                {provider?.contactNumber || "Not available"}
-              </span>
-            </a>
+
+            {user ? (
+              /* Logged-in: show the real number as a tappable link */
+              <a
+                href={`tel:${provider?.contactNumber}`}
+                onClick={() => trackCall()}
+                className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
+              >
+                <IonIcon icon={callOutline} className="text-base text-gray-500" />
+                <span className="text-base font-semibold text-gray-800 tracking-wide">
+                  {provider?.contactNumber || "Not available"}
+                </span>
+              </a>
+            ) : (
+              /* Guest: blurred number + sign-in prompt */
+              <div className="w-full relative">
+                {/* Blurred placeholder number */}
+                <div className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl select-none pointer-events-none" aria-hidden>
+                  <IonIcon icon={callOutline} className="text-base text-gray-400" />
+                  <span className="text-base font-semibold text-gray-400 tracking-[0.2em] blur-[6px]">
+                    +91 98765 43210
+                  </span>
+                </div>
+                {/* Overlay */}
+                <div className="absolute inset-0 rounded-2xl bg-white/70 backdrop-blur-[2px] flex items-center justify-center">
+                  <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
+                    <IonIcon icon={lockClosedOutline} className="text-sm" />
+                    <span className="text-[12px] font-bold">Sign in to see number</span>
+                    <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="flex gap-3 mt-6">
             <button
               onClick={() => setCallSheetOpened(false)}
@@ -752,12 +836,22 @@ export default function ProviderDetailsPage() {
             >
               Cancel
             </button>
-            <a
-              href={`tel:${provider?.contactNumber}`}
-              className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold text-center shadow-sm shadow-amber-200 active:scale-[0.98] transition-all"
-            >
-              Call Now
-            </a>
+            {user ? (
+              <a
+                href={`tel:${provider?.contactNumber}`}
+                className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold text-center shadow-sm shadow-amber-200 active:scale-[0.98] transition-all"
+              >
+                Call Now
+              </a>
+            ) : (
+              <button
+                onClick={() => { setCallSheetOpened(false); requireAuth(); }}
+                className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm shadow-amber-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                <IonIcon icon={logInOutline} className="text-base" />
+                Sign in to Call
+              </button>
+            )}
           </div>
         </div>
       </Sheet>

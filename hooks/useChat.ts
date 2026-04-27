@@ -214,14 +214,16 @@ export function useTypingIndicator(conversationId: string | null) {
 // ─── Heartbeat (call periodically while app is open) ─
 
 export function useHeartbeat() {
+  const user = useAppSelector((state) => state.auth.user);
   useEffect(() => {
+    if (!user) return;
     // Send immediately, then every 60s
     chatApi.sendHeartbeat().catch(() => {});
     const interval = setInterval(() => {
       chatApi.sendHeartbeat().catch(() => {});
     }, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 }
 
 // ─── Presence (online status of another user) ─
