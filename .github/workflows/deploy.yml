@@ -43,11 +43,6 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           NEXT_PUBLIC_FIREBASE_VAPID_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}
 
-      - name: Debug FTP host
-        run: |
-          echo "FTP_HOST length: $(echo -n '${{ secrets.FTP_HOST }}' | wc -c)"
-          nslookup '${{ secrets.FTP_HOST }}' || echo "DNS lookup failed"
-
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
