@@ -11,22 +11,15 @@ import {
   logoWhatsapp,
   checkmarkCircle,
 } from "ionicons/icons";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { shareInvite, buildInviteLink } from "@/utils/sharing";
 import { trackInvite } from "@/services/invite.service";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import PrivateRoute from "@/app/components/private-route";
 
-export default function InviteFriendsPage() {
+function InviteFriendsContent() {
   const router = useRouter();
-  const { isAuthenticated, requireAuth } = useAuthGate();
   const [copied, setCopied] = useState(false);
-
-  // Prompt login immediately if unauthenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      requireAuth(() => {});
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShare = async (method: string) => {
     const result = await shareInvite();
@@ -213,5 +206,16 @@ export default function InviteFriendsPage() {
         </div>
       </div>
     </Page>
+  );
+}
+
+export default function InviteFriendsPage() {
+  return (
+    <PrivateRoute
+      title="Invite Friends"
+      description="Sign in to share Tijarah Connect with friends and help your community discover local businesses."
+    >
+      <InviteFriendsContent />
+    </PrivateRoute>
   );
 }

@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { submitVerification, getMyProviderStatus } from "@/services/provider.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import PrivateRoute from "@/app/components/private-route";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
@@ -37,16 +38,8 @@ const DOC_TYPES = [
 
 type DocTypeId = (typeof DOC_TYPES)[number]["id"];
 
-export default function VerifyPage() {
+function VerifyContent() {
   const router = useRouter();
-  const { isAuthenticated, requireAuth } = useAuthGate();
-
-  // Prompt login immediately if unauthenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      requireAuth(() => {});
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -465,5 +458,16 @@ export default function VerifyPage() {
         </div>
       </div>
     </Page>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <PrivateRoute
+      title="Provider Verification"
+      description="Sign in to verify your identity and complete your provider application."
+    >
+      <VerifyContent />
+    </PrivateRoute>
   );
 }

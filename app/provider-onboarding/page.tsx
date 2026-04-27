@@ -52,7 +52,7 @@ import { reverseGeocode } from "@/services/geocode.service";
 import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
-import { useAuthGate } from "@/hooks/useAuthGate";
+import PrivateRoute from "@/app/components/private-route";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1215,14 +1215,6 @@ const ProviderOnboardingPage = () => {
   const { notify } = useNotification();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
-  const { isAuthenticated, requireAuth } = useAuthGate();
-
-  // Prompt login immediately if unauthenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      requireAuth(() => {});
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(
@@ -2013,4 +2005,13 @@ const ProviderOnboardingPage = () => {
   );
 };
 
-export default ProviderOnboardingPage;
+export default function ProviderOnboardingExport() {
+  return (
+    <PrivateRoute
+      title="Become a Provider"
+      description="Sign in to register your business and start reaching customers on Tijarah Connect."
+    >
+      <ProviderOnboardingPage />
+    </PrivateRoute>
+  );
+}

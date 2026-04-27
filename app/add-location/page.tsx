@@ -24,7 +24,7 @@ import {
 } from "@/services/geocode.service";
 import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuthGate } from "@/hooks/useAuthGate";
+import PrivateRoute from "@/app/components/private-route";
 
 // Defined at module level — @react-google-maps/api uses reference equality
 // to detect changes. Defining inside the component (even with useMemo) can
@@ -47,16 +47,8 @@ const locationTypes = [
   { key: "Other", icon: locationOutline, label: "Other", value: "other" },
 ];
 
-const AddLocationPage = () => {
+const AddLocationContent = () => {
   const router = useRouter();
-  const { isAuthenticated, requireAuth } = useAuthGate();
-
-  // Prompt login immediately if unauthenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      requireAuth(() => {});
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -522,4 +514,13 @@ const AddLocationPage = () => {
   );
 };
 
-export default AddLocationPage;
+export default function AddLocationPage() {
+  return (
+    <PrivateRoute
+      title="Add Location"
+      description="Sign in to save and manage your favourite locations."
+    >
+      <AddLocationContent />
+    </PrivateRoute>
+  );
+}
