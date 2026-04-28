@@ -24,6 +24,7 @@ import {
   peopleOutline,
   arrowForwardOutline,
   rocketOutline,
+  optionsOutline,
 } from "ionicons/icons";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -39,6 +40,8 @@ import type {
 } from "@/services/explore.service";
 import ProviderBadgeList from "./explore/provider-badge";
 import InfiniteScroll from "./infinite-scroll";
+import FilterSheet, { type AllServicesFilters } from "./filter-sheet";
+import FilterChips from "./filter-chips";
 
 type SortKey = "nearest" | "top_rated" | "newest";
 
@@ -48,12 +51,20 @@ const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
   { key: "newest", label: "Newest", icon: timeOutline },
 ];
 
-const QUICK_ACTIONS = [
-  { label: "Women-Led", icon: femaleOutline, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100", query: "?womenLed=true" },
-  { label: "Verified", icon: shieldCheckmarkOutline, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", query: "?verified=true" },
-  { label: "Top Rated", icon: star, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", query: "?sortBy=rating" },
-  { label: "Featured", icon: diamondOutline, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", query: "?featured=true" },
+const QUICK_ACTIONS: { label: string; icon: string; color: string; bg: string; border: string; activeColor: string; activeBg: string; filterKey: "womenLedOnly" | "verifiedOnly" | "topRated" | "featured" }[] = [
+  { label: "Women-Led", icon: femaleOutline, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100", activeColor: "text-white", activeBg: "bg-purple-600 border-purple-600", filterKey: "womenLedOnly" },
+  { label: "Verified", icon: shieldCheckmarkOutline, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", activeColor: "text-white", activeBg: "bg-emerald-600 border-emerald-600", filterKey: "verifiedOnly" },
+  { label: "Top Rated", icon: star, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", activeColor: "text-white", activeBg: "bg-amber-600 border-amber-600", filterKey: "topRated" },
+  { label: "Featured", icon: diamondOutline, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", activeColor: "text-white", activeBg: "bg-blue-600 border-blue-600", filterKey: "featured" },
 ];
+
+const EMPTY_FILTERS: AllServicesFilters = {
+  categoryIds: new Set(),
+  minRating: null,
+  maxDistance: null,
+  verifiedOnly: false,
+  womenLedOnly: false,
+};
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
@@ -296,6 +307,11 @@ function BannerCarousel({
 const ExploreContent = () => {
   const router = useRouter();
   const [sort, setSort] = useState<SortKey>("nearest");
+  const [filters, setFilters] = useState<AllServicesFilters>({ ...EMPTY_FILTERS, categoryIds: new Set() });
+  const [sheetOpened, setSheetOpened] = useState(false);
+
+  // Active quick-action pills state
+  const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
 
   const user = useAppSelector((state) => state.auth.user as any);
   const feedParams = {
@@ -307,14 +323,76 @@ const ExploreContent = () => {
   const { data: feed, isLoading: feedLoading } = useExploreFeed(feedParams);
   const trackAd = useTrackAd();
 
+  // Map sort key to API sortBy
+  const sortByParam = sort === "top_rated" ? "rating" as const : sort === "newest" ? "newest" as const : undefined;
+
   const { data: nearbyData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: nearbyLoading } =
     useNearbyProviders({
       lat: user?.latitude || 18.5204,
       lng: user?.longitude || 73.8567,
       city: user?.city,
       limit: 12,
-      radius: 25,
+      radius: filters.maxDistance || 25,
+      categoryIds: Array.from(filters.categoryIds),
+      sortBy: sortByParam,
+      minRating: filters.minRating ?? undefined,
+      verifiedOnly: filters.verifiedOnly || undefined,
+      womenLedOnly: filters.womenLedOnly || undefined,
     });
+
+  const activeFilterCount =
+    filters.categoryIds.size +
+    (filters.minRating ? 1 : 0) +
+    (filters.maxDistance ? 1 : 0) +
+    (filters.verifiedOnly ? 1 : 0) +
+    (filters.womenLedOnly ? 1 : 0);
+
+  // Toggle quick action pill (in-place filter)
+  const handleQuickActionToggle = useCallback((filterKey: string) => {
+    setActiveActions((prev) => {
+      const next = new Set(prev);
+      if (next.has(filterKey)) next.delete(filterKey);
+      else next.add(filterKey);
+      return next;
+    });
+    setFilters((prev) => {
+      const next = { ...prev, categoryIds: new Set(prev.categoryIds) };
+      switch (filterKey) {
+        case "womenLedOnly":
+          next.womenLedOnly = !prev.womenLedOnly;
+          break;
+        case "verifiedOnly":
+          next.verifiedOnly = !prev.verifiedOnly;
+          break;
+        case "topRated":
+          next.minRating = prev.minRating && prev.minRating >= 4 ? null : 4;
+          break;
+        case "featured":
+          // featured maps to sort by rating for now
+          break;
+      }
+      return next;
+    });
+  }, []);
+
+  // Filter chip removals
+  const handleRemoveCategory = useCallback((id: string) => {
+    setFilters((prev) => {
+      const next = new Set(prev.categoryIds);
+      next.delete(id);
+      return { ...prev, categoryIds: next };
+    });
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setFilters({ ...EMPTY_FILTERS, categoryIds: new Set() });
+    setActiveActions(new Set());
+  }, []);
+
+  const handleApplyFilters = useCallback((f: AllServicesFilters) => {
+    setFilters({ ...f, categoryIds: new Set(f.categoryIds) });
+    setSheetOpened(false);
+  }, []);
 
   const { data: savedIds = [] } = useSavedItemIds();
   const toggleSaved = useToggleSaved();
@@ -368,6 +446,46 @@ const ExploreContent = () => {
     return mapped;
   }, [nearbyData, sort]);
 
+  // ── Client-side filter for feed sections ──
+  const hasActiveFilter = activeFilterCount > 0;
+
+  const filterProvider = useCallback(
+    (p: { isWomenLed?: boolean; verified?: boolean; rating?: number; distance?: number | null }) => {
+      if (filters.womenLedOnly && !p.isWomenLed) return false;
+      if (filters.verifiedOnly && !p.verified) return false;
+      if (filters.minRating && (p.rating ?? 0) < filters.minRating) return false;
+      if (filters.maxDistance && p.distance != null && p.distance > filters.maxDistance) return false;
+      return true;
+    },
+    [filters],
+  );
+
+  // Filtered feed sections (only apply when filters are active)
+  const filteredSponsored = useMemo(
+    () => hasActiveFilter ? (feed?.sponsoredCarousel ?? []).filter(filterProvider) : (feed?.sponsoredCarousel ?? []),
+    [feed?.sponsoredCarousel, filterProvider, hasActiveFilter],
+  );
+  const filteredOffers = useMemo(
+    () => hasActiveFilter ? (feed?.activeOffers ?? []).filter(filterProvider) : (feed?.activeOffers ?? []),
+    [feed?.activeOffers, filterProvider, hasActiveFilter],
+  );
+  const filteredPopularNearby = useMemo(
+    () => hasActiveFilter ? (feed?.popularNearby ?? []).filter(filterProvider) : (feed?.popularNearby ?? []),
+    [feed?.popularNearby, filterProvider, hasActiveFilter],
+  );
+  const filteredTopRated = useMemo(
+    () => hasActiveFilter ? (feed?.topRated ?? []).filter(filterProvider) : (feed?.topRated ?? []),
+    [feed?.topRated, filterProvider, hasActiveFilter],
+  );
+  const filteredSpotlightProviders = useMemo(
+    () => hasActiveFilter ? (feed?.categorySpotlight?.providers ?? []).filter(filterProvider) : (feed?.categorySpotlight?.providers ?? []),
+    [feed?.categorySpotlight?.providers, filterProvider, hasActiveFilter],
+  );
+  const filteredNewArrivals = useMemo(
+    () => hasActiveFilter ? (feed?.newArrivals ?? []).filter(filterProvider) : (feed?.newArrivals ?? []),
+    [feed?.newArrivals, filterProvider, hasActiveFilter],
+  );
+
   // Collections from quick categories or static fallback
   const collections = useMemo(() => {
     const cats = feed?.quickCategories ?? [];
@@ -418,35 +536,83 @@ const ExploreContent = () => {
   return (
     <div className="flex flex-col pb-4">
 
-      {/* ── 1. Search Bar ── */}
-      <div className="px-4 pt-2 pb-1">
-        <motion.div
-          whileTap={{ scale: 0.98 }}
-          onClick={() => router.push(ROUTE_PATH.SEARCH)}
-          className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer"
-        >
-          <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
-          <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
-          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">Search</span>
-        </motion.div>
-      </div>
+      {/* ── Sticky Filter Bar ── */}
+      <div className="sticky top-0 z-20 bg-[#FAFAFA]/95 dark:bg-slate-950/95 backdrop-blur-md pb-1">
 
-      {/* ── 2. Quick Action Pills ── */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pt-3 pb-1">
-        {QUICK_ACTIONS.map((action, i) => (
-          <motion.button
-            key={action.label}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.04 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push(`${ROUTE_PATH.SEARCH}${action.query}`)}
-            className={`shrink-0 flex items-center gap-1.5 ${action.bg} border ${action.border} px-3 py-2 rounded-xl shadow-sm`}
+        {/* ── 1. Search Bar ── */}
+        <div className="px-4 pt-2 pb-1">
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push(ROUTE_PATH.SEARCH)}
+            className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 shadow-sm cursor-pointer"
           >
-            <IonIcon icon={action.icon} className={`text-sm ${action.color}`} />
-            <span className={`text-[11px] font-bold ${action.color} whitespace-nowrap`}>{action.label}</span>
+            <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
+            <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
+            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">Search</span>
+          </motion.div>
+        </div>
+
+        {/* ── 2. Quick Action Pills (functional filters) ── */}
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 pt-1.5 pb-0.5">
+          {QUICK_ACTIONS.map((action, i) => {
+            const isActive = activeActions.has(action.filterKey);
+            return (
+              <motion.button
+                key={action.label}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleQuickActionToggle(action.filterKey)}
+                className={`shrink-0 flex items-center gap-1 border px-2.5 py-1.5 rounded-xl transition-all ${
+                  isActive
+                    ? `${action.activeBg} ${action.activeColor}`
+                    : `${action.bg} ${action.border}`
+                }`}
+              >
+                <IonIcon icon={action.icon} className={`text-xs ${isActive ? action.activeColor : action.color}`} />
+                <span className={`text-[10px] font-bold whitespace-nowrap ${isActive ? action.activeColor : action.color}`}>{action.label}</span>
+              </motion.button>
+            );
+          })}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSheetOpened(true)}
+            className={`shrink-0 flex items-center gap-1 border px-2.5 py-1.5 rounded-xl transition-all ${
+              activeFilterCount > 0
+                ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-200/50"
+                : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300"
+            }`}
+          >
+            <IonIcon icon={optionsOutline} className="text-xs" />
+            <span className="text-[10px] font-bold whitespace-nowrap">Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="h-[14px] min-w-[14px] px-0.5 bg-white text-amber-600 text-[8px] font-bold rounded-full flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
           </motion.button>
-        ))}
+        </div>
+
+        {/* ── 2b. Filter Chips ── */}
+        <div className="px-4 pt-0.5 pb-0.5">
+          <FilterChips
+            filters={filters}
+            onRemoveCategory={handleRemoveCategory}
+            onRemoveRating={() => setFilters((prev) => ({ ...prev, minRating: null }))}
+            onRemoveDistance={() => setFilters((prev) => ({ ...prev, maxDistance: null }))}
+            onRemoveVerified={() => {
+              setFilters((prev) => ({ ...prev, verifiedOnly: false }));
+              setActiveActions((prev) => { const n = new Set(prev); n.delete("verifiedOnly"); return n; });
+            }}
+            onRemoveWomenLed={() => {
+              setFilters((prev) => ({ ...prev, womenLedOnly: false }));
+              setActiveActions((prev) => { const n = new Set(prev); n.delete("womenLedOnly"); return n; });
+            }}
+            onClearAll={handleClearAllFilters}
+          />
+        </div>
+
       </div>
 
       {/* ── 3. Sponsored Carousel — revenue: CPC ads ── */}
@@ -459,14 +625,14 @@ const ExploreContent = () => {
           <CardCarouselSkeleton cards={3} />
         </div>
       )}
-      {!feedLoading && (feed?.sponsoredCarousel?.length ?? 0) > 0 && (
+      {!feedLoading && filteredSponsored.length > 0 && (
         <div className="mt-4" ref={sponsoredRef}>
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={megaphoneOutline} className="text-sm text-amber-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Sponsored</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.sponsoredCarousel.map((p, i) => (
+            {filteredSponsored.map((p, i) => (
               <motion.div
                 key={p.id}
                 data-track-id={p.sponsoredListingId}
@@ -527,7 +693,7 @@ const ExploreContent = () => {
           <CardCarouselSkeleton cards={3} />
         </div>
       )}
-      {!feedLoading && (feed?.activeOffers?.length ?? 0) > 0 && (
+      {!feedLoading && filteredOffers.length > 0 && (
         <div className="mt-5" ref={offersRef}>
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
@@ -539,7 +705,7 @@ const ExploreContent = () => {
             </span>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.activeOffers.map((p, i) => (
+            {filteredOffers.map((p, i) => (
               <motion.div
                 key={p.offerId}
                 data-track-id={p.offerId}
@@ -640,7 +806,7 @@ const ExploreContent = () => {
       )}
 
       {/* ── 7. Popular Nearby — core discovery ── */}
-      {(feed?.popularNearby?.length ?? 0) > 0 && (
+      {filteredPopularNearby.length > 0 && (
         <div className="mt-5">
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
@@ -649,7 +815,7 @@ const ExploreContent = () => {
             </div>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.popularNearby.map((p, i) => (
+            {filteredPopularNearby.map((p, i) => (
               <ProviderCard
                 key={p.id}
                 provider={p}
@@ -679,14 +845,14 @@ const ExploreContent = () => {
       )}
 
       {/* ── 9. Top Rated ── */}
-      {(feed?.topRated?.length ?? 0) > 0 && (
+      {filteredTopRated.length > 0 && (
         <div className="mt-5">
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={star} className="text-sm text-amber-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.topRated.map((p, i) => (
+            {filteredTopRated.map((p, i) => (
               <ProviderCard
                 key={p.id}
                 provider={p}
@@ -701,7 +867,7 @@ const ExploreContent = () => {
       )}
 
       {/* ── 10. Category Spotlight ── */}
-      {feed?.categorySpotlight && (
+      {feed?.categorySpotlight && filteredSpotlightProviders.length > 0 && (
         <div className="mt-5">
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
@@ -725,7 +891,7 @@ const ExploreContent = () => {
             </motion.button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed.categorySpotlight.providers.map((p, i) => (
+            {filteredSpotlightProviders.map((p, i) => (
               <ProviderCard
                 key={p.id}
                 provider={p}
@@ -740,7 +906,7 @@ const ExploreContent = () => {
       )}
 
       {/* ── 11. New Arrivals ── */}
-      {(feed?.newArrivals?.length ?? 0) > 0 && (
+      {filteredNewArrivals.length > 0 && (
         <div className="mt-5">
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={rocketOutline} className="text-sm text-indigo-500" />
@@ -750,7 +916,7 @@ const ExploreContent = () => {
             </span>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.newArrivals.map((p, i) => (
+            {filteredNewArrivals.map((p, i) => (
               <ProviderCard
                 key={p.id}
                 provider={p}
@@ -918,6 +1084,14 @@ const ExploreContent = () => {
           )}
         </div>
       )}
+
+      {/* ── Filter Sheet ── */}
+      <FilterSheet
+        opened={sheetOpened}
+        filters={filters}
+        onClose={() => setSheetOpened(false)}
+        onApply={handleApplyFilters}
+      />
     </div>
   );
 };

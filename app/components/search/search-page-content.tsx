@@ -16,7 +16,7 @@ import {
 } from "ionicons/icons";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useSearchSuggestions } from "@/hooks/useSearch";
+import { useSearchSuggestions, useTrendingSearches } from "@/hooks/useSearch";
 import { addRecentSearch, setCategoryIds, resetFilters } from "@/store/slices/searchSlice";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useFlags } from "@/app/context/FeatureFlagContext";
@@ -62,6 +62,8 @@ const SearchPageContent = () => {
       lat,
       lng
     );
+
+  const { data: trending = [] } = useTrendingSearches(user?.city);
 
   useEffect(() => {
     if (!initialQ) {
@@ -271,6 +273,8 @@ const SearchPageContent = () => {
                 query={debouncedQuery}
                 isLoading={isSuggestionsFetching}
                 onSelect={handleSuggestionTap}
+                trending={trending}
+                onTrendingTap={handleRecentTap}
               />
             </motion.div>
           )}
@@ -294,6 +298,10 @@ const SearchPageContent = () => {
                   dispatch(setCategoryIds([id]));
                   setQuery(name);
                   handleSubmit(name);
+                }}
+                onSearchTap={(text) => {
+                  setQuery(text);
+                  handleSubmit(text);
                 }}
               />
             </motion.div>

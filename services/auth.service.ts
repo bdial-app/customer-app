@@ -4,6 +4,7 @@ import { UserProfile } from "@/services/user.service";
 
 export interface SendOtpPayload {
   mobileNumber: string;
+  referralCode?: string;
 }
 
 export interface VerifyOtpPayload {

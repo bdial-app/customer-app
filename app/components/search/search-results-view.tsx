@@ -27,6 +27,7 @@ import type { SearchEntityType, SearchSortBy } from "@/services/search.service";
 
 import SearchFilterSheet from "./search-filter-sheet";
 import SearchFilterChips from "./search-filter-chips";
+import SearchFallbackView from "./search-fallback-view";
 import ProviderResultCard from "./cards/provider-result-card";
 import ProductResultCard from "./cards/product-result-card";
 import CategoryResultCard from "./cards/category-result-card";
@@ -52,9 +53,10 @@ interface Props {
   lng?: number;
   city?: string;
   onCategoryTap?: (name: string, id: string) => void;
+  onSearchTap?: (text: string) => void;
 }
 
-const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
+const SearchResultsView = ({ query, lat, lng, city, onCategoryTap, onSearchTap }: Props) => {
   const dispatch = useAppDispatch();
   const { activeTab, filters } = useAppSelector((s) => s.search);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -274,9 +276,9 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
       )}
 
       {/* ── Did you mean? ─────────────────────── */}
-      {!isLoading && results?.meta?.didYouMean && (
+      {!isLoading && results?.meta?.didYouMean && totalResults > 0 && (
         <button
-          onClick={() => onCategoryTap?.(results.meta.didYouMean!, "")}
+          onClick={() => onSearchTap?.(results.meta.didYouMean!)}
           className="mx-4 mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-left"
         >
           <p className="text-[12px] text-gray-500">
@@ -289,12 +291,34 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
         </button>
       )}
 
+      {/* ── Low results nudge ─────────────────── */}
+      {!isLoading && totalResults > 0 && totalResults < 5 && activeFilterCount > 0 && (
+        <div className="mx-4 mt-2 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+          <p className="text-[12px] text-gray-600">
+            Only <span className="font-bold">{totalResults}</span> result{totalResults !== 1 ? "s" : ""}.
+          </p>
+          <button
+            onClick={() => dispatch(resetFilters())}
+            className="text-[12px] font-bold text-blue-600 active:opacity-60 px-2 py-1 rounded-lg active:bg-blue-100 transition-colors"
+          >
+            Remove filters
+          </button>
+        </div>
+      )}
+
       {/* ── Results ───────────────────────────── */}
       <div className="px-4 pt-2 pb-8">
         {isLoading ? (
           <ResultsSkeleton />
         ) : !results || totalResults === 0 ? (
-          <EmptyResults query={query} />
+          <SearchFallbackView
+            query={query}
+            fallback={results?.fallback}
+            didYouMean={results?.meta?.didYouMean}
+            onDidYouMeanTap={onSearchTap}
+            onTrendingTap={onSearchTap}
+            onCategoryTap={onCategoryTap}
+          />
         ) : activeTab === "all" ? (
           <AllResultsView results={results} onCategoryTap={onCategoryTap} />
         ) : activeTab === "providers" ? (

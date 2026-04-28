@@ -32,6 +32,7 @@ import {
   callOutline,
   shieldOutline,
   mapOutline,
+  femaleOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useFlags } from "../context/FeatureFlagContext";
@@ -1369,6 +1370,7 @@ const ProviderOnboardingPage = () => {
   } | null>(null);
   const pendingSubmitRef = useRef<(() => void) | null>(null);
   const formikRef = useRef<any>(null);
+  const [isWomenLed, setIsWomenLed] = useState(false);
 
   // Fetch categories
   useEffect(() => {
@@ -1586,6 +1588,7 @@ const ProviderOnboardingPage = () => {
         productImages: allProductImages.length
           ? allProductImages
           : undefined,
+        isWomenLed,
       });
       setProviderStatus(values.identity_doc ? "pending" : "approved");
     } catch (err: any) {
@@ -1806,6 +1809,42 @@ const ProviderOnboardingPage = () => {
                         onChange={(val) => setFieldValue("close_time", val)}
                       />
                     </List>
+
+                    {/* Women-Led Business Toggle */}
+                    <div className="px-4 mt-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setIsWomenLed((v) => !v)}
+                        className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all active:scale-[0.99] ${
+                          isWomenLed
+                            ? "border-purple-300 bg-purple-50/80"
+                            : "border-slate-200 bg-white"
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          isWomenLed ? "bg-purple-100" : "bg-slate-100"
+                        }`}>
+                          <IonIcon icon={femaleOutline} className={`text-xl ${
+                            isWomenLed ? "text-purple-600" : "text-slate-400"
+                          }`} />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className={`text-sm font-bold ${
+                            isWomenLed ? "text-purple-700" : "text-slate-700"
+                          }`}>Women-Led Business</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Get a special badge & appear in women-led filters
+                          </p>
+                        </div>
+                        <div className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                          isWomenLed ? "bg-purple-500" : "bg-slate-200"
+                        }`}>
+                          <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                            isWomenLed ? "translate-x-5" : "translate-x-0"
+                          }`} />
+                        </div>
+                      </button>
+                    </div>
                   </>
                 )}
 

@@ -53,6 +53,7 @@ export interface BecomeProviderPayload {
   categoryIds?: string[];
   products?: Array<{ name: string; description?: string; price?: number; currency?: string; imageCount?: number }>;
   productImages?: File[];
+  isWomenLed?: boolean;
 }
 
 export interface ProviderData {
@@ -234,6 +235,9 @@ export const becomeProvider = async (
   if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
   if (payload.categoryIds?.length) {
     payload.categoryIds.forEach((id) => formData.append("categoryIds", id));
+  }
+  if (payload.isWomenLed != null) {
+    formData.append("isWomenLed", String(payload.isWomenLed));
   }
   // Products as JSON string + individual image files
   if (payload.products?.length) {

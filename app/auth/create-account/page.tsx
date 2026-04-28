@@ -373,6 +373,7 @@ function CreateAccountContent() {
   const router = useRouter();
   const flags = useFlags();
   const initialMobile = searchParams.get("mobile") ?? undefined;
+  const referralCode = searchParams.get("ref") ?? undefined;
 
   // Redirect if registration is disabled
   useEffect(() => {
@@ -393,7 +394,7 @@ function CreateAccountContent() {
     handleNext,
     handleResendOtp,
     handleSubmit,
-  } = useCreateAccount(initialMobile);
+  } = useCreateAccount(initialMobile, referralCode);
 
   const stepInfo = {
     mobile: {

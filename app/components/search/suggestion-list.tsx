@@ -12,6 +12,7 @@ import {
   gridOutline,
   arrowForward,
   searchOutline,
+  trendingUpOutline,
 } from "ionicons/icons";
 import type { SearchSuggestion } from "@/services/search.service";
 
@@ -20,6 +21,8 @@ interface Props {
   query: string;
   isLoading: boolean;
   onSelect: (suggestion: SearchSuggestion) => void;
+  trending?: { query: string; count: number }[];
+  onTrendingTap?: (query: string) => void;
 }
 
 const TYPE_CONFIG = {
@@ -73,7 +76,7 @@ const HighlightedText = ({
   );
 };
 
-const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
+const SuggestionList = ({ suggestions, query, isLoading, onSelect, trending, onTrendingTap }: Props) => {
   const grouped = {
     provider: suggestions.filter((s) => s.type === "provider"),
     product: suggestions.filter((s) => s.type === "product"),
@@ -103,16 +106,43 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
 
   if (suggestions.length === 0 && !isLoading) {
     return (
-      <div className="flex flex-col items-center pt-16 text-center px-8">
-        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-          <IonIcon icon={searchOutline} className="w-6 h-6 text-gray-400" />
+      <div className="px-4 pt-6">
+        <div className="flex flex-col items-center text-center px-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+            <IonIcon icon={searchOutline} className="w-5 h-5 text-gray-400" />
+          </div>
+          <p className="text-[13px] font-semibold text-gray-600 mb-0.5">
+            No suggestions for &ldquo;{query}&rdquo;
+          </p>
+          <p className="text-[11px] text-gray-400">
+            Tap Search to see all results
+          </p>
         </div>
-        <p className="text-[14px] font-semibold text-gray-600 mb-1">
-          No suggestions for &ldquo;{query}&rdquo;
-        </p>
-        <p className="text-[12px] text-gray-400">
-          Tap Search to see all results
-        </p>
+        {trending && trending.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <IonIcon icon={trendingUpOutline} className="w-3.5 h-3.5 text-emerald-500" />
+              </div>
+              <span className="text-[12px] font-bold text-gray-500">Try these popular searches</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {trending.map((t, i) => (
+                <motion.button
+                  key={t.query}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  onClick={() => onTrendingTap?.(t.query)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 active:bg-gray-50 active:scale-95 transition-all shadow-sm"
+                >
+                  <IonIcon icon={trendingUpOutline} className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="capitalize">{t.query}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

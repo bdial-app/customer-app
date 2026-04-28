@@ -119,7 +119,7 @@ function InviteFriendsContent() {
               desc: "Build a trusted network of service providers near you",
             },
             {
-              emoji: "🔍",
+              emoji: "�",
               title: "Discover More",
               desc: "More members help uncover hidden gems in your area",
             },

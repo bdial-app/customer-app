@@ -90,11 +90,19 @@ export interface CategorySearchResult {
   relevanceScore: number;
 }
 
+export interface SearchFallback {
+  relaxedProviders?: ProviderSearchResult[];
+  relatedCategories?: CategorySearchResult[];
+  trending?: { query: string; count: number }[];
+  nearbyPopular?: ProviderSearchResult[];
+}
+
 export interface SearchResponse {
   providers: { data: ProviderSearchResult[]; total: number };
   products: { data: ProductSearchResult[]; total: number };
   categories: { data: CategorySearchResult[]; total: number };
   meta: { query: string; tookMs: number; totalResults: number; didYouMean?: string };
+  fallback?: SearchFallback;
 }
 
 export interface TrendingSearch {

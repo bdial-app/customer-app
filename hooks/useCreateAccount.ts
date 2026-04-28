@@ -6,7 +6,7 @@ import { useNotification } from "@/app/context/NotificationContext";
 
 export type CreateAccountStep = "mobile" | "otp" | "details";
 
-export const useCreateAccount = (initialMobile?: string) => {
+export const useCreateAccount = (initialMobile?: string, referralCode?: string) => {
   const router = useRouter();
   const { notify } = useNotification();
   const [currentStep, setCurrentStep] = useState<CreateAccountStep>(
@@ -100,7 +100,7 @@ export const useCreateAccount = (initialMobile?: string) => {
   useEffect(() => {
     if (!initialMobile || autoSentRef.current) return;
     autoSentRef.current = true;
-    registrationSendOtpMutation.mutateAsync({ mobileNumber: initialMobile }).then((res) => {
+    registrationSendOtpMutation.mutateAsync({ mobileNumber: initialMobile, referralCode }).then((res) => {
       const otp: string | undefined = res?.data?.otp;
       notify({
         title: "OTP Sent",
@@ -146,7 +146,7 @@ export const useCreateAccount = (initialMobile?: string) => {
 
     try {
       if (currentStep === "mobile") {
-        const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
+        const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: values.mobile, referralCode });
         const otp: string | undefined = res?.data?.otp;
         notify({
           title: "OTP Sent",
@@ -223,7 +223,7 @@ export const useCreateAccount = (initialMobile?: string) => {
   ) => {
     if (resendCooldown > 0) return;
     try {
-      const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: mobile });
+      const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: mobile, referralCode });
       const otp: string | undefined = res?.data?.otp;
       setFieldValue("otp", "");
       notify({
