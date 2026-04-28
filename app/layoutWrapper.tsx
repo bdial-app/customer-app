@@ -23,6 +23,7 @@ import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
+import PushNotificationPrompt from "./components/PushNotificationPrompt";
 
 function LanguageSyncBridge() {
   useLanguageSync();
@@ -64,7 +65,7 @@ function PushNotificationBridge() {
     };
   }, [router]);
 
-  return null;
+  return <PushNotificationPrompt />;
 }
 
 function InappropriateContentHandler() {
