@@ -59,6 +59,8 @@ export interface ProviderSearchResult {
   reviewCount: number;
   categories: string | null;
   relevanceScore: number;
+  isSponsored?: boolean;
+  sponsoredListingId?: string;
 }
 
 export interface ProductSearchResult {
@@ -92,7 +94,7 @@ export interface SearchResponse {
   providers: { data: ProviderSearchResult[]; total: number };
   products: { data: ProductSearchResult[]; total: number };
   categories: { data: CategorySearchResult[]; total: number };
-  meta: { query: string; tookMs: number; totalResults: number };
+  meta: { query: string; tookMs: number; totalResults: number; didYouMean?: string };
 }
 
 export interface TrendingSearch {

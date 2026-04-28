@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
+import { useFlags } from "@/app/context/FeatureFlagContext";
 
 const FALLBACK_TEXTS = [
   'Search "Tailoring"',
@@ -17,7 +18,11 @@ const FALLBACK_TEXTS = [
 
 const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: string[] }) => {
   const router = useRouter();
+  const flags = useFlags();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  // Don't render if search is disabled
+  if (!flags.search_enabled) return null;
 
   const placeholderTexts = prompts && prompts.length > 0
     ? prompts.map((p) => `Search "${p}"`)

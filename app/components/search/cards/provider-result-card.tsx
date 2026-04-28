@@ -13,8 +13,10 @@ import {
   shieldCheckmarkOutline,
   navigateOutline,
   ribbonOutline,
+  diamondOutline,
 } from "ionicons/icons";
 import { ROUTE_PATH } from "@/utils/contants";
+import { useTrackAd } from "@/hooks/useExplore";
 import type { ProviderSearchResult } from "@/services/search.service";
 
 interface Props {
@@ -24,19 +26,33 @@ interface Props {
 
 const ProviderResultCard = ({ provider, index }: Props) => {
   const router = useRouter();
+  const trackAd = useTrackAd();
 
   const image =
     provider.profilePhotoUrl || provider.bannerImageUrl || "";
+
+  const handleClick = () => {
+    if (provider.isSponsored && provider.sponsoredListingId) {
+      trackAd.mutate({
+        eventType: "click",
+        entityType: "sponsored_listing",
+        entityId: provider.sponsoredListingId,
+      });
+    }
+    router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
-      onClick={() =>
-        router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
-      }
-      className="cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.97] transition-transform duration-150"
+      onClick={handleClick}
+      className={`cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.97] transition-transform duration-150 ${
+        provider.isSponsored
+          ? "border-2 border-amber-200 shadow-[0_2px_12px_rgba(245,158,11,0.08)]"
+          : "border border-gray-100"
+      }`}
     >
       {/* Image */}
       <div className="relative h-[140px] overflow-hidden bg-gray-100">
@@ -58,8 +74,16 @@ const ProviderResultCard = ({ provider, index }: Props) => {
 
         {/* Top badges row */}
         <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
+          {/* Sponsored badge */}
+          {provider.isSponsored && (
+            <div className="bg-amber-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-0.5 shadow-sm">
+              <IonIcon icon={diamondOutline} className="w-3 h-3" />
+              Ad
+            </div>
+          )}
+
           {/* Verified badge */}
-          {provider.status === "active" && (
+          {!provider.isSponsored && provider.status === "active" && (
             <div className="bg-white/95 backdrop-blur-sm text-emerald-600 text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
               <IonIcon icon={shieldCheckmarkOutline} className="w-3 h-3" />
               Verified

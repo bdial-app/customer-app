@@ -63,9 +63,14 @@ export function usePushNotifications() {
           dispatch(setFcmToken(result.token));
           try {
             await registerDevice(result.token, detectPlatform(), getDeviceInfo());
-          } catch (err) {
-            console.warn("[Push] Failed to register device token:", err);
+            console.log("[Push] Device token registered with backend successfully");
+          } catch (err: any) {
+            console.error("[Push] Failed to register device token with backend:", err?.response?.status, err?.response?.data || err?.message);
+            // Clear the fcmToken so next render cycle will retry
+            dispatch(setFcmToken(null));
           }
+        } else {
+          console.warn("[Push] Failed to get FCM token:", result.error);
         }
       })();
     }
@@ -115,13 +120,17 @@ export function usePushNotifications() {
       dispatch(setFcmToken(result.token));
       try {
         await registerDevice(result.token, detectPlatform(), getDeviceInfo());
-      } catch (err) {
-        console.warn("[Push] Failed to register device token:", err);
+        console.log("[Push] Device token registered with backend after permission grant");
+      } catch (err: any) {
+        console.error("[Push] Failed to register device token after permission grant:", err?.response?.status, err?.response?.data || err?.message);
+        // Clear the token so the auto-register effect will retry on next render
+        dispatch(setFcmToken(null));
       }
       return true;
     }
 
     // Show the error to the user
+    console.warn("[Push] Permission request failed:", result.error);
     setPushError(result.error);
     dispatch(setPermissionStatus(getPermissionStatus() as any));
     return false;

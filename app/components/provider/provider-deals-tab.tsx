@@ -560,7 +560,14 @@ const OfferCard = ({
       ? `${Number(offer.discountValue)}% OFF`
       : `₹${Number(offer.discountValue)} OFF`;
 
-  const statusBadge = active
+  const isPendingApproval = offer.approvalStatus === "pending_approval";
+  const isRejected = offer.approvalStatus === "rejected";
+
+  const statusBadge = isPendingApproval
+    ? { label: "Pending Approval", bg: "bg-amber-50", text: "text-amber-700" }
+    : isRejected
+    ? { label: "Rejected", bg: "bg-red-50", text: "text-red-700" }
+    : active
     ? { label: "Active", bg: "bg-emerald-50", text: "text-emerald-700" }
     : upcoming
     ? { label: "Upcoming", bg: "bg-blue-50", text: "text-blue-700" }
@@ -625,6 +632,13 @@ const OfferCard = ({
           <span>Min ₹{Number(offer.minOrderAmount)}</span>
         )}
       </div>
+      {isRejected && offer.adminNotes && (
+        <div className="mt-2 px-2.5 py-1.5 bg-red-50 rounded-lg border border-red-100">
+          <p className="text-[10px] text-red-600">
+            <span className="font-semibold">Reason:</span> {offer.adminNotes}
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 };

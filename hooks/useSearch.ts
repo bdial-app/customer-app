@@ -14,7 +14,6 @@ import {
   SuggestionParams,
   SearchEntityType,
 } from "@/services/search.service";
-import { useDebounce } from "./useDebounce";
 import { useAppSelector } from "./useAppStore";
 
 // ─── Unified search with infinite scroll ────────────────────
@@ -54,12 +53,12 @@ export const useSearchSuggestions = (
   lat?: number,
   lng?: number
 ) => {
-  const debouncedQuery = useDebounce(query, 150);
+  // NOTE: query is already debounced by the parent (search-page-content.tsx)
   return useQuery({
-    queryKey: ["search-suggestions", debouncedQuery, lat, lng],
+    queryKey: ["search-suggestions", query, lat, lng],
     queryFn: () =>
-      getSuggestions({ q: debouncedQuery, lat, lng }),
-    enabled: debouncedQuery.length >= 1,
+      getSuggestions({ q: query, lat, lng }),
+    enabled: query.length >= 1,
     staleTime: 60_000,
     placeholderData: (prev) => prev,
   });

@@ -17,6 +17,7 @@ export const USER_URLS = {
 export const CATEGORY_URLS = {
   LIST: "/categories",
   TOP_LEVEL: "/categories/top-level",
+  TREE: "/categories/tree",
   BY_ID: (id: string) => `/categories/${id}`,
   SUB_CATEGORIES: (id: string) => `/categories/${id}/sub-categories`,
 };
@@ -139,4 +140,8 @@ export const NOTIFICATION_URLS = {
 
 export const BUG_REPORT_URLS = {
   CREATE: '/bug-reports',
+};
+
+export const CONFIG_URLS = {
+  FEATURE_FLAGS: '/config/feature-flags',
 };

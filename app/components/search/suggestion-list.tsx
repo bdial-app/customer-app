@@ -81,7 +81,7 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
   };
 
   const sections = (
-    ["provider", "product", "category"] as const
+    ["category", "provider", "product"] as const
   ).filter((t) => grouped[t].length > 0);
 
   if (isLoading && suggestions.length === 0) {
@@ -136,14 +136,20 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                 </span>
               </div>
             )}
-            {items.map((suggestion, i) => (
+            {items.map((suggestion, i) => {
+              const isCategoryCard = suggestion.type === "category";
+              return (
               <motion.button
                 key={`${suggestion.type}-${suggestion.id}`}
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.025, duration: 0.2 }}
                 onClick={() => onSelect(suggestion)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-gray-50 transition-colors"
+                className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors ${
+                  isCategoryCard
+                    ? "bg-purple-50/50 active:bg-purple-100/50 border-b border-purple-100/50"
+                    : "active:bg-gray-50"
+                }`}
               >
                 {/* Thumbnail or Icon */}
                 {suggestion.imageUrl ? (
@@ -175,7 +181,7 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                   </p>
                   {suggestion.subtitle && (
                     <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                      {suggestion.subtitle}
+                      {isCategoryCard ? `Browse all → ${suggestion.subtitle}` : suggestion.subtitle}
                     </p>
                   )}
                 </div>
@@ -192,7 +198,8 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                   className="w-3.5 h-3.5 text-gray-300 flex-shrink-0 -rotate-45"
                 />
               </motion.button>
-            ))}
+              );
+            })}
           </div>
         );
       })}

@@ -19,6 +19,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchSuggestions } from "@/hooks/useSearch";
 import { addRecentSearch, setCategoryIds, resetFilters } from "@/store/slices/searchSlice";
 import { ROUTE_PATH } from "@/utils/contants";
+import { useFlags } from "@/app/context/FeatureFlagContext";
 import type { SearchSuggestion } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
@@ -32,12 +33,18 @@ const SearchPageContent = () => {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement>(null);
+  const flags = useFlags();
 
   const initialQ = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(initialQ);
   const [committedQuery, setCommittedQuery] = useState(initialQ);
   const debouncedQuery = useDebounce(query, 150);
   const [isFocused, setIsFocused] = useState(!initialQ);
+
+  // Redirect to home if search is disabled
+  useEffect(() => {
+    if (!flags.search_enabled) router.replace("/");
+  }, [flags.search_enabled, router]);
 
   const user = useAppSelector((s) => s.auth.user as any);
   const lat = user?.latitude;

@@ -273,6 +273,22 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
         </div>
       )}
 
+      {/* ── Did you mean? ─────────────────────── */}
+      {!isLoading && results?.meta?.didYouMean && (
+        <button
+          onClick={() => onCategoryTap?.(results.meta.didYouMean!, "")}
+          className="mx-4 mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-left"
+        >
+          <p className="text-[12px] text-gray-500">
+            Did you mean:{" "}
+            <span className="font-semibold text-amber-600">
+              {results.meta.didYouMean}
+            </span>
+            ?
+          </p>
+        </button>
+      )}
+
       {/* ── Results ───────────────────────────── */}
       <div className="px-4 pt-2 pb-8">
         {isLoading ? (

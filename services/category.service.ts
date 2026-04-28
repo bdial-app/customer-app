@@ -11,6 +11,7 @@ export interface Category {
   imageUrl?: string;
   isActive: boolean;
   displayOrder: number;
+  providerCount?: number;
   children?: Category[];
 }
 
@@ -26,6 +27,11 @@ export interface PaginatedCategories {
 
 export const getTopLevelCategories = async (): Promise<Category[]> => {
   const { data } = await apiClient.get(CATEGORY_URLS.TOP_LEVEL);
+  return data;
+};
+
+export const getCategoryTree = async (): Promise<Category[]> => {
+  const { data } = await apiClient.get(CATEGORY_URLS.TREE);
   return data;
 };
 

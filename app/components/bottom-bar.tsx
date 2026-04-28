@@ -20,6 +20,7 @@ import {
 } from "ionicons/icons";
 import { motion } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
+import { useFlags } from "../context/FeatureFlagContext";
 import { useAppSelector } from "@/hooks/useAppStore";
 
 interface BottomBarProps {
@@ -92,6 +93,7 @@ const TABS: TabItem[] = [
 
 const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
   const { userMode } = useAppContext();
+  const flags = useFlags();
   const user = useAppSelector((state) => state.auth.user);
   const customerUnreadCount = useAppSelector((state) => state.chat.customerUnreadCount);
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
@@ -100,6 +102,8 @@ const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
   const visibleTabs = TABS.filter(
     (tab) =>
       (!tab.mode || tab.mode === userMode) &&
+      // Hide chats tab if chat is disabled
+      (tab.id !== "chats" || flags.chat_enabled) &&
       // Provider-only tabs still hidden for guests; customer tabs always visible
       (!tab.requiresAuth || !!user || tab.mode !== "provider")
   );

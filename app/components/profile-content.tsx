@@ -50,6 +50,7 @@ import {
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
+import { useFlags } from "../context/FeatureFlagContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
 import { LanguageSelector, LanguageMenuButton } from "./language-selector";
@@ -238,6 +239,7 @@ const ProfileContent = () => {
     toggleMode,
     resetProviderState,
   } = useAppContext();
+  const flags = useFlags();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user as any);
   const updateUserMutation = useUpdateUser();
@@ -738,7 +740,7 @@ const ProfileContent = () => {
             </div>
           )}
 
-          {providerStatus === "not_applied" && (
+          {flags.provider_onboarding_enabled && providerStatus === "not_applied" && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}

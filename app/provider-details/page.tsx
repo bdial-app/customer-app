@@ -40,6 +40,7 @@ import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "../context/AppContext";
+import { useFlags } from "../context/FeatureFlagContext";
 import { openDirections } from "@/utils/sharing";
 import {
   useTrackProviderView,
@@ -190,6 +191,7 @@ export default function ProviderDetailsPage() {
   const dispatch = useAppDispatch();
   const { requireAuth } = useAuthGate();
   const { setUserMode } = useAppContext();
+  const flags = useFlags();
   const { data: savedData } = useIsSaved(id, "provider");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
@@ -843,8 +845,8 @@ export default function ProviderDetailsPage() {
             ))
           )}
 
-          {/* Write Review — hidden for own provider, and if already reviewed */}
-          {!isOwnProvider && !hasAlreadyReviewed && (
+          {/* Write Review — hidden for own provider, and if already reviewed, or if reviews disabled */}
+          {flags.reviews_enabled && !isOwnProvider && !hasAlreadyReviewed && (
             <button onClick={() => requireAuth(() => { setReviewError(""); setReviewSuccess(false); setSheetOpened(true); })} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
               <IonIcon icon={star} className="w-4 h-4" />
               Write a Review
@@ -981,6 +983,7 @@ export default function ProviderDetailsPage() {
         ) : (
           /* Customer mode — message & call */
           <div className="flex gap-3">
+            {flags.chat_enabled && (
             <button disabled={isCreatingChat} onClick={() => {
               requireAuth(() => {
                 if (!provider?.id) return;
@@ -1000,6 +1003,7 @@ export default function ProviderDetailsPage() {
               <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
               {isCreatingChat ? "Opening..." : "Message"}
             </button>
+            )}
 
             {/* Call button — blurred + gated for guests */}
             {user ? (

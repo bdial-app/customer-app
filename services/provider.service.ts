@@ -342,6 +342,8 @@ export interface ProviderOfferFull {
   startsAt: string;
   endsAt: string;
   isActive: boolean;
+  approvalStatus: "pending_approval" | "approved" | "rejected";
+  adminNotes: string | null;
   usageCount: number;
   usageLimit: number | null;
   createdAt: string;
@@ -427,6 +429,8 @@ export interface SponsoredListing {
   startsAt: string;
   endsAt: string;
   isActive: boolean;
+  approvalStatus: "pending_approval" | "approved" | "rejected";
+  adminNotes: string | null;
   createdAt: string;
 }
 

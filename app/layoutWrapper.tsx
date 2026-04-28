@@ -14,6 +14,7 @@ import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent } from "@/utils/axios";
 import { AuthGateProvider } from "./context/AuthGateContext";
+import { FeatureFlagProvider } from "./context/FeatureFlagContext";
 import AuthGateSheet from "./components/auth-gate-sheet";
 import { resumeMyAccount } from "@/services/user.service";
 import { useRouter } from "next/navigation";
@@ -157,6 +158,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         <ThemeProvider>
           <LanguageProvider>
             <AppProvider>
+              <FeatureFlagProvider>
               <AuthGateProvider>
               <LanguageSyncBridge />
               <PushNotificationBridge />
@@ -171,6 +173,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                 </App>
               </NotificationProvider>
               </AuthGateProvider>
+              </FeatureFlagProvider>
             </AppProvider>
           </LanguageProvider>
         </ThemeProvider>

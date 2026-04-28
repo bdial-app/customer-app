@@ -17,11 +17,13 @@ import CitySpotlight from "./home/city-spotlight";
 import RecentlyAdded from "./home/recently-added";
 import { useHomeFeed } from "@/hooks/useHomeFeed";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useFlags } from "../context/FeatureFlagContext";
 
 const UserHome = () => {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
+  const flags = useFlags();
 
   const { data: feed, isLoading } = useHomeFeed({
     lat: user?.latitude ?? undefined,
@@ -152,10 +154,12 @@ const UserHome = () => {
         )}
 
         {/* Community Reviews */}
+        {flags.reviews_enabled && (
         <CommunityReviews
           reviews={feed?.communityReviews}
           isLoading={isLoading}
         />
+        )}
 
         {/* Divider */}
         <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />

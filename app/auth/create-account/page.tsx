@@ -2,12 +2,14 @@
 import { List, Page, Block, Navbar } from "konsta/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "@/app/components/formik-input";
 import { useCreateAccount } from "@/hooks/useCreateAccount";
+import { useFlags } from "@/app/context/FeatureFlagContext";
 import { IonIcon } from "@ionic/react";
 import {
   phonePortraitOutline,
@@ -368,7 +370,15 @@ const LocationFields = () => {
 // ─── Main Page ──────────────────────────────────────────────────
 function CreateAccountContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const flags = useFlags();
   const initialMobile = searchParams.get("mobile") ?? undefined;
+
+  // Redirect if registration is disabled
+  useEffect(() => {
+    if (!flags.registration_enabled) router.replace("/");
+  }, [flags.registration_enabled, router]);
+
   const {
     currentStep,
     isLoading,

@@ -34,6 +34,7 @@ import {
   mapOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
+import { useFlags } from "../context/FeatureFlagContext";
 import { useNotification } from "../context/NotificationContext";
 import { useRouter } from "next/navigation";
 import TimePicker from "../components/time-picker";
@@ -47,7 +48,7 @@ import {
   sendProviderOtp,
   verifyProviderOtp,
 } from "@/services/provider.service";
-import { getTopLevelCategories, Category } from "@/services/category.service";
+import { getCategoryTree, Category } from "@/services/category.service";
 import { reverseGeocode } from "@/services/geocode.service";
 import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
@@ -420,7 +421,7 @@ const MapLocationPicker = ({
 };
 
 // ---------------------------------------------------------------------------
-// Category selector with search (Step 3)
+// Category selector — grouped by parent, collapsible, searchable (Step 3)
 // ---------------------------------------------------------------------------
 const CategorySelector = ({
   categories,
@@ -432,11 +433,50 @@ const CategorySelector = ({
   onToggle: (id: string) => void;
 }) => {
   const [search, setSearch] = useState("");
-  const filtered = search.trim()
-    ? categories.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase()),
-      )
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  // Auto-expand groups that have selected children
+  useEffect(() => {
+    const groupsWithSelected = new Set<string>();
+    for (const cat of categories) {
+      if (cat.children?.length) {
+        for (const child of cat.children) {
+          if (selectedIds.includes(child.id)) groupsWithSelected.add(cat.id);
+        }
+      }
+      if (selectedIds.includes(cat.id)) groupsWithSelected.add(cat.id);
+    }
+    if (groupsWithSelected.size) {
+      setExpandedGroups((prev) => new Set([...prev, ...groupsWithSelected]));
+    }
+  }, []); // only on mount
+
+  const query = search.trim().toLowerCase();
+
+  // Filter: show parent if its name or any child name matches
+  const filtered = query
+    ? categories.filter((cat) => {
+        if (cat.name.toLowerCase().includes(query)) return true;
+        return cat.children?.some((ch) =>
+          ch.name.toLowerCase().includes(query),
+        );
+      })
     : categories;
+
+  // When searching, auto-expand all matching groups
+  const isExpanded = (id: string) =>
+    query ? true : expandedGroups.has(id);
+
+  // Count selected items
+  const totalSelected = selectedIds.length;
 
   return (
     <div className="px-4 pb-2">
@@ -456,48 +496,123 @@ const CategorySelector = ({
       </div>
 
       {/* Selected count */}
-      {selectedIds.length > 0 && (
+      {totalSelected > 0 && (
         <p className="text-[11px] font-semibold text-indigo-600 mb-2">
-          {selectedIds.length} categor
-          {selectedIds.length === 1 ? "y" : "ies"} selected
+          {totalSelected} categor{totalSelected === 1 ? "y" : "ies"} selected
         </p>
       )}
 
-      {/* Chips */}
-      <div className="flex flex-wrap gap-2">
+      {/* Grouped list */}
+      <div className="space-y-2 max-h-[50vh] overflow-y-auto">
         {filtered.map((cat) => {
-          const selected = selectedIds.includes(cat.id);
+          const hasChildren = cat.children && cat.children.length > 0;
+          const expanded = isExpanded(cat.id);
+          const childrenToShow = query
+            ? cat.children?.filter((ch) =>
+                ch.name.toLowerCase().includes(query) ||
+                cat.name.toLowerCase().includes(query),
+              ) ?? []
+            : cat.children ?? [];
+          const selectedChildCount = childrenToShow.filter((ch) =>
+            selectedIds.includes(ch.id),
+          ).length;
+          const parentSelected = selectedIds.includes(cat.id);
+
           return (
-            <button
+            <div
               key={cat.id}
-              type="button"
-              onClick={() => onToggle(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all active:scale-[0.96] ${
-                selected
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50"
-              }`}
+              className="bg-white rounded-xl border border-slate-100 overflow-hidden"
             >
-              {cat.icon && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cat.icon}
-                  alt=""
-                  className="w-4 h-4 rounded-sm object-cover"
-                />
+              {/* Parent header */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (hasChildren) {
+                    toggleGroup(cat.id);
+                  } else {
+                    onToggle(cat.id);
+                  }
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 transition-colors ${
+                  parentSelected && !hasChildren
+                    ? "bg-indigo-50"
+                    : "hover:bg-slate-50"
+                }`}
+              >
+                {cat.icon ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cat.icon}
+                    alt=""
+                    className="w-6 h-6 rounded-lg object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                    <IonIcon
+                      icon={layersOutline}
+                      className="text-indigo-400 text-xs"
+                    />
+                  </div>
+                )}
+                <span className="flex-1 text-left text-xs font-bold text-slate-700 truncate">
+                  {cat.name}
+                </span>
+                {selectedChildCount > 0 && hasChildren && (
+                  <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">
+                    {selectedChildCount}
+                  </span>
+                )}
+                {parentSelected && !hasChildren && (
+                  <IonIcon
+                    icon={checkmarkCircle}
+                    className="text-indigo-600 text-base shrink-0"
+                  />
+                )}
+                {hasChildren && (
+                  <IonIcon
+                    icon={arrowForwardOutline}
+                    className={`text-slate-400 text-xs transition-transform ${
+                      expanded ? "rotate-90" : ""
+                    }`}
+                  />
+                )}
+              </button>
+
+              {/* Children chips */}
+              {hasChildren && expanded && (
+                <div className="px-3 pb-3 pt-1 border-t border-slate-50">
+                  <div className="flex flex-wrap gap-1.5">
+                    {childrenToShow.map((child) => {
+                      const sel = selectedIds.includes(child.id);
+                      return (
+                        <button
+                          key={child.id}
+                          type="button"
+                          onClick={() => onToggle(child.id)}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all active:scale-[0.96] ${
+                            sel
+                              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                              : "bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300"
+                          }`}
+                        >
+                          {child.name}
+                          {sel && (
+                            <IonIcon
+                              icon={checkmarkCircle}
+                              className="text-white/80 text-[10px]"
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
-              {cat.name}
-              {selected && (
-                <IonIcon
-                  icon={checkmarkCircle}
-                  className="text-white/80 text-xs"
-                />
-              )}
-            </button>
+            </div>
           );
         })}
         {filtered.length === 0 && (
-          <p className="text-xs text-slate-400 py-4 text-center w-full">
+          <p className="text-xs text-slate-400 py-6 text-center">
             {categories.length === 0
               ? "Loading categories..."
               : `No categories matching "${search}"`}
@@ -1212,9 +1327,15 @@ const UnderReviewBanner = ({
 // ===========================================================================
 const ProviderOnboardingPage = () => {
   const { providerStatus, setProviderStatus } = useAppContext();
+  const flags = useFlags();
   const { notify } = useNotification();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+
+  // Redirect if provider onboarding is disabled
+  useEffect(() => {
+    if (!flags.provider_onboarding_enabled) router.replace("/");
+  }, [flags.provider_onboarding_enabled, router]);
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(
@@ -1251,7 +1372,7 @@ const ProviderOnboardingPage = () => {
 
   // Fetch categories
   useEffect(() => {
-    getTopLevelCategories()
+    getCategoryTree()
       .then((cats) => setCategories(cats))
       .catch(() => {});
   }, []);

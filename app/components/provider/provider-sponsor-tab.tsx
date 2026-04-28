@@ -297,22 +297,36 @@ const SponsorshipCard = ({
   const budget = sponsorship.budgetAmount ?? 0;
   const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const ctr = sponsorship.impressions > 0 ? ((sponsorship.clicks / sponsorship.impressions) * 100).toFixed(1) : "0.0";
+  const isPendingApproval = sponsorship.approvalStatus === "pending_approval";
+  const isRejected = sponsorship.approvalStatus === "rejected";
 
   return (
-    <div className={`bg-white rounded-2xl border p-4 ${isPast ? "border-slate-100 opacity-70" : "border-slate-100"}`}>
+    <div className={`bg-white rounded-2xl border p-4 ${isPast ? "border-slate-100 opacity-70" : isPendingApproval ? "border-amber-200" : isRejected ? "border-red-200" : "border-slate-100"}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${typeColors[sponsorship.type]} flex items-center justify-center`}>
             <IonIcon icon={typeIcons[sponsorship.type]} className="text-white text-sm" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800">{typeLabels[sponsorship.type]} Sponsorship</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-bold text-slate-800">{typeLabels[sponsorship.type]} Sponsorship</p>
+              {isPendingApproval && (
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 uppercase">
+                  Pending
+                </span>
+              )}
+              {isRejected && (
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 uppercase">
+                  Rejected
+                </span>
+              )}
+            </div>
             <p className="text-[10px] text-slate-500">
               {isPast ? "Ended" : `${daysLeft} days left`}
             </p>
           </div>
         </div>
-        {!isPast && (
+        {!isPast && !isPendingApproval && !isRejected && (
           <button
             onClick={() => onToggle(sponsorship)}
             disabled={isUpdating}
@@ -356,6 +370,14 @@ const SponsorshipCard = ({
           <div className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>
+
+      {isRejected && sponsorship.adminNotes && (
+        <div className="mt-3 px-2.5 py-1.5 bg-red-50 rounded-lg border border-red-100">
+          <p className="text-[10px] text-red-600">
+            <span className="font-semibold">Reason:</span> {sponsorship.adminNotes}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

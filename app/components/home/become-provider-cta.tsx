@@ -2,13 +2,18 @@
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/app/context/AppContext";
+import { useFlags } from "@/app/context/FeatureFlagContext";
 
 const BecomeProviderCTA = () => {
   const router = useRouter();
   const { providerStatus } = useAppContext();
+  const flags = useFlags();
 
   // Don't show if already a provider or applied
   if (providerStatus !== "not_applied") return null;
+
+  // Don't show if provider onboarding is disabled
+  if (!flags.provider_onboarding_enabled) return null;
 
   return (
     <motion.div

@@ -68,7 +68,7 @@ const QuickCategories = () => {
       >
         {displayCategories.map((cat: any, i) => {
           const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
-          // const Icon = ABSTRACT_ICONS[i % ABSTRACT_ICONS.length];
+          const hasImage = !!cat.imageUrl;
           return (
             <motion.div
               key={cat.id}
@@ -81,14 +81,20 @@ const QuickCategories = () => {
               }
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
             >
-              <div className="w-[62px] h-[62px] rounded-2xl relative overflow-hidden flex items-center justify-center">
-                <Image
-                  src={cat.imageUrl}
-                  alt={cat.name}
-                  fill
-                  sizes="62px"
-                  className="object-cover"
-                />
+              <div className={`w-[62px] h-[62px] rounded-2xl relative overflow-hidden flex items-center justify-center ${
+                !hasImage ? `bg-gradient-to-br ${color.gradient}` : ''
+              }`}>
+                {hasImage ? (
+                  <Image
+                    src={cat.imageUrl}
+                    alt={cat.name}
+                    fill
+                    sizes="62px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl">{cat.icon || '📂'}</span>
+                )}
               </div>
               <span className="text-[10px] font-semibold text-white/70 text-center leading-tight w-[68px] line-clamp-2">
                 {cat.name}
