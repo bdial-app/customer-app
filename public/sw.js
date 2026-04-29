@@ -170,7 +170,9 @@ self.addEventListener("push", (event) => {
     payload = event.data ? event.data.json() : {};
   } catch {
     try {
-      payload = { notification: { title: event.data?.text() || "New notification" } };
+      payload = {
+        notification: { title: event.data?.text() || "New notification" },
+      };
     } catch {
       payload = { notification: { title: "New notification" } };
     }
@@ -180,11 +182,12 @@ self.addEventListener("push", (event) => {
   const notifData = payload.notification || {};
   const fcmData = payload.data || {};
 
-  const title = notifData.title || fcmData.title || "Bohri Connect";
+  const title = notifData.title || fcmData.title || "Tijarah";
   const body = notifData.body || fcmData.body || "";
   const icon = "/cloth-icon.png";
   const badge = "/cloth-icon.png";
-  const image = notifData.image || notifData.imageUrl || fcmData.imageUrl || undefined;
+  const image =
+    notifData.image || notifData.imageUrl || fcmData.imageUrl || undefined;
 
   // Use type as collapse tag so multiple chat notifications from same conversation collapse
   const tag = fcmData.type || "general";
@@ -261,7 +264,7 @@ self.addEventListener("notificationclick", (event) => {
         if (clients.openWindow) {
           return clients.openWindow(targetUrl);
         }
-      })
+      }),
   );
 });
 

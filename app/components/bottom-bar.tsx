@@ -33,6 +33,8 @@ interface TabItem {
   iconOutline: string;
   iconFilled: string;
   mode?: "customer" | "provider";
+  /** Tab requires authentication — hidden when user is not logged in */
+  requiresAuth?: boolean;
 }
 
 const TABS: TabItem[] = [
@@ -52,6 +54,7 @@ const TABS: TabItem[] = [
     iconOutline: bookmarkOutline,
     iconFilled: bookmark,
     mode: "customer",
+    requiresAuth: true,
   },
   // Provider-only
   {
@@ -60,6 +63,7 @@ const TABS: TabItem[] = [
     iconOutline: layersOutline,
     iconFilled: layers,
     mode: "provider",
+    requiresAuth: true,
   },
   {
     id: "analytics",
@@ -67,6 +71,7 @@ const TABS: TabItem[] = [
     iconOutline: analyticsOutline,
     iconFilled: analyticsSharp,
     mode: "provider",
+    requiresAuth: true,
   },
   // Shared
   {
@@ -74,23 +79,29 @@ const TABS: TabItem[] = [
     label: "Chats",
     iconOutline: chatbubblesOutline,
     iconFilled: chatbubbles,
+    requiresAuth: true,
   },
   {
     id: "profile",
     label: "Profile",
     iconOutline: personOutline,
     iconFilled: person,
+    requiresAuth: true,
   },
 ];
 
 const BottomBar = ({ activeTab, setActiveTab }: BottomBarProps) => {
   const { userMode } = useAppContext();
+  const user = useAppSelector((state) => state.auth.user);
   const customerUnreadCount = useAppSelector((state) => state.chat.customerUnreadCount);
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const badgeCount = userMode === "provider" ? providerUnreadCount : customerUnreadCount;
 
   const visibleTabs = TABS.filter(
-    (tab) => !tab.mode || tab.mode === userMode
+    (tab) =>
+      (!tab.mode || tab.mode === userMode) &&
+      // Provider-only tabs still hidden for guests; customer tabs always visible
+      (!tab.requiresAuth || !!user || tab.mode !== "provider")
   );
 
   const isProvider = userMode === "provider";

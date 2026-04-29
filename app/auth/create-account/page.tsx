@@ -82,10 +82,10 @@ const StepProgress = ({
                 <div
                   className={`w-9 h-9 rounded-full grid place-content-center transition-all duration-300 ${
                     isActive
-                      ? "bg-amber-500 text-white shadow-lg shadow-amber-200/50 scale-110"
+                      ? "bg-amber-500 text-white shadow-lg shadow-amber-200/50 dark:shadow-amber-900/50 scale-110"
                       : isComplete
                         ? "bg-green-500 text-white"
-                        : "bg-slate-100 text-slate-400"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                   }`}
                 >
                   {isComplete ? (
@@ -110,7 +110,7 @@ const StepProgress = ({
                 <div className="flex-1 mx-2 -mt-4">
                   <div
                     className={`h-0.5 rounded-full transition-all duration-500 ${
-                      i < currentIdx ? "bg-green-400" : "bg-slate-200"
+                      i < currentIdx ? "bg-green-400" : "bg-slate-200 dark:bg-slate-700"
                     }`}
                   />
                 </div>
@@ -134,7 +134,7 @@ const GenderSelector = () => {
 
   return (
     <div className="px-4 py-2">
-      <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
         Gender
       </label>
       <div className="grid grid-cols-3 gap-2.5">
@@ -147,8 +147,8 @@ const GenderSelector = () => {
               onClick={() => setFieldValue("gender", g.value)}
               className={`relative flex flex-col items-center gap-1.5 py-3.5 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
                 selected
-                  ? "border-amber-400 bg-amber-50 shadow-sm shadow-amber-100/50"
-                  : "border-slate-100 bg-white hover:border-slate-200"
+                  ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20 shadow-sm shadow-amber-100/50"
+                  : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600"
               }`}
             >
               {selected && (
@@ -161,7 +161,7 @@ const GenderSelector = () => {
               )}
               <span className="text-2xl">{g.emoji}</span>
               <span
-                className={`text-xs font-bold ${selected ? "text-amber-700" : "text-slate-500"}`}
+                className={`text-xs font-bold ${selected ? "text-amber-700 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"}`}
               >
                 {g.label}
               </span>
@@ -192,7 +192,7 @@ const CitySelector = () => {
 
   return (
     <div className="px-4 py-1.5 relative z-10">
-      <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
         City
       </label>
       <button
@@ -200,12 +200,12 @@ const CitySelector = () => {
         onClick={() => setCityOpen(!cityOpen)}
         className={`w-full flex items-center gap-2 px-3.5 py-3 rounded-xl border-2 transition-all text-left ${
           touched.city && errors.city
-            ? "border-red-300 bg-white"
+            ? "border-red-300 bg-white dark:bg-slate-800"
             : values.city
               ? isCitySupported
-                ? "border-green-200 bg-green-50/30"
-                : "border-amber-200 bg-amber-50/30"
-              : "border-slate-200 bg-white"
+                ? "border-green-200 bg-green-50/30 dark:bg-green-900/10"
+                : "border-amber-200 bg-amber-50/30 dark:bg-amber-900/10"
+              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
         }`}
       >
         <IonIcon
@@ -213,7 +213,7 @@ const CitySelector = () => {
           className="text-slate-400 text-base flex-shrink-0"
         />
         <span
-          className={`flex-1 text-sm ${values.city ? "text-slate-800 font-medium" : "text-slate-400"}`}
+          className={`flex-1 text-sm ${values.city ? "text-slate-800 dark:text-slate-200 font-medium" : "text-slate-400"}`}
         >
           {values.city || "Select your city"}
         </span>
@@ -229,14 +229,14 @@ const CitySelector = () => {
         />
       </button>
       {cityOpen && (
-        <div className="absolute left-4 right-4 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-xl z-30 max-h-52 overflow-hidden">
-          <div className="p-2 border-b border-slate-100">
+        <div className="absolute left-4 right-4 top-full mt-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl z-30 max-h-52 overflow-hidden">
+          <div className="p-2 border-b border-slate-100 dark:border-slate-700">
             <input
               type="text"
               value={citySearch}
               onChange={(e) => setCitySearch(e.target.value)}
               placeholder="Search city..."
-              className="w-full px-3 py-2 text-sm bg-slate-50 rounded-lg outline-none placeholder:text-slate-400"
+              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 rounded-lg outline-none placeholder:text-slate-400 text-slate-800 dark:text-white"
               autoFocus
             />
           </div>
@@ -254,8 +254,8 @@ const CitySelector = () => {
                   }}
                   className={`w-full text-left px-3 py-2.5 text-sm transition-colors ${
                     values.city === city
-                      ? "bg-amber-50 text-amber-700 font-semibold"
-                      : "text-slate-700 active:bg-slate-50"
+                      ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold"
+                      : "text-slate-700 dark:text-slate-300 active:bg-slate-50 dark:active:bg-slate-700"
                   }`}
                 >
                   {city}
@@ -296,14 +296,14 @@ const LocationFields = () => {
   return (
     <>
       <div className="px-4 py-1.5">
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
           Area / Locality
         </label>
         <div
           className={`flex items-center gap-2 px-3.5 py-3 rounded-xl border-2 transition-all ${
             touched.area && errors.area
-              ? "border-red-300 bg-white"
-              : "border-slate-200 bg-white"
+              ? "border-red-300 bg-white dark:bg-slate-800"
+              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
           }`}
         >
           <IonIcon
@@ -318,7 +318,7 @@ const LocationFields = () => {
               setFieldTouched("area", true, false);
             }}
             placeholder="e.g. Bandra West, Koregaon Park"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 dark:text-white"
           />
         </div>
         {touched.area && errors.area && (
@@ -329,14 +329,14 @@ const LocationFields = () => {
       </div>
 
       <div className="px-4 py-1.5">
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
           Pincode
         </label>
         <div
           className={`flex items-center gap-2 px-3.5 py-3 rounded-xl border-2 transition-all ${
             touched.pincode && errors.pincode
-              ? "border-red-300 bg-white"
-              : "border-slate-200 bg-white"
+              ? "border-red-300 bg-white dark:bg-slate-800"
+              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
           }`}
         >
           <IonIcon
@@ -352,7 +352,7 @@ const LocationFields = () => {
               setFieldTouched("pincode", true, false);
             }}
             placeholder="e.g. 411001"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 tracking-wide"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 dark:text-white tracking-wide"
           />
         </div>
         {touched.pincode && errors.pincode && (
@@ -401,7 +401,7 @@ function CreateAccountContent() {
   };
 
   return (
-    <Page className="bg-white">
+    <Page className="bg-white dark:bg-slate-950 dark:!bg-slate-950">
       <Navbar title="Create Account" />
 
       {/* Logo area */}
@@ -417,10 +417,10 @@ function CreateAccountContent() {
 
       {/* Header */}
       <div className="px-6 pt-2 pb-1">
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
           {stepInfo[currentStep].title}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {stepInfo[currentStep].subtitle}
         </p>
       </div>
@@ -566,14 +566,14 @@ function CreateAccountContent() {
                 <div className="overflow-y-auto max-h-[calc(100vh-280px)] pb-4 space-y-0.5">
                   {/* Full Name */}
                   <div className="px-4 pt-2 pb-1">
-                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
                       Full Name
                     </label>
                     <div
                       className={`flex items-center gap-2 px-3.5 py-3 rounded-xl border-2 transition-all focus-within:border-amber-300 ${
                         touched.name && errors.name
-                          ? "border-red-300 bg-white"
-                          : "border-slate-200 bg-white"
+                          ? "border-red-300 bg-white dark:bg-slate-800"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                       }`}
                     >
                       <IonIcon
@@ -587,7 +587,7 @@ function CreateAccountContent() {
                         onChange={(e) => setFieldValue("name", e.target.value)}
                         onBlur={() => setFieldTouched("name", true)}
                         placeholder="e.g. Adeeb Shah"
-                        className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800"
+                        className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 dark:text-white"
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1 px-1">

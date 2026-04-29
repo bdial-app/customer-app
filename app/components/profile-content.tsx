@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   List,
   ListItem,
@@ -67,11 +67,25 @@ import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
-import { getMyProviderStatus, disableMyProvider, enableMyProvider, deleteMyProvider } from "@/services/provider.service";
+import {
+  getMyProviderStatus,
+  disableMyProvider,
+  enableMyProvider,
+  deleteMyProvider,
+} from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
-import { deleteMyAccount, pauseMyAccount, exportMyData } from "@/services/user.service";
-import { submitBugReport, BUG_CATEGORY_LABELS, type BugCategory } from "@/services/bug-report.service";
+import {
+  deleteMyAccount,
+  pauseMyAccount,
+  exportMyData,
+} from "@/services/user.service";
+import {
+  submitBugReport,
+  BUG_CATEGORY_LABELS,
+  type BugCategory,
+} from "@/services/bug-report.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 interface UserProfile {
   mobileNumber: string;
@@ -120,12 +134,12 @@ const MenuRow = ({
   onClick?: () => void;
 }) => (
   <motion.div
-    whileTap={{ scale: 0.98, backgroundColor: "#f8fafc" }}
+    whileTap={{ scale: 0.98 }}
     onClick={onClick}
     className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
   >
     <div
-      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
+      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg} dark:bg-slate-700`}
     >
       <IonIcon icon={icon} className={`text-lg ${iconColor}`} />
     </div>
@@ -201,7 +215,9 @@ const SlidePage = ({
               <IonIcon icon={arrowBack} className="text-lg" />
               Back
             </button>
-            <h2 className="text-base font-bold text-slate-800 dark:text-white">{title}</h2>
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">
+              {title}
+            </h2>
             <div className="w-12" />
           </div>
         </div>
@@ -234,14 +250,24 @@ const ProfileContent = () => {
   const [pauseSheetOpen, setPauseSheetOpen] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [disableProviderSheetOpen, setDisableProviderSheetOpen] = useState(false);
+  const [disableProviderSheetOpen, setDisableProviderSheetOpen] =
+    useState(false);
   const [deleteProviderSheetOpen, setDeleteProviderSheetOpen] = useState(false);
   const [isDisablingProvider, setIsDisablingProvider] = useState(false);
   const [isDeletingProvider, setIsDeletingProvider] = useState(false);
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
-    "about" | "terms" | "privacy" | "help" | "editProfile" | "language" | "notificationSettings" | "contactUs" | "reportBug" | null
+    | "about"
+    | "terms"
+    | "privacy"
+    | "help"
+    | "editProfile"
+    | "language"
+    | "notificationSettings"
+    | "contactUs"
+    | "reportBug"
+    | null
   >(null);
 
   const [profile, setProfile] = useState<any>(user || {});
@@ -314,7 +340,7 @@ const ProfileContent = () => {
     dispatch(clearUser());
     resetProviderState();
     setLogoutActionSheetOpen(false);
-    router.push("/auth/login");
+    router.push("/");
   };
 
   const handleDeleteAccount = async () => {
@@ -326,7 +352,7 @@ const ProfileContent = () => {
       dispatch(clearUser());
       resetProviderState();
       setDeleteSheetOpen(false);
-      router.push("/auth/login");
+      router.push("/");
       notify({
         title: "Account Deleted",
         subtitle: "Your account has been archived. We're sorry to see you go.",
@@ -352,7 +378,7 @@ const ProfileContent = () => {
       dispatch(clearUser());
       resetProviderState();
       setPauseSheetOpen(false);
-      router.push("/auth/login");
+      router.push("/");
       notify({
         title: "Account Paused",
         subtitle: "Your account is paused. Log in anytime to reactivate.",
@@ -373,7 +399,9 @@ const ProfileContent = () => {
     setIsExporting(true);
     try {
       const data = await exportMyData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -411,7 +439,8 @@ const ProfileContent = () => {
       setDisableProviderSheetOpen(false);
       notify({
         title: "Provider Disabled",
-        subtitle: "Your provider profile is hidden from all listings. You can re-enable it anytime.",
+        subtitle:
+          "Your provider profile is hidden from all listings. You can re-enable it anytime.",
         variant: "success",
       });
     } catch {
@@ -480,467 +509,690 @@ const ProfileContent = () => {
         .slice(0, 2)
     : "BC";
 
+  const { requireAuth } = useAuthGate();
+  const guestAction = useCallback(() => requireAuth(), [requireAuth]);
+
+  // ─── Guest Profile View ───────────────────────────────────────
+  // Instead of early return, we render guest content conditionally
+  // so that all SlidePage components at the bottom are shared.
+
   return (
     <>
-      {/* Profile Header Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mx-4 mt-4 mb-3 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm"
-      >
-        <div className="flex items-center gap-3.5">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-sm">
-            <span className="text-lg font-bold text-white">{initials}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
-              {profile.name || "User"}
-            </h2>
-            <p className="text-xs text-slate-500 truncate">
-              {profile.mobileNumber || "No phone"}
-            </p>
-            {profile.city && (
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {profile.area ? `${profile.area}, ` : ""}
-                {profile.city}
-              </p>
-            )}
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setActivePage("editProfile")}
-            className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center"
-          >
-            <IonIcon icon={createOutline} className="text-amber-600 text-lg" />
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Provider Status Cards */}
-      {(providerStatus === "approved" ||
-        providerStatus === "pending" ||
-        providerStatus === "in_review") && (
-        <div className="mx-4 mb-3">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
-            <div>
-              <div className="text-sm font-bold text-slate-800 dark:text-white">
-                Provider Mode
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
-                {userMode === "provider"
-                  ? "Managing your business"
-                  : "Switch to manage your business"}
-              </div>
-            </div>
-            <Toggle
-              component="label"
-              checked={userMode === "provider"}
-              onChange={toggleMode}
-              className="konsta-color-primary"
-            />
-          </div>
-        </div>
-      )}
-
-      {providerStatus === "not_applied" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mx-4 mb-3"
-        >
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
-            <div className="relative z-10">
-              <h3 className="text-white font-bold text-sm">
-                Become a Provider
-              </h3>
-              <p className="text-white/70 text-xs mt-0.5 mb-3">
-                Start offering your services on Bohri Connect
-              </p>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleApply}
-                className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-bold border border-white/30"
-              >
-                Apply Now →
-              </motion.button>
-            </div>
-            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
-            <div className="absolute -right-2 -bottom-6 w-20 h-20 rounded-full bg-white/5" />
-          </div>
-        </motion.div>
-      )}
-
-      {providerStatus === "pending" && userMode === "customer" && (
-        <div className="mx-4 mb-3">
-          <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-amber-100 rounded-xl">
-                <IonIcon
-                  icon={timeOutline}
-                  className="text-xl text-amber-600"
-                />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm text-amber-900">
-                  Verification Pending
-                </div>
-                <div className="text-amber-700 text-xs mt-0.5">
-                  Under review. You can still manage your business.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {providerStatus === "rejected" && (
-        <div className="mx-4 mb-3">
-          <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-red-100 rounded-xl">
-                <IonIcon
-                  icon={alertCircleOutline}
-                  className="text-xl text-red-600"
-                />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm text-red-900">
-                  Application Rejected
-                </div>
-                <div className="text-red-700 text-xs mt-0.5">
-                  Please review your documents and try again.
-                </div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setProviderStatus("not_applied")}
-                  className="mt-2 text-xs font-bold text-red-600 underline"
-                >
-                  Retry Application
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Provider Business Card - shown when in provider mode */}
-      {(providerStatus === "approved" ||
-        providerStatus === "pending" ||
-        providerStatus === "in_review") &&
-        userMode === "provider" && (
+      {!user ? (
+        <>
+          {/* Guest Header */}
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-4 mb-3"
+            transition={{ duration: 0.3 }}
+            className="mx-4 mt-4 mb-3 bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm text-center"
           >
-            <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
-                  <IonIcon
-                    icon={businessOutline}
-                    className="text-xl text-white"
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center mx-auto mb-3">
+              <IonIcon
+                icon={personOutline}
+                className="text-2xl text-slate-400 dark:text-slate-500"
+              />
+            </div>
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">
+              Guest User
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Sign in to access your profile
+            </p>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={guestAction}
+              className="mt-3 px-6 py-2.5 bg-amber-500 text-white font-bold text-sm rounded-xl active:bg-amber-600"
+            >
+              Sign In / Sign Up
+            </motion.button>
+          </motion.div>
+
+          {/* Account Section — all gated */}
+          <MenuSection title="Account">
+            <MenuRow
+              icon={personOutline}
+              iconColor="text-blue-500"
+              iconBg="bg-blue-50"
+              label="Edit Profile"
+              sublabel="Name, gender, location"
+              onClick={guestAction}
+            />
+            <MenuRow
+              icon={locationOutline}
+              iconColor="text-green-500"
+              iconBg="bg-green-50"
+              label="Saved Addresses"
+              sublabel="Home, office, and more"
+              onClick={guestAction}
+            />
+            <MenuRow
+              icon={heartOutline}
+              iconColor="text-pink-500"
+              iconBg="bg-pink-50"
+              label="Saved Providers"
+              sublabel="Your favourites"
+              onClick={guestAction}
+            />
+          </MenuSection>
+
+          {/* Preferences — theme & language work without login */}
+          <MenuSection title="Preferences">
+            <MenuRow
+              icon={notificationsOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Notifications"
+              sublabel="Push & in-app alerts"
+              onClick={guestAction}
+            />
+            <MenuRow
+              icon={isDark ? sunnyOutline : moonOutline}
+              iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
+              iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
+              label="Dark Mode"
+              sublabel={isDark ? "On" : "Off"}
+              trailing={
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleTheme();
+                  }}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`}
                   />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm truncate">
-                    {profile.name || "Your Business"}
+              }
+              onClick={toggleTheme}
+            />
+            <LanguageMenuButton onClick={() => setActivePage("language")} />
+          </MenuSection>
+
+          {/* Support */}
+          <MenuSection title="Support">
+            <MenuRow
+              icon={helpCircleOutline}
+              iconColor="text-indigo-500"
+              iconBg="bg-indigo-50"
+              label="Help & FAQ"
+              onClick={() => setActivePage("help")}
+            />
+            <MenuRow
+              icon={mailOutline}
+              iconColor="text-cyan-500"
+              iconBg="bg-cyan-50"
+              label="Contact Us"
+              sublabel="support@tijarah.app"
+              onClick={() => setActivePage("contactUs")}
+            />
+            <MenuRow
+              icon={bugOutline}
+              iconColor="text-orange-500"
+              iconBg="bg-orange-50"
+              label="Report a Bug"
+              onClick={() => setActivePage("reportBug")}
+            />
+          </MenuSection>
+
+          {/* Legal */}
+          <MenuSection title="Legal">
+            <MenuRow
+              icon={informationCircleOutline}
+              iconColor="text-blue-500"
+              iconBg="bg-blue-50"
+              label="About Us"
+              onClick={() => setActivePage("about")}
+            />
+            <MenuRow
+              icon={documentTextOutline}
+              iconColor="text-slate-500"
+              iconBg="bg-slate-100"
+              label="Terms & Conditions"
+              onClick={() => setActivePage("terms")}
+            />
+            <MenuRow
+              icon={shieldCheckmarkOutline}
+              iconColor="text-green-500"
+              iconBg="bg-green-50"
+              label="Privacy Policy"
+              onClick={() => setActivePage("privacy")}
+            />
+          </MenuSection>
+
+          {/* App Version */}
+          <div className="text-center py-6">
+            <p className="text-[11px] text-slate-300 font-medium">
+              Tijarah v{APP_VERSION}
+            </p>
+            <p className="text-[10px] text-slate-300 mt-0.5">
+              Made with ♥ in India
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Profile Header Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mx-4 mt-4 mb-3 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-sm">
+                <span className="text-lg font-bold text-white">{initials}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
+                  {profile.name || "User"}
+                </h2>
+                <p className="text-xs text-slate-500 truncate">
+                  {profile.mobileNumber || "No phone"}
+                </p>
+                {profile.city && (
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {profile.area ? `${profile.area}, ` : ""}
+                    {profile.city}
                   </p>
-                  <p className="text-white/70 text-[11px]">Business Profile</p>
-                </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    // Navigate back to home/dashboard tab to manage business
-                  }}
-                  className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
-                >
-                  Manage Business
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={toggleMode}
-                  className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
-                >
-                  Switch to Customer
-                </motion.button>
-              </div>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setActivePage("editProfile")}
+                className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"
+              >
+                <IonIcon
+                  icon={createOutline}
+                  className="text-amber-600 text-lg"
+                />
+              </motion.button>
             </div>
           </motion.div>
-        )}
 
-      {/* Provider Disabled Card */}
-      {providerStatus === "disabled" && (
-        <div className="mx-4 mb-3">
-          <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl">
-                <IonIcon icon={eyeOffOutline} className="text-xl text-slate-500" />
+          {/* Provider Status Cards */}
+          {(providerStatus === "approved" ||
+            providerStatus === "pending" ||
+            providerStatus === "in_review" ||
+            providerStatus === "suspended") && (
+            <div className="mx-4 mb-3">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
+                <div>
+                  <div className="text-sm font-bold text-slate-800 dark:text-white">
+                    Provider Mode
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    {userMode === "provider"
+                      ? "Managing your business"
+                      : "Switch to manage your business"}
+                  </div>
+                </div>
+                <Toggle
+                  component="label"
+                  checked={userMode === "provider"}
+                  onChange={toggleMode}
+                  className="konsta-color-primary"
+                />
               </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm text-slate-800 dark:text-white">
-                  Provider Disabled
+            </div>
+          )}
+
+          {providerStatus === "not_applied" && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-4 mb-3"
+            >
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
+                <div className="relative z-10">
+                  <h3 className="text-white font-bold text-sm">
+                    Become a Provider
+                  </h3>
+                  <p className="text-white/70 text-xs mt-0.5 mb-3">
+                    Start offering your services on Tijarah
+                  </p>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleApply}
+                    className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-bold border border-white/30"
+                  >
+                    Apply Now →
+                  </motion.button>
                 </div>
-                <div className="text-slate-500 text-xs mt-0.5">
-                  Your provider profile is hidden from all listings. Re-enable it anytime.
+                <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
+                <div className="absolute -right-2 -bottom-6 w-20 h-20 rounded-full bg-white/5" />
+              </div>
+            </motion.div>
+          )}
+
+          {providerStatus === "pending" && userMode === "customer" && (
+            <div className="mx-4 mb-3">
+              <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-xl">
+                    <IonIcon
+                      icon={timeOutline}
+                      className="text-xl text-amber-600"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-amber-900 dark:text-amber-300">
+                      Verification Pending
+                    </div>
+                    <div className="text-amber-700 dark:text-amber-400 text-xs mt-0.5">
+                      Under review. You can still manage your business.
+                    </div>
+                  </div>
                 </div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
+              </div>
+            </div>
+          )}
+
+          {providerStatus === "rejected" && (
+            <div className="mx-4 mb-3">
+              <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
+                    <IonIcon
+                      icon={alertCircleOutline}
+                      className="text-xl text-red-600"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-red-900 dark:text-red-300">
+                      Application Rejected
+                    </div>
+                    <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
+                      Please review your documents and try again.
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setProviderStatus("not_applied")}
+                      className="mt-2 text-xs font-bold text-red-600 underline"
+                    >
+                      Retry Application
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Provider Business Card - shown when in provider mode */}
+          {(providerStatus === "approved" ||
+            providerStatus === "pending" ||
+            providerStatus === "in_review") &&
+            userMode === "provider" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mx-4 mb-3"
+              >
+                <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
+                      <IonIcon
+                        icon={businessOutline}
+                        className="text-xl text-white"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate">
+                        {profile.name || "Your Business"}
+                      </p>
+                      <p className="text-white/70 text-[11px]">
+                        Business Profile
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        // Navigate back to home/dashboard tab to manage business
+                      }}
+                      className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
+                    >
+                      Manage Business
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={toggleMode}
+                      className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
+                    >
+                      Switch to Customer
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+          {/* Provider Suspended Card */}
+          {providerStatus === "suspended" && (
+            <div className="mx-4 mb-3">
+              <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
+                    <IonIcon
+                      icon={alertCircleOutline}
+                      className="text-xl text-red-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-red-900 dark:text-red-300">
+                      Provider Suspended
+                    </div>
+                    <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
+                      Your provider profile has been suspended by our moderation
+                      team. Please contact support to request a review.
+                    </div>
+                    <a
+                      href="mailto:support@tijarahconnect.com?subject=Provider%20Suspension%20Review%20Request"
+                      className="inline-block mt-3 px-4 py-2 bg-red-500 text-white text-xs font-bold rounded-xl"
+                    >
+                      Contact Support
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Provider Disabled Card */}
+          {providerStatus === "disabled" && (
+            <div className="mx-4 mb-3">
+              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl">
+                    <IonIcon
+                      icon={eyeOffOutline}
+                      className="text-xl text-slate-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-slate-800 dark:text-white">
+                      Provider Disabled
+                    </div>
+                    <div className="text-slate-500 text-xs mt-0.5">
+                      Your provider profile is hidden from all listings.
+                      Re-enable it anytime.
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleEnableProvider}
+                      disabled={isDisablingProvider}
+                      className="mt-3 px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl disabled:opacity-50"
+                    >
+                      {isDisablingProvider
+                        ? "Enabling..."
+                        : "Re-enable Provider"}
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Provider Deleted Card */}
+          {providerStatus === "deleted" && (
+            <div className="mx-4 mb-3">
+              <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
+                    <IonIcon
+                      icon={trashOutline}
+                      className="text-xl text-red-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-red-900 dark:text-red-300">
+                      Provider Deleted
+                    </div>
+                    <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
+                      Your provider profile has been removed. You can apply
+                      again as a new provider.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Provider Management Section (when provider mode is active) ── */}
+          {(providerStatus === "approved" ||
+            providerStatus === "pending" ||
+            providerStatus === "in_review" ||
+            providerStatus === "disabled" ||
+            providerStatus === "suspended") && (
+            <MenuSection title="Provider Management">
+              {providerStatus === "disabled" ? (
+                <MenuRow
+                  icon={eyeOutline}
+                  iconColor="text-teal-500"
+                  iconBg="bg-teal-50"
+                  label="Re-enable Provider"
+                  sublabel="Make your profile visible again"
                   onClick={handleEnableProvider}
-                  disabled={isDisablingProvider}
-                  className="mt-3 px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl disabled:opacity-50"
-                >
-                  {isDisablingProvider ? "Enabling..." : "Re-enable Provider"}
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                  trailing={
+                    isDisablingProvider ? (
+                      <Preloader className="w-5 h-5" />
+                    ) : (
+                      <IonIcon
+                        icon={chevronForward}
+                        className="text-slate-300 text-sm"
+                      />
+                    )
+                  }
+                />
+              ) : (
+                <MenuRow
+                  icon={eyeOffOutline}
+                  iconColor="text-amber-500"
+                  iconBg="bg-amber-50"
+                  label="Disable Provider"
+                  sublabel="Hide your profile from listings"
+                  onClick={() => setDisableProviderSheetOpen(true)}
+                />
+              )}
+              <MenuRow
+                icon={trashOutline}
+                iconColor="text-red-500"
+                iconBg="bg-red-50"
+                label="Delete Provider"
+                sublabel="Permanently remove your provider profile"
+                danger
+                onClick={() => setDeleteProviderSheetOpen(true)}
+              />
+            </MenuSection>
+          )}
 
-      {/* Provider Deleted Card */}
-      {providerStatus === "deleted" && (
-        <div className="mx-4 mb-3">
-          <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
-                <IonIcon icon={trashOutline} className="text-xl text-red-500" />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm text-red-900 dark:text-red-300">
-                  Provider Deleted
-                </div>
-                <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
-                  Your provider profile has been removed. You can apply again as a new provider.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Provider Management Section (when provider mode is active) ── */}
-      {(providerStatus === "approved" ||
-        providerStatus === "pending" ||
-        providerStatus === "in_review" ||
-        providerStatus === "disabled") && (
-        <MenuSection title="Provider Management">
-          {providerStatus === "disabled" ? (
+          {/* ── Account Section ──────────────────────────────────── */}
+          <MenuSection title="Account">
             <MenuRow
-              icon={eyeOutline}
-              iconColor="text-teal-500"
-              iconBg="bg-teal-50"
-              label="Re-enable Provider"
-              sublabel="Make your profile visible again"
-              onClick={handleEnableProvider}
+              icon={personOutline}
+              iconColor="text-blue-500"
+              iconBg="bg-blue-50"
+              label="Edit Profile"
+              sublabel="Name, gender, location"
+              onClick={() => setActivePage("editProfile")}
+            />
+            <MenuRow
+              icon={locationOutline}
+              iconColor="text-green-500"
+              iconBg="bg-green-50"
+              label="Saved Addresses"
+              sublabel="Home, office, and more"
+              onClick={() => router.push("/add-location")}
+            />
+            <MenuRow
+              icon={heartOutline}
+              iconColor="text-pink-500"
+              iconBg="bg-pink-50"
+              label="Saved Providers"
+              sublabel="Your favourites"
+            />
+          </MenuSection>
+
+          {/* ── Preferences Section ──────────────────────────────── */}
+          <MenuSection title="Preferences">
+            <MenuRow
+              icon={notificationsOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Notifications"
+              sublabel="Push & in-app alerts"
+              onClick={() => setActivePage("notificationSettings")}
+            />
+            <MenuRow
+              icon={isDark ? sunnyOutline : moonOutline}
+              iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
+              iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
+              label="Dark Mode"
+              sublabel={isDark ? "On" : "Off"}
               trailing={
-                isDisablingProvider ? (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleTheme();
+                  }}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`}
+                  />
+                </div>
+              }
+              onClick={toggleTheme}
+            />
+            <LanguageMenuButton onClick={() => setActivePage("language")} />
+          </MenuSection>
+
+          {/* ── Support Section ──────────────────────────────────── */}
+          <MenuSection title="Support">
+            <MenuRow
+              icon={helpCircleOutline}
+              iconColor="text-indigo-500"
+              iconBg="bg-indigo-50"
+              label="Help & FAQ"
+              onClick={() => setActivePage("help")}
+            />
+            <MenuRow
+              icon={mailOutline}
+              iconColor="text-cyan-500"
+              iconBg="bg-cyan-50"
+              label="Contact Us"
+              sublabel="support@tijarah.app"
+              onClick={() => setActivePage("contactUs")}
+            />
+            <MenuRow
+              icon={bugOutline}
+              iconColor="text-orange-500"
+              iconBg="bg-orange-50"
+              label="Report a Bug"
+              onClick={() => setActivePage("reportBug")}
+            />
+          </MenuSection>
+
+          {/* ── Legal Section ────────────────────────────────────── */}
+          <MenuSection title="Legal">
+            <MenuRow
+              icon={informationCircleOutline}
+              iconColor="text-blue-500"
+              iconBg="bg-blue-50"
+              label="About Us"
+              onClick={() => setActivePage("about")}
+            />
+            <MenuRow
+              icon={documentTextOutline}
+              iconColor="text-slate-500"
+              iconBg="bg-slate-100"
+              label="Terms & Conditions"
+              onClick={() => setActivePage("terms")}
+            />
+            <MenuRow
+              icon={shieldCheckmarkOutline}
+              iconColor="text-green-500"
+              iconBg="bg-green-50"
+              label="Privacy Policy"
+              onClick={() => setActivePage("privacy")}
+            />
+          </MenuSection>
+
+          {/* ── Data & Privacy Section ───────────────────────────── */}
+          <MenuSection title="Data & Privacy">
+            <MenuRow
+              icon={downloadOutline}
+              iconColor="text-indigo-500"
+              iconBg="bg-indigo-50"
+              label="Download My Data"
+              sublabel="Export all your data as JSON"
+              onClick={handleExportData}
+              trailing={
+                isExporting ? (
                   <Preloader className="w-5 h-5" />
                 ) : (
-                  <IonIcon icon={chevronForward} className="text-slate-300 text-sm" />
+                  <IonIcon
+                    icon={chevronForward}
+                    className="text-slate-300 text-sm"
+                  />
                 )
               }
             />
-          ) : (
             <MenuRow
-              icon={eyeOffOutline}
+              icon={folderOpenOutline}
+              iconColor="text-teal-500"
+              iconBg="bg-teal-50"
+              label="Manage Saved Data"
+              sublabel="Locations, favourites, history"
+              onClick={() => router.push("/add-location")}
+            />
+          </MenuSection>
+
+          {/* ── Danger Zone ──────────────────────────────────────── */}
+          <MenuSection title="">
+            <MenuRow
+              icon={logOutOutline}
+              iconColor="text-orange-500"
+              iconBg="bg-orange-50"
+              label="Log Out"
+              onClick={() => setLogoutActionSheetOpen(true)}
+              trailing={null}
+            />
+            <MenuRow
+              icon={pauseCircleOutline}
               iconColor="text-amber-500"
               iconBg="bg-amber-50"
-              label="Disable Provider"
-              sublabel="Hide your profile from listings"
-              onClick={() => setDisableProviderSheetOpen(true)}
+              label="Pause Account"
+              sublabel="Temporarily freeze your account"
+              onClick={() => setPauseSheetOpen(true)}
+              trailing={null}
             />
-          )}
-          <MenuRow
-            icon={trashOutline}
-            iconColor="text-red-500"
-            iconBg="bg-red-50"
-            label="Delete Provider"
-            sublabel="Permanently remove your provider profile"
-            danger
-            onClick={() => setDeleteProviderSheetOpen(true)}
-          />
-        </MenuSection>
+            <MenuRow
+              icon={trashOutline}
+              iconColor="text-red-500"
+              iconBg="bg-red-50"
+              label="Delete Account"
+              sublabel="Permanently remove your data"
+              danger
+              onClick={() => setDeleteSheetOpen(true)}
+              trailing={null}
+            />
+          </MenuSection>
+
+          {/* App Version */}
+          <div className="text-center py-6">
+            <p className="text-[11px] text-slate-300 font-medium">
+              Tijarah v{APP_VERSION}
+            </p>
+            <p className="text-[10px] text-slate-300 mt-0.5">
+              Made with ♥ in India
+            </p>
+          </div>
+        </>
       )}
 
-      {/* ── Account Section ──────────────────────────────────── */}
-      <MenuSection title="Account">
-        <MenuRow
-          icon={personOutline}
-          iconColor="text-blue-500"
-          iconBg="bg-blue-50"
-          label="Edit Profile"
-          sublabel="Name, gender, location"
-          onClick={() => setActivePage("editProfile")}
-        />
-        <MenuRow
-          icon={locationOutline}
-          iconColor="text-green-500"
-          iconBg="bg-green-50"
-          label="Saved Addresses"
-          sublabel="Home, office, and more"
-          onClick={() => router.push("/add-location")}
-        />
-        <MenuRow
-          icon={heartOutline}
-          iconColor="text-pink-500"
-          iconBg="bg-pink-50"
-          label="Saved Providers"
-          sublabel="Your favourites"
-        />
-      </MenuSection>
-
-      {/* ── Preferences Section ──────────────────────────────── */}
-      <MenuSection title="Preferences">
-        <MenuRow
-          icon={notificationsOutline}
-          iconColor="text-amber-500"
-          iconBg="bg-amber-50"
-          label="Notifications"
-          sublabel="Push & in-app alerts"
-          onClick={() => setActivePage("notificationSettings")}
-        />
-        <MenuRow
-          icon={isDark ? sunnyOutline : moonOutline}
-          iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
-          iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
-          label="Dark Mode"
-          sublabel={isDark ? "On" : "Off"}
-          trailing={
-            <div
-              onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
-            >
-              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`} />
-            </div>
-          }
-          onClick={toggleTheme}
-        />
-        <LanguageMenuButton onClick={() => setActivePage("language")} />
-      </MenuSection>
-
-      {/* ── Support Section ──────────────────────────────────── */}
-      <MenuSection title="Support">
-        <MenuRow
-          icon={helpCircleOutline}
-          iconColor="text-indigo-500"
-          iconBg="bg-indigo-50"
-          label="Help & FAQ"
-          onClick={() => setActivePage("help")}
-        />
-        <MenuRow
-          icon={mailOutline}
-          iconColor="text-cyan-500"
-          iconBg="bg-cyan-50"
-          label="Contact Us"
-          sublabel="support@tijarah.app"
-          onClick={() => setActivePage("contactUs")}
-        />
-        <MenuRow
-          icon={bugOutline}
-          iconColor="text-orange-500"
-          iconBg="bg-orange-50"
-          label="Report a Bug"
-          onClick={() => setActivePage("reportBug")}
-        />
-      </MenuSection>
-
-      {/* ── Legal Section ────────────────────────────────────── */}
-      <MenuSection title="Legal">
-        <MenuRow
-          icon={informationCircleOutline}
-          iconColor="text-blue-500"
-          iconBg="bg-blue-50"
-          label="About Us"
-          onClick={() => setActivePage("about")}
-        />
-        <MenuRow
-          icon={documentTextOutline}
-          iconColor="text-slate-500"
-          iconBg="bg-slate-100"
-          label="Terms & Conditions"
-          onClick={() => setActivePage("terms")}
-        />
-        <MenuRow
-          icon={shieldCheckmarkOutline}
-          iconColor="text-green-500"
-          iconBg="bg-green-50"
-          label="Privacy Policy"
-          onClick={() => setActivePage("privacy")}
-        />
-      </MenuSection>
-
-      {/* ── Data & Privacy Section ───────────────────────────── */}
-      <MenuSection title="Data & Privacy">
-        <MenuRow
-          icon={downloadOutline}
-          iconColor="text-indigo-500"
-          iconBg="bg-indigo-50"
-          label="Download My Data"
-          sublabel="Export all your data as JSON"
-          onClick={handleExportData}
-          trailing={
-            isExporting ? (
-              <Preloader className="w-5 h-5" />
-            ) : (
-              <IonIcon icon={chevronForward} className="text-slate-300 text-sm" />
-            )
-          }
-        />
-        <MenuRow
-          icon={folderOpenOutline}
-          iconColor="text-teal-500"
-          iconBg="bg-teal-50"
-          label="Manage Saved Data"
-          sublabel="Locations, favourites, history"
-          onClick={() => router.push("/add-location")}
-        />
-      </MenuSection>
-
-      {/* ── Danger Zone ──────────────────────────────────────── */}
-      <MenuSection title="">
-        <MenuRow
-          icon={logOutOutline}
-          iconColor="text-orange-500"
-          iconBg="bg-orange-50"
-          label="Log Out"
-          onClick={() => setLogoutActionSheetOpen(true)}
-          trailing={null}
-        />
-        <MenuRow
-          icon={pauseCircleOutline}
-          iconColor="text-amber-500"
-          iconBg="bg-amber-50"
-          label="Pause Account"
-          sublabel="Temporarily freeze your account"
-          onClick={() => setPauseSheetOpen(true)}
-          trailing={null}
-        />
-        <MenuRow
-          icon={trashOutline}
-          iconColor="text-red-500"
-          iconBg="bg-red-50"
-          label="Delete Account"
-          sublabel="Permanently remove your data"
-          danger
-          onClick={() => setDeleteSheetOpen(true)}
-          trailing={null}
-        />
-      </MenuSection>
-
-      {/* App Version */}
-      <div className="text-center py-6">
-        <p className="text-[11px] text-slate-300 font-medium">
-          Bohri Connect v{APP_VERSION}
-        </p>
-        <p className="text-[10px] text-slate-300 mt-0.5">
-          Made with ♥ in India
-        </p>
-      </div>
-
-      {/* ── Slide Pages ──────────────────────────────────────── */}
+      {/* ── Slide Pages (shared between guest and logged-in) ── */}
 
       {/* Language Page */}
       <SlidePage
@@ -951,18 +1203,15 @@ const ProfileContent = () => {
         <LanguageSelector
           onLanguageChange={(newLocale: Locale) => {
             // Save to backend
-            updateUserMutation.mutate(
-              { preferredLanguage: newLocale } as any,
-              {
-                onSuccess: () => {
-                  notify({
-                    title: "Language Updated",
-                    subtitle: "Your language preference has been saved.",
-                    variant: "success",
-                  });
-                },
+            updateUserMutation.mutate({ preferredLanguage: newLocale } as any, {
+              onSuccess: () => {
+                notify({
+                  title: "Language Updated",
+                  subtitle: "Your language preference has been saved.",
+                  variant: "success",
+                });
               },
-            );
+            });
           }}
         />
       </SlidePage>
@@ -1038,7 +1287,7 @@ const ProfileContent = () => {
                 <button
                   type="button"
                   onClick={() => setActivePage(null)}
-                  className="py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm active:bg-slate-200"
+                  className="py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-sm active:bg-slate-200 dark:active:bg-slate-600"
                 >
                   Cancel
                 </button>
@@ -1061,19 +1310,20 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="About Us"
       >
-        <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <div className="text-center mb-6">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
               <span className="text-2xl font-bold text-white">BC</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Bohri Connect</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+              Tijarah
+            </h3>
             <p className="text-xs text-slate-400">Version {APP_VERSION}</p>
           </div>
           <p>
-            Bohri Connect is a community-driven marketplace that connects
-            customers with trusted local service providers. Our mission is to
-            empower small businesses and make quality services accessible to
-            everyone.
+            Tijarah is a community-driven marketplace that connects customers
+            with trusted local service providers. Our mission is to empower
+            small businesses and make quality services accessible to everyone.
           </p>
           <p>
             Founded with the vision of strengthening community bonds, we provide
@@ -1081,7 +1331,9 @@ const ProfileContent = () => {
             and customers can find reliable services — from tailoring and beauty
             to home repairs and catering.
           </p>
-          <h4 className="font-bold text-slate-800 pt-2">Our Values</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white pt-2">
+            Our Values
+          </h4>
           <ul className="space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">●</span>
@@ -1111,14 +1363,16 @@ const ProfileContent = () => {
               </span>
             </li>
           </ul>
-          <h4 className="font-bold text-slate-800 pt-2">Contact</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white pt-2">
+            Contact
+          </h4>
           <p>
             Email: support@bohriconnect.com
             <br />
             Website: www.bohriconnect.com
           </p>
           <p className="text-xs text-slate-400 pt-4 text-center">
-            © {new Date().getFullYear()} Bohri Connect. All rights reserved.
+            © {new Date().getFullYear()} Tijarah. All rights reserved.
           </p>
         </div>
       </SlidePage>
@@ -1129,28 +1383,67 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="Terms & Conditions"
       >
-        <div className="space-y-5 text-sm text-slate-600 leading-relaxed">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <p className="text-xs text-amber-700 font-medium">Effective Date: 1 May 2026 · Last Updated: April 2026</p>
+        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+              Effective Date: 1 May 2026 · Last Updated: April 2026
+            </p>
           </div>
 
-          <p>Welcome to Tijarah (BohriConnect). These Terms govern your use of the Tijarah app and all related services. By using Tijarah, you confirm you have read, understood, and agreed to these Terms.</p>
+          <p>
+            Welcome to Tijarah (BohriConnect). These Terms govern your use of
+            the Tijarah app and all related services. By using Tijarah, you
+            confirm you have read, understood, and agreed to these Terms.
+          </p>
 
-          <h4 className="font-bold text-slate-800">1. About Tijarah — What We Are and Are Not</h4>
-          <p>Tijarah is a community-driven business discovery platform. We provide a digital space where Bohra-owned businesses can be listed and discovered.</p>
-          <div className="bg-slate-50 border-l-4 border-amber-400 px-4 py-3 rounded-r-xl">
-            <p className="text-xs font-semibold text-slate-700">IMPORTANT</p>
-            <p className="text-xs mt-1 text-slate-600">Tijarah is an intermediary platform only. We do not own, operate, or control any listed business. We do not handle payments, bookings, or any transaction. Any arrangement between a User and a Business Owner is strictly between those two parties. Tijarah accepts no liability arising from it.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            1. About Tijarah — What We Are and Are Not
+          </h4>
+          <p>
+            Tijarah is a community-driven business discovery platform. We
+            provide a digital space where Bohra-owned businesses can be listed
+            and discovered.
+          </p>
+          <div className="bg-slate-50 dark:bg-slate-800 border-l-4 border-amber-400 px-4 py-3 rounded-r-xl">
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              IMPORTANT
+            </p>
+            <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
+              Tijarah is an intermediary platform only. We do not own, operate,
+              or control any listed business. We do not handle payments,
+              bookings, or any transaction. Any arrangement between a User and a
+              Business Owner is strictly between those two parties. Tijarah
+              accepts no liability arising from it.
+            </p>
           </div>
 
-          <h4 className="font-bold text-slate-800">2. Eligibility</h4>
-          <p>You may use Tijarah if you are at least 13 years of age and capable of entering a legally binding agreement. Users between 13–18 should have a parent or guardian review these Terms.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            2. Eligibility
+          </h4>
+          <p>
+            You may use Tijarah if you are at least 13 years of age and capable
+            of entering a legally binding agreement. Users between 13–18 should
+            have a parent or guardian review these Terms.
+          </p>
 
-          <h4 className="font-bold text-slate-800">3. User Accounts</h4>
-          <p>You must provide accurate registration information, keep credentials secure, and notify us of any unauthorised access. You are responsible for all activity through your account.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            3. User Accounts
+          </h4>
+          <p>
+            You must provide accurate registration information, keep credentials
+            secure, and notify us of any unauthorised access. You are
+            responsible for all activity through your account.
+          </p>
 
-          <h4 className="font-bold text-slate-800">4. Business Listings</h4>
-          <p>By submitting a listing, you confirm all information is accurate and the business is genuinely owned by a member of the Dawoodi Bohra community. The following are not permitted and will be removed without notice:</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            4. Business Listings
+          </h4>
+          <p>
+            By submitting a listing, you confirm all information is accurate and
+            the business is genuinely owned by a member of the Dawoodi Bohra
+            community. The following are not permitted and will be removed
+            without notice:
+          </p>
           <ul className="list-disc pl-5 space-y-1 text-xs">
             <li>Businesses not owned by a Bohra community member</li>
             <li>Listings for illegal goods or services</li>
@@ -1158,33 +1451,89 @@ const ProfileContent = () => {
             <li>Content violating third-party intellectual property rights</li>
           </ul>
 
-          <h4 className="font-bold text-slate-800">5. Verified Badge</h4>
-          <p>The 'Verified' badge indicates Tijarah reviewed an identity or community document. It does <strong>not</strong> guarantee quality, reliability, or safety of the business. Users must conduct their own due diligence.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            5. Verified Badge
+          </h4>
+          <p>
+            The 'Verified' badge indicates Tijarah reviewed an identity or
+            community document. It does <strong>not</strong> guarantee quality,
+            reliability, or safety of the business. Users must conduct their own
+            due diligence.
+          </p>
 
-          <h4 className="font-bold text-slate-800">6. User Conduct</h4>
-          <p>You agree not to post false or offensive content, impersonate others, spam, scrape data, upload malware, or use the platform for any unlawful purpose. We may suspend accounts that violate these rules without prior notice.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            6. User Conduct
+          </h4>
+          <p>
+            You agree not to post false or offensive content, impersonate
+            others, spam, scrape data, upload malware, or use the platform for
+            any unlawful purpose. We may suspend accounts that violate these
+            rules without prior notice.
+          </p>
 
-          <h4 className="font-bold text-slate-800">7. Reviews & Community Content</h4>
-          <p>Reviews must be honest and based on genuine first-hand experience. Reviews in exchange for payment, discounts, or gifts are prohibited. You retain ownership of your content and grant Tijarah a non-exclusive licence to display it within the Platform.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            7. Reviews & Community Content
+          </h4>
+          <p>
+            Reviews must be honest and based on genuine first-hand experience.
+            Reviews in exchange for payment, discounts, or gifts are prohibited.
+            You retain ownership of your content and grant Tijarah a
+            non-exclusive licence to display it within the Platform.
+          </p>
 
-          <h4 className="font-bold text-slate-800">8. Reporting & Blocking</h4>
-          <p>You may report or block any business or user. Submitting a report does not guarantee removal — Tijarah reviews each case individually and takes action where a clear violation is identified.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            8. Reporting & Blocking
+          </h4>
+          <p>
+            You may report or block any business or user. Submitting a report
+            does not guarantee removal — Tijarah reviews each case individually
+            and takes action where a clear violation is identified.
+          </p>
 
-          <h4 className="font-bold text-slate-800">9. Disclaimer of Warranties</h4>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-            <p className="text-xs text-slate-600">The Platform is provided on an "AS IS" basis without warranties of any kind. Tijarah makes no warranty that the Platform will be uninterrupted, error-free, or that any listing is accurate or reliable.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            9. Disclaimer of Warranties
+          </h4>
+          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              The Platform is provided on an "AS IS" basis without warranties of
+              any kind. Tijarah makes no warranty that the Platform will be
+              uninterrupted, error-free, or that any listing is accurate or
+              reliable.
+            </p>
           </div>
 
-          <h4 className="font-bold text-slate-800">10. Limitation of Liability</h4>
-          <p className="text-xs">To the fullest extent permitted by law, Tijarah shall not be liable for any loss arising from reliance on listings, any transaction between users and businesses, or any indirect or consequential damages. Our maximum aggregate liability is zero for users who have not paid anything.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            10. Limitation of Liability
+          </h4>
+          <p className="text-xs">
+            To the fullest extent permitted by law, Tijarah shall not be liable
+            for any loss arising from reliance on listings, any transaction
+            between users and businesses, or any indirect or consequential
+            damages. Our maximum aggregate liability is zero for users who have
+            not paid anything.
+          </p>
 
-          <h4 className="font-bold text-slate-800">11. Governing Law</h4>
-          <p>These Terms are governed by the laws of India. Disputes shall be subject to the exclusive jurisdiction of the courts in Pune, Maharashtra.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            11. Governing Law
+          </h4>
+          <p>
+            These Terms are governed by the laws of India. Disputes shall be
+            subject to the exclusive jurisdiction of the courts in Pune,
+            Maharashtra.
+          </p>
 
-          <h4 className="font-bold text-slate-800">12. Contact</h4>
-          <p>Legal enquiries: <span className="text-blue-600 font-medium">legal@tijarah.app</span></p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            12. Contact
+          </h4>
+          <p>
+            Legal enquiries:{" "}
+            <span className="text-blue-600 font-medium">legal@tijarah.app</span>
+          </p>
 
-          <p className="text-xs text-slate-400 pt-2 text-center">© 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May 2026</p>
+          <p className="text-xs text-slate-400 pt-2 text-center">
+            © 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May
+            2026
+          </p>
         </div>
       </SlidePage>
 
@@ -1194,35 +1543,84 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="Privacy Policy"
       >
-        <div className="space-y-5 text-sm text-slate-600 leading-relaxed">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <p className="text-xs text-amber-700 font-medium">Effective Date: 1 May 2026 · Last Updated: April 2026</p>
+        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+              Effective Date: 1 May 2026 · Last Updated: April 2026
+            </p>
           </div>
 
-          <p>Tijarah (BohriConnect) connects users with Bohra-owned businesses across food, fashion, retail, and local services. This Privacy Policy explains what personal information we collect, how we use it, and your rights over it.</p>
+          <p>
+            Tijarah (BohriConnect) connects users with Bohra-owned businesses
+            across food, fashion, retail, and local services. This Privacy
+            Policy explains what personal information we collect, how we use it,
+            and your rights over it.
+          </p>
 
-          <h4 className="font-bold text-slate-800">1. Information We Collect</h4>
-          <p className="font-medium text-slate-700">A. Information You Provide</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            1. Information We Collect
+          </h4>
+          <p className="font-medium text-slate-700">
+            A. Information You Provide
+          </p>
           <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li><strong>Name</strong> — optional, to personalise your experience</li>
-            <li><strong>Phone number</strong> — for account login and in-app contact</li>
-            <li><strong>Email</strong> — optional, for account recovery</li>
-            <li><strong>Profile photo</strong> — optional, displayed on reviews</li>
-            <li><strong>Business details</strong> — if you register a listing</li>
-            <li><strong>Reviews & ratings</strong> — content you write</li>
-            <li><strong>Reports</strong> — details you submit when reporting content</li>
+            <li>
+              <strong>Name</strong> — optional, to personalise your experience
+            </li>
+            <li>
+              <strong>Phone number</strong> — for account login and in-app
+              contact
+            </li>
+            <li>
+              <strong>Email</strong> — optional, for account recovery
+            </li>
+            <li>
+              <strong>Profile photo</strong> — optional, displayed on reviews
+            </li>
+            <li>
+              <strong>Business details</strong> — if you register a listing
+            </li>
+            <li>
+              <strong>Reviews & ratings</strong> — content you write
+            </li>
+            <li>
+              <strong>Reports</strong> — details you submit when reporting
+              content
+            </li>
           </ul>
-          <p className="font-medium text-slate-700 mt-2">B. Identity Documents (Optional — Business Owners Only)</p>
-          <p className="text-xs">To receive the 'Verified' badge, business owners may voluntarily submit an Aadhaar Card, PAN Card, or Ejmaat Card. Submission is entirely optional. These documents are stored in an encrypted, access-controlled Supabase Storage bucket separate from all other app data, accessible only to authorised Tijarah administrators, and are never shared with other users or third parties.</p>
-          <p className="font-medium text-slate-700 mt-2">C. Automatically Collected</p>
+          <p className="font-medium text-slate-700 mt-2">
+            B. Identity Documents (Optional — Business Owners Only)
+          </p>
+          <p className="text-xs">
+            To receive the 'Verified' badge, business owners may voluntarily
+            submit an Aadhaar Card, PAN Card, or Ejmaat Card. Submission is
+            entirely optional. These documents are stored in an encrypted,
+            access-controlled Supabase Storage bucket separate from all other
+            app data, accessible only to authorised Tijarah administrators, and
+            are never shared with other users or third parties.
+          </p>
+          <p className="font-medium text-slate-700 mt-2">
+            C. Automatically Collected
+          </p>
           <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li><strong>Location</strong> — only if you grant permission</li>
-            <li><strong>Device info</strong> — type, OS version, app version</li>
-            <li><strong>Usage data</strong> — features used, search terms, interactions</li>
-            <li><strong>Crash reports</strong> — anonymous technical data</li>
+            <li>
+              <strong>Location</strong> — only if you grant permission
+            </li>
+            <li>
+              <strong>Device info</strong> — type, OS version, app version
+            </li>
+            <li>
+              <strong>Usage data</strong> — features used, search terms,
+              interactions
+            </li>
+            <li>
+              <strong>Crash reports</strong> — anonymous technical data
+            </li>
           </ul>
 
-          <h4 className="font-bold text-slate-800">2. How We Use Your Information</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            2. How We Use Your Information
+          </h4>
           <ul className="list-disc pl-5 space-y-1 text-xs">
             <li>Create and manage your account</li>
             <li>Display and operate Bohra business listings</li>
@@ -1234,15 +1632,36 @@ const ProfileContent = () => {
             <li>Detect and respond to reports of inappropriate content</li>
             <li>Fix technical bugs and improve performance</li>
           </ul>
-          <p className="text-xs italic">We do not use your information for advertising targeting or sale to any third party.</p>
+          <p className="text-xs italic">
+            We do not use your information for advertising targeting or sale to
+            any third party.
+          </p>
 
-          <h4 className="font-bold text-slate-800">3. Data Storage — Supabase</h4>
-          <p className="text-xs">All data in transit is encrypted via HTTPS/TLS. Data at rest — including identity documents — is encrypted by Supabase. Identity documents are stored in a restricted, separately scoped Supabase Storage bucket. Supabase is hosted on AWS infrastructure and is GDPR-compliant.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            3. Data Storage — Supabase
+          </h4>
+          <p className="text-xs">
+            All data in transit is encrypted via HTTPS/TLS. Data at rest —
+            including identity documents — is encrypted by Supabase. Identity
+            documents are stored in a restricted, separately scoped Supabase
+            Storage bucket. Supabase is hosted on AWS infrastructure and is
+            GDPR-compliant.
+          </p>
 
-          <h4 className="font-bold text-slate-800">4. How We Share Your Information</h4>
-          <p className="text-xs">We do not sell, rent, or trade your personal data. Information is shared only in these limited circumstances: when you initiate contact with a business through the app, with trusted third-party service providers (Supabase, Apple, Google) under confidentiality obligations, and where required by law.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            4. How We Share Your Information
+          </h4>
+          <p className="text-xs">
+            We do not sell, rent, or trade your personal data. Information is
+            shared only in these limited circumstances: when you initiate
+            contact with a business through the app, with trusted third-party
+            service providers (Supabase, Apple, Google) under confidentiality
+            obligations, and where required by law.
+          </p>
 
-          <h4 className="font-bold text-slate-800">5. Your Rights</h4>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            5. Your Rights
+          </h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {[
               ["Access", "Request a summary of your data"],
@@ -1252,26 +1671,59 @@ const ProfileContent = () => {
               ["Location Withdrawal", "Revoke via device Settings"],
               ["Data Portability", "Request a copy of your data"],
             ].map(([right, desc]) => (
-              <div key={right} className="bg-slate-50 rounded-xl p-2.5">
-                <p className="font-semibold text-slate-800">{right}</p>
+              <div
+                key={right}
+                className="bg-slate-50 dark:bg-slate-800 rounded-xl p-2.5"
+              >
+                <p className="font-semibold text-slate-800 dark:text-white">
+                  {right}
+                </p>
                 <p className="text-slate-500 mt-0.5">{desc}</p>
               </div>
             ))}
           </div>
 
-          <h4 className="font-bold text-slate-800">6. Children's Privacy</h4>
-          <p className="text-xs">Tijarah is not intended for users under 13. We do not knowingly collect data from children. If you believe a child under 13 has submitted information, contact us immediately.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            6. Children's Privacy
+          </h4>
+          <p className="text-xs">
+            Tijarah is not intended for users under 13. We do not knowingly
+            collect data from children. If you believe a child under 13 has
+            submitted information, contact us immediately.
+          </p>
 
-          <h4 className="font-bold text-slate-800">7. Data Retention</h4>
-          <p className="text-xs">Account data is retained while your account is active. Identity documents are deleted within 30 days of a written request. You may request full account and data deletion at any time.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            7. Data Retention
+          </h4>
+          <p className="text-xs">
+            Account data is retained while your account is active. Identity
+            documents are deleted within 30 days of a written request. You may
+            request full account and data deletion at any time.
+          </p>
 
-          <h4 className="font-bold text-slate-800">8. Changes to This Policy</h4>
-          <p className="text-xs">We will notify you of material changes via in-app notification and update the 'Last Updated' date. Continued use after changes constitutes acceptance.</p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            8. Changes to This Policy
+          </h4>
+          <p className="text-xs">
+            We will notify you of material changes via in-app notification and
+            update the 'Last Updated' date. Continued use after changes
+            constitutes acceptance.
+          </p>
 
-          <h4 className="font-bold text-slate-800">9. Contact</h4>
-          <p>Privacy enquiries: <span className="text-blue-600 font-medium">privacy@tijarah.app</span></p>
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            9. Contact
+          </h4>
+          <p>
+            Privacy enquiries:{" "}
+            <span className="text-blue-600 font-medium">
+              privacy@tijarah.app
+            </span>
+          </p>
 
-          <p className="text-xs text-slate-400 pt-2 text-center">© 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May 2026</p>
+          <p className="text-xs text-slate-400 pt-2 text-center">
+            © 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May
+            2026
+          </p>
         </div>
       </SlidePage>
 
@@ -1281,53 +1733,141 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
         title="Help & FAQ"
       >
-        <div className="space-y-3 text-sm text-slate-600 leading-relaxed">
-          <p className="text-xs text-slate-400 pb-1">Can't find your answer? Contact us at <span className="text-blue-500 font-medium">support@tijarah.app</span></p>
+        <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-xs text-slate-400 pb-1">
+            Can't find your answer? Contact us at{" "}
+            <span className="text-blue-500 font-medium">
+              support@tijarah.app
+            </span>
+          </p>
 
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-1">General</p>
-          <FAQItem q="What is Tijarah (BohriConnect)?" a="Tijarah is a free community app built for the Dawoodi Bohra community. It helps you discover Bohra-owned businesses across categories like home-cooked food, rida and fashion, tutors, repair services, catering, and retail — all in one searchable, trusted place." />
-          <FAQItem q="What does 'Tijarah' mean?" a="Tijarah (تجارة) is an Arabic word meaning 'trade' or 'commerce'. It reflects the app's mission: to honour and support the entrepreneurial tradition at the heart of the Bohra community." />
-          <FAQItem q="Is Tijarah only for Dawoodi Bohras?" a="All businesses listed are owned or operated by Dawoodi Bohra community members. However, anyone is welcome to browse and use the app — Bohra or not." />
-          <FAQItem q="Which cities is Tijarah available in?" a="Tijarah launched in Pune, Maharashtra. We are actively expanding to Mumbai, Surat, Hyderabad, Nagpur, and Indore. Follow us on Instagram or join our WhatsApp Channel for launch announcements." />
-          <FAQItem q="Is Tijarah free to use?" a="Yes — completely. Tijarah is free for both users and business owners. There are no listing fees, subscription charges, or transaction commissions." />
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-1">
+            General
+          </p>
+          <FAQItem
+            q="What is Tijarah (BohriConnect)?"
+            a="Tijarah is a free community app built for the Dawoodi Bohra community. It helps you discover Bohra-owned businesses across categories like home-cooked food, rida and fashion, tutors, repair services, catering, and retail — all in one searchable, trusted place."
+          />
+          <FAQItem
+            q="What does 'Tijarah' mean?"
+            a="Tijarah (تجارة) is an Arabic word meaning 'trade' or 'commerce'. It reflects the app's mission: to honour and support the entrepreneurial tradition at the heart of the Bohra community."
+          />
+          <FAQItem
+            q="Is Tijarah only for Dawoodi Bohras?"
+            a="All businesses listed are owned or operated by Dawoodi Bohra community members. However, anyone is welcome to browse and use the app — Bohra or not."
+          />
+          <FAQItem
+            q="Which cities is Tijarah available in?"
+            a="Tijarah launched in Pune, Maharashtra. We are actively expanding to Mumbai, Surat, Hyderabad, Nagpur, and Indore. Follow us on Instagram or join our WhatsApp Channel for launch announcements."
+          />
+          <FAQItem
+            q="Is Tijarah free to use?"
+            a="Yes — completely. Tijarah is free for both users and business owners. There are no listing fees, subscription charges, or transaction commissions."
+          />
 
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">For Users</p>
-          <FAQItem q="How do I find a business?" a="Browse by category, search by business name or type, or use the 'Nearby' feature. You can filter by category, area, and verified status." />
-          <FAQItem q="How do I contact a business?" a="Every business profile includes an in-app Chat and/or Call button. You can message or call directly through the Tijarah app — no need to share your personal phone number." />
-          <FAQItem q="Does Tijarah handle orders or payments?" a="No. Tijarah is a discovery and connection platform only. All orders, payments, and arrangements are made directly between you and the business." />
-          <FAQItem q="What does the 'Verified' badge mean?" a="Businesses marked Verified have voluntarily submitted a government-issued ID (Aadhaar / PAN) and/or an Ejmaat Card, reviewed by the Tijarah team. It confirms identity — it does not guarantee service quality." />
-          <FAQItem q="Can I post a review?" a="Yes. After using a business, you can leave a star rating and written review on their profile. Reviews must be honest, specific, and respectful." />
-          <FAQItem q="How do I report a business or content?" a="Tap the 'Report' button on any business profile or listing. Our team reviews all reports and will take appropriate action where a violation is identified." />
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">
+            For Users
+          </p>
+          <FAQItem
+            q="How do I find a business?"
+            a="Browse by category, search by business name or type, or use the 'Nearby' feature. You can filter by category, area, and verified status."
+          />
+          <FAQItem
+            q="How do I contact a business?"
+            a="Every business profile includes an in-app Chat and/or Call button. You can message or call directly through the Tijarah app — no need to share your personal phone number."
+          />
+          <FAQItem
+            q="Does Tijarah handle orders or payments?"
+            a="No. Tijarah is a discovery and connection platform only. All orders, payments, and arrangements are made directly between you and the business."
+          />
+          <FAQItem
+            q="What does the 'Verified' badge mean?"
+            a="Businesses marked Verified have voluntarily submitted a government-issued ID (Aadhaar / PAN) and/or an Ejmaat Card, reviewed by the Tijarah team. It confirms identity — it does not guarantee service quality."
+          />
+          <FAQItem
+            q="Can I post a review?"
+            a="Yes. After using a business, you can leave a star rating and written review on their profile. Reviews must be honest, specific, and respectful."
+          />
+          <FAQItem
+            q="How do I report a business or content?"
+            a="Tap the 'Report' button on any business profile or listing. Our team reviews all reports and will take appropriate action where a violation is identified."
+          />
 
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">For Business Owners</p>
-          <FAQItem q="How do I list my business on Tijarah?" a="Tap 'Add Business' in the app and follow the steps. Or send us a WhatsApp message or email — we'll set up your listing for you, free of charge." />
-          <FAQItem q="How do I get the 'Verified' badge?" a="Contact us at support@tijarah.app and we'll guide you through submitting a document (Aadhaar, PAN, or Ejmaat Card). Verification is optional — your listing works fully without it." />
-          <FAQItem q="My business was already listed. Why?" a="Tijarah may create listings from publicly available information. If you are the owner, you can claim your listing by contacting us — we'll update every detail to reflect exactly how you want to be represented." />
-          <FAQItem q="Can I update or remove my listing?" a="Yes, at any time. Contact us or manage your listing directly in the app. Changes are processed within 2–3 business days." />
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">
+            For Business Owners
+          </p>
+          <FAQItem
+            q="How do I list my business on Tijarah?"
+            a="Tap 'Add Business' in the app and follow the steps. Or send us a WhatsApp message or email — we'll set up your listing for you, free of charge."
+          />
+          <FAQItem
+            q="How do I get the 'Verified' badge?"
+            a="Contact us at support@tijarah.app and we'll guide you through submitting a document (Aadhaar, PAN, or Ejmaat Card). Verification is optional — your listing works fully without it."
+          />
+          <FAQItem
+            q="My business was already listed. Why?"
+            a="Tijarah may create listings from publicly available information. If you are the owner, you can claim your listing by contacting us — we'll update every detail to reflect exactly how you want to be represented."
+          />
+          <FAQItem
+            q="Can I update or remove my listing?"
+            a="Yes, at any time. Contact us or manage your listing directly in the app. Changes are processed within 2–3 business days."
+          />
 
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">Privacy & Data</p>
-          <FAQItem q="What personal data does Tijarah collect?" a="We collect your name (optional), phone number, email (optional), location (if you grant permission), and app usage data. Business owners may optionally provide identity documents for verification. We never collect payment details or biometric data." />
-          <FAQItem q="Can I delete my account and all my data?" a="Yes. Contact us at privacy@tijarah.app to request full account and data deletion. We process requests within 30 days." />
-          <FAQItem q="Does Tijarah sell my data?" a="No. Tijarah does not sell, rent, or trade your personal data to any third party, ever." />
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">
+            Privacy & Data
+          </p>
+          <FAQItem
+            q="What personal data does Tijarah collect?"
+            a="We collect your name (optional), phone number, email (optional), location (if you grant permission), and app usage data. Business owners may optionally provide identity documents for verification. We never collect payment details or biometric data."
+          />
+          <FAQItem
+            q="Can I delete my account and all my data?"
+            a="Yes. Contact us at privacy@tijarah.app to request full account and data deletion. We process requests within 30 days."
+          />
+          <FAQItem
+            q="Does Tijarah sell my data?"
+            a="No. Tijarah does not sell, rent, or trade your personal data to any third party, ever."
+          />
 
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">Technical</p>
-          <FAQItem q="How do I turn off notifications?" a="Go to Settings > Notifications > Tijarah on your device and toggle off. You can also manage preferences inside the Tijarah app under Settings." />
-          <FAQItem q="How do I turn off location access?" a="Go to Settings > Privacy > Location Services > Tijarah and set to 'Never'. The app still works for browsing — nearby discovery will not be available." />
-          <FAQItem q="I found a bug. What do I do?" a="Use the 'Report a Bug' option in your profile to send us details. Include your device type and what happened — we'll investigate and follow up as quickly as possible." />
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">
+            Technical
+          </p>
+          <FAQItem
+            q="How do I turn off notifications?"
+            a="Go to Settings > Notifications > Tijarah on your device and toggle off. You can also manage preferences inside the Tijarah app under Settings."
+          />
+          <FAQItem
+            q="How do I turn off location access?"
+            a="Go to Settings > Privacy > Location Services > Tijarah and set to 'Never'. The app still works for browsing — nearby discovery will not be available."
+          />
+          <FAQItem
+            q="I found a bug. What do I do?"
+            a="Use the 'Report a Bug' option in your profile to send us details. Include your device type and what happened — we'll investigate and follow up as quickly as possible."
+          />
 
-          <div className="pt-4 text-center border-t border-slate-100 mt-2">
+          <div className="pt-4 text-center border-t border-slate-100 dark:border-slate-700 mt-2">
             <p className="text-xs text-slate-400">Still need help?</p>
-            <p className="text-sm font-semibold text-blue-500 mt-1">support@tijarah.app</p>
-            <p className="text-xs text-slate-400 mt-0.5">WhatsApp: +91 XXXXXXXXXX</p>
+            <p className="text-sm font-semibold text-blue-500 mt-1">
+              support@tijarah.app
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              WhatsApp: +91 XXXXXXXXXX
+            </p>
           </div>
         </div>
       </SlidePage>
 
       {/* Contact Us Page */}
-      <ContactUsSlide open={activePage === "contactUs"} onClose={() => setActivePage(null)} />
+      <ContactUsSlide
+        open={activePage === "contactUs"}
+        onClose={() => setActivePage(null)}
+      />
 
       {/* Report a Bug Page */}
-      <ReportBugSlide open={activePage === "reportBug"} onClose={() => setActivePage(null)} />
+      <ReportBugSlide
+        open={activePage === "reportBug"}
+        onClose={() => setActivePage(null)}
+      />
 
       {/* ── Dialogs ─────────────────────────────────────── */}
       <AppDialog
@@ -1412,66 +1952,96 @@ const ProfileContent = () => {
 };
 
 // ─── Contact Us Slide ───────────────────────────────────────────────
-const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void }) => (
+const ContactUsSlide = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => (
   <SlidePage open={open} onClose={onClose} title="Contact Us">
-    <div className="space-y-5 text-sm text-slate-600">
+    <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300">
       {/* Hero */}
       <div className="text-center pb-2">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
           <IonIcon icon={mailOutline} className="text-2xl text-white" />
         </div>
-        <h3 className="text-base font-bold text-slate-800">Get in Touch</h3>
-        <p className="text-xs text-slate-400 mt-1">We typically respond within 7 business days</p>
+        <h3 className="text-base font-bold text-slate-800 dark:text-white">
+          Get in Touch
+        </h3>
+        <p className="text-xs text-slate-400 mt-1">
+          We typically respond within 7 business days
+        </p>
       </div>
 
       {/* Contact Cards */}
       <div className="space-y-3">
         <a
           href="mailto:support@tijarah.app"
-          className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3.5 active:bg-blue-100 transition-colors"
+          className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-2xl px-4 py-3.5 active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
             <IonIcon icon={mailOutline} className="text-white text-lg" />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-700">General Support</p>
-            <p className="text-sm font-semibold text-blue-600">support@tijarah.app</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              General Support
+            </p>
+            <p className="text-sm font-semibold text-blue-600">
+              support@tijarah.app
+            </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
 
         <a
           href="mailto:privacy@tijarah.app"
-          className="flex items-center gap-3 bg-green-50 border border-green-100 rounded-2xl px-4 py-3.5 active:bg-green-100 transition-colors"
+          className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded-2xl px-4 py-3.5 active:bg-green-100 dark:active:bg-green-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
-            <IonIcon icon={shieldCheckmarkOutline} className="text-white text-lg" />
+            <IonIcon
+              icon={shieldCheckmarkOutline}
+              className="text-white text-lg"
+            />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-700">Privacy & Data Requests</p>
-            <p className="text-sm font-semibold text-green-600">privacy@tijarah.app</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Privacy & Data Requests
+            </p>
+            <p className="text-sm font-semibold text-green-600">
+              privacy@tijarah.app
+            </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
 
         <a
           href="mailto:legal@tijarah.app"
-          className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-2xl px-4 py-3.5 active:bg-purple-100 transition-colors"
+          className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/40 rounded-2xl px-4 py-3.5 active:bg-purple-100 dark:active:bg-purple-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center shrink-0">
-            <IonIcon icon={documentTextOutline} className="text-white text-lg" />
+            <IonIcon
+              icon={documentTextOutline}
+              className="text-white text-lg"
+            />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-700">Legal & Terms</p>
-            <p className="text-sm font-semibold text-purple-600">legal@tijarah.app</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Legal & Terms
+            </p>
+            <p className="text-sm font-semibold text-purple-600">
+              legal@tijarah.app
+            </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
       </div>
 
       {/* Location */}
-      <div className="bg-slate-50 rounded-2xl px-4 py-4 space-y-1">
-        <p className="text-xs font-bold text-slate-700">Registered Address</p>
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-4 space-y-1">
+        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+          Registered Address
+        </p>
         <p className="text-xs text-slate-500">Tijarah (BohriConnect)</p>
         <p className="text-xs text-slate-500">Pune, Maharashtra, India</p>
       </div>
@@ -1484,7 +2054,13 @@ const ContactUsSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
 );
 
 // ─── Report a Bug Slide ─────────────────────────────────────────────
-const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+const ReportBugSlide = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   const { notify } = useNotification();
   const [category, setCategory] = useState<BugCategory>("other");
   const [description, setDescription] = useState("");
@@ -1529,12 +2105,18 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
     <SlidePage open={open} onClose={handleClose} title="Report a Bug">
       {submitted ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-            <IonIcon icon={checkmarkCircleOutline} className="text-4xl text-green-500" />
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+            <IonIcon
+              icon={checkmarkCircleOutline}
+              className="text-4xl text-green-500"
+            />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Report Submitted!</h3>
-          <p className="text-sm text-slate-500 max-w-xs">
-            Thank you for helping improve Tijarah. We've received your bug report and will investigate it.
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+            Report Submitted!
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+            Thank you for helping improve Tijarah. We've received your bug
+            report and will investigate it.
           </p>
           <button
             onClick={handleClose}
@@ -1545,33 +2127,38 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
-            Found something broken? Tell us what happened and we'll fix it as quickly as possible.
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Found something broken? Tell us what happened and we'll fix it as
+            quickly as possible.
           </p>
 
           {/* Category */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Bug Category</label>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Bug Category
+            </label>
             <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(BUG_CATEGORY_LABELS) as BugCategory[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setCategory(key)}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors text-left ${
-                    category === key
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : "bg-slate-50 text-slate-700 border-slate-200 active:bg-slate-100"
-                  }`}
-                >
-                  {BUG_CATEGORY_LABELS[key]}
-                </button>
-              ))}
+              {(Object.keys(BUG_CATEGORY_LABELS) as BugCategory[]).map(
+                (key) => (
+                  <button
+                    key={key}
+                    onClick={() => setCategory(key)}
+                    className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors text-left ${
+                      category === key
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 active:bg-slate-100 dark:active:bg-slate-700"
+                    }`}
+                  >
+                    {BUG_CATEGORY_LABELS[key]}
+                  </button>
+                ),
+              )}
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
               Describe the Bug <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -1580,15 +2167,18 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
               placeholder="What went wrong? What did you expect to happen?"
               rows={4}
               maxLength={1000}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-3 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
             />
-            <p className="text-[10px] text-slate-400 text-right mt-0.5">{description.length}/1000</p>
+            <p className="text-[10px] text-slate-400 text-right mt-0.5">
+              {description.length}/1000
+            </p>
           </div>
 
           {/* Steps */}
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
-              Steps to Reproduce <span className="text-slate-400 font-normal">(optional)</span>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+              Steps to Reproduce{" "}
+              <span className="text-slate-400 font-normal">(optional)</span>
             </label>
             <textarea
               value={steps}
@@ -1596,7 +2186,7 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
               placeholder="1. Open the app&#10;2. Tap on...&#10;3. Bug appears"
               rows={3}
               maxLength={500}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-3 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-amber-400 resize-none"
             />
           </div>
 
@@ -1621,12 +2211,14 @@ const ReportBugSlide = ({ open, onClose }: { open: boolean; onClose: () => void 
 const FAQItem = ({ q, a }: { q: string; a: string }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border border-slate-100 rounded-xl overflow-hidden">
+    <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-slate-50"
+        className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-slate-50 dark:active:bg-slate-700"
       >
-        <span className="text-sm font-semibold text-slate-800 pr-2">{q}</span>
+        <span className="text-sm font-semibold text-slate-800 dark:text-white pr-2">
+          {q}
+        </span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
@@ -1644,7 +2236,9 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <p className="px-4 pb-3 text-sm text-slate-500">{a}</p>
+            <p className="px-4 pb-3 text-sm text-slate-500 dark:text-slate-400">
+              {a}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

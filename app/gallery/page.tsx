@@ -14,16 +14,16 @@ export default function GalleryPage() {
   const router = useRouter();
 
   return (
-    <Page className="!bg-gray-50/80">
+    <Page className="!bg-gray-50/80 dark:!bg-slate-900">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 bg-white border-b border-gray-100/80">
+      <div className="flex items-center gap-3 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 bg-white dark:bg-slate-900 border-b border-gray-100/80 dark:border-slate-800">
         <button
           onClick={() => router.back()}
-          className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+          className="w-9 h-9 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center active:scale-90 transition-transform"
         >
-          <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
+          <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
         </button>
-        <h1 className="text-[17px] font-bold text-gray-900">Gallery</h1>
+        <h1 className="text-[17px] font-bold text-gray-900 dark:text-white">Gallery</h1>
       </div>
 
       {/* Photo Grid with Lightbox */}

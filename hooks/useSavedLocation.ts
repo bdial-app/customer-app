@@ -4,11 +4,14 @@ import {
   getSavedLocations,
   CreateSavedLocationPayload,
 } from "@/services/saved-location.service";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 export const useSavedLocations = () => {
+  const user = useAppSelector((state) => state.auth.user);
   return useQuery({
     queryKey: ["saved-locations"],
     queryFn: getSavedLocations,
+    enabled: !!user,
   });
 };
 

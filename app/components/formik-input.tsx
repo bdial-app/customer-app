@@ -12,6 +12,7 @@ interface FormikInputProps {
   media?: React.ReactNode | string;
   children?: React.ReactNode;
   inputClassName?: string;
+  readonly?: boolean;
 }
 
 export const FormikInput: React.FC<FormikInputProps> = ({
@@ -24,12 +25,14 @@ export const FormikInput: React.FC<FormikInputProps> = ({
   media = null,
   children,
   inputClassName,
+  readonly = false,
 }) => {
   const [field, meta, helpers] = useField(name);
 
   const showError = meta.touched && meta.error;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (readonly) return;
     const val = e.target.value;
     if (formatValue) {
       helpers.setValue(formatValue(val));
@@ -50,7 +53,8 @@ export const FormikInput: React.FC<FormikInputProps> = ({
       onBlur={field.onBlur}
       name={field.name}
       error={showError ? meta.error : ""}
-      inputClassName={inputClassName}
+      inputClassName={`${inputClassName ?? ""} ${readonly ? "opacity-60 cursor-not-allowed select-none" : ""}`}
+      readOnly={readonly}
     >
       {children}
     </ListInput>

@@ -30,7 +30,7 @@ function SettingRow({
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <div className="flex-1 min-w-0">
-        <span className={`text-sm font-medium ${disabled ? "text-slate-400" : "text-slate-800"}`}>
+        <span className={`text-sm font-medium ${disabled ? "text-slate-400" : "text-slate-800 dark:text-white"}`}>
           {label}
         </span>
         {sublabel && (
@@ -74,12 +74,12 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed inset-0 z-[100] bg-slate-50 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-900 overflow-y-auto"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           {/* Header */}
           <div
-            className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100"
+            className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
             style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
           >
             <div className="flex items-center justify-between px-4 py-3">
@@ -90,7 +90,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                 <IonIcon icon={arrowBack} className="text-lg" />
                 Back
               </button>
-              <h2 className="text-base font-bold text-slate-800">Notification Settings</h2>
+              <h2 className="text-base font-bold text-slate-800 dark:text-white">Notification Settings</h2>
               <div className="w-12" />
             </div>
           </div>
@@ -103,14 +103,14 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
             <div className="px-4 py-4 space-y-3">
               {/* iOS not-standalone guidance */}
               {isIOSNotStandalone && (
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-2">
-                  <h3 className="text-sm font-semibold text-blue-800 mb-1">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-2xl p-4 mb-2">
+                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">
                     Add to Home Screen Required
                   </h3>
-                  <p className="text-xs text-blue-600 mb-2">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
                     On iPhone and iPad, push notifications only work when the app is installed to your Home Screen.
                   </p>
-                  <ol className="text-xs text-blue-600 list-decimal list-inside space-y-1">
+                  <ol className="text-xs text-blue-600 dark:text-blue-400 list-decimal list-inside space-y-1">
                     <li>Tap the <strong>Share</strong> button (square with arrow) in Safari</li>
                     <li>Scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong></li>
                     <li>Open the app from your Home Screen</li>
@@ -121,11 +121,11 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
 
               {/* Push Permission Banner */}
               {isSupported && permissionStatus !== "granted" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-2">
-                  <h3 className="text-sm font-semibold text-amber-800 mb-1">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 mb-2">
+                  <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
                     Enable Push Notifications
                   </h3>
-                  <p className="text-xs text-amber-600 mb-3">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
                     Get notified about new messages, reviews, and important updates
                     even when the app is closed.
                   </p>
@@ -151,7 +151,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
               )}
 
               {/* Master Toggle */}
-              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
                 <SettingRow
                   label="Push Notifications"
                   sublabel="Receive push notifications on this device"
@@ -161,7 +161,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
               </div>
 
               {/* Category Toggles */}
-              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden divide-y divide-slate-50">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
                 <div className="px-4 pt-3 pb-1">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     Notification Types
@@ -219,7 +219,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
               </div>
 
               {/* Quiet Hours */}
-              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden divide-y divide-slate-50">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
                 <div className="px-4 pt-3 pb-1">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     Quiet Hours
@@ -240,7 +240,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                         type="time"
                         value={prefs?.quietHoursStart || "22:00"}
                         onChange={(e) => handleToggle("quietHoursStart" as any, e.target.value as any)}
-                        className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg"
+                        className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent dark:text-white"
                       />
                     </div>
                     <div className="flex-1">
@@ -249,7 +249,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                         type="time"
                         value={prefs?.quietHoursEnd || "07:00"}
                         onChange={(e) => handleToggle("quietHoursEnd" as any, e.target.value as any)}
-                        className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg"
+                        className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent dark:text-white"
                       />
                     </div>
                   </div>

@@ -56,17 +56,20 @@ export interface PlatformStats {
   verifiedProviders: number;
   totalReviews: number;
   avgRating: number;
-  totalBookings: number;
+  totalCategories: number;
 }
 
-export interface LastBooking {
-  id: string;
-  providerId: string;
-  providerName: string;
-  providerImage: string | null;
-  categories: string | null;
-  location: string;
-  completedAt: string;
+export interface FeaturedCategory {
+  name: string;
+  slug: string;
+  icon: string | null;
+  providerCount: number;
+  providers: HomeProvider[];
+}
+
+export interface CityProviders {
+  city: string;
+  providers: HomeProvider[];
 }
 
 export interface LiveActivity {
@@ -76,12 +79,15 @@ export interface LiveActivity {
 
 export interface HomeFeedResponse {
   nearbyProviders: HomeProvider[];
-  beautyProviders: HomeProvider[];
+  featuredCategory: FeaturedCategory | null;
+  topRatedProviders: HomeProvider[];
+  cityProviders: CityProviders | null;
+  newArrivals: HomeProvider[];
   promoBanners: PromoBanner[];
   trendingCategories: TrendingCategory[];
   communityReviews: CommunityReview[];
   platformStats: PlatformStats;
-  lastBooking: LastBooking | null;
+  searchPrompts: string[];
 }
 
 // ─── API Functions ──────────────────────────────────────────────────

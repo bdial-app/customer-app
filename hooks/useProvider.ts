@@ -36,6 +36,8 @@ export const useProviderDetails = (id: string) => {
     queryKey: ["provider-details", id],
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 

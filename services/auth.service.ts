@@ -14,9 +14,9 @@ export interface VerifyOtpPayload {
 export interface CreateAccountPayload {
   name: string;
   gender: string;
-  city: string;
+  city?: string;
   area?: string;
-  pincode: string;
+  pincode?: string;
   latitude?: number;
   longitude?: number;
 }

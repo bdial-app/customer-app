@@ -12,6 +12,10 @@ export interface ProviderNearbyParams {
   search?: string;
   city?: string;
   categoryIds?: string[];
+  sortBy?: 'distance' | 'rating' | 'newest' | 'reviews';
+  minRating?: number;
+  verifiedOnly?: boolean;
+  womenLedOnly?: boolean;
 }
 
 export interface NearbyProviderResponse {
@@ -76,7 +80,7 @@ export interface ProviderData {
 }
 
 export interface ProviderStatusResponse {
-  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted";
+  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted" | "suspended";
   verificationStatus: string | null;
   provider: ProviderData | null;
   verification: any | null;

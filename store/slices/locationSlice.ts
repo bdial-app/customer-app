@@ -1,8 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SearchGeocodeResult } from "@/services/geocode.service";
 
+interface GuestCoords {
+  lat: number;
+  lng: number;
+}
+
 interface LocationState {
   recentLocations: SearchGeocodeResult[];
+  guestCoords: GuestCoords | null;
 }
 
 const getInitialRecentLocations = (): SearchGeocodeResult[] => {
@@ -17,8 +23,21 @@ const getInitialRecentLocations = (): SearchGeocodeResult[] => {
   return [];
 };
 
+const getInitialGuestCoords = (): GuestCoords | null => {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("guestCoords");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 const initialState: LocationState = {
   recentLocations: getInitialRecentLocations(),
+  guestCoords: getInitialGuestCoords(),
 };
 
 const locationSlice = createSlice({
@@ -46,8 +65,18 @@ const locationSlice = createSlice({
         localStorage.removeItem("recentLocations");
       }
     },
+    setGuestCoords(state, action: PayloadAction<GuestCoords | null>) {
+      state.guestCoords = action.payload;
+      if (typeof window !== "undefined") {
+        if (action.payload) {
+          localStorage.setItem("guestCoords", JSON.stringify(action.payload));
+        } else {
+          localStorage.removeItem("guestCoords");
+        }
+      }
+    },
   },
 });
 
-export const { addRecentLocation, clearRecentLocations } = locationSlice.actions;
+export const { addRecentLocation, clearRecentLocations, setGuestCoords } = locationSlice.actions;
 export default locationSlice.reducer;

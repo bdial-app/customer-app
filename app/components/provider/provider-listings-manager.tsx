@@ -76,8 +76,8 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
           style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
         >
           <div className="px-4 py-3 flex items-center justify-between">
-            <div className="h-6 w-32 bg-slate-100 rounded-lg animate-pulse" />
-            <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
+            <div className="h-6 w-32 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse" />
+            <div className="h-8 w-8 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse" />
           </div>
         </div>
         <div className="px-4 py-3">

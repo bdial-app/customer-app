@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 
-const PLACEHOLDER_TEXTS = [
+const FALLBACK_TEXTS = [
   'Search "Tailoring"',
   'Search "AC Repair"',
   'Search "Beauty Salon"',
@@ -15,16 +15,20 @@ const PLACEHOLDER_TEXTS = [
   'Search "Mehandi Artist"',
 ];
 
-const HeroSearchBar = ({ onTap }: { onTap?: () => void }) => {
+const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: string[] }) => {
   const router = useRouter();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
+  const placeholderTexts = prompts && prompts.length > 0
+    ? prompts.map((p) => `Search "${p}"`)
+    : FALLBACK_TEXTS;
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_TEXTS.length);
+      setPlaceholderIndex((prev) => (prev + 1) % placeholderTexts.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholderTexts.length]);
 
   const handleTap = () => {
     if (onTap) {
@@ -54,7 +58,7 @@ const HeroSearchBar = ({ onTap }: { onTap?: () => void }) => {
               transition={{ duration: 0.25 }}
               className="text-sm text-white/40 absolute whitespace-nowrap"
             >
-              {PLACEHOLDER_TEXTS[placeholderIndex]}
+              {placeholderTexts[placeholderIndex]}
             </motion.span>
           </AnimatePresence>
         </div>
