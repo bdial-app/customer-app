@@ -214,6 +214,16 @@ const UserHome = () => {
           </Suspense>
         </div>
 
+        {/* Divider */}
+        <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
+
+        {/* Recently Added — new arrivals */}
+        <RecentlyAdded
+          providers={newArrivals}
+          isLoading={isLoading}
+          viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
+        />
+
         {/* Become a Provider CTA */}
         <div style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px" }}>
           <Suspense fallback={<LazyFallback />}>
