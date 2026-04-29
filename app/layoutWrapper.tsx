@@ -207,10 +207,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <AuthGateProvider>
               <LanguageSyncBridge />
               <PushNotificationBridge />
-<<<<<<< HEAD
               <PwaHistoryGuard />
-=======
->>>>>>> 39a067f7d5e2f908f643191aff2ecac71b459f19
               <NotificationProvider>
                 <App theme="ios">
                   <AppToast />
