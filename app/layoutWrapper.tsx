@@ -186,7 +186,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute default stale time
+            staleTime: 60 * 1000, // one minute default stale time
             refetchOnWindowFocus: false,
             retry: 1,
           },
