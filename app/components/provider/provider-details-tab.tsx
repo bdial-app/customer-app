@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -16,6 +16,9 @@ import {
   imageOutline,
   personCircleOutline,
   toggleOutline,
+  navigateOutline,
+  searchOutline,
+  checkmarkCircle,
 } from "ionicons/icons";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -23,6 +26,10 @@ import { List, Button, Sheet, Page, Navbar, Block } from "konsta/react";
 import { FormikInput } from "../formik-input";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
+import TimePicker from "../time-picker";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
+import { reverseGeocode, searchGeocode } from "@/services/geocode.service";
 
 interface ProviderDetailsTabProps {
   provider: ProviderData;
@@ -76,6 +83,83 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const updateMutation = useUpdateProvider();
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
+  const [bannerError, setBannerError] = useState(false);
+  const [profileError, setProfileError] = useState(false);
+
+  // Map / location state for edit mode
+  const { isLoaded } = useGoogleMapsLoader();
+  const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(
+    provider.latitude && provider.longitude
+      ? { lat: Number(provider.latitude), lng: Number(provider.longitude) }
+      : null,
+  );
+  const [mapCenter, setMapCenter] = useState(
+    mapCoords || { lat: 18.5204, lng: 73.8567 },
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ placeId: string; description: string; mainText: string; secondaryText: string; lat: number; lng: number }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const formikRef = useRef<any>(null);
+
+  const handleSearchLocation = useCallback((query: string) => {
+    setSearchQuery(query);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!query.trim()) { setSearchResults([]); return; }
+    searchTimer.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchGeocode(query.trim());
+        setSearchResults(results.filter(r => r.lat && r.lng).map(r => ({
+          placeId: r.placeId,
+          description: r.description,
+          mainText: r.mainText || r.description,
+          secondaryText: r.secondaryText || "",
+          lat: Number(r.lat),
+          lng: Number(r.lng),
+        })));
+      } catch { setSearchResults([]); }
+      finally { setIsSearching(false); }
+    }, 400);
+  }, []);
+
+  const handleMapSelect = useCallback(async (lat: number, lng: number) => {
+    const pos = { lat, lng };
+    setMapCoords(pos);
+    setMapCenter(pos);
+    mapRef.current?.panTo(pos);
+    if (!formikRef.current) return;
+    try {
+      const geo = await reverseGeocode({ lat, lng });
+      const { setFieldValue } = formikRef.current;
+      if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+      if (geo.city) setFieldValue("city", geo.city);
+      if (geo.area) setFieldValue("area", geo.area);
+      if (geo.pincode) setFieldValue("pincode", geo.pincode);
+    } catch { /* keep coords even if reverse geocode fails */ }
+  }, []);
+
+  const handleSelectSearchResult = useCallback((result: { lat: number; lng: number; description: string }) => {
+    setSearchQuery(result.description);
+    setSearchResults([]);
+    handleMapSelect(result.lat, result.lng);
+  }, [handleMapSelect]);
+
+  const handleDetectGPS = useCallback(async () => {
+    setIsDetectingLocation(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, enableHighAccuracy: true }),
+      );
+      handleMapSelect(pos.coords.latitude, pos.coords.longitude);
+    } catch {
+      alert("Could not detect location. Please allow location access and try again.");
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  }, [handleMapSelect]);
 
   const handleSave = async (values: any) => {
     try {
@@ -91,6 +175,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           pincode: values.pincode || undefined,
           openTime: values.openTime || undefined,
           closeTime: values.closeTime || undefined,
+          ...(mapCoords ? { latitude: mapCoords.lat, longitude: mapCoords.lng } : {}),
         },
       });
       setIsEditing(false);
@@ -159,11 +244,12 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           onClick={() => bannerInputRef.current?.click()}
           className="relative w-full h-36 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 cursor-pointer group"
         >
-          {provider.bannerImageUrl ? (
+          {provider.bannerImageUrl && !bannerError ? (
             <img
               src={provider.bannerImageUrl}
               alt="Banner"
               className="w-full h-full object-cover"
+              onError={() => setBannerError(true)}
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -193,11 +279,12 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
             onClick={() => profileInputRef.current?.click()}
             className="w-20 h-20 rounded-2xl border-4 border-white bg-white shadow-md overflow-hidden cursor-pointer relative group"
           >
-            {provider.profilePhotoUrl ? (
+            {provider.profilePhotoUrl && !profileError ? (
               <img
                 src={provider.profilePhotoUrl}
                 alt={provider.brandName}
                 className="w-full h-full object-cover"
+                onError={() => setProfileError(true)}
               />
             ) : (
               <div className="w-full h-full bg-teal-50 flex items-center justify-center">
@@ -300,6 +387,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
 
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
               <Formik
+                innerRef={formikRef}
                 initialValues={{
                   brandName: provider.brandName || "",
                   description: provider.description || "",
@@ -314,7 +402,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}
               >
-                {({ isValid, dirty, isSubmitting }) => (
+                {({ isValid, dirty, isSubmitting, setFieldValue, values }) => (
                   <Form>
                     <List strongIos insetIos className="!my-0">
                       <FormikInput
@@ -339,45 +427,143 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         placeholder="+91 98765 43210"
                         media={<IonIcon icon={callOutline} />}
                       />
+                    </List>
+
+                    {/* ── Location Section with Map ── */}
+                    <div className="px-4 pt-3 pb-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center">
+                          <IonIcon icon={locationOutline} className="text-teal-600 text-sm" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700">Business Location</p>
+                      </div>
+
+                      {/* GPS detect */}
+                      <button type="button" onClick={handleDetectGPS} disabled={isDetectingLocation}
+                        className="w-full flex items-center gap-3 p-2.5 mb-2 rounded-xl border border-teal-200 bg-teal-50/50 hover:border-teal-300 transition-all active:scale-[0.99] disabled:opacity-60">
+                        <div className={`w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center shrink-0 ${isDetectingLocation ? "animate-pulse" : ""}`}>
+                          <IonIcon icon={navigateOutline} className="text-teal-600 text-base" />
+                        </div>
+                        <span className="text-[11px] font-bold text-teal-700">
+                          {isDetectingLocation ? "Detecting..." : "Use Current Location"}
+                        </span>
+                      </button>
+
+                      {/* Search bar */}
+                      <div className="relative mb-2">
+                        <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10" />
+                        <input type="text" value={searchQuery} onChange={(e) => handleSearchLocation(e.target.value)}
+                          placeholder="Search for your business location..."
+                          className="w-full pl-8 pr-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 transition-all" />
+                        {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="w-3 h-3 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin" /></div>}
+                        {searchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
+                            {searchResults.map((r) => (
+                              <button key={r.placeId} type="button" onClick={() => handleSelectSearchResult(r)}
+                                className="w-full px-3 py-2 text-left hover:bg-teal-50 transition-colors border-b border-slate-50 last:border-b-0 flex items-start gap-2">
+                                <IonIcon icon={locationOutline} className="text-xs text-teal-500 mt-0.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-[11px] font-semibold text-slate-700 truncate">{r.mainText}</p>
+                                  <p className="text-[9px] text-slate-400 truncate">{r.secondaryText}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Google Map */}
+                      {isLoaded ? (
+                        <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm mb-2">
+                          <GoogleMap
+                            mapContainerStyle={{ width: "100%", height: "200px", borderRadius: "12px" }}
+                            center={mapCenter}
+                            zoom={mapCoords ? 16 : 12}
+                            onClick={(e) => {
+                              if (!e.latLng) return;
+                              handleMapSelect(e.latLng.lat(), e.latLng.lng());
+                            }}
+                            onLoad={(map) => { mapRef.current = map; }}
+                            options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+                          >
+                            {mapCoords && (
+                              <Marker position={mapCoords} draggable onDragEnd={(e) => {
+                                if (!e.latLng) return;
+                                handleMapSelect(e.latLng.lat(), e.latLng.lng());
+                              }} />
+                            )}
+                          </GoogleMap>
+                          <div className="px-2 py-1.5 bg-slate-50 border-t border-slate-100">
+                            <p className="text-[9px] text-slate-400 flex items-center gap-1">
+                              <IonIcon icon={mapOutline} className="text-[10px]" />
+                              {mapCoords ? `📍 ${mapCoords.lat.toFixed(5)}, ${mapCoords.lng.toFixed(5)}` : "Tap on the map or search to pin your location"}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-[200px] rounded-xl bg-slate-100 flex items-center justify-center mb-2">
+                          <div className="w-5 h-5 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin" />
+                        </div>
+                      )}
+
+                      <p className="text-[9px] text-slate-400 mb-1">
+                        Address fields are auto-filled from the map. Move the pin to update.
+                      </p>
+                    </div>
+
+                    {/* Address fields (readonly, auto-filled from map) */}
+                    <List strongIos insetIos className="!my-0">
                       <FormikInput
                         name="address"
                         label="Address"
                         type="text"
-                        placeholder="Street address"
+                        placeholder="Auto-filled from map"
+                        readonly
                         media={<IonIcon icon={locationOutline} />}
                       />
                       <FormikInput
                         name="city"
                         label="City"
                         type="text"
-                        placeholder="City"
+                        placeholder="Auto-filled from map"
+                        readonly
                         media={<IonIcon icon={mapOutline} />}
                       />
                       <FormikInput
                         name="area"
                         label="Area"
                         type="text"
-                        placeholder="Area / Locality"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="pincode"
                         label="Pincode"
                         type="text"
-                        placeholder="6-digit pincode"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
-                      <FormikInput
-                        name="openTime"
+                    </List>
+
+                    {/* ── Operating Hours with TimePicker ── */}
+                    <div className="px-4 pt-2 pb-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center">
+                          <IonIcon icon={timeOutline} className="text-teal-600 text-sm" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700">Operating Hours</p>
+                      </div>
+                    </div>
+                    <List strongIos insetIos className="!my-0">
+                      <TimePicker
                         label="Open Time"
-                        type="time"
-                        placeholder="09:00"
-                        media={<IonIcon icon={timeOutline} />}
+                        value={values.openTime}
+                        onChange={(val) => setFieldValue("openTime", val)}
                       />
-                      <FormikInput
-                        name="closeTime"
+                      <TimePicker
                         label="Close Time"
-                        type="time"
-                        placeholder="18:00"
-                        media={<IonIcon icon={timeOutline} />}
+                        value={values.closeTime}
+                        onChange={(val) => setFieldValue("closeTime", val)}
                       />
                     </List>
 

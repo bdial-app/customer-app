@@ -1,9 +1,8 @@
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
-const IonIcon = dynamic(
-  () => import("@ionic/react").then((m) => m.IonIcon),
-  { ssr: false },
-);
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
+  ssr: false,
+});
 import {
   locationOutline,
   star,
@@ -13,11 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-const ProviderList = ({
-  providerList,
-}: {
-  providerList: any[];
-}) => {
+const ProviderList = ({ providerList }: { providerList: any[] }) => {
   const router = useRouter();
 
   const handleNavigate = (id: string) => {
@@ -34,16 +29,22 @@ const ProviderList = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03, duration: 0.3 }}
             onClick={() => handleNavigate(provider.id)}
-            className="cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform"
+            className="cursor-pointer bg-white dark:!bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:!border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:!shadow-none active:scale-[0.98] transition-transform"
           >
             {/* Image */}
             <div className="relative h-[140px] overflow-hidden">
-              <img
-                src={provider.image}
-                alt={provider.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+              {provider.image ? (
+                <img
+                  src={provider.image}
+                  alt={provider.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-amber-100 to-amber-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-amber-600/40 dark:text-slate-400">{provider.name?.[0] || "?"}</span>
+                </div>
+              )}
               {/* Verified badge */}
               {provider.verified && (
                 <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
@@ -77,31 +78,31 @@ const ProviderList = ({
 
             {/* Content */}
             <div className="p-2.5">
-              <h4 className="text-[13px] font-semibold text-gray-900 leading-tight line-clamp-1">
+              <h4 className="text-[13px] font-semibold text-gray-900 dark:!text-white leading-tight line-clamp-1">
                 {provider.name}
               </h4>
               {provider.service && (
-                <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">
+                <p className="text-[10px] text-gray-500 dark:!text-slate-400 mt-0.5 line-clamp-1">
                   {provider.service}
                 </p>
               )}
               <div className="flex items-center gap-2 mt-1.5">
                 {provider.rating != null && provider.rating > 0 && (
-                  <div className="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                  <div className="flex items-center gap-0.5 bg-amber-50 dark:!bg-amber-900/20 px-1.5 py-0.5 rounded-md">
                     <IonIcon icon={star} className="w-3 h-3 text-amber-500" />
-                    <span className="text-[10px] font-bold text-amber-700">
+                    <span className="text-[10px] font-bold text-amber-700 dark:!text-amber-400">
                       {Number(provider.rating).toFixed(1)}
                     </span>
                   </div>
                 )}
                 {provider.reviews != null && provider.reviews > 0 && (
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-gray-400 dark:!text-slate-500">
                     ({provider.reviews})
                   </span>
                 )}
               </div>
               {provider.location && (
-                <div className="flex items-center gap-0.5 mt-1.5 text-[10px] text-gray-400">
+                <div className="flex items-center gap-0.5 mt-1.5 text-[10px] text-gray-400 dark:!text-slate-500">
                   <IonIcon icon={locationOutline} className="w-3 h-3" />
                   <span className="truncate">{provider.location}</span>
                 </div>

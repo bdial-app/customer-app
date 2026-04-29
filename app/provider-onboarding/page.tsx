@@ -36,6 +36,7 @@ import {
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
 import { useRouter } from "next/navigation";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import TimePicker from "../components/time-picker";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -51,7 +52,9 @@ import { getTopLevelCategories, Category } from "@/services/category.service";
 import { reverseGeocode } from "@/services/geocode.service";
 import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
+import PrivateRoute from "@/app/components/private-route";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -277,7 +280,6 @@ const TipBanner = ({
 // ---------------------------------------------------------------------------
 // Interactive Map location picker with search (Step 2)
 // ---------------------------------------------------------------------------
-const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
 const MAP_CONTAINER = { width: "100%", height: "260px", borderRadius: "16px" };
 const DEFAULT_CENTER = { lat: 18.5204, lng: 73.8567 }; // Pune default
 
@@ -294,11 +296,11 @@ const MapLocationPicker = ({
   isDetecting: boolean;
   detectedLabel: string | null;
 }) => {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_KEY });
+  const { isLoaded } = useGoogleMapsLoader();
   const [mapCenter, setMapCenter] = useState(coords || DEFAULT_CENTER);
   const [markerPos, setMarkerPos] = useState(coords || null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Array<{ placeId: string; description: string; lat: number; lng: number }>>([]);
+  const [searchResults, setSearchResults] = useState<Array<{ placeId: string; description: string; mainText: string; secondaryText: string; lat: number; lng: number }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -316,15 +318,20 @@ const MapLocationPicker = ({
       try {
         const results = await searchGeocode(query.trim());
         setSearchResults(results.filter(r => r.lat && r.lng).map(r => ({
-          placeId: r.placeId, description: r.description, lat: r.lat, lng: r.lng
+          placeId: r.placeId,
+          description: r.description,
+          mainText: r.mainText || r.description,
+          secondaryText: r.secondaryText || "",
+          lat: Number(r.lat),
+          lng: Number(r.lng),
         })));
       } catch { setSearchResults([]); }
       finally { setIsSearching(false); }
     }, 400);
   }, []);
 
-  const selectResult = (result: { lat: number; lng: number; description: string }) => {
-    const pos = { lat: result.lat, lng: result.lng };
+  const selectResult = (result: { lat: number; lng: number; description: string; mainText?: string; secondaryText?: string }) => {
+    const pos = { lat: Number(result.lat), lng: Number(result.lng) };
     setMarkerPos(pos);
     setMapCenter(pos);
     setSearchQuery(result.description);
@@ -372,11 +379,17 @@ const MapLocationPicker = ({
           className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
         {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /></div>}
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-56 overflow-y-auto">
             {searchResults.map((r) => (
               <button key={r.placeId} type="button" onClick={() => selectResult(r)}
-                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0">
-                <p className="text-xs text-slate-700 leading-snug">{r.description}</p>
+                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0 flex items-start gap-2.5">
+                <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-xs text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-700 leading-snug truncate">{r.mainText}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-snug truncate">{r.secondaryText}</p>
+                </div>
               </button>
             ))}
           </div>
@@ -1110,7 +1123,7 @@ const UnderReviewBanner = ({
       iconColor: "text-green-500",
       title: "You're Approved!",
       subtitle:
-        "Your provider account is active. Switch to Provider Mode from your profile to start listing services.",
+        "Your provider account is active. Continue as a provider to manage your business, add products, and start receiving orders.",
       steps: [
         { label: "Application submitted", done: true },
         { label: "Identity verified", done: true },
@@ -1177,18 +1190,29 @@ const UnderReviewBanner = ({
             </div>
           ))}
         </div>
-        <div className="w-full bg-indigo-50 border border-indigo-100 rounded-2xl p-3 flex items-start gap-2">
-          <IonIcon
-            icon={informationCircleOutline}
-            className="text-indigo-400 text-lg shrink-0 mt-0.5"
-          />
-          <p className="text-xs text-indigo-700 leading-relaxed">
-            You can continue using the app as a customer while your application
-            is being reviewed.
-          </p>
-        </div>
-        <Button large rounded className="w-full" onClick={onGoBack}>
-          Continue as Customer
+        {status === "approved" ? (
+          <div className="w-full bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex items-start gap-2">
+            <IonIcon
+              icon={storefrontOutline}
+              className="text-emerald-500 text-lg shrink-0 mt-0.5"
+            />
+            <p className="text-xs text-emerald-700 leading-relaxed">
+              Your provider dashboard is ready. Switch to Provider Mode from your profile to manage products, bookings, and business settings.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full bg-indigo-50 border border-indigo-100 rounded-2xl p-3 flex items-start gap-2">
+            <IonIcon
+              icon={informationCircleOutline}
+              className="text-indigo-400 text-lg shrink-0 mt-0.5"
+            />
+            <p className="text-xs text-indigo-700 leading-relaxed">
+              Your application is being reviewed. You'll be notified once approved.
+            </p>
+          </div>
+        )}
+        <Button large rounded className={`w-full ${status === "approved" ? "!bg-emerald-600" : ""}`} onClick={onGoBack}>
+          {status === "approved" ? "Continue as Provider" : "Go Back"}
         </Button>
       </div>
     </Page>
@@ -1202,6 +1226,7 @@ const ProviderOnboardingPage = () => {
   const { providerStatus, setProviderStatus } = useAppContext();
   const { notify } = useNotification();
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const user = useAppSelector((state) => state.auth.user);
 
   const [currentStep, setCurrentStep] = useState<StepId>(1);
@@ -1288,6 +1313,7 @@ const ProviderOnboardingPage = () => {
         if (geo.city) setFieldValue("city", geo.city);
         if (geo.area) setFieldValue("area", geo.area);
         if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+        if (geo.pincode) setFieldValue("pincode", geo.pincode);
         setDetectedLocationLabel(
           geo.label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
         );
@@ -1355,6 +1381,7 @@ const ProviderOnboardingPage = () => {
       if (geo.city) setFieldValue("city", geo.city);
       if (geo.area) setFieldValue("area", geo.area);
       if (geo.fullAddress) setFieldValue("address", geo.fullAddress);
+      if (geo.pincode) setFieldValue("pincode", geo.pincode);
       setDetectedLocationLabel(geo.label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     } catch {
       setDetectedLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
@@ -1364,7 +1391,7 @@ const ProviderOnboardingPage = () => {
   const handleBack = () => {
     if (isSubmitting) return;
     if (currentStep > 1) setCurrentStep((currentStep - 1) as StepId);
-    else router.back();
+    else goBack("/");
   };
 
   const handleNext = async (validateForm: any, setTouched: any) => {
@@ -1484,7 +1511,7 @@ const ProviderOnboardingPage = () => {
     return (
       <UnderReviewBanner
         status={providerStatus as "pending" | "in_review" | "approved"}
-        onGoBack={() => router.back()}
+        onGoBack={() => goBack("/")}
       />
     );
   }
@@ -1695,35 +1722,36 @@ const ProviderOnboardingPage = () => {
                     <SectionHeader
                       icon={locationOutline}
                       title="Address Details"
-                      subtitle="Auto-filled from pin — adjust if needed"
+                      subtitle="Auto-filled from map pin — cannot be edited manually"
                     />
                     <List strongIos insetIos>
                       <FormikInput
                         name="address"
                         label="Full Address"
                         type="text"
-                        placeholder="Shop address or locality"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="city"
                         label="City"
                         type="text"
-                        placeholder="e.g. Pune"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="area"
                         label="Area / Locality"
                         type="text"
-                        placeholder="e.g. Yerawada"
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                       <FormikInput
                         name="pincode"
                         label="Pincode"
                         type="text"
-                        placeholder="e.g. 411001"
-                        formatValue={(val) =>
-                          val.replace(/\D/g, "").slice(0, 6)
-                        }
+                        placeholder="Auto-filled from map"
+                        readonly
                       />
                     </List>
                   </>
@@ -1990,4 +2018,13 @@ const ProviderOnboardingPage = () => {
   );
 };
 
-export default ProviderOnboardingPage;
+export default function ProviderOnboardingExport() {
+  return (
+    <PrivateRoute
+      title="Become a Provider"
+      description="Sign in to register your business and start reaching customers on Tijarah Connect."
+    >
+      <ProviderOnboardingPage />
+    </PrivateRoute>
+  );
+}

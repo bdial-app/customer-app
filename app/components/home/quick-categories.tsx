@@ -82,13 +82,27 @@ const QuickCategories = () => {
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
             >
               <div className="w-[62px] h-[62px] rounded-2xl relative overflow-hidden flex items-center justify-center">
-                <Image
-                  src={cat.imageUrl}
-                  alt={cat.name}
-                  fill
-                  sizes="62px"
-                  className="object-cover"
-                />
+                {cat.imageUrl ? (
+                  <Image
+                    src={cat.imageUrl}
+                    alt={cat.name}
+                    fill
+                    sizes="62px"
+                    className="object-cover"
+                  />
+                ) : cat.icon ? (
+                  <Image
+                    src={cat.icon}
+                    alt={cat.name}
+                    fill
+                    sizes="62px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${color.gradient} flex items-center justify-center`}>
+                    <span className="text-xl font-bold text-white/80">{cat.name?.[0] || "?"}</span>
+                  </div>
+                )}
               </div>
               <span className="text-[10px] font-semibold text-white/70 text-center leading-tight w-[68px] line-clamp-2">
                 {cat.name}

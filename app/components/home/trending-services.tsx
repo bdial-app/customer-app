@@ -88,13 +88,13 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="shrink-0 w-[130px] rounded-2xl bg-slate-100 p-3 animate-pulse h-[100px]"
+              className="shrink-0 w-[130px] rounded-2xl bg-slate-100 dark:bg-slate-800 p-3 animate-pulse h-[100px]"
             >
-              <div className="h-3.5 bg-slate-200 rounded-full w-4/5 mb-2" />
-              <div className="h-2.5 bg-slate-200/60 rounded-full w-3/5 mb-3" />
+              <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded-full w-4/5 mb-2" />
+              <div className="h-2.5 bg-slate-200/60 dark:bg-slate-700/60 rounded-full w-3/5 mb-3" />
               <div className="flex -space-x-1.5">
                 {[0, 1, 2].map((j) => (
-                  <div key={j} className="w-4 h-4 rounded-full bg-slate-200" />
+                  <div key={j} className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700" />
                 ))}
               </div>
             </div>

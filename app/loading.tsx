@@ -2,14 +2,16 @@
 import { Page, Block } from "konsta/react";
 
 const Skeleton = ({ className = "" }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-200 rounded-md ${className}`} />
+  <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded-md ${className}`} />
 );
 
 export default function Loading() {
   return (
     <Page
+      className="dark:!bg-slate-900"
       style={{
-        background: "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
+        background:
+          "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
       }}
     >
       {/* Search / header area */}
@@ -67,7 +69,7 @@ export default function Loading() {
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="bg-white rounded-xl overflow-hidden shrink-0 w-40"
+              className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shrink-0 w-40"
             >
               <Skeleton className="h-24 w-full rounded-none" />
               <div className="p-2 flex flex-col gap-1.5">
@@ -80,7 +82,7 @@ export default function Loading() {
       </Block>
 
       {/* Bottom bar placeholder */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-100 flex items-center justify-around px-6">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex items-center justify-around px-6">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-1.5">
             <Skeleton className="w-6 h-6 rounded-md" />

@@ -20,6 +20,7 @@ export const useNearbyProviders = (params: Omit<ProviderNearbyParams, "page">) =
       return page < totalPages ? page + 1 : undefined;
     },
     enabled: !!params.lat && !!params.lng,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
@@ -36,6 +37,8 @@ export const useProviderDetails = (id: string) => {
     queryKey: ["provider-details", id],
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 

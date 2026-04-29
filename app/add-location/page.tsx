@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Page } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -20,7 +15,9 @@ import {
   warningOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { GoogleMap, MarkerF } from "@react-google-maps/api";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import { useSearchGeocode } from "@/hooks/useGeocode";
 import {
   SearchGeocodeResult,
@@ -29,11 +26,9 @@ import {
 } from "@/services/geocode.service";
 import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
+import PrivateRoute from "@/app/components/private-route";
 
-// Defined at module level — @react-google-maps/api uses reference equality
-// to detect changes. Defining inside the component (even with useMemo) can
-// cause the script to reload or throw on every render.
-const GOOGLE_MAPS_LIBRARIES: ("places")[] = [];
+
 
 const containerStyle = {
   width: "100%",
@@ -51,18 +46,17 @@ const locationTypes = [
   { key: "Other", icon: locationOutline, label: "Other", value: "other" },
 ];
 
-const AddLocationPage = () => {
+const AddLocationContent = () => {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedType, setSelectedType] = useState("Home");
   const mapRef = useRef<google.maps.Map | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
-    libraries: GOOGLE_MAPS_LIBRARIES,
-  });
+  const { isLoaded, loadError } = useGoogleMapsLoader();
 
   const [marker, setMarker] = useState(defaultCenter);
   const [address, setAddress] = useState("");
@@ -147,7 +141,10 @@ const AddLocationPage = () => {
     mapRef.current = mapInstance;
     // If geolocation resolved before map loaded, pan to the updated marker now
     setMarker((current) => {
-      if (current.lat !== defaultCenter.lat || current.lng !== defaultCenter.lng) {
+      if (
+        current.lat !== defaultCenter.lat ||
+        current.lng !== defaultCenter.lng
+      ) {
         mapInstance.panTo(current);
         mapInstance.setZoom(16);
       }
@@ -160,7 +157,7 @@ const AddLocationPage = () => {
       setIsFocused(false);
       setSearchQuery("");
     } else {
-      router.back();
+      goBack("/");
     }
   };
 
@@ -200,7 +197,10 @@ const AddLocationPage = () => {
               onClick={handleBack}
               className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all"
             >
-              <IonIcon icon={arrowBack} className="text-xl text-neutral-800 dark:text-neutral-200" />
+              <IonIcon
+                icon={arrowBack}
+                className="text-xl text-neutral-800 dark:text-neutral-200"
+              />
             </button>
             <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">
               {isFocused ? "Search Location" : "Add Address"}
@@ -258,10 +258,15 @@ const AddLocationPage = () => {
                   className="w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 dark:active:bg-neutral-800 transition-colors border-b border-neutral-100 dark:border-neutral-800"
                 >
                   <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center shrink-0">
-                    <IonIcon icon={navigateOutline} className="text-lg text-amber-500" />
+                    <IonIcon
+                      icon={navigateOutline}
+                      className="text-lg text-amber-500"
+                    />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Use current location</p>
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                      Use current location
+                    </p>
                     <p className="text-xs text-neutral-400">Using GPS</p>
                   </div>
                 </button>
@@ -278,7 +283,10 @@ const AddLocationPage = () => {
                         className="w-full flex items-start gap-3.5 px-5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 dark:active:bg-neutral-800 transition-colors"
                       >
                         <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
-                          <IonIcon icon={locationOutline} className="text-base text-neutral-500" />
+                          <IonIcon
+                            icon={locationOutline}
+                            className="text-base text-neutral-500"
+                          />
                         </div>
                         <div className="text-left min-w-0 flex-1 border-b border-neutral-50 dark:border-neutral-800 pb-3">
                           <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
@@ -294,7 +302,10 @@ const AddLocationPage = () => {
                 ) : searchQuery.length >= 3 && !isSearchLoading ? (
                   <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
                     <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                      <IonIcon icon={search} className="text-2xl text-neutral-300" />
+                      <IonIcon
+                        icon={search}
+                        className="text-2xl text-neutral-300"
+                      />
                     </div>
                     <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
                       No results found
@@ -306,7 +317,9 @@ const AddLocationPage = () => {
                 ) : isSearchLoading ? (
                   <div className="flex flex-col items-center py-16">
                     <div className="w-7 h-7 border-[2.5px] border-amber-400 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs text-neutral-400 mt-3">Searching...</p>
+                    <p className="text-xs text-neutral-400 mt-3">
+                      Searching...
+                    </p>
                   </div>
                 ) : searchQuery.length > 0 && searchQuery.length < 3 ? (
                   <div className="px-5 py-12 text-center">
@@ -330,7 +343,10 @@ const AddLocationPage = () => {
                   {loadError ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
                       <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                        <IonIcon icon={warningOutline} className="text-xl text-red-500" />
+                        <IonIcon
+                          icon={warningOutline}
+                          className="text-xl text-red-500"
+                        />
                       </div>
                       <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Map failed to load
@@ -368,7 +384,10 @@ const AddLocationPage = () => {
                     onClick={handleLocateMe}
                     className="absolute bottom-3 right-3 w-11 h-11 bg-white dark:bg-neutral-800 rounded-full shadow-lg shadow-black/10 flex items-center justify-center active:scale-95 transition-transform z-10"
                   >
-                    <IonIcon icon={locateOutline} className="text-xl text-amber-500" />
+                    <IonIcon
+                      icon={locateOutline}
+                      className="text-xl text-amber-500"
+                    />
                   </button>
                 </div>
 
@@ -387,7 +406,10 @@ const AddLocationPage = () => {
                     ) : address ? (
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <IonIcon icon={locationOutline} className="text-lg text-amber-500" />
+                          <IonIcon
+                            icon={locationOutline}
+                            className="text-lg text-amber-500"
+                          />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
@@ -398,13 +420,19 @@ const AddLocationPage = () => {
                           </p>
                         </div>
                         <div className="shrink-0 mt-0.5">
-                          <IonIcon icon={checkmarkCircle} className="text-lg text-green-500" />
+                          <IonIcon
+                            icon={checkmarkCircle}
+                            className="text-lg text-green-500"
+                          />
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 py-1">
                         <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                          <IonIcon icon={locationOutline} className="text-lg text-neutral-400" />
+                          <IonIcon
+                            icon={locationOutline}
+                            className="text-lg text-neutral-400"
+                          />
                         </div>
                         <p className="text-sm text-neutral-400">
                           Tap on the map or search to select a location
@@ -483,4 +511,13 @@ const AddLocationPage = () => {
   );
 };
 
-export default AddLocationPage;
+export default function AddLocationPage() {
+  return (
+    <PrivateRoute
+      title="Add Location"
+      description="Sign in to save and manage your favourite locations."
+    >
+      <AddLocationContent />
+    </PrivateRoute>
+  );
+}

@@ -69,12 +69,27 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
     return (sum / displayReviews.length).toFixed(1);
   }, [displayReviews]);
 
+  // Only run rAF auto-scroll when the section is visible on screen
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || !isVisible) return;
 
     let animFrame: number;
-    let pos = 0;
+    let pos = el.scrollLeft;
 
     const scroll = () => {
       if (!isPaused && el) {
@@ -87,7 +102,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
 
     animFrame = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animFrame);
-  }, [isPaused]);
+  }, [isPaused, isVisible]);
 
   // Duplicate for infinite scroll
   const allReviews = [...displayReviews, ...displayReviews];
@@ -95,7 +110,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
   if (displayReviews.length === 0 && !isLoading) return null;
 
   return (
-    <div className="mb-2">
+    <div ref={containerRef} className="mb-2">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div>
           <h2 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
@@ -106,8 +121,8 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
           </p>
         </div>
         {Number(avgRating) > 0 && (
-          <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full">
-            <span className="text-xs font-bold text-amber-700">{avgRating}</span>
+          <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">{avgRating}</span>
             <span className="text-[10px] text-amber-600">★★★★★</span>
           </div>
         )}
@@ -116,9 +131,9 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
       {isLoading ? (
         <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="shrink-0 w-[260px] bg-white rounded-2xl p-3.5 border border-slate-100 animate-pulse">
+            <div key={i} className="shrink-0 w-[260px] bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700 animate-pulse">
               <div className="flex items-center gap-2.5 mb-2.5">
-                <div className="w-9 h-9 rounded-full bg-slate-100" />
+                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700" />
                 <div className="flex-1 space-y-1.5">
                   <div className="h-3 bg-slate-100 rounded-full w-24" />
                   <div className="h-2 bg-slate-50 rounded-full w-32" />
@@ -145,11 +160,8 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
         className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
       >
         {allReviews.map((review, i) => (
-          <motion.div
+          <div
             key={`${review.id}-${i}`}
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
             className="shrink-0 w-[260px] bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700 shadow-sm"
           >
             <div className="flex items-center gap-2.5 mb-2.5">
@@ -177,7 +189,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
             <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
               &ldquo;{review.text}&rdquo;
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
       )}

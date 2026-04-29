@@ -68,14 +68,14 @@ function PhoneInput({
   return (
     <div>
       <div
-        className={`flex items-center h-14 rounded-2xl bg-white border transition-colors ${
+        className={`flex items-center h-14 rounded-2xl bg-white dark:bg-slate-800 border transition-colors ${
           err
-            ? "border-red-300"
-            : "border-gray-200 focus-within:border-gray-400"
+            ? "border-red-300 dark:border-red-500/50"
+            : "border-gray-200 dark:border-slate-700 focus-within:border-gray-400 dark:focus-within:border-slate-500"
         }`}
       >
         {prefix && (
-          <span className="pl-4 text-[15px] font-medium text-gray-400 select-none">
+          <span className="pl-4 text-[15px] font-medium text-gray-400 dark:text-slate-500 select-none">
             {prefix}
           </span>
         )}
@@ -90,7 +90,7 @@ function PhoneInput({
           onChange={(e) =>
             helpers.setValue(format ? format(e.target.value) : e.target.value)
           }
-          className="flex-1 h-full bg-transparent px-3 text-[16px] text-gray-900 outline-none placeholder:text-gray-300"
+          className="flex-1 h-full bg-transparent px-3 text-[16px] text-gray-900 dark:text-white outline-none placeholder:text-gray-300 dark:placeholder:text-slate-600"
         />
       </div>
       {err && (
@@ -253,7 +253,7 @@ function LoginContent() {
     });
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gray-50">
+    <div className="fixed inset-0 flex flex-col bg-gray-50 dark:bg-slate-950">
       {/* ── Top safe-area (no skip) ── */}
       <div
         className="shrink-0"
@@ -272,7 +272,7 @@ function LoginContent() {
       </div>
 
       {/* ── Card ── */}
-      <div className="flex-1 flex flex-col bg-white rounded-t-[28px] shadow-[0_-4px_30px_rgba(0,0,0,0.04)] px-6 pt-7 pb-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-t-[28px] shadow-[0_-4px_30px_rgba(0,0,0,0.04)] dark:shadow-none px-6 pt-7 pb-0 overflow-y-auto">
         <AnimatePresence mode="wait">
           {step === "mobile" ? (
             <motion.div
@@ -282,10 +282,10 @@ function LoginContent() {
               exit={{ opacity: 0 }}
               className="mb-6"
             >
-              <h1 className="text-[22px] font-bold text-gray-900 leading-tight">
+              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
                 Enter your mobile number
               </h1>
-              <p className="text-[13px] text-gray-400 mt-1">
+              <p className="text-[13px] text-gray-400 dark:text-slate-500 mt-1">
                 We&apos;ll send a verification code
               </p>
             </motion.div>
@@ -297,10 +297,10 @@ function LoginContent() {
               exit={{ opacity: 0 }}
               className="mb-6"
             >
-              <h1 className="text-[22px] font-bold text-gray-900 leading-tight">
+              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
                 Verification code
               </h1>
-              <p className="text-[13px] text-gray-400 mt-1">
+              <p className="text-[13px] text-gray-400 dark:text-slate-500 mt-1">
                 Sent to your mobile number
               </p>
             </motion.div>
@@ -360,7 +360,7 @@ function LoginContent() {
                           setStep("mobile");
                           setFieldValue("otp", "");
                         }}
-                        className="text-[12px] text-amber-600 font-medium"
+                        className="text-[12px] text-amber-600 dark:text-amber-400 font-medium"
                       >
                         Change number
                       </button>
@@ -407,8 +407,8 @@ function LoginContent() {
                         }}
                         className={`text-[12px] font-medium ${
                           resendCountdown > 0
-                            ? "text-gray-300"
-                            : "text-amber-600"
+                            ? "text-gray-300 dark:text-slate-600"
+                            : "text-amber-600 dark:text-amber-400"
                         }`}
                       >
                         {resendCountdown > 0
@@ -425,7 +425,7 @@ function LoginContent() {
                 type="button"
                 onClick={() => handleSubmit(validateForm, setTouched, values)}
                 disabled={!isValid || !dirty || busy}
-                className="mt-5 h-[52px] rounded-2xl bg-gray-900 text-white text-[15px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:bg-gray-200 disabled:text-gray-400"
+                className="mt-5 h-[52px] rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:bg-gray-200 dark:disabled:bg-slate-800 disabled:text-gray-400 dark:disabled:text-slate-600"
               >
                 {busy ? <Spinner /> : step === "mobile" ? "Continue" : "Verify"}
               </button>
@@ -433,11 +433,11 @@ function LoginContent() {
               {/* ── Divider ── */}
               {step === "mobile" && (
                 <div className="flex items-center gap-3 my-6">
-                  <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-[11px] font-medium text-gray-300 uppercase tracking-widest">
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-slate-800" />
+                  <span className="text-[11px] font-medium text-gray-300 dark:text-slate-600 uppercase tracking-widest">
                     or
                   </span>
-                  <div className="flex-1 h-px bg-gray-100" />
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-slate-800" />
                 </div>
               )}
 
@@ -448,7 +448,7 @@ function LoginContent() {
                     type="button"
                     onClick={() => googleLogin()}
                     disabled={busy}
-                    className="w-full h-[52px] rounded-2xl border border-gray-200 bg-white flex items-center justify-center gap-3 text-[15px] font-medium text-gray-700 active:scale-[0.98] transition-all disabled:opacity-40"
+                    className="w-full h-[52px] rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center gap-3 text-[15px] font-medium text-gray-700 dark:text-slate-200 active:scale-[0.98] transition-all disabled:opacity-40"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path
@@ -492,16 +492,16 @@ function LoginContent() {
                   paddingBottom: "max(env(safe-area-inset-bottom, 0px), 20px)",
                 }}
               >
-                <p className="text-[13px] text-gray-400">
+                <p className="text-[13px] text-gray-400 dark:text-slate-500">
                   Don&apos;t have an account?{" "}
                   <Link
                     href={ROUTE_PATH.CREATE_ACCOUNT}
-                    className="text-gray-900 font-semibold"
+                    className="text-gray-900 dark:text-white font-semibold"
                   >
                     Sign up
                   </Link>
                 </p>
-                <p className="text-[10px] text-gray-300 mt-3 leading-relaxed">
+                <p className="text-[10px] text-gray-300 dark:text-slate-600 mt-3 leading-relaxed">
                   By continuing you agree to our Terms & Privacy Policy
                 </p>
               </div>
@@ -524,7 +524,7 @@ export default function LoginPage() {
 
   if (!ready) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-slate-950">
         <div className="w-16 h-16 rounded-[18px] overflow-hidden animate-pulse">
           <img
             src="/icons/512.png"

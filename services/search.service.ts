@@ -26,6 +26,8 @@ export interface SearchParams {
   sortBy?: SearchSortBy;
   minRating?: number;
   city?: string;
+  verifiedOnly?: boolean;
+  womenLedOnly?: boolean;
 }
 
 export interface SuggestionParams {
@@ -59,6 +61,12 @@ export interface ProviderSearchResult {
   reviewCount: number;
   categories: string | null;
   relevanceScore: number;
+  isSponsored?: boolean;
+  sponsoredListingId?: string;
+  hasActiveOffer?: boolean;
+  offerTitle?: string;
+  discountValue?: number;
+  discountType?: string;
 }
 
 export interface ProductSearchResult {
@@ -88,11 +96,23 @@ export interface CategorySearchResult {
   relevanceScore: number;
 }
 
+export interface SearchFallback {
+  relaxedProviders?: ProviderSearchResult[];
+  relatedCategories?: CategorySearchResult[];
+  trending?: { query: string; count: number }[];
+  nearbyPopular?: ProviderSearchResult[];
+  peopleAlsoSearched?: string[];
+}
+
 export interface SearchResponse {
+  sponsored: ProviderSearchResult[];
+  deals: ProviderSearchResult[];
+  topRated: ProviderSearchResult[];
   providers: { data: ProviderSearchResult[]; total: number };
   products: { data: ProductSearchResult[]; total: number };
   categories: { data: CategorySearchResult[]; total: number };
-  meta: { query: string; tookMs: number; totalResults: number };
+  meta: { query: string; tookMs: number; totalResults: number; didYouMean?: string };
+  fallback?: SearchFallback;
 }
 
 export interface TrendingSearch {
@@ -113,6 +133,8 @@ export async function searchAll(params: SearchParams): Promise<SearchResponse> {
     params: {
       ...rest,
       ...(categoryIds?.length ? { categoryIds: categoryIds.join(',') } : {}),
+      ...(rest.verifiedOnly ? { verifiedOnly: true } : {}),
+      ...(rest.womenLedOnly ? { womenLedOnly: true } : {}),
     },
   });
   return res.data;

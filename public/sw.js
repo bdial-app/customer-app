@@ -1,5 +1,7 @@
-const CACHE_NAME = "bohri-connect-v1";
-const RUNTIME_CACHE = "bohri-runtime-cache-v1";
+const CACHE_NAME = "bohri-connect-v2";
+const RUNTIME_CACHE = "bohri-runtime-cache-v2";
+const IMAGE_CACHE = "bohri-image-cache-v1";
+const IMAGE_CACHE_MAX = 150;
 const ASSETS_TO_CACHE = ["/", "/manifest.json"];
 
 // Install event - cache essential files
@@ -23,7 +25,11 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+          if (
+            cacheName !== CACHE_NAME &&
+            cacheName !== RUNTIME_CACHE &&
+            cacheName !== IMAGE_CACHE
+          ) {
             console.log("[SW] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
@@ -47,6 +53,35 @@ self.addEventListener("fetch", (event) => {
 
   // Skip chrome extension requests
   if (url.protocol === "chrome-extension:") {
+    return;
+  }
+
+  // Supabase storage images — cache-first (images rarely change)
+  if (
+    url.hostname.includes("supabase.co") &&
+    url.pathname.includes("/storage/v1/object/public/")
+  ) {
+    event.respondWith(
+      caches.open(IMAGE_CACHE).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(request).then((response) => {
+            if (response.status === 200) {
+              cache.put(request, response.clone());
+              // Evict oldest if cache is too large
+              cache.keys().then((keys) => {
+                if (keys.length > IMAGE_CACHE_MAX) {
+                  cache.delete(keys[0]);
+                }
+              });
+            }
+            return response;
+          });
+        });
+      }),
+    );
     return;
   }
 
@@ -170,7 +205,9 @@ self.addEventListener("push", (event) => {
     payload = event.data ? event.data.json() : {};
   } catch {
     try {
-      payload = { notification: { title: event.data?.text() || "New notification" } };
+      payload = {
+        notification: { title: event.data?.text() || "New notification" },
+      };
     } catch {
       payload = { notification: { title: "New notification" } };
     }
@@ -180,11 +217,12 @@ self.addEventListener("push", (event) => {
   const notifData = payload.notification || {};
   const fcmData = payload.data || {};
 
-  const title = notifData.title || fcmData.title || "Bohri Connect";
+  const title = notifData.title || fcmData.title || "Tijarah";
   const body = notifData.body || fcmData.body || "";
   const icon = "/cloth-icon.png";
   const badge = "/cloth-icon.png";
-  const image = notifData.image || notifData.imageUrl || fcmData.imageUrl || undefined;
+  const image =
+    notifData.image || notifData.imageUrl || fcmData.imageUrl || undefined;
 
   // Use type as collapse tag so multiple chat notifications from same conversation collapse
   const tag = fcmData.type || "general";
@@ -261,7 +299,7 @@ self.addEventListener("notificationclick", (event) => {
         if (clients.openWindow) {
           return clients.openWindow(targetUrl);
         }
-      })
+      }),
   );
 });
 

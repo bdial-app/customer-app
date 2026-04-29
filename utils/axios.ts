@@ -29,6 +29,17 @@ export const onInappropriateContent = (listener: InappropriateContentListener) =
   };
 };
 
+// Event emitter for unauthorized (401 / non-paused 403) — triggers auth gate
+type UnauthorizedListener = () => void;
+const unauthorizedListeners: UnauthorizedListener[] = [];
+export const onUnauthorized = (listener: UnauthorizedListener) => {
+  unauthorizedListeners.push(listener);
+  return () => {
+    const idx = unauthorizedListeners.indexOf(listener);
+    if (idx >= 0) unauthorizedListeners.splice(idx, 1);
+  };
+};
+
 // Request interceptor — attach token if present
 apiClient.interceptors.request.use((config) => {
   const token =
@@ -43,16 +54,32 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error?.response?.status;
+
     // Detect paused account response
     if (
-      error?.response?.status === 403 &&
+      status === 403 &&
       error?.response?.data?.code === "ACCOUNT_PAUSED"
     ) {
       pausedListeners.forEach((fn) => fn());
     }
+    // 401 or generic 403 (not paused) — trigger auth gate
+    // Only fire for authenticated requests (where a token was present).
+    // Guest users (no token) get 401s naturally — don't popup the auth gate for those.
+    else if (status === 401 || (status === 403 && error?.response?.data?.code !== "ACCOUNT_PAUSED")) {
+      const hadToken = !!error?.config?.headers?.Authorization;
+      // Clear stale token on 401
+      if (status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("token");
+      }
+      // Only trigger auth gate if the request had a token (stale session)
+      if (hadToken) {
+        unauthorizedListeners.forEach((fn) => fn());
+      }
+    }
 
     // Detect inappropriate language error (400 from ContentSanitizerService)
-    if (error?.response?.status === 400) {
+    if (status === 400) {
       const msg: string = error?.response?.data?.message ?? "";
       if (typeof msg === "string" && msg.toLowerCase().includes("inappropriate language")) {
         inappropriateContentListeners.forEach((fn) => fn(msg));

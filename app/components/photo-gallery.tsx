@@ -286,13 +286,15 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
                 aspect-square
               `}
             >
-              <img
-                src={img.thumb}
-                alt={img.alt}
-                loading="lazy"
-                draggable={false}
-                className="w-full h-full object-cover select-none"
-              />
+              {img.thumb && (
+                <img
+                  src={img.thumb}
+                  alt={img.alt}
+                  loading="lazy"
+                  draggable={false}
+                  className="w-full h-full object-cover select-none"
+                />
+              )}
               {/* Subtle gradient on hover area */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
             </button>
@@ -364,22 +366,24 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
             >
               {/* Image */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <img
-                  key={lightbox}
-                  src={IMAGES[lightbox].src}
-                  alt={IMAGES[lightbox].alt}
-                  draggable={false}
-                  className={`
-                    max-w-full max-h-full object-contain select-none pointer-events-none
-                    will-change-transform ${animClass}
-                  `}
-                  style={{
-                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                    transition: gesture.current ? "none" : "transform 0.22s ease",
+                {IMAGES[lightbox]?.src && (
+                  <img
+                    key={lightbox}
+                    src={IMAGES[lightbox].src}
+                    alt={IMAGES[lightbox].alt}
+                    draggable={false}
+                    className={`
+                      max-w-full max-h-full object-contain select-none pointer-events-none
+                      will-change-transform ${animClass}
+                    `}
+                    style={{
+                      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                      transition: gesture.current ? "none" : "transform 0.22s ease",
                     cursor: zoom > 1 ? "grab" : "default",
                     transformOrigin: "center center",
                   }}
                 />
+                )}
               </div>
 
               {/* Double-tap ripple */}

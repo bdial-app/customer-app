@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -25,21 +25,23 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
   in_review: { label: "In Review", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: timeOutline },
   suspended: { label: "Suspended", color: "text-red-700", bg: "bg-red-50 border-red-200", icon: alertCircleOutline },
   unverified: { label: "Unverified", color: "text-slate-600", bg: "bg-slate-50 border-slate-200", icon: alertCircleOutline },
+  disabled: { label: "Disabled", color: "text-red-700", bg: "bg-red-50 border-red-200", icon: alertCircleOutline },
 };
 
 const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) => {
   const updateMutation = useUpdateProvider();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   if (!provider) return null;
 
-  const status = statusConfig[provider.status] || statusConfig.pending;
-  const initials = provider.brandName
+  const status = statusConfig[provider.status] || statusConfig.unverified;
+  const initials = (provider.brandName || "?")
     .split(" ")
     .map((w) => w[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "?";
 
   const handleToggleAvailability = () => {
     updateMutation.mutate({
@@ -69,6 +71,15 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: provider.brandName || "My Business",
+                    text: `Check out ${provider.brandName || "my business"} on Tijarah Connect!`,
+                    url: typeof window !== "undefined" ? `${window.location.origin}/provider-details/${provider.id}` : "",
+                  }).catch(() => {});
+                }
+              }}
               className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
             >
               <IonIcon icon={shareSocialOutline} className="text-white text-lg" />
@@ -81,32 +92,29 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
           {/* Avatar */}
           <div className="relative">
             <div className="w-[72px] h-[72px] rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 overflow-hidden">
-              {provider.profilePhotoUrl ? (
+              {provider.profilePhotoUrl && !avatarError ? (
                 <img
                   src={provider.profilePhotoUrl}
                   alt={provider.brandName}
                   className="w-full h-full object-cover"
+                  onError={() => setAvatarError(true)}
                 />
               ) : (
                 <span className="text-2xl font-bold text-white">{initials}</span>
               )}
             </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center">
-              <IonIcon icon={cameraOutline} className="text-teal-600 text-sm" />
-            </button>
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-white truncate">
-              {provider.brandName}
+              {provider.brandName || "My Business"}
             </h1>
-            {provider.city && (
-              <p className="text-white/70 text-sm mt-0.5">
-                {provider.area ? `${provider.area}, ` : ""}
-                {provider.city}
-              </p>
-            )}
+            <p className="text-white/70 text-sm mt-0.5">
+              {provider.area && provider.city
+                ? `${provider.area}, ${provider.city}`
+                : provider.city || "Location not set"}
+            </p>
             {/* Status + Availability */}
             <div className="flex items-center gap-2 mt-2">
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${status.bg} ${status.color}`}>

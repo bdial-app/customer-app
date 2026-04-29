@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
@@ -23,7 +24,7 @@ import {
   setCategoryIds,
   resetFilters,
 } from "@/store/slices/searchSlice";
-import type { SearchEntityType, SearchSortBy } from "@/services/search.service";
+import type { SearchEntityType, SearchSortBy, ProviderSearchResult } from "@/services/search.service";
 
 import SearchFilterSheet from "./search-filter-sheet";
 import SearchFilterChips from "./search-filter-chips";
@@ -72,6 +73,8 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
       minRating: filters.minRating ?? undefined,
       city,
       limit: activeTab === "all" ? 50 : 10,
+      verifiedOnly: filters.verifiedOnly || undefined,
+      womenLedOnly: filters.womenLedOnly || undefined,
     }),
     [query, lat, lng, activeTab, filters, city]
   );
@@ -278,7 +281,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
         {isLoading ? (
           <ResultsSkeleton />
         ) : !results || totalResults === 0 ? (
-          <EmptyResults query={query} />
+          <EmptyResults query={query} fallback={results?.fallback} didYouMean={results?.meta?.didYouMean} onSearch={onCategoryTap ? (q: string) => onCategoryTap(q, '') : undefined} />
         ) : activeTab === "all" ? (
           <AllResultsView results={results} onCategoryTap={onCategoryTap} />
         ) : activeTab === "providers" ? (
@@ -328,16 +331,76 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
   );
 };
 
-// ── "All" tab — mixed results ─────────────────────────────────
+// ── "All" tab — prioritized sections: Sponsored → Deals → Top Rated → Regular ──
 
 const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTap?: (name: string, id: string) => void }) => {
   const dispatch = useAppDispatch();
+  const sponsored: ProviderSearchResult[] = results.sponsored ?? [];
+  const deals: ProviderSearchResult[] = results.deals ?? [];
+  const topRated: ProviderSearchResult[] = results.topRated ?? [];
   const providers = results.providers?.data ?? [];
   const products = results.products?.data ?? [];
   const categories = results.categories?.data ?? [];
 
   return (
     <div className="space-y-6">
+      {/* ── Sponsored Section ──────────────────── */}
+      {sponsored.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-[14px] font-bold text-gray-800">Sponsored</h3>
+            <span className="text-[9px] font-semibold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">AD</span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+            {sponsored.map((p, i) => (
+              <div key={p.id} className="min-w-[200px] max-w-[200px] flex-shrink-0">
+                <ProviderResultCard provider={p} index={i} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Deals & Offers Section ────────────── */}
+      {deals.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm">🏷️</span>
+            <h3 className="text-[14px] font-bold text-gray-800">Deals & Offers</h3>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+            {deals.map((p, i) => (
+              <div key={p.id} className="min-w-[200px] max-w-[200px] flex-shrink-0 relative">
+                <ProviderResultCard provider={p} index={i} />
+                {p.discountValue && (
+                  <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm">
+                    {p.discountType === 'percentage' ? `${p.discountValue}% OFF` : `₹${p.discountValue} OFF`}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Top Rated Section ─────────────────── */}
+      {topRated.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm">⭐</span>
+            <h3 className="text-[14px] font-bold text-gray-800">Top Rated</h3>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+            {topRated.map((p, i) => (
+              <div key={p.id} className="min-w-[200px] max-w-[200px] flex-shrink-0">
+                <ProviderResultCard provider={p} index={i} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Regular Businesses ────────────────── */}
       {providers.length > 0 && (
         <section>
           <SectionHeader
@@ -353,6 +416,7 @@ const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTa
         </section>
       )}
 
+      {/* ── Products & Services ───────────────── */}
       {products.length > 0 && (
         <section>
           <SectionHeader
@@ -368,6 +432,7 @@ const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTa
         </section>
       )}
 
+      {/* ── Categories ────────────────────────── */}
       {categories.length > 0 && (
         <section>
           <SectionHeader
@@ -436,23 +501,111 @@ const ResultsSkeleton = () => (
 
 // ── Empty state ───────────────────────────────────────────────
 
-const EmptyResults = ({ query }: { query: string }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="flex flex-col items-center pt-16 text-center px-6"
-  >
-    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center mb-5 shadow-sm">
-      <IonIcon icon={sadOutline} className="w-9 h-9 text-gray-400" />
-    </div>
-    <h3 className="text-[16px] font-bold text-gray-800 mb-1.5">
-      No results found
-    </h3>
-    <p className="text-[13px] text-gray-400 max-w-[280px] leading-relaxed">
-      We couldn&apos;t find anything for &ldquo;{query}&rdquo;. Try a different
-      search term or adjust your filters.
-    </p>
-  </motion.div>
-);
+// ── Enhanced empty state with fallback data ───────────────────
+
+const EmptyResults = ({ query, fallback, didYouMean, onSearch }: {
+  query: string;
+  fallback?: any;
+  didYouMean?: string;
+  onSearch?: (q: string) => void;
+}) => {
+  const router = useRouter();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center pt-10 text-center px-2"
+    >
+      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center mb-5 shadow-sm">
+        <IonIcon icon={sadOutline} className="w-9 h-9 text-gray-400" />
+      </div>
+      <h3 className="text-[16px] font-bold text-gray-800 mb-1.5">
+        No exact results found
+      </h3>
+      <p className="text-[13px] text-gray-400 max-w-[280px] leading-relaxed mb-4">
+        We couldn&apos;t find anything for &ldquo;{query}&rdquo;. Try these instead:
+      </p>
+
+      {/* Did you mean? */}
+      {didYouMean && (
+        <button
+          onClick={() => onSearch?.(didYouMean)}
+          className="mb-4 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[13px] font-semibold text-amber-700 active:bg-amber-100 transition-colors"
+        >
+          Did you mean: <span className="font-bold">&ldquo;{didYouMean}&rdquo;</span>?
+        </button>
+      )}
+
+      {/* People also searched */}
+      {fallback?.peopleAlsoSearched?.length > 0 && (
+        <div className="w-full text-left mb-5">
+          <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wide mb-2">People also searched</h4>
+          <div className="flex flex-wrap gap-2">
+            {fallback.peopleAlsoSearched.map((q: string) => (
+              <button
+                key={q}
+                onClick={() => onSearch?.(q)}
+                className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[12px] font-medium text-gray-600 active:bg-gray-50 transition-colors shadow-sm"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Related categories */}
+      {fallback?.relatedCategories?.length > 0 && (
+        <div className="w-full text-left mb-5">
+          <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wide mb-2">Browse related categories</h4>
+          <div className="flex flex-wrap gap-2">
+            {fallback.relatedCategories.map((c: any) => (
+              <button
+                key={c.id}
+                onClick={() => router.push(`/search?q=${encodeURIComponent(c.name)}&categoryIds=${c.id}`)}
+                className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[12px] font-medium text-gray-600 active:bg-gray-50 transition-colors shadow-sm"
+              >
+                {c.name} <span className="text-gray-400">({c.providerCount})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Relaxed / nearby popular providers */}
+      {(fallback?.relaxedProviders?.length > 0 || fallback?.nearbyPopular?.length > 0) && (
+        <div className="w-full text-left mb-5">
+          <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wide mb-3">
+            {fallback?.relaxedProviders?.length > 0 ? 'Close matches' : 'Popular nearby'}
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            {(fallback?.relaxedProviders || fallback?.nearbyPopular || []).slice(0, 4).map((p: any, i: number) => (
+              <ProviderResultCard key={p.id} provider={p} index={i} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trending searches */}
+      {fallback?.trending?.length > 0 && (
+        <div className="w-full text-left">
+          <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wide mb-2">Trending searches</h4>
+          <div className="flex flex-wrap gap-2">
+            {fallback.trending.map((t: any) => (
+              <button
+                key={t.query}
+                onClick={() => onSearch?.(t.query)}
+                className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[12px] font-medium text-gray-600 active:bg-gray-50 transition-colors shadow-sm"
+              >
+                🔥 {t.query}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
 
 export default SearchResultsView;

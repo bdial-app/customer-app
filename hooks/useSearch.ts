@@ -15,6 +15,7 @@ import {
   SearchEntityType,
 } from "@/services/search.service";
 import { useDebounce } from "./useDebounce";
+import { useAppSelector } from "./useAppStore";
 
 // ─── Unified search with infinite scroll ────────────────────
 
@@ -77,10 +78,12 @@ export const useTrendingSearches = (city?: string) => {
 // ─── Recent searches ────────────────────────────────────────
 
 export const useRecentSearches = () => {
+  const user = useAppSelector((state) => state.auth.user);
   return useQuery({
     queryKey: ["recent-searches"],
     queryFn: () => getRecentSearches(10),
     staleTime: 60_000,
+    enabled: !!user,
   });
 };
 

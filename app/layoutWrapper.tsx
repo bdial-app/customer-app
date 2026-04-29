@@ -4,6 +4,7 @@ import { AppProvider } from "./context/AppContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "@/store";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -13,16 +14,59 @@ import { hydrateAuth, clearUser, setProfile } from "@/store/slices/authSlice";
 import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent } from "@/utils/axios";
+import { AuthGateProvider } from "./context/AuthGateContext";
+import AuthGateSheet from "./components/auth-gate-sheet";
 import { resumeMyAccount } from "@/services/user.service";
 import { useRouter } from "next/navigation";
 import { useNotification } from "./context/NotificationContext";
 import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 
 function LanguageSyncBridge() {
   useLanguageSync();
   useServiceWorker();
+  return null;
+}
+
+function PostHogIdentifyBridge() {
+  usePostHogIdentify();
+  return null;
+}
+
+/**
+ * Prevents the Android hardware back button from closing the PWA when the user
+ * is on the first page of the history stack. Pushes a sentinel entry so that
+ * `popstate` fires before the app would close, letting us push the entry again.
+ */
+function PwaHistoryGuard() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Only activate in standalone PWA mode
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as any).standalone === true;
+    if (!isStandalone) return;
+
+    // Push a sentinel state so the back button triggers popstate instead of closing the app
+    const SENTINEL = "__pwa_guard__";
+    if (!window.history.state?.[SENTINEL]) {
+      window.history.replaceState({ ...window.history.state, [SENTINEL]: true }, "");
+    }
+
+    const handlePopState = () => {
+      // Re-push sentinel when back pops to prevent the app from closing
+      if (!window.history.state?.[SENTINEL]) {
+        window.history.pushState({ [SENTINEL]: true }, "", window.location.href);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [pathname]);
+
   return null;
 }
 
@@ -63,7 +107,11 @@ function InappropriateContentHandler() {
 
   useEffect(() => {
     return onInappropriateContent((message) => {
-      notify({ title: "Inappropriate Language", subtitle: message, variant: "error" });
+      notify({
+        title: "Inappropriate Language",
+        subtitle: message,
+        variant: "error",
+      });
     });
   }, [notify]);
 
@@ -91,7 +139,9 @@ function AccountPausedHandler() {
       }
       setShowDialog(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to reactivate. Please try again.";
+      const msg =
+        err?.response?.data?.message ||
+        "Failed to reactivate. Please try again.";
       setResumeError(msg);
     } finally {
       setIsResuming(false);
@@ -104,7 +154,7 @@ function AccountPausedHandler() {
     store.dispatch(clearUser());
     setShowDialog(false);
     setResumeError(null);
-    router.push("/auth/login");
+    router.push("/");
   }, [router]);
 
   return (
@@ -131,7 +181,18 @@ function AccountPausedHandler() {
 }
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000, // 1 minute default stale time
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+  );
 
   useEffect(() => {
     store.dispatch(hydrateAuth());
@@ -141,20 +202,25 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     <ReduxProvider store={store}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-        <LanguageProvider>
-          <AppProvider>
-            <LanguageSyncBridge />
-            <PushNotificationBridge />
-            <NotificationProvider>
-              <App theme="ios">
-                <AppToast />
-                <InappropriateContentHandler />
-                <AccountPausedHandler />
-                {children}
-              </App>
-            </NotificationProvider>
-          </AppProvider>
-        </LanguageProvider>
+          <LanguageProvider>
+            <AppProvider>
+              <AuthGateProvider>
+              <LanguageSyncBridge />
+              <PushNotificationBridge />
+              <PwaHistoryGuard />
+              <NotificationProvider>
+                <App theme="ios">
+                  <AppToast />
+                  <PostHogIdentifyBridge />
+                  <InappropriateContentHandler />
+                  <AccountPausedHandler />
+                  <AuthGateSheet />
+                  {children}
+                </App>
+              </NotificationProvider>
+              </AuthGateProvider>
+            </AppProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ReduxProvider>

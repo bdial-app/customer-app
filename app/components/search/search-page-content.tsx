@@ -17,7 +17,8 @@ import {
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchSuggestions } from "@/hooks/useSearch";
-import { addRecentSearch, setCategoryIds, resetFilters } from "@/store/slices/searchSlice";
+import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { SearchSuggestion } from "@/services/search.service";
 
@@ -29,6 +30,7 @@ type SearchPhase = "zero" | "typing" | "results";
 
 const SearchPageContent = () => {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +44,23 @@ const SearchPageContent = () => {
   const user = useAppSelector((s) => s.auth.user as any);
   const lat = user?.latitude;
   const lng = user?.longitude;
+
+  // Hydrate Redux filters from URL params (for deep-links from explore, shared URLs, etc.)
+  useEffect(() => {
+    const catIds = searchParams.get("categoryIds");
+    const sortBy = searchParams.get("sortBy");
+    const minRating = searchParams.get("minRating");
+    const maxDistance = searchParams.get("maxDistance");
+    const verified = searchParams.get("verifiedOnly");
+    const womenLed = searchParams.get("womenLedOnly");
+
+    if (catIds) dispatch(setCategoryIds(catIds.split(",").filter(Boolean)));
+    if (sortBy && ["relevance", "distance", "rating", "newest"].includes(sortBy)) dispatch(setSortBy(sortBy as any));
+    if (minRating) dispatch(setMinRating(parseFloat(minRating)));
+    if (maxDistance) dispatch(setMaxDistance(parseFloat(maxDistance)));
+    if (verified === "true") dispatch(setVerifiedOnly(true));
+    if (womenLed === "true") dispatch(setWomenLedOnly(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const phase: SearchPhase = committedQuery
     ? "results"
@@ -120,8 +139,8 @@ const SearchPageContent = () => {
 
   const handleBack = useCallback(() => {
     dispatch(resetFilters());
-    router.push(ROUTE_PATH.HOME);
-  }, [router, dispatch]);
+    goBack(ROUTE_PATH.HOME);
+  }, [goBack, dispatch]);
 
   const handleInputFocus = useCallback(() => {
     setIsFocused(true);

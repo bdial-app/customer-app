@@ -168,7 +168,7 @@ const ProviderProductsTab = ({
             >
               {/* Photo */}
               <div
-                className="w-[88px] h-[88px] shrink-0 bg-slate-100 cursor-pointer relative"
+                className="w-[88px] h-[88px] shrink-0 bg-slate-100 cursor-pointer relative overflow-hidden"
                 onClick={() => handleEdit(p)}
               >
                 {p.photoUrl ? (
@@ -176,15 +176,18 @@ const ProviderProductsTab = ({
                     src={p.photoUrl}
                     alt={p.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      (e.target as HTMLImageElement).parentElement!.querySelector(".fallback-icon")?.classList.remove("hidden");
+                    }}
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <IonIcon
-                      icon={cubeOutline}
-                      className="text-2xl text-slate-300"
-                    />
-                  </div>
-                )}
+                ) : null}
+                <div className={`fallback-icon w-full h-full flex items-center justify-center absolute inset-0 ${p.photoUrl ? "hidden" : ""}`}>
+                  <IonIcon
+                    icon={cubeOutline}
+                    className="text-2xl text-slate-300"
+                  />
+                </div>
                 {(p.photoUrls?.length ?? 0) > 1 && (
                   <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
                     +{(p.photoUrls?.length ?? 1) - 1}
@@ -393,7 +396,7 @@ const ProviderProductsTab = ({
                     {/* Photo Upload Section */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-2">
-                        Photos <span className="text-slate-400 font-normal">(up to 5, max 5 MB each)</span>
+                        Photos <span className="text-slate-400 font-normal">({photoPreviews.length}/5, max 5 MB each)</span>
                       </label>
                       <div className="flex gap-2 flex-wrap">
                         {photoPreviews.map((url, i) => (
@@ -414,7 +417,7 @@ const ProviderProductsTab = ({
                           </div>
                         ))}
                         {photoPreviews.length < 5 && (
-                          <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-300 transition-colors">
+                          <label className="w-20 h-20 rounded-xl border-2 border-dashed border-teal-300 bg-teal-50/50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-colors active:scale-95">
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -423,11 +426,16 @@ const ProviderProductsTab = ({
                               className="hidden"
                               onChange={handlePhotoSelect}
                             />
-                            <IonIcon icon={cameraOutline} className="text-lg text-slate-400" />
-                            <span className="text-[9px] text-slate-400 mt-0.5">Add</span>
+                            <IonIcon icon={cameraOutline} className="text-lg text-teal-500" />
+                            <span className="text-[9px] text-teal-600 mt-0.5 font-medium">Add</span>
                           </label>
                         )}
                       </div>
+                      {photoPreviews.length === 0 && (
+                        <p className="text-[10px] text-slate-400 mt-2">
+                          Tap the + button to add up to 5 photos. You can select multiple at once.
+                        </p>
+                      )}
                       {photoError && (
                         <p className="text-[10px] text-red-500 mt-1.5 flex items-center gap-1">
                           <IonIcon icon={closeCircleOutline} className="text-xs" />

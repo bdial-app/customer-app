@@ -75,11 +75,20 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
                 transition={{ delay: i * 0.03 }}
                 className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 group"
               >
-                <img
-                  src={photo.imageUrl}
-                  alt={`Photo ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                {photo.imageUrl ? (
+                  <img
+                    src={photo.imageUrl}
+                    alt={`Photo ${i + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <IonIcon icon={imagesOutline} className="text-xl text-slate-300" />
+                  </div>
+                )}
                 {/* Delete overlay */}
                 <motion.button
                   whileTap={{ scale: 0.8 }}

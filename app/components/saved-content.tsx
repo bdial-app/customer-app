@@ -171,13 +171,13 @@ const SavedContent = () => {
       {isLoading ? (
         <div className="flex flex-col gap-2.5 px-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100 animate-pulse">
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 animate-pulse">
               <div className="flex gap-3">
-                <div className="w-[88px] h-[88px] rounded-xl bg-slate-100" />
+                <div className="w-[88px] h-[88px] rounded-xl bg-slate-100 dark:bg-slate-700" />
                 <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3.5 bg-slate-100 rounded-full w-3/4" />
-                  <div className="h-2.5 bg-slate-50 rounded-full w-1/2" />
-                  <div className="h-2.5 bg-slate-50 rounded-full w-2/3" />
+                  <div className="h-3.5 bg-slate-100 dark:bg-slate-700 rounded-full w-3/4" />
+                  <div className="h-2.5 bg-slate-700/50 dark:bg-slate-600 rounded-full w-1/2" />
+                  <div className="h-2.5 bg-slate-700/50 dark:bg-slate-600 rounded-full w-2/3" />
                 </div>
               </div>
             </div>
@@ -323,13 +323,13 @@ const SavedContent = () => {
                 exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => handleNavigate(item)}
-                className="bg-white rounded-2xl overflow-hidden border border-slate-100 cursor-pointer active:scale-[0.98] transition-transform"
+                className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 cursor-pointer active:scale-[0.98] transition-transform"
               >
                 <div className="relative h-[120px]">
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                    <div className="w-full h-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                       <IonIcon icon={item.itemType === "provider" ? storefrontOutline : cubeOutline} className="text-2xl text-slate-300" />
                     </div>
                   )}
@@ -355,12 +355,12 @@ const SavedContent = () => {
                   </div>
                 </div>
                 <div className="p-2.5">
-                  <h3 className="text-[12px] font-bold text-slate-800 line-clamp-1">{item.name}</h3>
-                  <p className="text-[9px] text-slate-500 mt-0.5">{item.category}</p>
+                  <h3 className="text-[12px] font-bold text-slate-800 dark:text-white line-clamp-1">{item.name}</h3>
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">{item.category}</p>
                   {item.itemType === "provider" && (item.rating ?? 0) > 0 && (
                     <div className="flex items-center gap-1 mt-1.5">
                       <IonIcon icon={star} className="text-amber-400 text-[10px]" />
-                      <span className="text-[10px] font-bold text-slate-800">{item.rating}</span>
+                      <span className="text-[10px] font-bold text-slate-800 dark:text-white">{item.rating}</span>
                       {(item.reviews ?? 0) > 0 && (
                         <span className="text-[8px] text-slate-400">({item.reviews})</span>
                       )}

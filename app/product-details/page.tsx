@@ -4,10 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
-const IonIcon = dynamic(
-  () => import("@ionic/react").then((m) => m.IonIcon),
-  { ssr: false }
-);
+const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
+  ssr: false,
+});
 import {
   arrowBack,
   heartOutline,
@@ -23,9 +22,11 @@ import {
   flagOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useProduct } from "@/hooks/useProduct";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "@/app/context/AppContext";
@@ -39,6 +40,7 @@ const FALLBACK_IMAGE =
 
 export default function ProductDetailsPage() {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? "";
 
@@ -49,15 +51,18 @@ export default function ProductDetailsPage() {
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
+  const { requireAuth } = useAuthGate();
   const { setUserMode } = useAppContext();
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
-  const { mutate: createConversation, isPending: isCreatingChat } = useCreateConversation();
+  const { mutate: createConversation, isPending: isCreatingChat } =
+    useCreateConversation();
 
   const handleToggleSaved = () => {
-    if (!user) return;
-    toggleSaved.mutate({ itemId: id, itemType: "product" });
+    requireAuth(() => {
+      toggleSaved.mutate({ itemId: id, itemType: "product" });
+    });
   };
 
   const product = data?.product;
@@ -78,14 +83,17 @@ export default function ProductDetailsPage() {
   );
 
   const photos = useMemo(() => {
-    if (product?.photoUrls?.length) return product.photoUrls;
+    if (product?.photoUrls?.length) {
+      const valid = product.photoUrls.filter((u: string) => !!u);
+      if (valid.length) return valid;
+    }
     if (product?.photoUrl) return [product.photoUrl];
     return [FALLBACK_IMAGE];
   }, [product?.photoUrls, product?.photoUrl]);
 
   if (!id) {
     return (
-      <Page className="!bg-gray-50/80">
+      <Page className="!bg-gray-50/80 dark:!bg-slate-900">
         <div className="p-10 text-center text-sm text-gray-500">
           Product not found.
         </div>
@@ -95,13 +103,13 @@ export default function ProductDetailsPage() {
 
   if (isLoading) {
     return (
-      <Page className="!bg-gray-50/80">
-        <div className="h-80 bg-gray-200 animate-pulse" />
+      <Page className="!bg-gray-50/80 dark:!bg-slate-900">
+        <div className="h-80 bg-gray-200 dark:bg-slate-700 animate-pulse" />
         <div className="px-5 pt-5 space-y-4">
-          <div className="h-5 w-2/3 bg-gray-200 rounded animate-pulse" />
-          <div className="h-7 w-1/3 bg-gray-200 rounded animate-pulse" />
-          <div className="h-24 bg-gray-200 rounded-2xl animate-pulse" />
-          <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
+          <div className="h-5 w-2/3 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-7 w-1/3 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-24 bg-gray-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
+          <div className="h-32 bg-gray-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
         </div>
       </Page>
     );
@@ -109,7 +117,7 @@ export default function ProductDetailsPage() {
 
   if (isError || !product) {
     return (
-      <Page className="!bg-gray-50/80">
+      <Page className="!bg-gray-50/80 dark:!bg-slate-900">
         <div className="p-10 text-center text-sm text-gray-500">
           Could not load this product.
         </div>
@@ -121,9 +129,9 @@ export default function ProductDetailsPage() {
   const currency = product.currency === "INR" ? "₹" : product.currency;
 
   return (
-    <Page className="!bg-gray-50/80">
+    <Page className="!bg-gray-50/80 dark:!bg-slate-900">
       <div className="relative">
-        <div className="relative h-80 overflow-hidden bg-white">
+        <div className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
           <img
             src={photos[currentPhoto]}
             alt={product.name}
@@ -132,7 +140,7 @@ export default function ProductDetailsPage() {
 
           <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => goBack("/")}
               className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
             >
               <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
@@ -160,9 +168,9 @@ export default function ProductDetailsPage() {
               >
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>
-              {!isOwnProduct && user && (
+              {!isOwnProduct && (
                 <button
-                  onClick={() => setReportSheetOpen(true)}
+                  onClick={() => requireAuth(() => setReportSheetOpen(true))}
                   className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
                 >
                   <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
@@ -200,7 +208,7 @@ export default function ProductDetailsPage() {
         </div>
 
         {photos.length > 1 && (
-          <div className="flex gap-2 px-5 py-3 bg-white border-b border-gray-100/80 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 px-5 py-3 bg-white dark:bg-slate-800 border-b border-gray-100/80 dark:border-slate-700 overflow-x-auto no-scrollbar">
             {photos.map((photo, i) => (
               <button
                 key={i}
@@ -224,7 +232,7 @@ export default function ProductDetailsPage() {
 
       <div className="px-5 pt-5 pb-28 space-y-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
           <div className="flex items-center gap-3">
@@ -234,12 +242,12 @@ export default function ProductDetailsPage() {
                 {price.toLocaleString()}
               </span>
             ) : (
-              <span className="text-sm font-semibold text-gray-500">
+              <span className="text-sm font-semibold text-gray-500 dark:text-slate-400">
                 Price on request
               </span>
             )}
             {stats && stats.reviewCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 bg-amber-50 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
                 <IonIcon icon={star} className="w-3 h-3 text-amber-500" />
                 {stats.rating.toFixed(1)} ({stats.reviewCount})
               </span>
@@ -262,9 +270,9 @@ export default function ProductDetailsPage() {
         {provider && (
           <Link
             href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
-            className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100/80 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-transform"
+            className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
           >
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden flex-shrink-0">
               {provider.profilePhotoUrl ? (
                 <img
                   src={provider.profilePhotoUrl}
@@ -272,15 +280,12 @@ export default function ProductDetailsPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <IonIcon
-                  icon={storefront}
-                  className="w-5 h-5 text-amber-600"
-                />
+                <IonIcon icon={storefront} className="w-5 h-5 text-amber-600" />
               )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <h4 className="text-[13px] font-bold text-gray-900 truncate">
+                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white truncate">
                   {provider.brandName}
                 </h4>
                 {provider?.communityVerified && (
@@ -291,7 +296,7 @@ export default function ProductDetailsPage() {
                 )}
               </div>
               {(provider.area || provider.city) && (
-                <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                <p className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
                   <IonIcon icon={locationOutline} className="w-3 h-3" />
                   {[provider.area, provider.city].filter(Boolean).join(", ")}
                 </p>
@@ -305,22 +310,30 @@ export default function ProductDetailsPage() {
         )}
 
         {/* Get Directions */}
-        {provider && (provider as any)?.latitude && (provider as any)?.longitude && (
-          <button
-            onClick={() => openDirections(Number((provider as any).latitude), Number((provider as any).longitude), provider.brandName)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
-          >
-            <IonIcon icon={navigateOutline} className="w-4 h-4" />
-            Get Directions
-          </button>
-        )}
+        {provider &&
+          (provider as any)?.latitude &&
+          (provider as any)?.longitude && (
+            <button
+              onClick={() =>
+                openDirections(
+                  Number((provider as any).latitude),
+                  Number((provider as any).longitude),
+                  provider.brandName,
+                )
+              }
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[13px] font-semibold active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
+            >
+              <IonIcon icon={navigateOutline} className="w-4 h-4" />
+              Get Directions
+            </button>
+          )}
 
         {provider?.categories && provider.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {provider.categories.map((cat: any) => (
               <span
                 key={cat.id}
-                className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full"
+                className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full"
               >
                 {cat.name}
               </span>
@@ -329,11 +342,11 @@ export default function ProductDetailsPage() {
         )}
 
         {product.description && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[15px] font-bold text-gray-900 mb-2">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
               Description
             </h3>
-            <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-line">
+            <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
               {product.description}
             </p>
           </div>
@@ -342,7 +355,7 @@ export default function ProductDetailsPage() {
         {related.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[15px] font-bold text-gray-900">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
                 You May Also Like
               </h3>
               {provider && (
@@ -367,8 +380,8 @@ export default function ProductDetailsPage() {
                     href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${item.id}`}
                     className="flex-shrink-0 w-36"
                   >
-                    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-[0.98] transition-transform">
-                      <div className="relative aspect-square overflow-hidden bg-gray-100">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-700">
                         <img
                           src={item.photoUrl ?? FALLBACK_IMAGE}
                           alt={item.name}
@@ -376,7 +389,7 @@ export default function ProductDetailsPage() {
                         />
                       </div>
                       <div className="p-2.5">
-                        <h4 className="text-[12px] font-semibold text-gray-900 mb-0.5 line-clamp-1">
+                        <h4 className="text-[12px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
                           {item.name}
                         </h4>
                         {itemPrice !== null ? (
@@ -385,7 +398,7 @@ export default function ProductDetailsPage() {
                             {itemPrice.toLocaleString()}
                           </span>
                         ) : (
-                          <span className="text-[11px] font-semibold text-gray-500">
+                          <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">
                             On request
                           </span>
                         )}
@@ -403,18 +416,25 @@ export default function ProductDetailsPage() {
         className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
         style={{
           background:
-            "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",
+            "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
         }}
       >
         {isOwnProduct ? (
           <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
               <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
-                <IonIcon icon={storefrontOutline} className="text-white text-sm" />
+                <IonIcon
+                  icon={storefrontOutline}
+                  className="text-white text-sm"
+                />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">Your Product</p>
-                <p className="text-[10px] text-violet-500 truncate">You&apos;re viewing your own listing</p>
+                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+                  Your Product
+                </p>
+                <p className="text-[10px] text-violet-500 truncate">
+                  You&apos;re viewing your own listing
+                </p>
               </div>
               <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
                 <IonIcon icon={eyeOutline} className="text-xs" />
@@ -423,7 +443,10 @@ export default function ProductDetailsPage() {
             </div>
             <div className="px-4 py-3">
               <button
-                onClick={() => { setUserMode('provider'); router.push('/'); }}
+                onClick={() => {
+                  setUserMode("provider");
+                  router.push("/");
+                }}
                 className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
               >
                 <IonIcon icon={createOutline} className="text-base" />
@@ -434,37 +457,37 @@ export default function ProductDetailsPage() {
         ) : (
           <button
             onClick={() => {
-              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-              if (!token) { router.push('/auth/login'); return; }
-              if (!provider?.id) return;
-              createConversation({
-                providerId: provider.id,
-                contextType: 'product',
-                contextId: product?.id,
-                initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
-                initialMessageMetadata: {
-                  productId: product?.id,
-                  productName: product?.name,
-                  productImage: product?.photoUrl,
-                  productPrice: product?.price,
-                  currency: product?.currency,
-                },
-              }, {
-                onSuccess: (conv) => {
-                  dispatch(openChat(conv.id));
-                  router.push('/');
-                },
-                onError: (err: any) => {
-                  const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
-                },
+              requireAuth(() => {
+                if (!provider?.id) return;
+                createConversation({
+                  providerId: provider.id,
+                  contextType: 'product',
+                  contextId: product?.id,
+                  initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
+                  initialMessageMetadata: {
+                    productId: product?.id,
+                    productName: product?.name,
+                    productImage: product?.photoUrl,
+                    productPrice: product?.price,
+                    currency: product?.currency,
+                  },
+                }, {
+                  onSuccess: (conv) => {
+                    dispatch(openChat(conv.id));
+                    router.push('/');
+                  },
+                  onError: (err: any) => {
+                    const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                    alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                  },
+              });
               });
             }}
             disabled={isCreatingChat}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? 'Opening Chat...' : 'Send Enquiry'}
+            {isCreatingChat ? "Opening Chat..." : "Send Enquiry"}
           </button>
         )}
       </div>

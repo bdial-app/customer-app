@@ -406,21 +406,40 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-white rounded-2xl p-3.5 border border-slate-100"
+            className="bg-white rounded-2xl border border-slate-100 overflow-hidden flex"
           >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-slate-800 truncate flex-1 mr-2">
-                {p.name}
-              </p>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                p.isActive ? "text-emerald-700 bg-emerald-50" : "text-slate-600 bg-slate-50"
-              }`}>
-                {p.isActive ? "Active" : "Inactive"}
-              </span>
+            {/* Product photo */}
+            <div className="w-16 h-16 shrink-0 bg-slate-100 overflow-hidden">
+              {p.photoUrl ? (
+                <img
+                  src={p.photoUrl}
+                  alt={p.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <IonIcon icon={cubeOutline} className="text-lg text-slate-300" />
+                </div>
+              )}
             </div>
-            {p.price && (
-              <p className="text-[11px] text-slate-500">{p.currency === "INR" ? "₹" : p.currency}{p.price.toLocaleString()}</p>
-            )}
+            <div className="flex-1 min-w-0 p-3 flex flex-col justify-center">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-xs font-bold text-slate-800 truncate flex-1 mr-2">
+                  {p.name}
+                </p>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+                  p.isActive ? "text-emerald-700 bg-emerald-50" : "text-slate-600 bg-slate-50"
+                }`}>
+                  {p.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+              {p.price != null && (
+                <p className="text-[11px] text-slate-500">{p.currency === "INR" ? "₹" : p.currency}{Number(p.price).toLocaleString()}</p>
+              )}
+            </div>
           </motion.div>
         ))}
       </div>
@@ -653,8 +672,8 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         <div className="px-4 py-4 grid grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100 flex flex-col items-center gap-1.5">
-              <div className="w-8 h-8 rounded-xl bg-slate-100 animate-pulse" />
-              <div className="h-4 w-8 bg-slate-100 rounded animate-pulse" />
+              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 animate-pulse" />
+              <div className="h-4 w-8 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
               <div className="h-2 w-12 bg-slate-50 rounded animate-pulse" />
             </div>
           ))}

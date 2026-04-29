@@ -84,14 +84,14 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
     <div className="flex flex-col">
       {/* Search bar */}
       <div className="px-4 pt-2 pb-1">
-        <div className="flex items-center gap-2.5 bg-slate-100 rounded-xl px-3.5 py-2.5">
+        <div className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3.5 py-2.5">
           <IonIcon icon={searchOutline} className="text-base text-slate-400" />
           <input
             type="text"
             placeholder="Search conversations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+            className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none"
           />
         </div>
       </div>
@@ -105,8 +105,8 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
             onClick={() => setFilter(f)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filter === f
-                ? "bg-slate-800 text-white"
-                : "bg-slate-100 text-slate-500"
+                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
             }`}
           >
             {f === "all" ? "All" : `Unread (${totalUnread})`}
@@ -119,10 +119,10 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
         <div className="flex flex-col gap-1 px-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center gap-3 py-3 animate-pulse">
-              <div className="w-12 h-12 rounded-full bg-slate-200" />
+              <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700" />
               <div className="flex-1 space-y-2">
-                <div className="h-3.5 bg-slate-200 rounded w-2/3" />
-                <div className="h-3 bg-slate-100 rounded w-4/5" />
+                <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-2/3" />
+                <div className="h-3 bg-slate-100 dark:bg-slate-600 rounded w-4/5" />
               </div>
             </div>
           ))}
@@ -168,7 +168,7 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
                     layout
                     whileTap={{ backgroundColor: "rgba(0,0,0,0.03)" }}
                     onClick={() => onChatClick(conv.id)}
-                    className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-slate-50 active:bg-slate-50 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-slate-50 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
                   >
                     {/* Avatar */}
                     <div className="relative shrink-0">
@@ -195,8 +195,8 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
                         <h4
                           className={`text-[14px] leading-tight truncate ${
                             conv.unreadCount > 0
-                              ? "font-bold text-slate-900"
-                              : "font-semibold text-slate-700"
+                              ? "font-bold text-slate-900 dark:text-white"
+                              : "font-semibold text-slate-700 dark:text-slate-300"
                           }`}
                         >
                           {name}
@@ -231,8 +231,8 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
                           <p
                             className={`text-[12px] truncate ${
                               conv.unreadCount > 0
-                                ? "text-slate-700 font-medium"
-                                : "text-slate-500"
+                                ? "text-slate-700 dark:text-slate-200 font-medium"
+                                : "text-slate-500 dark:text-slate-400"
                             }`}
                           >
                             {conv.lastMessagePreview || "Start a conversation"}
@@ -249,7 +249,7 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
                       </div>
                       {/* Context tag */}
                       {conv.contextTitle && (
-                        <span className="inline-block mt-1 text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                        <span className="inline-block mt-1 text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                           {conv.contextTitle}
                         </span>
                       )}

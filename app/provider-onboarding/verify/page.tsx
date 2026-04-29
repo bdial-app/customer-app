@@ -17,8 +17,11 @@ import {
   hourglassOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { submitVerification, getMyProviderStatus } from "@/services/provider.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import PrivateRoute from "@/app/components/private-route";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
@@ -36,8 +39,9 @@ const DOC_TYPES = [
 
 type DocTypeId = (typeof DOC_TYPES)[number]["id"];
 
-export default function VerifyPage() {
+function VerifyContent() {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,7 +131,7 @@ export default function VerifyPage() {
           title="Identity Verification"
           leftClassName="w-11"
           left={
-            <Button clear onClick={() => router.back()}>
+            <Button clear onClick={() => goBack("/")}>
               <IonIcon icon={arrowBack} className="w-5 h-5" />
             </Button>
           }
@@ -142,7 +146,7 @@ export default function VerifyPage() {
               Your identity has been verified. You have a verified badge on your profile.
             </p>
           </div>
-          <Button large rounded className="w-full mt-4" onClick={() => router.back()}>
+          <Button large rounded className="w-full mt-4" onClick={() => goBack("/")}>
             Go Back
           </Button>
         </div>
@@ -158,7 +162,7 @@ export default function VerifyPage() {
           title="Identity Verification"
           leftClassName="w-11"
           left={
-            <Button clear onClick={() => router.back()}>
+            <Button clear onClick={() => goBack("/")}>
               <IonIcon icon={arrowBack} className="w-5 h-5" />
             </Button>
           }
@@ -173,7 +177,7 @@ export default function VerifyPage() {
               Your documents are being reviewed. This usually takes 1-2 business days.
             </p>
           </div>
-          <Button large rounded className="w-full mt-4" onClick={() => router.back()}>
+          <Button large rounded className="w-full mt-4" onClick={() => goBack("/")}>
             Go Back
           </Button>
         </div>
@@ -189,7 +193,7 @@ export default function VerifyPage() {
           title="Identity Verification"
           leftClassName="w-11"
           left={
-            <Button clear onClick={() => router.back()}>
+            <Button clear onClick={() => goBack("/")}>
               <IonIcon icon={arrowBack} className="w-5 h-5" />
             </Button>
           }
@@ -210,7 +214,7 @@ export default function VerifyPage() {
               Once verified, you&apos;ll receive a verified badge and improved search ranking.
             </p>
           </div>
-          <Button large rounded className="w-full mt-2" onClick={() => router.back()}>
+          <Button large rounded className="w-full mt-2" onClick={() => goBack("/")}>
             Back to Dashboard
           </Button>
         </div>
@@ -227,7 +231,7 @@ export default function VerifyPage() {
         title="Identity Verification"
         leftClassName="w-11"
         left={
-          <Button clear onClick={() => router.back()}>
+          <Button clear onClick={() => goBack("/")}>
             <IonIcon icon={arrowBack} className="w-5 h-5" />
           </Button>
         }
@@ -430,7 +434,7 @@ export default function VerifyPage() {
             rounded
             clear
             className="flex-1"
-            onClick={() => router.back()}
+            onClick={() => goBack("/")}
             disabled={isSubmitting}
             type="button"
           >
@@ -456,5 +460,16 @@ export default function VerifyPage() {
         </div>
       </div>
     </Page>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <PrivateRoute
+      title="Provider Verification"
+      description="Sign in to verify your identity and complete your provider application."
+    >
+      <VerifyContent />
+    </PrivateRoute>
   );
 }

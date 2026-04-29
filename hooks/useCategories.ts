@@ -8,6 +8,8 @@ export const useTopLevelCategories = () => {
   return useQuery({
     queryKey: ["top-level-categories"],
     queryFn: getTopLevelCategories,
+    staleTime: 5 * 60 * 1000, // 5 minutes — categories rarely change
+    refetchOnWindowFocus: false,
   });
 };
 

@@ -19,7 +19,7 @@ const BecomeProviderCTA = () => {
       className="mx-4 my-1"
     >
       <div
-        className="relative overflow-hidden rounded-2xl p-4 border border-emerald-100"
+        className="relative overflow-hidden rounded-2xl p-4 border border-emerald-100 dark:border-emerald-800/40"
         style={{
           background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%)",
         }}
@@ -41,7 +41,7 @@ const BecomeProviderCTA = () => {
                   Earn on your own terms
                 </span>
               </div>
-              <h3 className="text-[15px] font-extrabold text-slate-800 leading-snug">
+              <h3 className="text-[15px] font-extrabold text-slate-800 dark:text-slate-900 leading-snug">
                 Become a service provider
               </h3>
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
