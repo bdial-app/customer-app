@@ -8,4 +8,5 @@ export const ROUTE_PATH = {
     PRODUCT_DETAILS: "/product-details",
     HOME: "/",
     SEARCH: "/search",
+    DEALS: "/deals",
 };

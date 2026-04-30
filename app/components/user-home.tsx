@@ -5,6 +5,8 @@ import { useRef, useMemo, lazy, Suspense, useCallback } from "react";
 import HeroSearchBar from "./home/hero-search-bar";
 import QuickCategories from "./home/quick-categories";
 import PromoBannerCarousel from "./home/promo-banner-carousel";
+import DealsCarousel from "./home/deals-carousel";
+import SponsoredCarousel from "./home/sponsored-carousel";
 import ProviderCardSlider from "./home/provider-card-slider";
 import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
@@ -71,6 +73,8 @@ const UserHome = () => {
     () => (feed?.newArrivals || []).map(mapProvider),
     [feed?.newArrivals],
   );
+  const dealsAroundYou = feed?.dealsAroundYou || [];
+  const sponsoredProviders = feed?.sponsoredProviders || [];
   const stats = feed?.platformStats;
 
   return (
@@ -112,6 +116,12 @@ const UserHome = () => {
           banners={feed?.promoBanners}
           isLoading={isLoading}
         />
+
+        {/* ⭐ Featured Businesses — gold themed sponsored carousel */}
+        <SponsoredCarousel providers={sponsoredProviders} isLoading={isLoading} />
+
+        {/* 🏷️ Deals Around You — red themed carousel */}
+        <DealsCarousel deals={dealsAroundYou} isLoading={isLoading} />
 
         {/* Divider */}
         <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
@@ -216,13 +226,6 @@ const UserHome = () => {
 
         {/* Divider */}
         <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-
-        {/* Recently Added — new arrivals */}
-        <RecentlyAdded
-          providers={newArrivals}
-          isLoading={isLoading}
-          viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
-        />
 
         {/* Become a Provider CTA */}
         <div style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px" }}>

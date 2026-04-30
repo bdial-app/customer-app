@@ -45,7 +45,7 @@ export default async function RootLayout({
       <head>
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+          content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
         />
         <meta name="theme-color" content="#F59E0B" />
         <meta name="mobile-web-app-capable" content="yes" />

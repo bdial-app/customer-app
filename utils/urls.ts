@@ -89,6 +89,7 @@ export const HOME_URLS = {
 export const EXPLORE_URLS = {
   FEED: '/explore/feed',
   TRACK: '/explore/track',
+  DEALS: '/explore/deals',
 };
 
 export const INVITE_URLS = {
@@ -139,4 +140,19 @@ export const NOTIFICATION_URLS = {
 
 export const BUG_REPORT_URLS = {
   CREATE: '/bug-reports',
+};
+
+// Payment URLs
+export const PAYMENT_URLS = {
+  SPONSORSHIP_CHECKOUT: '/payments/sponsorship/checkout',
+  LEAD_UNLOCK_CHECKOUT: '/payments/lead-unlock/checkout',
+  SUBSCRIPTION_CHECKOUT: '/payments/subscriptions/checkout',
+  SUBSCRIPTION_PLANS: '/payments/subscriptions/plans',
+  SUBSCRIPTION_CURRENT: '/payments/subscriptions/current',
+  SUBSCRIPTION_CANCEL: '/payments/subscriptions/cancel',
+  SUBSCRIPTION_RESUME: '/payments/subscriptions/resume',
+  SUBSCRIPTION_PORTAL: '/payments/subscriptions/portal',
+  VALIDATE_VOUCHER: '/payments/vouchers/validate',
+  HISTORY: '/payments/history',
+  CONFIRM: '/payments/confirm',
 };

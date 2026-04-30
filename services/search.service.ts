@@ -43,6 +43,8 @@ export interface SearchSuggestion {
   id: string;
   subtitle?: string;
   imageUrl?: string;
+  isSponsored?: boolean;
+  hasActiveOffer?: boolean;
 }
 
 export interface ProviderSearchResult {

@@ -75,7 +75,13 @@ const HighlightedText = ({
 
 const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
   const grouped = {
-    provider: suggestions.filter((s) => s.type === "provider"),
+    provider: suggestions
+      .filter((s) => s.type === "provider")
+      .sort((a, b) => {
+        const aScore = (a.isSponsored ? 2 : 0) + (a.hasActiveOffer ? 1 : 0);
+        const bScore = (b.isSponsored ? 2 : 0) + (b.hasActiveOffer ? 1 : 0);
+        return bScore - aScore;
+      }),
     product: suggestions.filter((s) => s.type === "product"),
     category: suggestions.filter((s) => s.type === "category"),
   };
@@ -181,11 +187,25 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                 </div>
 
                 {/* Type badge */}
-                <span
-                  className={`text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${config.labelBg} ${config.labelText} flex-shrink-0`}
-                >
-                  {config.label}
-                </span>
+                {suggestion.isSponsored ? (
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-amber-50 text-amber-600 flex-shrink-0 flex items-center gap-0.5"
+                  >
+                    <span className="text-[8px]">⚡</span> Sponsored
+                  </span>
+                ) : suggestion.hasActiveOffer ? (
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200/60 flex-shrink-0 flex items-center gap-0.5"
+                  >
+                    <span className="text-[8px]">🏷️</span> Deals
+                  </span>
+                ) : (
+                  <span
+                    className={`text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${config.labelBg} ${config.labelText} flex-shrink-0`}
+                  >
+                    {config.label}
+                  </span>
+                )}
 
                 <IonIcon
                   icon={arrowForward}

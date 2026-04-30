@@ -77,6 +77,42 @@ export interface LiveActivity {
   text: string;
 }
 
+export interface HomeProviderWithOffer {
+  id: string;
+  name: string;
+  image: string | null;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  verified: boolean;
+  distance: number | null;
+  offerId: string;
+  offerTitle: string;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  offerEndsAt: string;
+  hasActiveOffer: true;
+  totalOffers: number;
+}
+
+export interface HomeSponsoredProvider {
+  id: string;
+  name: string;
+  image: string | null;
+  description: string | null;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  services: string | null;
+  primaryCategory: string | null;
+  verified: boolean;
+  distance: number | null;
+  sponsorType: 'carousel' | 'inline' | 'top_result';
+  hasActiveOffer: boolean;
+  sponsoredListingId: string;
+  endsAt: string;
+}
+
 export interface HomeFeedResponse {
   nearbyProviders: HomeProvider[];
   featuredCategory: FeaturedCategory | null;
@@ -88,6 +124,8 @@ export interface HomeFeedResponse {
   communityReviews: CommunityReview[];
   platformStats: PlatformStats;
   searchPrompts: string[];
+  dealsAroundYou: HomeProviderWithOffer[];
+  sponsoredProviders: HomeSponsoredProvider[];
 }
 
 // ─── API Functions ──────────────────────────────────────────────────

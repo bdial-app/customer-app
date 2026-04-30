@@ -15,6 +15,7 @@ import {
   sparklesOutline,
   arrowForwardOutline,
   shieldCheckmarkOutline,
+  ticketOutline,
 } from "ionicons/icons";
 import {
   useSponsorshipPlans,
@@ -22,6 +23,7 @@ import {
   useCreateSponsorship,
   useUpdateSponsorship,
 } from "@/hooks/useMyProvider";
+import { createSponsorshipCheckout, validateVoucher } from "@/services/payment.service";
 import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
 
 const typeLabels: Record<string, string> = {
@@ -49,6 +51,10 @@ const ProviderSponsorTab = () => {
   const updateMutation = useUpdateSponsorship();
   const [selectedPlan, setSelectedPlan] = useState<SponsorshipPlan | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherResult, setVoucherResult] = useState<{ valid: boolean; discount?: number; finalAmount?: number; message: string } | null>(null);
+  const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > new Date()) ?? [];
   const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= new Date()) ?? [];
@@ -56,27 +62,46 @@ const ProviderSponsorTab = () => {
   const handleSelectPlan = (plan: SponsorshipPlan) => {
     setSelectedPlan(plan);
     setShowConfirm(true);
+    setVoucherCode("");
+    setVoucherResult(null);
   };
 
-  const handleCreateSponsorship = () => {
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim() || !selectedPlan) return;
+    setIsCheckingVoucher(true);
+    try {
+      const result = await validateVoucher(voucherCode, 'sponsorship', selectedPlan.price);
+      setVoucherResult(result);
+    } catch {
+      setVoucherResult({ valid: false, message: 'Failed to validate voucher' });
+    } finally {
+      setIsCheckingVoucher(false);
+    }
+  };
+
+  const handleCreateSponsorship = async () => {
     if (!selectedPlan) return;
-    const now = new Date();
-    const end = new Date(now);
-    end.setDate(end.getDate() + selectedPlan.duration);
+    setIsRedirecting(true);
+    try {
+      const now = new Date();
+      const end = new Date(now);
+      end.setDate(end.getDate() + selectedPlan.duration);
 
-    const payload: CreateSponsorshipPayload = {
-      type: selectedPlan.type,
-      budgetAmount: selectedPlan.price,
-      startsAt: now.toISOString(),
-      endsAt: end.toISOString(),
-    };
+      const result = await createSponsorshipCheckout({
+        type: selectedPlan.type,
+        budgetAmount: selectedPlan.price,
+        startsAt: now.toISOString(),
+        endsAt: end.toISOString(),
+        voucherCode: voucherResult?.valid ? voucherCode : undefined,
+      });
 
-    createMutation.mutate(payload, {
-      onSuccess: () => {
-        setShowConfirm(false);
-        setSelectedPlan(null);
-      },
-    });
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      }
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      setIsRedirecting(false);
+    }
   };
 
   const handleToggleActive = (sponsorship: SponsoredListing) => {
@@ -139,16 +164,16 @@ const ProviderSponsorTab = () => {
         </div>
       </div>
 
-      {/* Payment Notice */}
-      <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200">
+      {/* Payment Info */}
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-200">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center flex-shrink-0">
-            <IonIcon icon={walletOutline} className="text-slate-600 text-lg" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+            <IonIcon icon={walletOutline} className="text-emerald-600 text-lg" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-700">Payment Gateway Coming Soon</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Sponsorship activation will require payment once the gateway is integrated. For now, you can explore plans and see how it works.
+            <p className="text-xs font-semibold text-emerald-700">Secure Payment via Stripe</p>
+            <p className="text-[11px] text-emerald-600 mt-0.5">
+              Pay securely with UPI, cards, or netbanking. Your payment is processed by Stripe.
             </p>
           </div>
         </div>
@@ -197,17 +222,57 @@ const ProviderSponsorTab = () => {
                 <p className="text-xs text-slate-500 mt-1">{selectedPlan.duration} days · {typeLabels[selectedPlan.type]} placement</p>
               </div>
 
-              <div className="bg-slate-50 rounded-2xl p-4 mb-4">
+              <div className="bg-slate-50 rounded-2xl p-4 mb-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Total Amount</span>
-                  <span className="text-xl font-bold text-slate-800">₹{selectedPlan.price}</span>
+                  <span className="text-sm text-slate-600">Subtotal</span>
+                  <span className="text-sm font-semibold text-slate-800">₹{selectedPlan.price}</span>
+                </div>
+                {voucherResult?.valid && voucherResult.discount && (
+                  <div className="flex items-center justify-between text-emerald-600">
+                    <span className="text-sm">Voucher Discount</span>
+                    <span className="text-sm font-semibold">-₹{voucherResult.discount}</span>
+                  </div>
+                )}
+                <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-700">Total</span>
+                  <span className="text-xl font-bold text-slate-800">
+                    ₹{voucherResult?.valid ? voucherResult.finalAmount : selectedPlan.price}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 mb-6 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                <IonIcon icon={shieldCheckmarkOutline} className="text-amber-500 text-lg flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-amber-700">
-                  Payment gateway is not yet integrated. This will create a sponsorship entry. Actual billing will be enabled soon.
+              {/* Voucher Input */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <IonIcon icon={ticketOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                    <input
+                      type="text"
+                      placeholder="Voucher code"
+                      value={voucherCode}
+                      onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherResult(null); }}
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
+                    />
+                  </div>
+                  <button
+                    onClick={handleApplyVoucher}
+                    disabled={!voucherCode.trim() || isCheckingVoucher}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold disabled:opacity-50"
+                  >
+                    {isCheckingVoucher ? "..." : "Apply"}
+                  </button>
+                </div>
+                {voucherResult && (
+                  <p className={`text-[11px] mt-1.5 ${voucherResult.valid ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {voucherResult.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-start gap-2 mb-6 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                <IonIcon icon={shieldCheckmarkOutline} className="text-emerald-500 text-lg flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-emerald-700">
+                  You&apos;ll be redirected to Stripe&apos;s secure payment page to complete your purchase.
                 </p>
               </div>
 
@@ -220,14 +285,14 @@ const ProviderSponsorTab = () => {
                 </button>
                 <button
                   onClick={handleCreateSponsorship}
-                  disabled={createMutation.isPending}
+                  disabled={isRedirecting}
                   className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  {createMutation.isPending ? (
+                  {isRedirecting ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      Activate <IonIcon icon={arrowForwardOutline} className="text-base" />
+                      Pay with Stripe <IonIcon icon={arrowForwardOutline} className="text-base" />
                     </>
                   )}
                 </button>

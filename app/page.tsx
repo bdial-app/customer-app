@@ -29,11 +29,13 @@ import { useChatSubscription } from "@/hooks/useChatSubscription";
 import { useHeartbeat } from "@/hooks/useChat";
 import { clearPendingChat } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "@/hooks/useNotifications";
+import { useNotification } from "./context/NotificationContext";
 
 export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const { notify } = useNotification();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
@@ -55,12 +57,28 @@ export default function Home() {
   useEffect(() => {
     const tab = searchParams.get("tab");
     const conversationId = searchParams.get("conversationId");
+    const subTab = searchParams.get("subTab");
+    const payment = searchParams.get("payment");
+
     if (tab) {
       setActiveTab(tab);
       if (conversationId) {
         setActiveChat(conversationId);
       }
-      // Clear query params after consuming them
+      if (subTab) {
+        setListingsSubTab(subTab);
+      }
+    }
+
+    // Show payment result toast
+    if (payment === "success") {
+      notify({ title: "Payment successful", subtitle: "Your payment has been processed. It may take a moment to reflect.", variant: "success" });
+    } else if (payment === "cancelled") {
+      notify({ title: "Payment cancelled", subtitle: "Your payment was cancelled. No charges were made.", variant: "warning" });
+    }
+
+    // Clear query params after consuming them
+    if (tab || payment) {
       router.replace("/", { scroll: false });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

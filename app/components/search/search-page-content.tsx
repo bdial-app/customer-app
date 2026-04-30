@@ -196,7 +196,7 @@ const SearchPageContent = () => {
                   handleSubmit();
                 }
               }}
-              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 text-[15px] text-gray-900 placeholder:text-gray-400 outline-none focus:bg-white focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
+              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 text-base text-gray-900 placeholder:text-gray-400 outline-none focus:bg-white focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
             />
 
             {/* Right-side icons inside the input */}

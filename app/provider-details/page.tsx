@@ -230,6 +230,8 @@ export default function ProviderDetailsPage() {
   const categories = data?.categories ?? [];
   const badges = data?.badges ?? [];
   const activeOffers = data?.activeOffers ?? [];
+  const isSponsored = data?.isSponsored ?? false;
+  const sponsorEndsAt = data?.sponsorEndsAt ?? null;
 
   // Check if current user already reviewed this provider
   const hasAlreadyReviewed = useMemo(() => {
@@ -371,13 +373,24 @@ export default function ProviderDetailsPage() {
   const owner = (provider as any)?.user;
 
   return (
-    <Page className="!bg-white dark:!bg-slate-900">
+    <Page className={`!bg-white dark:!bg-slate-900 ${isSponsored ? "sponsored-provider" : ""}`}>
+      {/* Sponsored Premium Banner */}
+      {isSponsored && (
+        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-4 py-2 flex items-center justify-center gap-2 shadow-md relative z-10">
+          <IonIcon icon={shieldCheckmark} className="w-4 h-4 text-white" />
+          <span className="text-[11px] font-bold text-white tracking-wide uppercase">
+            Featured Business
+          </span>
+          <span className="text-[9px] text-white/80 font-medium">• Premium Partner</span>
+        </div>
+      )}
+
       {/* Hero */}
       <div
         className="relative"
         style={{ display: isLightboxOpen ? "none" : "block" }}
       >
-        <div className="relative h-72 overflow-hidden bg-gradient-to-br from-slate-200 to-slate-100">
+        <div className={`relative h-72 overflow-hidden ${isSponsored ? "h-80" : ""} bg-gradient-to-br from-slate-200 to-slate-100`}>
           {heroImage ? (
             <img
               src={heroImage}
@@ -391,7 +404,7 @@ export default function ProviderDetailsPage() {
               </span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className={`absolute inset-0 ${isSponsored ? "bg-gradient-to-t from-black/70 via-black/20 to-amber-900/10" : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"}`} />
 
           {/* Top Actions */}
           <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3">
@@ -450,6 +463,11 @@ export default function ProviderDetailsPage() {
                   className="w-5 h-5 text-blue-400 flex-shrink-0"
                 />
               )}
+              {isSponsored && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm">
+                  ⭐ Premium
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
               <p className="text-white/80 text-sm truncate">{categoryLabel}</p>
@@ -476,7 +494,7 @@ export default function ProviderDetailsPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="flex items-center justify-between bg-white dark:bg-slate-800 px-5 py-3 border-b border-gray-100/80 dark:border-slate-700">
+        <div className={`flex items-center justify-between px-5 py-3 border-b ${isSponsored ? "bg-gradient-to-r from-amber-50/50 to-white dark:from-amber-950/20 dark:to-slate-800 border-amber-100/80 dark:border-amber-900/40" : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"}`}>
           <div className="flex items-center gap-1.5">
             {reviewCount > 0 ? (
               <>
@@ -507,7 +525,7 @@ export default function ProviderDetailsPage() {
         </div>
 
         {/* Tab Bar */}
-        <div className="bg-white dark:bg-slate-800 border-b border-gray-100/80 dark:border-slate-700 overflow-x-auto no-scrollbar">
+        <div className={`border-b overflow-x-auto no-scrollbar ${isSponsored ? "bg-gradient-to-r from-amber-50/30 to-white dark:from-amber-950/10 dark:to-slate-800 border-amber-100/60 dark:border-amber-900/30" : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"}`}>
           <div className="flex px-1">
             {TABS.map((tab) => (
               <button
@@ -520,7 +538,7 @@ export default function ProviderDetailsPage() {
               >
                 {tab}
                 {activeTab === tab && (
-                  <span className="absolute bottom-0 left-1/4 right-1/4 h-[2.5px] bg-amber-500 rounded-full" />
+                  <span className={`absolute bottom-0 left-1/4 right-1/4 h-[2.5px] rounded-full ${isSponsored ? "bg-gradient-to-r from-amber-500 to-yellow-400" : "bg-amber-500"}`} />
                 )}
               </button>
             ))}
@@ -531,6 +549,39 @@ export default function ProviderDetailsPage() {
       {/* === OVERVIEW === */}
       {activeTab === "Overview" && (
         <div className="px-5 pt-5 pb-28 space-y-5">
+          {/* Premium Trust Banner — Sponsored Only */}
+          {isSponsored && (
+            <div className="relative overflow-hidden rounded-2xl border border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50 via-white to-yellow-50 dark:from-amber-950/30 dark:via-slate-800 dark:to-yellow-950/20 p-4 shadow-[0_2px_12px_rgba(245,158,11,0.1)]">
+              {/* Decorative sparkle */}
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-400/10 rounded-full blur-xl" />
+              <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-yellow-400/10 rounded-full blur-lg" />
+
+              <div className="flex items-start gap-3 relative">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <IonIcon icon={shieldCheckmark} className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[13px] font-bold text-slate-800 dark:text-white">
+                    Premium Verified Business
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    This business has been verified and is a featured partner on our platform. Premium businesses go through additional quality checks.
+                  </p>
+                  <div className="flex items-center gap-3 mt-2.5">
+                    <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                      Identity Verified
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                      Quality Assured
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Gallery Preview */}
           {galleryImages.length > 0 && (
             <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
@@ -1002,14 +1053,14 @@ export default function ProviderDetailsPage() {
                   },
                 });
               });
-            }} className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50">
+            }} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50 ${isSponsored ? "bg-white border-2 border-amber-200 text-amber-800 shadow-amber-100" : "bg-white border border-gray-200 text-gray-700"}`}>
               <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
               {isCreatingChat ? "Opening..." : "Message"}
             </button>
 
             {/* Call button — blurred + gated for guests */}
             {user ? (
-              <button onClick={() => setCallSheetOpened(true)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform">
+              <button onClick={() => setCallSheetOpened(true)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition-transform ${isSponsored ? "bg-gradient-to-r from-amber-500 to-amber-400 shadow-amber-200" : "bg-amber-500 shadow-amber-200"}`}>
                 <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
                 Call Now
               </button>

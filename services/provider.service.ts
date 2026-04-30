@@ -191,6 +191,8 @@ export interface ProviderDetailsResponse {
   reviews: ProviderDetailsReview[];
   badges: ProviderDetailsBadge[];
   activeOffers: ProviderDetailsOffer[];
+  isSponsored: boolean;
+  sponsorEndsAt: string | null;
   stats: {
     rating: number;
     reviewCount: number;

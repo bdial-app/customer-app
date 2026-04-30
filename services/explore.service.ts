@@ -36,6 +36,7 @@ export interface ProviderWithOffer extends ExploreProvider {
   discountValue: number;
   offerEndsAt: string;
   hasActiveOffer: true;
+  providerDealCount?: number;
 }
 
 export interface ExploreCategory {
@@ -109,4 +110,30 @@ export const getExploreFeed = async (params?: {
 
 export const trackAdEvent = async (payload: TrackAdEventPayload): Promise<void> => {
   await apiClient.post(EXPLORE_URLS.TRACK, payload);
+};
+
+export interface DealsParams {
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  city?: string;
+  category?: string;
+  discountType?: 'percentage' | 'flat';
+  minDiscount?: number;
+  page?: number;
+  limit?: number;
+  sort?: 'discount' | 'ending_soon' | 'distance' | 'newest';
+}
+
+export interface DealsResponse {
+  data: ProviderWithOffer[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export const getDeals = async (params?: DealsParams): Promise<DealsResponse> => {
+  const { data } = await apiClient.get(EXPLORE_URLS.DEALS, { params });
+  return data;
 };
