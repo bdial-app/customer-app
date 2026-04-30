@@ -172,7 +172,7 @@ const StepIndicator = ({
                     ? "bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-200 scale-110"
                     : isDone
                     ? "bg-emerald-500 border-emerald-500"
-                    : "bg-white border-slate-200"
+                    : "bg-white border-slate-200 dark:bg-slate-700 dark:border-slate-600"
                 }`}
               >
                 {isDone && !isActive ? (
@@ -206,7 +206,7 @@ const StepIndicator = ({
                 className={`h-0.5 flex-1 mx-0.5 rounded-full transition-colors duration-500 ${
                   completedSteps.has(step.id)
                     ? "bg-emerald-400"
-                    : "bg-slate-200"
+                    : "bg-slate-200 dark:bg-slate-600"
                 }`}
               />
             )}
@@ -230,13 +230,13 @@ const SectionHeader = ({
   subtitle?: string;
 }) => (
   <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-    <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-      <IonIcon icon={icon} className="text-indigo-500 text-lg" />
+    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 flex items-center justify-center shrink-0">
+      <IonIcon icon={icon} className="text-indigo-500 dark:text-indigo-400 text-lg" />
     </div>
     <div>
-      <p className="text-sm font-bold text-slate-800">{title}</p>
+      <p className="text-sm font-bold text-slate-800 dark:text-white">{title}</p>
       {subtitle && (
-        <p className="text-[11px] text-slate-400">{subtitle}</p>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">{subtitle}</p>
       )}
     </div>
   </div>
@@ -376,18 +376,18 @@ const MapLocationPicker = ({
         <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base z-10" />
         <input type="text" value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search for your business location..."
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
         {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /></div>}
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-56 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg z-20 max-h-56 overflow-y-auto">
             {searchResults.map((r) => (
               <button key={r.placeId} type="button" onClick={() => selectResult(r)}
-                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0 flex items-start gap-2.5">
+                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-50 dark:border-slate-700 last:border-b-0 flex items-start gap-2.5">
                 <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center">
                   <IonIcon icon={locationOutline} className="text-xs text-amber-500" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-700 leading-snug truncate">{r.mainText}</p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate">{r.mainText}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5 leading-snug truncate">{r.secondaryText}</p>
                 </div>
               </button>
@@ -398,13 +398,13 @@ const MapLocationPicker = ({
 
       {/* Map */}
       {isLoaded ? (
-        <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+        <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-600 shadow-sm">
           <GoogleMap mapContainerStyle={MAP_CONTAINER} center={mapCenter} zoom={markerPos ? 16 : 12}
             onClick={handleMapClick} onLoad={(map) => { mapRef.current = map; }}
             options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}>
             {markerPos && <Marker position={markerPos} draggable onDragEnd={handleDragEnd} />}
           </GoogleMap>
-          <div className="px-3 py-2 bg-slate-50 border-t border-slate-100">
+          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700 border-t border-slate-100 dark:border-slate-600">
             <p className="text-[10px] text-slate-400 flex items-center gap-1">
               <IonIcon icon={mapOutline} className="text-xs" />
               {markerPos ? `📍 ${markerPos.lat.toFixed(5)}, ${markerPos.lng.toFixed(5)}` : "Tap on the map or search to pin your location"}
@@ -493,7 +493,7 @@ const CategorySelector = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search from categories..."
-          className="w-full pl-10 pr-4 py-3 text-sm bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 shadow-sm transition-all placeholder:text-slate-300"
+          className="w-full pl-10 pr-4 py-3 text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 shadow-sm transition-all placeholder:text-slate-300 dark:placeholder:text-slate-500 dark:text-white"
         />
         {search && (
           <button
@@ -568,7 +568,7 @@ const CategorySelector = ({
       )}
 
       {/* Scrollable alphabetical list */}
-      <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-sm">
         {categories.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
             <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center animate-pulse">
@@ -589,7 +589,7 @@ const CategorySelector = ({
         )}
         {sortedLetters.map((letter, letterIdx) => (
           <div key={letter}>
-            <div className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-md px-3 py-1.5 border-b border-slate-100">
+            <div className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-700/95 backdrop-blur-md px-3 py-1.5 border-b border-slate-100 dark:border-slate-600">
               <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
                 {letter}
               </span>
@@ -720,7 +720,7 @@ const PhotoFileUpload = ({
 
   return (
     <div className="px-4 mb-3">
-      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+      <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ml-1">
         {label}
       </label>
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleChange} />
@@ -740,12 +740,12 @@ const PhotoFileUpload = ({
           </div>
         </div>
       ) : (
-        <button type="button" onClick={() => inputRef.current?.click()} className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-indigo-300 transition-all active:scale-[0.99]">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <IonIcon icon={icon} className="text-indigo-500 text-lg" />
+        <button type="button" onClick={() => inputRef.current?.click()} className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-700/50 hover:border-indigo-300 transition-all active:scale-[0.99]">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 flex items-center justify-center shrink-0">
+            <IonIcon icon={icon} className="text-indigo-500 dark:text-indigo-400 text-lg" />
           </div>
           <div className="text-left flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-700">Upload {label}</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Upload {label}</p>
             <p className="text-[10px] text-slate-400 mt-0.5">{hint}</p>
           </div>
           <IonIcon icon={cloudUploadOutline} className="text-slate-300 text-xl shrink-0" />
@@ -804,14 +804,14 @@ const ProductFormCard = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50/80 border-b border-slate-100">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50/80 dark:bg-slate-700/80 border-b border-slate-100 dark:border-slate-600">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center">
             <span className="text-[10px] font-bold text-indigo-600">{index + 1}</span>
           </div>
-          <span className="text-xs font-bold text-slate-700">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
             {product.name.trim() || `Product ${index + 1}`}
           </span>
         </div>
@@ -850,25 +850,25 @@ const ProductFormCard = ({
 
         {/* Name */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Product Name *</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Product Name *</label>
           <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehndi Package" maxLength={150}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Description</label>
           <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="Brief description of this product or service..." rows={2} maxLength={2000}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none" />
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
         {/* Price */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Price (₹)</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Price (₹)</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
             <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="0.00"
-              className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+              className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
           </div>
         </div>
       </div>
@@ -949,7 +949,7 @@ const DocumentTypeSelector = ({
             className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all duration-200 active:scale-[0.97] ${
               isActive
                 ? `ring-2 ${c.ring} border-transparent`
-                : "border-slate-100 bg-white hover:border-slate-200"
+                : "border-slate-100 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-500"
             }`}
           >
             <div
@@ -1176,8 +1176,8 @@ const DocFilePicker = ({
 // ---------------------------------------------------------------------------
 const DocumentGuidelines = () => (
   <div className="mx-4 mt-3 space-y-3">
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-3">
+    <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+      <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
         Document guidelines
       </p>
       <div className="space-y-2.5">
@@ -1193,7 +1193,7 @@ const DocumentGuidelines = () => (
                 {i + 1}
               </span>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">{text}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
@@ -1215,13 +1215,13 @@ const DocumentGuidelines = () => (
 // What happens next
 // ---------------------------------------------------------------------------
 const WhatHappensNext = () => (
-  <div className="mx-4 mt-4 mb-2 rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50/80 to-white p-4 shadow-sm">
+  <div className="mx-4 mt-4 mb-2 rounded-2xl border border-slate-100 dark:border-slate-700 bg-gradient-to-b from-slate-50/80 to-white dark:from-slate-800 dark:to-slate-800 p-4 shadow-sm">
     <div className="flex items-center gap-2 mb-3">
       <IonIcon
         icon={informationCircleOutline}
         className="text-indigo-400 text-lg"
       />
-      <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+      <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
         What happens next
       </p>
     </div>
@@ -1248,7 +1248,7 @@ const WhatHappensNext = () => (
             {item.step}
           </div>
           <div className="flex-1">
-            <p className="text-xs text-slate-700 font-medium">{item.text}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">{item.text}</p>
             <p className="text-[10px] text-slate-400">{item.time}</p>
           </div>
         </div>
@@ -1330,14 +1330,14 @@ const UnderReviewBanner = ({
           />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
             {config.title}
           </h2>
-          <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
             {config.subtitle}
           </p>
         </div>
-        <div className="w-full bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-0">
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm space-y-0">
           {config.steps.map((s, i) => (
             <div key={i}>
               <div className="flex items-center gap-3 py-2">
@@ -2063,7 +2063,7 @@ const ProviderOnboardingPage = () => {
                         </button>
                       )}
                     </div>
-                    <div className="mx-4 mt-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+                    <div className="mx-4 mt-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-xl">
                       <p className="text-[10px] text-slate-400 font-medium">
                         This step is optional — you can add products later from your provider dashboard.
                       </p>
@@ -2132,7 +2132,7 @@ const ProviderOnboardingPage = () => {
               </div>
 
               {/* Bottom action bar */}
-              <div className="fixed bottom-0 left-0 w-full z-10 bg-white/90 backdrop-blur-md border-t border-slate-100 px-4 pt-3 pb-6">
+              <div className="fixed bottom-0 left-0 w-full z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-700 px-4 pt-3 pb-6">
                 <p className="text-[10px] text-center text-slate-400 font-medium tracking-wide uppercase mb-3">
                   Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].label}
                 </p>
@@ -2142,7 +2142,7 @@ const ProviderOnboardingPage = () => {
                     type="button"
                     onClick={handleBack}
                     disabled={isSubmitting}
-                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
                   >
                     <IonIcon icon={arrowBack} className="text-base shrink-0" />
                     {currentStep === 1 ? "Exit" : "Back"}

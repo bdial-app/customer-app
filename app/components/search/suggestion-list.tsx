@@ -26,29 +26,29 @@ const TYPE_CONFIG = {
   provider: {
     icon: storefrontOutline,
     color: "text-blue-500",
-    bg: "bg-blue-50",
+    bg: "bg-blue-50 dark:bg-blue-900/30",
     ring: "ring-blue-100",
     label: "Business",
-    labelBg: "bg-blue-50",
-    labelText: "text-blue-600",
+    labelBg: "bg-blue-50 dark:bg-blue-900/30",
+    labelText: "text-blue-600 dark:text-blue-400",
   },
   product: {
     icon: cubeOutline,
     color: "text-emerald-500",
-    bg: "bg-emerald-50",
+    bg: "bg-emerald-50 dark:bg-emerald-900/30",
     ring: "ring-emerald-100",
     label: "Product",
-    labelBg: "bg-emerald-50",
-    labelText: "text-emerald-600",
+    labelBg: "bg-emerald-50 dark:bg-emerald-900/30",
+    labelText: "text-emerald-600 dark:text-emerald-400",
   },
   category: {
     icon: gridOutline,
     color: "text-purple-500",
-    bg: "bg-purple-50",
+    bg: "bg-purple-50 dark:bg-purple-900/30",
     ring: "ring-purple-100",
     label: "Category",
-    labelBg: "bg-purple-50",
-    labelText: "text-purple-600",
+    labelBg: "bg-purple-50 dark:bg-purple-900/30",
+    labelText: "text-purple-600 dark:text-purple-400",
   },
 };
 
@@ -65,7 +65,7 @@ const HighlightedText = ({
   return (
     <>
       {text.slice(0, idx)}
-      <span className="font-bold text-gray-900">
+      <span className="font-bold text-gray-900 dark:text-white">
         {text.slice(idx, idx + query.length)}
       </span>
       {text.slice(idx + query.length)}
@@ -95,12 +95,12 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
       <div className="px-4 pt-3 space-y-1">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="flex items-center gap-3 py-3 animate-pulse">
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex-shrink-0" />
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-700 flex-shrink-0" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3.5 bg-gray-100 rounded-full w-3/5" />
-              <div className="h-2.5 bg-gray-50 rounded-full w-2/5" />
+              <div className="h-3.5 bg-gray-100 dark:bg-slate-700 rounded-full w-3/5" />
+              <div className="h-2.5 bg-gray-50 dark:bg-slate-800 rounded-full w-2/5" />
             </div>
-            <div className="h-5 w-14 bg-gray-50 rounded-full" />
+            <div className="h-5 w-14 bg-gray-50 dark:bg-slate-800 rounded-full" />
           </div>
         ))}
       </div>
@@ -110,13 +110,13 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
   if (suggestions.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center pt-16 text-center px-8">
-        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-          <IonIcon icon={searchOutline} className="w-6 h-6 text-gray-400" />
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+          <IonIcon icon={searchOutline} className="w-6 h-6 text-gray-400 dark:text-slate-500" />
         </div>
-        <p className="text-[14px] font-semibold text-gray-600 mb-1">
+        <p className="text-[14px] font-semibold text-gray-600 dark:text-slate-300 mb-1">
           No suggestions for &ldquo;{query}&rdquo;
         </p>
-        <p className="text-[12px] text-gray-400">
+        <p className="text-[12px] text-gray-400 dark:text-slate-500">
           Tap Search to see all results
         </p>
       </div>
@@ -133,7 +133,7 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
             {/* Section header */}
             {sections.length > 1 && (
               <div className="px-4 pt-4 pb-1">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                   {type === "provider"
                     ? "Businesses"
                     : type === "product"
@@ -149,7 +149,7 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.025, duration: 0.2 }}
                 onClick={() => onSelect(suggestion)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-gray-50 dark:active:bg-slate-800 transition-colors"
               >
                 {/* Thumbnail or Icon */}
                 {suggestion.imageUrl ? (
@@ -157,9 +157,9 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                     <img
                       src={suggestion.imageUrl}
                       alt=""
-                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-gray-100"
+                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-gray-100 dark:ring-slate-700"
                     />
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${config.bg} flex items-center justify-center ring-2 ring-white`}>
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${config.bg} flex items-center justify-center ring-2 ring-white dark:ring-slate-900`}>
                       <IonIcon icon={config.icon} className={`w-2.5 h-2.5 ${config.color}`} />
                     </div>
                   </div>
@@ -176,11 +176,11 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
 
                 {/* Text */}
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-[14px] text-gray-700 truncate leading-tight">
+                  <p className="text-[14px] text-gray-700 dark:text-slate-200 truncate leading-tight">
                     <HighlightedText text={suggestion.text} query={query} />
                   </p>
                   {suggestion.subtitle && (
-                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                    <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate mt-0.5">
                       {suggestion.subtitle}
                     </p>
                   )}
@@ -189,13 +189,13 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                 {/* Type badge */}
                 {suggestion.isSponsored ? (
                   <span
-                    className="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-amber-50 text-amber-600 flex-shrink-0 flex items-center gap-0.5"
+                    className="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex-shrink-0 flex items-center gap-0.5"
                   >
                     <span className="text-[8px]">⚡</span> Sponsored
                   </span>
                 ) : suggestion.hasActiveOffer ? (
                   <span
-                    className="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200/60 flex-shrink-0 flex items-center gap-0.5"
+                    className="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/50 flex-shrink-0 flex items-center gap-0.5"
                   >
                     <span className="text-[8px]">🏷️</span> Deals
                   </span>
@@ -209,7 +209,7 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
 
                 <IonIcon
                   icon={arrowForward}
-                  className="w-3.5 h-3.5 text-gray-300 flex-shrink-0 -rotate-45"
+                  className="w-3.5 h-3.5 text-gray-300 dark:text-slate-600 flex-shrink-0 -rotate-45"
                 />
               </motion.button>
             ))}

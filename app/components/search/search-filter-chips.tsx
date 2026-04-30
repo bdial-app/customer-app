@@ -87,10 +87,10 @@ const SearchFilterChips = () => {
         <button
           key={chip.key}
           onClick={chip.onRemove}
-          className="inline-flex items-center gap-1 pl-3 pr-1.5 h-8 rounded-xl text-[11px] font-bold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200/60 active:bg-amber-100 transition-colors shadow-sm"
+          className="inline-flex items-center gap-1 pl-3 pr-1.5 h-8 rounded-xl text-[11px] font-bold whitespace-nowrap bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/50 active:bg-amber-100 dark:active:bg-amber-900/50 transition-colors shadow-sm"
         >
           {chip.label}
-          <span className="w-5 h-5 rounded-full bg-amber-200/40 flex items-center justify-center ml-0.5">
+          <span className="w-5 h-5 rounded-full bg-amber-200/40 dark:bg-amber-800/40 flex items-center justify-center ml-0.5">
             <IonIcon icon={close} className="w-3 h-3" />
           </span>
         </button>

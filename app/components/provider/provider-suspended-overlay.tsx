@@ -18,7 +18,7 @@ const ProviderSuspendedOverlay = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -27,25 +27,25 @@ const ProviderSuspendedOverlay = () => {
       >
         {/* Icon */}
         <div className="flex justify-center mb-5">
-          <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
             <IonIcon icon={banOutline} className="text-4xl text-red-500" />
           </div>
         </div>
 
         {/* Title */}
-        <h2 className="text-center text-xl font-bold text-slate-900 mb-2">
+        <h2 className="text-center text-xl font-bold text-slate-900 dark:text-white mb-2">
           Account Suspended
         </h2>
 
         {/* Description */}
-        <p className="text-center text-sm text-slate-500 leading-relaxed mb-6">
+        <p className="text-center text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
           Your provider profile has been suspended by our moderation team. You
           cannot access your provider dashboard or manage your listings while
           suspended.
         </p>
 
         {/* Info card */}
-        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-4">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 rounded-2xl p-4 mb-4">
           <h4 className="text-xs font-bold text-red-800 mb-1.5">
             What does this mean?
           </h4>
@@ -57,7 +57,7 @@ const ProviderSuspendedOverlay = () => {
         </div>
 
         {/* How to get reinstated */}
-        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-6">
+        <div className="bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-2xl p-4 mb-6">
           <h4 className="text-xs font-bold text-slate-800 mb-1">
             How to get reinstated?
           </h4>

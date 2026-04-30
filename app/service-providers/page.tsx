@@ -161,9 +161,9 @@ export default function ServiceProvidersPage() {
         left={
           <button
             onClick={() => goBack("/")}
-            className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full active:scale-90 transition-transform"
+            className="w-9 h-9 flex items-center justify-center bg-gray-100 dark:bg-slate-700 rounded-full active:scale-90 transition-transform"
           >
-            <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
+            <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
         }
       />
@@ -193,7 +193,7 @@ export default function ServiceProvidersPage() {
       </Block>
 
       <Block className="my-0">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-slate-400">
           {filteredProviders.length} providers found
         </p>
       </Block>
@@ -225,7 +225,7 @@ export default function ServiceProvidersPage() {
                       ({provider.reviews})
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-600">
+                  <div className="flex items-center gap-1 text-gray-600 dark:text-slate-400">
                     <IonIcon icon={location} className="w-4 h-4" />
                     <span className="text-sm">{provider.location}</span>
                   </div>
@@ -269,7 +269,7 @@ export default function ServiceProvidersPage() {
 
       {filteredProviders.length === 0 && (
         <Block className="text-center py-8">
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-slate-400">
             No providers found matching your search.
           </p>
           <Button clear onClick={() => setSearchQuery("")}>

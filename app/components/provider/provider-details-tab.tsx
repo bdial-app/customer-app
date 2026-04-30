@@ -63,14 +63,14 @@ const InfoRow = ({
     onClick={onTap}
     className="flex items-start gap-3 px-4 py-3.5 cursor-pointer"
   >
-    <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 mt-0.5">
+    <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center shrink-0 mt-0.5">
       <IonIcon icon={icon} className="text-teal-600 text-lg" />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+      <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
         {label}
       </p>
-      <p className="text-sm text-slate-800 mt-0.5 leading-relaxed">
+      <p className="text-sm text-slate-800 dark:text-white mt-0.5 leading-relaxed">
         {value || "Not set"}
       </p>
     </div>
@@ -336,18 +336,18 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           >
             {/* Section header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <h3 className="text-sm font-bold text-slate-800">Business Details</h3>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Business Details</h3>
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 active:bg-teal-100"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100"
               >
                 <IonIcon icon={createOutline} className="text-teal-600 text-sm" />
                 <span className="text-xs font-semibold text-teal-600">Edit</span>
               </motion.button>
             </div>
 
-            <div className="mx-4 bg-white rounded-2xl border border-slate-100 overflow-hidden divide-y divide-slate-50">
+            <div className="mx-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
               <InfoRow icon={storefrontOutline} label="Brand Name" value={provider.brandName} />
               <InfoRow
                 icon={documentTextOutline}
@@ -375,17 +375,17 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
             className="px-4 pt-4"
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800">Edit Details</h3>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Edit Details</h3>
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsEditing(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
               >
                 <IonIcon icon={closeOutline} className="text-slate-500" />
               </motion.button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
               <Formik
                 innerRef={formikRef}
                 initialValues={{

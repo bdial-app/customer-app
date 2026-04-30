@@ -774,7 +774,7 @@ export default function ProviderDetailsPage() {
           {owner && (
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
-                Business Owner
+                Business Contact
               </h3>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-sm">

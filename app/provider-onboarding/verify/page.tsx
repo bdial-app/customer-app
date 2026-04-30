@@ -141,8 +141,8 @@ function VerifyContent() {
             <IonIcon icon={checkmarkCircleOutline} className="text-5xl text-emerald-500" />
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-2">Already Verified</h2>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Already Verified</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               Your identity has been verified. You have a verified badge on your profile.
             </p>
           </div>
@@ -172,8 +172,8 @@ function VerifyContent() {
             <IonIcon icon={hourglassOutline} className="text-5xl text-amber-500" />
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-2">Verification Pending</h2>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Verification Pending</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               Your documents are being reviewed. This usually takes 1-2 business days.
             </p>
           </div>
@@ -203,8 +203,8 @@ function VerifyContent() {
             <IonIcon icon={checkmarkCircle} className="text-5xl text-emerald-500" />
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-2">Document Submitted</h2>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Document Submitted</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               Your identity document has been submitted for review. We&apos;ll verify it within 1-2 business days.
             </p>
           </div>
@@ -251,7 +251,7 @@ function VerifyContent() {
 
         {/* Document type selector */}
         <div className="px-4 pt-2 pb-3">
-          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
             Select document type
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -273,13 +273,13 @@ function VerifyContent() {
                     setSubmitError(null);
                   }}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all duration-200 active:scale-[0.97] ${
-                    isActive ? `ring-2 ${c.ring} border-transparent` : "border-slate-100 bg-white"
+                    isActive ? `ring-2 ${c.ring} border-transparent` : "border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800"
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isActive ? c.bg : "bg-slate-50"}`}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isActive ? c.bg : "bg-slate-50 dark:bg-slate-700"}`}>
                     <IonIcon icon={doc.icon} className={`text-xl ${isActive ? c.icon : "text-slate-400"}`} />
                   </div>
-                  <span className={`text-[10px] font-bold leading-tight text-center ${isActive ? c.text : "text-slate-500"}`}>
+                  <span className={`text-[10px] font-bold leading-tight text-center ${isActive ? c.text : "text-slate-500 dark:text-slate-400"}`}>
                     {doc.label}
                   </span>
                 </button>
@@ -301,7 +301,7 @@ function VerifyContent() {
           {file ? (
             <div className="rounded-2xl border border-green-200 bg-gradient-to-b from-green-50/60 to-white overflow-hidden shadow-sm">
               {preview ? (
-                <div className="relative w-full h-44 bg-slate-100 overflow-hidden">
+                <div className="relative w-full h-44 bg-slate-100 dark:bg-slate-700 overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={preview} alt={`${docLabel} preview`} className="w-full h-full object-cover" />
                   <div className="absolute top-2 left-2 bg-green-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -317,12 +317,12 @@ function VerifyContent() {
                   </button>
                 </div>
               ) : (
-                <div className="relative w-full h-32 bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+                <div className="relative w-full h-32 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-800 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-1.5 text-slate-400">
                     <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
                       <IonIcon icon={documentTextOutline} className="text-3xl text-indigo-400" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">PDF Document</span>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">PDF Document</span>
                   </div>
                   <button
                     type="button"
@@ -338,8 +338,8 @@ function VerifyContent() {
                   <IonIcon icon={checkmarkCircle} className="text-green-600 text-lg" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">{file.name}</p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">{file.name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
                     {formatFileSize(file.size)} &bull; {file.type === "application/pdf" ? "PDF" : "Image"} &bull; {docLabel}
                   </p>
                 </div>
@@ -353,7 +353,7 @@ function VerifyContent() {
               </div>
             </div>
           ) : (
-            <label className="relative flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-b from-slate-50/50 to-white hover:border-indigo-300 min-h-[180px] cursor-pointer group transition-all">
+            <label className="relative flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-800/50 dark:to-slate-800 hover:border-indigo-300 min-h-[180px] cursor-pointer group transition-all">
               <input
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf"
@@ -361,11 +361,11 @@ function VerifyContent() {
                 onChange={handleFileChange}
               />
               <div className="flex flex-col items-center gap-3 p-6 pointer-events-none">
-                <div className="p-4 rounded-2xl border bg-white border-slate-100 text-indigo-500 shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
+                <div className="p-4 rounded-2xl border bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-indigo-500 shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
                   <IonIcon icon={cloudUploadOutline} className="text-4xl" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                  <p className="text-sm font-bold text-slate-700 dark:text-white group-hover:text-indigo-600 transition-colors">
                     Upload {docLabel}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
@@ -374,11 +374,11 @@ function VerifyContent() {
                 </div>
                 <div className="flex flex-wrap justify-center gap-1.5 mt-1">
                   {["JPEG", "PNG", "PDF"].map((f) => (
-                    <span key={f} className="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-medium">
+                    <span key={f} className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 rounded-full font-medium">
                       {f}
                     </span>
                   ))}
-                  <span className="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 rounded-full font-medium">
                     Max 5 MB
                   </span>
                 </div>
@@ -389,8 +389,8 @@ function VerifyContent() {
 
         {/* Guidelines */}
         <div className="mx-4 mt-3 space-y-3">
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-3">
+          <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+            <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3">
               Document guidelines
             </p>
             <div className="space-y-2.5">
@@ -404,7 +404,7 @@ function VerifyContent() {
                   <div className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-[9px] font-bold text-indigo-600">{i + 1}</span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">{text}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{text}</p>
                 </div>
               ))}
             </div>
@@ -427,7 +427,7 @@ function VerifyContent() {
       </div>
 
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-0 w-full pb-safe z-10 bg-white/80 backdrop-blur-sm border-t border-slate-100 px-4 pt-3 pb-5">
+      <div className="fixed bottom-0 left-0 w-full pb-safe z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-t border-slate-100 dark:border-slate-700 px-4 pt-3 pb-5">
         <div className="flex gap-3">
           <Button
             large

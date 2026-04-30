@@ -113,7 +113,7 @@ const ProviderDealsTab = () => {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-24 bg-white rounded-2xl border border-slate-100 animate-pulse"
+            className="h-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse"
           />
         ))}
       </div>
@@ -127,12 +127,12 @@ const ProviderDealsTab = () => {
         <div className="px-4 mb-3">
           <div className={`rounded-2xl p-3.5 border ${
             limits.requiresPayment
-              ? "bg-amber-50 border-amber-200"
-              : "bg-slate-50 border-slate-100"
+              ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700"
+              : "bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600"
           }`}>
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                limits.requiresPayment ? "bg-amber-100" : "bg-white"
+                limits.requiresPayment ? "bg-amber-100 dark:bg-amber-900/50" : "bg-white dark:bg-slate-800"
               }`}>
                 <IonIcon
                   icon={limits.requiresPayment ? lockClosedOutline : pricetagOutline}
@@ -142,17 +142,17 @@ const ProviderDealsTab = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-slate-700">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       {limits.totalDeals}/{limits.maxTotalDeals}
                     </span>
-                    <span className="text-[10px] text-slate-400">deals</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">deals</span>
                   </div>
                   <div className="w-px h-3 bg-slate-200" />
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-slate-700">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       {limits.activeDeals}/{limits.maxActiveDeals}
                     </span>
-                    <span className="text-[10px] text-slate-400">active</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">active</span>
                   </div>
                 </div>
                 {/* Progress bars */}
@@ -197,14 +197,14 @@ const ProviderDealsTab = () => {
 
       {offers.length === 0 ? (
         <div className="px-4">
-          <div className="bg-white rounded-2xl p-8 border border-slate-100 text-center">
-            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-100 dark:border-slate-700 text-center">
+            <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <IonIcon icon={pricetagOutline} className="text-3xl text-amber-400" />
             </div>
-            <h4 className="text-sm font-bold text-slate-800 mb-1">
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
               No deals yet
             </h4>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
               Create your first deal to attract more customers
             </p>
             <motion.button
@@ -224,7 +224,7 @@ const ProviderDealsTab = () => {
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Active ({activeOffers.length})
                 </h4>
               </div>
@@ -241,7 +241,7 @@ const ProviderDealsTab = () => {
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Upcoming ({upcomingOffers.length})
                 </h4>
               </div>
@@ -258,7 +258,7 @@ const ProviderDealsTab = () => {
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-2 h-2 rounded-full bg-slate-300" />
-                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Expired ({expiredOffers.length})
                 </h4>
               </div>
@@ -298,19 +298,19 @@ const ProviderDealsTab = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="w-full max-w-md bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-white z-10 border-b border-slate-100 px-5 py-4 flex items-center justify-between rounded-t-3xl">
-                <h3 className="text-base font-bold text-slate-800">
+              <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
+                <h3 className="text-base font-bold text-slate-800 dark:text-white">
                   {editing ? "Edit Deal" : "New Deal"}
                 </h3>
                 <button
                   onClick={() => !isSaving && setSheetOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
                 >
-                  <IonIcon icon={closeOutline} className="text-lg text-slate-500" />
+                  <IonIcon icon={closeOutline} className="text-lg text-slate-500 dark:text-slate-400" />
                 </button>
               </div>
 
@@ -386,8 +386,8 @@ const ProviderDealsTab = () => {
 
                     {/* Discount Type Toggle */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-2">Discount Type</label>
-                      <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Discount Type</label>
+                      <div className="flex bg-slate-100 dark:bg-slate-700 rounded-xl p-1 gap-1">
                         {(["percentage", "flat"] as const).map((type) => (
                           <button
                             key={type}
@@ -395,8 +395,8 @@ const ProviderDealsTab = () => {
                             onClick={() => setFieldValue("discountType", type)}
                             className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                               values.discountType === type
-                                ? "bg-white text-teal-700 shadow-sm"
-                                : "text-slate-500"
+                                ? "bg-white dark:bg-slate-600 text-teal-700 dark:text-teal-300 shadow-sm"
+                                : "text-slate-500 dark:text-slate-400"
                             }`}
                           >
                             {type === "percentage" ? "Percentage (%)" : "Flat Amount (₹)"}
@@ -500,20 +500,20 @@ const ProviderDealsTab = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-xl"
+              className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full text-center shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <IonIcon icon={diamondOutline} className="text-3xl text-white" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
                 Upgrade Your Plan
               </h3>
-              <p className="text-sm text-slate-500 mb-2">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                 You&apos;ve reached the free limit of{" "}
                 <span className="font-bold text-slate-700">5 deals</span>.
               </p>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">
                 Upgrade to our Pro plan to create unlimited deals, unlock advanced
                 analytics, and get featured placement.
               </p>
@@ -572,13 +572,13 @@ const OfferCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
       onClick={() => onEdit(offer)}
-      className="bg-white rounded-2xl p-4 border border-slate-100 active:bg-slate-50 transition-colors"
+      className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              active ? "bg-amber-50" : "bg-slate-50"
+              active ? "bg-amber-50 dark:bg-amber-900/30" : "bg-slate-50 dark:bg-slate-700"
             }`}
           >
             <IonIcon
@@ -588,7 +588,7 @@ const OfferCard = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-xs font-bold text-slate-800 truncate">
+              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
                 {offer.title}
               </p>
               <span
@@ -598,19 +598,19 @@ const OfferCard = ({
               </span>
             </div>
             {offer.description && (
-              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 {offer.description}
               </p>
             )}
           </div>
         </div>
         <div className="shrink-0 ml-2">
-          <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded-lg">
+          <span className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded-lg">
             {discountLabel}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-3 text-[10px] text-slate-400">
+      <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
         <div className="flex items-center gap-1">
           <IonIcon icon={calendarOutline} className="text-xs" />
           {formatDate(offer.startsAt)} – {formatDate(offer.endsAt)}
@@ -645,7 +645,7 @@ const DealFormField = ({
   type?: string;
 }) => (
   <div>
-    <label htmlFor={name} className="block text-xs font-semibold text-slate-700 mb-1.5">
+    <label htmlFor={name} className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
       {label}
     </label>
     <Field
@@ -653,7 +653,7 @@ const DealFormField = ({
       name={name}
       type={type}
       placeholder={placeholder}
-      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
     />
     <ErrorMessage name={name} component="p" className="text-[10px] text-red-500 mt-1" />
   </div>

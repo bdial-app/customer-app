@@ -60,7 +60,7 @@ function LeadCard({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/60"
+      className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700"
     >
       <div className="flex items-start gap-3">
         {/* Avatar */}
@@ -80,7 +80,7 @@ function LeadCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-sm font-bold ${lead.isUnlocked ? "text-gray-900" : "text-gray-500"}`}>
+            <span className={`text-sm font-bold ${lead.isUnlocked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>
               {lead.visitor.name}
             </span>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
@@ -111,8 +111,8 @@ function LeadCard({
 
         {/* Score */}
         <div className="text-right shrink-0">
-          <span className="text-lg font-bold text-gray-800">{lead.score}</span>
-          <p className="text-[9px] text-gray-400 uppercase">Score</p>
+          <span className="text-lg font-bold text-gray-800 dark:text-white">{lead.score}</span>
+          <p className="text-[9px] text-gray-400 dark:text-slate-500 uppercase">Score</p>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ function LeadCard({
       <div className="flex gap-2 mt-3">
         {lead.isUnlocked ? (
           <>
-            <button onClick={onSelect} className="flex-1 py-2.5 bg-teal-50 text-teal-700 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
+            <button onClick={onSelect} className="flex-1 py-2.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
               View Details
             </button>
             {lead.visitor.userId && (
@@ -170,7 +170,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
           <IonIcon icon={arrowBack} className="text-lg text-gray-600" />
         </button>
         <div className="flex-1">
-          <h3 className="text-base font-bold text-gray-900">{detail.visitor.name}</h3>
+          <h3 className="text-base font-bold text-gray-900 dark:text-white">{detail.visitor.name}</h3>
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
             {detail.tier} · Score {detail.score}
@@ -180,24 +180,24 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-gray-900">{detail.productsViewed.length}</p>
-          <p className="text-[10px] text-gray-400">Products</p>
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{detail.productsViewed.length}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">Products</p>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-gray-900">{Math.round(detail.totalDuration / 60)}</p>
-          <p className="text-[10px] text-gray-400">Minutes</p>
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{Math.round(detail.totalDuration / 60)}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">Minutes</p>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-gray-900">{detail.actionsPerformed.length}</p>
-          <p className="text-[10px] text-gray-400">Actions</p>
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{detail.actionsPerformed.length}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">Actions</p>
         </div>
       </div>
 
       {/* Products Viewed */}
       {detail.products.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/60">
-          <h4 className="text-sm font-bold text-gray-900 mb-2">Products Viewed</h4>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700">
+          <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Products Viewed</h4>
           <div className="space-y-2">
             {detail.products.map((p) => (
               <div key={p.id} className="flex items-center gap-2">
@@ -210,8 +210,8 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
       )}
 
       {/* Timeline */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/60">
-        <h4 className="text-sm font-bold text-gray-900 mb-3">Activity Timeline</h4>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700">
+        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Activity Timeline</h4>
         <div className="space-y-3">
           {detail.timeline.slice(0, 20).map((ev, i) => (
             <div key={i} className="flex items-start gap-3">
@@ -255,7 +255,7 @@ export default function ProviderLeadsTab() {
             className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               tier === t.key
                 ? "bg-teal-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-500 active:bg-gray-200"
+                : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 active:bg-gray-200"
             }`}
           >
             {t.label}
@@ -286,7 +286,7 @@ export default function ProviderLeadsTab() {
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-32 bg-gray-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : !data?.data.length ? (
@@ -315,7 +315,7 @@ export default function ProviderLeadsTab() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+            className="px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-xl text-xs font-semibold dark:text-slate-300 disabled:opacity-40"
           >
             Previous
           </button>
@@ -325,7 +325,7 @@ export default function ProviderLeadsTab() {
           <button
             disabled={page >= data.meta.totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+            className="px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-xl text-xs font-semibold dark:text-slate-300 disabled:opacity-40"
           >
             Next
           </button>

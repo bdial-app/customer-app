@@ -150,10 +150,10 @@ const SearchPageContent = () => {
   }, [committedQuery]);
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#FAFAFA]">
+    <div className="flex flex-col h-[100dvh] bg-[#FAFAFA] dark:bg-slate-900">
       {/* ── Header ─────────────────────────────────── */}
       <div
-        className="sticky top-0 z-50 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+        className="sticky top-0 z-50 bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:shadow-none"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="flex items-center gap-2 px-3 py-2">
@@ -161,10 +161,10 @@ const SearchPageContent = () => {
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={handleBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors flex-shrink-0"
             aria-label="Back"
           >
-            <IonIcon icon={arrowBack} className="w-[22px] h-[22px] text-gray-800" />
+            <IonIcon icon={arrowBack} className="w-[22px] h-[22px] text-gray-800 dark:text-slate-200" />
           </motion.button>
 
           {/* Search input container */}
@@ -196,7 +196,7 @@ const SearchPageContent = () => {
                   handleSubmit();
                 }
               }}
-              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 text-base text-gray-900 placeholder:text-gray-400 outline-none focus:bg-white focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
+              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 dark:bg-slate-700 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
             />
 
             {/* Right-side icons inside the input */}
@@ -207,17 +207,17 @@ const SearchPageContent = () => {
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   onClick={handleClear}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 active:bg-gray-300 dark:active:bg-slate-500 transition-colors"
                   aria-label="Clear search"
                 >
-                  <IonIcon icon={close} className="w-4 h-4 text-gray-500" />
+                  <IonIcon icon={close} className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 </motion.button>
               )}
               {query.length === 0 && (
                 <div className="flex items-center gap-1">
-                  <div className="w-px h-5 bg-gray-200" />
-                  <button className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-200 transition-colors">
-                    <IonIcon icon={micOutline} className="w-[18px] h-[18px] text-gray-400" />
+                  <div className="w-px h-5 bg-gray-200 dark:bg-slate-600" />
+                  <button className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-200 dark:active:bg-slate-600 transition-colors">
+                    <IonIcon icon={micOutline} className="w-[18px] h-[18px] text-gray-400 dark:text-slate-500" />
                   </button>
                 </div>
               )}
@@ -239,7 +239,7 @@ const SearchPageContent = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={handleClear}
-              className="flex-shrink-0 text-[13px] font-medium text-gray-500 px-2 py-1 active:opacity-60"
+              className="flex-shrink-0 text-[13px] font-medium text-gray-500 dark:text-slate-400 px-2 py-1 active:opacity-60"
             >
               Cancel
             </motion.button>

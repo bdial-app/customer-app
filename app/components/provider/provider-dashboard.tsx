@@ -93,27 +93,27 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
       label: "Verification Pending",
       desc: "Your documents are being reviewed. This usually takes 1-2 business days.",
       icon: hourglassOutline,
-      bg: "bg-amber-50",
-      border: "border-amber-200",
-      text: "text-amber-800",
+      bg: "bg-amber-50 dark:bg-amber-900/30",
+      border: "border-amber-200 dark:border-amber-800",
+      text: "text-amber-800 dark:text-amber-300",
       iconColor: "text-amber-500",
     },
     approved: {
       label: "Verified Provider",
       desc: "Your identity has been verified. You have a verified badge on your profile.",
       icon: checkmarkCircleOutline,
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
-      text: "text-emerald-800",
+      bg: "bg-emerald-50 dark:bg-emerald-900/30",
+      border: "border-emerald-200 dark:border-emerald-800",
+      text: "text-emerald-800 dark:text-emerald-300",
       iconColor: "text-emerald-500",
     },
     rejected: {
       label: "Verification Rejected",
       desc: "Your documents were not accepted. Please resubmit with valid documents.",
       icon: closeCircleOutline,
-      bg: "bg-red-50",
-      border: "border-red-200",
-      text: "text-red-800",
+      bg: "bg-red-50 dark:bg-red-900/30",
+      border: "border-red-200 dark:border-red-800",
+      text: "text-red-800 dark:text-red-300",
       iconColor: "text-red-500",
     },
   };
@@ -156,24 +156,24 @@ const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800">Today's Activity</h3>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Today's Activity</h3>
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
           <IonIcon icon={calendarOutline} className="text-xs" />
           {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white rounded-2xl p-3 border border-slate-100 text-center">
-          <p className="text-xl font-bold text-teal-600">{todayReviews.length}</p>
-          <p className="text-[10px] text-slate-500">New Reviews</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+          <p className="text-xl font-bold text-teal-600 dark:text-teal-400">{todayReviews.length}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">New Reviews</p>
         </div>
-        <div className="bg-white rounded-2xl p-3 border border-slate-100 text-center">
-          <p className="text-xl font-bold text-amber-600">{stats.products.length}</p>
-          <p className="text-[10px] text-slate-500">Products</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+          <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.products.length}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">Products</p>
         </div>
-        <div className="bg-white rounded-2xl p-3 border border-slate-100 text-center">
-          <p className="text-xl font-bold text-blue-600">{stats.photos.length}</p>
-          <p className="text-[10px] text-slate-500">Photos</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{stats.photos.length}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">Photos</p>
         </div>
       </div>
     </div>
@@ -281,10 +281,10 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
-          <h3 className="text-sm font-bold text-slate-800">Growth Tips</h3>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white">Growth Tips</h3>
         </div>
         {urgentCount > 0 && (
-          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
             {urgentCount} urgent
           </span>
         )}
@@ -297,21 +297,21 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.06 }}
             onClick={tip.action}
-            className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 active:bg-slate-50 cursor-pointer"
+            className="flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700 cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-              <IonIcon icon={tip.icon} className="text-base text-teal-600" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center shrink-0">
+              <IonIcon icon={tip.icon} className="text-base text-teal-600 dark:text-teal-400" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-800">{tip.title}</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-white">{tip.title}</span>
                 <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full uppercase ${priorityBadge[tip.priority]}`}>
                   {tip.priority}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 mt-0.5 truncate">{tip.desc}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{tip.desc}</p>
             </div>
-            <IonIcon icon={chevronForwardOutline} className="text-slate-300 text-sm shrink-0" />
+            <IonIcon icon={chevronForwardOutline} className="text-slate-300 dark:text-slate-600 text-sm shrink-0" />
           </motion.div>
         ))}
       </div>
@@ -330,7 +330,7 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800">Recent Reviews</h3>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Recent Reviews</h3>
       </div>
       <div className="space-y-2">
         {allReviews.map((r, i) => (
@@ -339,7 +339,7 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-white rounded-2xl p-3.5 border border-slate-100"
+            className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700"
           >
             <div className="flex items-center gap-2.5 mb-1.5">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shrink-0">
@@ -347,10 +347,10 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800">
+                  <span className="text-xs font-bold text-slate-800 dark:text-white">
                     {r.reviewer?.name || "Customer"}
                   </span>
-                  <span className="text-[9px] text-slate-400">
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500">
                     {new Date(r.postedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </span>
                 </div>
@@ -366,7 +366,7 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
               </div>
             </div>
             {r.reviewText && (
-              <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-2">
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                 {r.reviewText}
               </p>
             )}
@@ -382,12 +382,12 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
   if (stats.products.length === 0) {
     return (
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-2xl p-6 border border-slate-100 text-center">
-          <div className="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 text-center">
+          <div className="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <IonIcon icon={ribbonOutline} className="text-2xl text-teal-400" />
           </div>
-          <h4 className="text-sm font-bold text-slate-800 mb-1">No products yet</h4>
-          <p className="text-xs text-slate-500 mb-3">Add products to showcase to customers</p>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">No products yet</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Add products to showcase to customers</p>
         </div>
       </div>
     );
@@ -396,8 +396,8 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800">My Products</h3>
-        <span className="text-[10px] font-medium text-slate-400">{stats.products.length} total</span>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">My Products</h3>
+        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{stats.products.length} total</span>
       </div>
       <div className="space-y-2">
         {stats.products.slice(0, 3).map((p, i) => (
@@ -406,10 +406,10 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-white rounded-2xl border border-slate-100 overflow-hidden flex"
+            className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden flex"
           >
             {/* Product photo */}
-            <div className="w-16 h-16 shrink-0 bg-slate-100 overflow-hidden">
+            <div className="w-16 h-16 shrink-0 bg-slate-100 dark:bg-slate-700 overflow-hidden">
               {p.photoUrl ? (
                 <img
                   src={p.photoUrl}
@@ -427,17 +427,17 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
             </div>
             <div className="flex-1 min-w-0 p-3 flex flex-col justify-center">
               <div className="flex items-center justify-between mb-0.5">
-                <p className="text-xs font-bold text-slate-800 truncate flex-1 mr-2">
+                <p className="text-xs font-bold text-slate-800 dark:text-white truncate flex-1 mr-2">
                   {p.name}
                 </p>
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
-                  p.isActive ? "text-emerald-700 bg-emerald-50" : "text-slate-600 bg-slate-50"
+                  p.isActive ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30" : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700"
                 }`}>
                   {p.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
               {p.price != null && (
-                <p className="text-[11px] text-slate-500">{p.currency === "INR" ? "₹" : p.currency}{Number(p.price).toLocaleString()}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.currency === "INR" ? "₹" : p.currency}{Number(p.price).toLocaleString()}</p>
               )}
             </div>
           </motion.div>
@@ -543,12 +543,12 @@ const DealsOverview = ({
   if (offers.length === 0) {
     return (
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 text-center">
-          <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 text-center">
+          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <IonIcon icon={pricetagOutline} className="text-xl text-amber-400" />
           </div>
-          <h4 className="text-sm font-bold text-slate-800 mb-1">No active deals</h4>
-          <p className="text-xs text-slate-500 mb-3">
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">No active deals</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
             Create deals to attract more customers and boost sales
           </p>
           <motion.button
@@ -577,7 +577,7 @@ const DealsOverview = ({
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <IonIcon icon={pricetagOutline} className="text-amber-500 text-sm" />
-          <h3 className="text-sm font-bold text-slate-800">Active Deals</h3>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white">Active Deals</h3>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -587,14 +587,14 @@ const DealsOverview = ({
           Manage All
         </motion.button>
       </div>
-      <div className="bg-white rounded-2xl p-4 border border-slate-100">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
               <IonIcon icon={flashOutline} className="text-lg text-amber-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-xs font-bold text-slate-800 dark:text-white">
                 {offers.length} active deal{offers.length > 1 ? "s" : ""}
               </p>
               {nextExpiring && (

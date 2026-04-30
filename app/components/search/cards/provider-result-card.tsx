@@ -36,10 +36,10 @@ const ProviderResultCard = ({ provider, index }: Props) => {
       onClick={() =>
         router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
       }
-      className="cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.97] transition-transform duration-150"
+      className="cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.97] transition-transform duration-150"
     >
       {/* Image */}
-      <div className="relative h-[140px] overflow-hidden bg-gray-100">
+      <div className="relative h-[140px] overflow-hidden bg-gray-100 dark:bg-slate-700">
         {image ? (
           <img
             src={image}
@@ -48,7 +48,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-800">
             <span className="text-3xl opacity-20">🏪</span>
           </div>
         )}
@@ -60,7 +60,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
         <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
           {/* Verified badge */}
           {provider.status === "active" && (
-            <div className="bg-white/95 backdrop-blur-sm text-emerald-600 text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-emerald-600 dark:text-emerald-400 text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
               <IonIcon icon={shieldCheckmarkOutline} className="w-3 h-3" />
               Verified
             </div>
@@ -68,7 +68,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
 
           {/* Women-led badge */}
           {provider.isWomenLed && (
-            <div className="bg-white/95 backdrop-blur-sm text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm text-purple-600">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm text-purple-600 dark:text-purple-400">
               <IonIcon icon={ribbonOutline} className="w-3 h-3" />
               Women-Led
             </div>
@@ -79,7 +79,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
         <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
           {/* Distance */}
           {provider.distance != null && (
-            <div className="bg-white/95 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-gray-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
               <IonIcon icon={navigateOutline} className="w-3 h-3 text-amber-500" />
               {provider.distance < 1
                 ? `${Math.round(provider.distance * 1000)}m`
@@ -98,12 +98,12 @@ const ProviderResultCard = ({ provider, index }: Props) => {
 
       {/* Info */}
       <div className="p-3">
-        <h4 className="text-[13px] font-bold text-gray-900 leading-tight line-clamp-1">
+        <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-tight line-clamp-1">
           {provider.brandName}
         </h4>
 
         {provider.categories && (
-          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1 font-medium">
+          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1 font-medium">
             {provider.categories}
           </p>
         )}
@@ -117,20 +117,20 @@ const ProviderResultCard = ({ provider, index }: Props) => {
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-md">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-md">
               <IonIcon icon={star} className="w-2.5 h-2.5 text-gray-400" />
               <span className="text-[10px] font-medium text-gray-400">New</span>
             </div>
           )}
           {provider.reviewCount > 0 && (
-            <span className="text-[10px] text-gray-400 font-medium">
+            <span className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">
               {provider.reviewCount} review{provider.reviewCount !== 1 ? "s" : ""}
             </span>
           )}
         </div>
 
         {(provider.area || provider.city) && (
-          <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400">
+          <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 dark:text-slate-500">
             <IonIcon icon={locationOutline} className="w-3 h-3 flex-shrink-0" />
             <span className="truncate font-medium">
               {[provider.area, provider.city].filter(Boolean).join(", ")}

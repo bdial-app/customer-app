@@ -33,10 +33,10 @@ const CategoryResultCard = ({ category, index, onTap }: Props) => {
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.04, duration: 0.25 }}
       onClick={handleClick}
-      className="flex items-center gap-3 p-3.5 bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:bg-gray-50 active:scale-[0.99] transition-all cursor-pointer"
+      className="flex items-center gap-3 p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-none active:bg-gray-50 dark:active:bg-slate-700 active:scale-[0.99] transition-all cursor-pointer"
     >
       {/* Icon */}
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100/60 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-100/60 dark:border-amber-800/40 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -56,22 +56,22 @@ const CategoryResultCard = ({ category, index, onTap }: Props) => {
 
       {/* Text */}
       <div className="flex-1 min-w-0">
-        <h4 className="text-[14px] font-bold text-gray-800 truncate">
+        <h4 className="text-[14px] font-bold text-gray-800 dark:text-white truncate">
           {category.name}
         </h4>
         <div className="flex items-center gap-1 mt-0.5">
-          <IonIcon icon={storefrontOutline} className="w-3 h-3 text-gray-400" />
-          <p className="text-[11px] text-gray-400 font-medium">
+          <IonIcon icon={storefrontOutline} className="w-3 h-3 text-gray-400 dark:text-slate-500" />
+          <p className="text-[11px] text-gray-400 dark:text-slate-400 font-medium">
             {category.providerCount} business
             {category.providerCount !== 1 ? "es" : ""} nearby
           </p>
         </div>
       </div>
 
-      <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
+      <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
         <IonIcon
           icon={chevronForward}
-          className="w-4 h-4 text-gray-400"
+          className="w-4 h-4 text-gray-400 dark:text-slate-500"
         />
       </div>
     </motion.div>

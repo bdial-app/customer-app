@@ -39,7 +39,7 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
     <div className="animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h3 className="text-sm font-bold text-slate-800">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
           Photos ({photos.length}/{maxPhotos})
         </h3>
         {photos.length > 0 && providerId && remaining > 0 && (
@@ -47,7 +47,7 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
             whileTap={{ scale: 0.9 }}
             onClick={() => fileRef.current?.click()}
             disabled={uploadMutation.isPending}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 active:bg-teal-100"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100"
           >
             <IonIcon icon={addOutline} className="text-teal-600 text-sm" />
             <span className="text-xs font-semibold text-teal-600">Add</span>
@@ -57,9 +57,9 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
 
       {/* Upload progress */}
       {uploadMutation.isPending && (
-        <div className="mx-4 mb-3 px-4 py-3 bg-teal-50 rounded-xl flex items-center gap-3">
+        <div className="mx-4 mb-3 px-4 py-3 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-teal-700 font-medium">Uploading photos...</span>
+          <span className="text-sm text-teal-700 dark:text-teal-300 font-medium">Uploading photos...</span>
         </div>
       )}
 
@@ -73,7 +73,7 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.03 }}
-                className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 group"
+                className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 group"
               >
                 {photo.imageUrl ? (
                   <img
@@ -108,13 +108,13 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
       ) : (
         /* Empty State */
         <div className="px-4 py-12 text-center">
-          <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <IonIcon icon={imagesOutline} className="text-4xl text-teal-400" />
           </div>
-          <h4 className="text-base font-bold text-slate-800 mb-1">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
             No photos yet
           </h4>
-          <p className="text-sm text-slate-500 max-w-[250px] mx-auto mb-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px] mx-auto mb-5">
             Upload photos of your work to attract more customers
           </p>
           {providerId ? (

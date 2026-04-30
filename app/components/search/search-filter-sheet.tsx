@@ -115,15 +115,15 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       style={{ maxHeight: "85vh" }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-slate-700">
         <div className="flex items-center gap-2.5">
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200 transition-colors"
+            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
           >
-            <IonIcon icon={close} className="w-4 h-4 text-gray-600" />
+            <IonIcon icon={close} className="w-4 h-4 text-gray-600 dark:text-slate-300" />
           </button>
-          <h2 className="text-[17px] font-bold text-gray-900">Filters</h2>
+          <h2 className="text-[17px] font-bold text-gray-900 dark:text-white">Filters</h2>
         </div>
         {tempFilterCount > 0 && (
           <button
@@ -141,7 +141,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       >
         {/* ── Rating ─────────────────────────── */}
         <section className="mb-6">
-          <h3 className="text-[13px] font-bold text-gray-800 mb-3">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
             Minimum Rating
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -153,8 +153,8 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                   onClick={() => setTempRating(opt.value)}
                   className={`flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
                     isActive
-                      ? "bg-amber-50 border-amber-400 text-amber-700 shadow-sm shadow-amber-100"
-                      : "bg-white border-gray-200 text-gray-600 active:bg-gray-50"
+                      ? "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400 shadow-sm shadow-amber-100 dark:shadow-none"
+                      : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 active:bg-gray-50 dark:active:bg-slate-700"
                   }`}
                 >
                   {opt.value && (
@@ -169,7 +169,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
 
         {/* ── Distance ───────────────────────── */}
         <section className="mb-6">
-          <h3 className="text-[13px] font-bold text-gray-800 mb-3">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
             Maximum Distance
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -181,8 +181,8 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                   onClick={() => setTempDistance(opt.value)}
                   className={`h-10 px-4 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
                     isActive
-                      ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm shadow-blue-100"
-                      : "bg-white border-gray-200 text-gray-600 active:bg-gray-50"
+                      ? "bg-blue-50 dark:bg-blue-900/30 border-blue-400 text-blue-700 dark:text-blue-400 shadow-sm shadow-blue-100 dark:shadow-none"
+                      : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 active:bg-gray-50 dark:active:bg-slate-700"
                   }`}
                 >
                   {opt.label}
@@ -194,20 +194,20 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
 
         {/* ── Toggles ────────────────────────── */}
         <section className="mb-6 space-y-2">
-          <h3 className="text-[13px] font-bold text-gray-800 mb-2">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-2">
             Business Type
           </h3>
-          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 cursor-pointer active:bg-gray-100 transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 dark:bg-slate-800 cursor-pointer active:bg-gray-100 dark:active:bg-slate-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
               <IonIcon icon={shieldCheckmarkOutline} className="w-4 h-4 text-emerald-600" />
             </div>
-            <span className="text-[14px] font-semibold text-gray-700 flex-1">
+            <span className="text-[14px] font-semibold text-gray-700 dark:text-slate-200 flex-1">
               Verified Only
             </span>
             <div
               onClick={() => setTempVerified(!tempVerified)}
               className={`w-12 h-7 rounded-full flex items-center px-0.5 transition-colors cursor-pointer ${
-                tempVerified ? "bg-emerald-500" : "bg-gray-200"
+                tempVerified ? "bg-emerald-500" : "bg-gray-200 dark:bg-slate-600"
               }`}
             >
               <div
@@ -217,17 +217,17 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
               />
             </div>
           </label>
-          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 cursor-pointer active:bg-gray-100 transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 dark:bg-slate-800 cursor-pointer active:bg-gray-100 dark:active:bg-slate-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
               <IonIcon icon={ribbonOutline} className="w-4 h-4 text-purple-600" />
             </div>
-            <span className="text-[14px] font-semibold text-gray-700 flex-1">
+            <span className="text-[14px] font-semibold text-gray-700 dark:text-slate-200 flex-1">
               Women-Led Only
             </span>
             <div
               onClick={() => setTempWomenLed(!tempWomenLed)}
               className={`w-12 h-7 rounded-full flex items-center px-0.5 transition-colors cursor-pointer ${
-                tempWomenLed ? "bg-purple-500" : "bg-gray-200"
+                tempWomenLed ? "bg-purple-500" : "bg-gray-200 dark:bg-slate-600"
               }`}
             >
               <div
@@ -242,7 +242,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
         {/* ── Categories ─────────────────────── */}
         {allCategories.length > 0 && (
           <section className="mb-2">
-            <h3 className="text-[13px] font-bold text-gray-800 mb-3">
+            <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
               Categories
             </h3>
             <div className="space-y-0.5">
@@ -269,9 +269,9 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                           toggleCat(cat.id);
                         }
                       }}
-                      className="w-full flex items-center gap-3 py-3 px-3 rounded-xl active:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 px-3 rounded-xl active:bg-gray-50 dark:active:bg-slate-700 transition-colors"
                     >
-                      <span className="text-[14px] font-semibold text-gray-700 flex-1 text-left">
+                      <span className="text-[14px] font-semibold text-gray-700 dark:text-slate-200 flex-1 text-left">
                         {cat.name}
                       </span>
                       {selectedCount > 0 && children.length > 0 && (
@@ -289,7 +289,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                           className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                             tempCats.has(cat.id)
                               ? "bg-amber-500 border-amber-500"
-                              : "border-gray-300 bg-white"
+                              : "border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-800"
                           }`}
                         >
                           {tempCats.has(cat.id) && (
@@ -300,21 +300,21 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                     </button>
 
                     {children.length > 0 && isExpanded && (
-                      <div className="ml-5 mb-2 space-y-0.5 border-l-2 border-gray-100 pl-3">
+                      <div className="ml-5 mb-2 space-y-0.5 border-l-2 border-gray-100 dark:border-slate-700 pl-3">
                         {children.map((child: any) => (
                           <button
                             key={child.id}
                             onClick={() => toggleCat(child.id)}
-                            className="w-full flex items-center gap-3 py-2.5 px-2 rounded-lg active:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-3 py-2.5 px-2 rounded-lg active:bg-gray-50 dark:active:bg-slate-700 transition-colors"
                           >
-                            <span className="text-[13px] text-gray-600 flex-1 text-left font-medium">
+                            <span className="text-[13px] text-gray-600 dark:text-slate-300 flex-1 text-left font-medium">
                               {child.name}
                             </span>
                             <div
                               className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                                 tempCats.has(child.id)
                                   ? "bg-amber-500 border-amber-500"
-                                  : "border-gray-300 bg-white"
+                                  : "border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-800"
                               }`}
                             >
                               {tempCats.has(child.id) && (
@@ -334,7 +334,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       </div>
 
       {/* Apply button */}
-      <div className="px-4 pb-4 pt-3 border-t border-gray-100 bg-white">
+      <div className="px-4 pb-4 pt-3 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <button
           onClick={handleApply}
           className="w-full h-12 rounded-2xl bg-amber-500 text-white text-[15px] font-bold active:bg-amber-600 transition-colors shadow-sm shadow-amber-200"

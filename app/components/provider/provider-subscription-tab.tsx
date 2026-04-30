@@ -128,7 +128,7 @@ const ProviderSubscriptionTab = () => {
     return (
       <div className="px-4 space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+          <div key={i} className="h-40 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse" />
         ))}
       </div>
     );
@@ -141,11 +141,11 @@ const ProviderSubscriptionTab = () => {
     <div className="px-4 space-y-6 pb-8">
       {/* Header */}
       <div className="text-center pt-2">
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 px-4 py-1.5 rounded-full text-xs font-semibold border border-purple-100">
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 text-purple-700 dark:text-purple-400 px-4 py-1.5 rounded-full text-xs font-semibold border border-purple-100 dark:border-purple-800">
           <IonIcon icon={diamondOutline} className="text-sm" />
           Subscription Plans
         </div>
-        <p className="text-xs text-slate-500 mt-2">Unlock premium features for your business</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Unlock premium features for your business</p>
       </div>
 
       {/* Current Subscription */}
@@ -214,11 +214,11 @@ const ProviderSubscriptionTab = () => {
       )}
 
       {/* Billing Toggle */}
-      <div className="flex items-center justify-center gap-1 bg-slate-100 rounded-full p-1">
+      <div className="flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-700 rounded-full p-1">
         <button
           onClick={() => setBillingInterval("monthly")}
           className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${
-            billingInterval === "monthly" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"
+            billingInterval === "monthly" ? "bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           Monthly
@@ -226,7 +226,7 @@ const ProviderSubscriptionTab = () => {
         <button
           onClick={() => setBillingInterval("yearly")}
           className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all ${
-            billingInterval === "yearly" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"
+            billingInterval === "yearly" ? "bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           Yearly
@@ -246,12 +246,12 @@ const ProviderSubscriptionTab = () => {
               key={plan.id}
               whileTap={{ scale: 0.98 }}
               onClick={() => !isCurrent && handleSelectPlan(plan)}
-              className={`relative bg-white rounded-2xl border p-4 cursor-pointer transition-all ${
+              className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 cursor-pointer transition-all ${
                 isCurrent
-                  ? "border-teal-300 bg-teal-50/50 ring-1 ring-teal-200"
+                  ? "border-teal-300 bg-teal-50/50 dark:bg-teal-900/30 ring-1 ring-teal-200 dark:ring-teal-800"
                   : plan.slug === "growth"
-                  ? "border-emerald-200 shadow-lg shadow-emerald-100/50"
-                  : "border-slate-100 hover:border-slate-200"
+                  ? "border-emerald-200 shadow-lg shadow-emerald-100/50 dark:border-emerald-700 dark:shadow-emerald-900/30"
+                  : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
               }`}
             >
               {plan.slug === "growth" && !isCurrent && (
@@ -272,10 +272,10 @@ const ProviderSubscriptionTab = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-slate-800">{plan.name}</h4>
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-white">{plan.name}</h4>
                     <div className="text-right">
                       <span className="text-base font-bold text-teal-600">₹{perMonth}</span>
-                      <span className="text-[10px] text-slate-400">/mo</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">/mo</span>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
@@ -308,23 +308,23 @@ const ProviderSubscriptionTab = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="w-full max-w-md bg-white rounded-t-3xl p-6"
+              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6" />
+              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
 
               <div className="text-center mb-6">
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${planColors[selectedPlan.slug] ?? planColors.starter} flex items-center justify-center mx-auto mb-3`}>
                   <IonIcon icon={planIcons[selectedPlan.slug] ?? diamondOutline} className="text-white text-2xl" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">{selectedPlan.name} Plan</h3>
-                <p className="text-xs text-slate-500 mt-1">{billingInterval === "yearly" ? "Yearly billing" : "Monthly billing"}</p>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">{selectedPlan.name} Plan</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{billingInterval === "yearly" ? "Yearly billing" : "Monthly billing"}</p>
               </div>
 
-              <div className="bg-slate-50 rounded-2xl p-4 mb-4 space-y-2">
+              <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-4 mb-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Price</span>
-                  <span className="text-sm font-semibold text-slate-800">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Price</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">
                     ₹{billingInterval === "yearly" ? selectedPlan.priceYearly : selectedPlan.priceMonthly}
                   </span>
                 </div>
@@ -334,9 +334,9 @@ const ProviderSubscriptionTab = () => {
                     <span className="text-sm font-semibold">-₹{voucherResult.discount}</span>
                   </div>
                 )}
-                <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">Total</span>
-                  <span className="text-xl font-bold text-slate-800">
+                <div className="border-t border-slate-200 dark:border-slate-600 pt-2 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                  <span className="text-xl font-bold text-slate-800 dark:text-white">
                     ₹{voucherResult?.valid ? voucherResult.finalAmount : (billingInterval === "yearly" ? selectedPlan.priceYearly : selectedPlan.priceMonthly)}
                   </span>
                 </div>
@@ -352,13 +352,13 @@ const ProviderSubscriptionTab = () => {
                       placeholder="Voucher code"
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherResult(null); }}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
                     />
                   </div>
                   <button
                     onClick={handleApplyVoucher}
                     disabled={!voucherCode.trim() || isCheckingVoucher}
-                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold disabled:opacity-50"
+                    className="px-4 py-2.5 bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold disabled:opacity-50"
                   >
                     {isCheckingVoucher ? "..." : "Apply"}
                   </button>
@@ -373,7 +373,7 @@ const ProviderSubscriptionTab = () => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold"
+                  className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold"
                 >
                   Cancel
                 </button>
@@ -400,7 +400,7 @@ const ProviderSubscriptionTab = () => {
 };
 
 const FeatureChip = ({ label }: { label: string }) => (
-  <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded-full">
+  <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">
     <IonIcon icon={checkmarkCircle} className="text-emerald-400 text-[10px]" />
     {label}
   </span>

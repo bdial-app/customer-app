@@ -117,7 +117,7 @@ const ProviderSponsorTab = () => {
     return (
       <div className="px-4 space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+          <div key={i} className="h-40 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse" />
         ))}
       </div>
     );
@@ -127,11 +127,11 @@ const ProviderSponsorTab = () => {
     <div className="px-4 space-y-6 pb-8">
       {/* Header */}
       <div className="text-center pt-2">
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-4 py-1.5 rounded-full text-xs font-semibold border border-amber-100">
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-700 dark:text-amber-400 px-4 py-1.5 rounded-full text-xs font-semibold border border-amber-100 dark:border-amber-800">
           <IonIcon icon={rocketOutline} className="text-sm" />
           Boost Your Visibility
         </div>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           Get more customers by sponsoring your listing
         </p>
       </div>
@@ -139,7 +139,7 @@ const ProviderSponsorTab = () => {
       {/* Active Sponsorships */}
       {activeSponsorships.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5">
             <IonIcon icon={checkmarkCircle} className="text-emerald-500" />
             Active Sponsorships
           </h3>
@@ -153,7 +153,7 @@ const ProviderSponsorTab = () => {
 
       {/* Plans */}
       <div>
-        <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5">
           <IonIcon icon={sparklesOutline} className="text-amber-500" />
           Choose a Plan
         </h3>
@@ -165,9 +165,9 @@ const ProviderSponsorTab = () => {
       </div>
 
       {/* Payment Info */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-200">
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
             <IonIcon icon={walletOutline} className="text-emerald-600 text-lg" />
           </div>
           <div>
@@ -182,7 +182,7 @@ const ProviderSponsorTab = () => {
       {/* Past Sponsorships */}
       {pastSponsorships.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5">
             <IonIcon icon={timeOutline} className="text-slate-400" />
             Past Sponsorships
           </h3>
@@ -209,23 +209,23 @@ const ProviderSponsorTab = () => {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="w-full max-w-md bg-white rounded-t-3xl p-6"
+              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6" />
+              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
               
               <div className="text-center mb-6">
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${typeColors[selectedPlan.type]} flex items-center justify-center mx-auto mb-3`}>
                   <IonIcon icon={typeIcons[selectedPlan.type]} className="text-white text-2xl" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">{selectedPlan.name}</h3>
-                <p className="text-xs text-slate-500 mt-1">{selectedPlan.duration} days · {typeLabels[selectedPlan.type]} placement</p>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">{selectedPlan.name}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{selectedPlan.duration} days · {typeLabels[selectedPlan.type]} placement</p>
               </div>
 
-              <div className="bg-slate-50 rounded-2xl p-4 mb-4 space-y-2">
+              <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-4 mb-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Subtotal</span>
-                  <span className="text-sm font-semibold text-slate-800">₹{selectedPlan.price}</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Subtotal</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">₹{selectedPlan.price}</span>
                 </div>
                 {voucherResult?.valid && voucherResult.discount && (
                   <div className="flex items-center justify-between text-emerald-600">
@@ -233,9 +233,9 @@ const ProviderSponsorTab = () => {
                     <span className="text-sm font-semibold">-₹{voucherResult.discount}</span>
                   </div>
                 )}
-                <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">Total</span>
-                  <span className="text-xl font-bold text-slate-800">
+                <div className="border-t border-slate-200 dark:border-slate-600 pt-2 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Total</span>
+                  <span className="text-xl font-bold text-slate-800 dark:text-white">
                     ₹{voucherResult?.valid ? voucherResult.finalAmount : selectedPlan.price}
                   </span>
                 </div>
@@ -251,13 +251,13 @@ const ProviderSponsorTab = () => {
                       placeholder="Voucher code"
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherResult(null); }}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
                     />
                   </div>
                   <button
                     onClick={handleApplyVoucher}
                     disabled={!voucherCode.trim() || isCheckingVoucher}
-                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold disabled:opacity-50"
+                    className="px-4 py-2.5 bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold disabled:opacity-50"
                   >
                     {isCheckingVoucher ? "..." : "Apply"}
                   </button>
@@ -269,7 +269,7 @@ const ProviderSponsorTab = () => {
                 )}
               </div>
 
-              <div className="flex items-start gap-2 mb-6 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+              <div className="flex items-start gap-2 mb-6 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
                 <IonIcon icon={shieldCheckmarkOutline} className="text-emerald-500 text-lg flex-shrink-0 mt-0.5" />
                 <p className="text-[11px] text-emerald-700">
                   You&apos;ll be redirected to Stripe&apos;s secure payment page to complete your purchase.
@@ -279,7 +279,7 @@ const ProviderSponsorTab = () => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold"
+                  className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold"
                 >
                   Cancel
                 </button>
@@ -311,8 +311,8 @@ const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: 
   <motion.div
     whileTap={{ scale: 0.98 }}
     onClick={() => onSelect(plan)}
-    className={`relative bg-white rounded-2xl border p-4 cursor-pointer transition-all ${
-      plan.recommended ? "border-teal-200 shadow-lg shadow-teal-100/50" : "border-slate-100 hover:border-slate-200"
+    className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 cursor-pointer transition-all ${
+      plan.recommended ? "border-teal-200 shadow-lg shadow-teal-100/50 dark:border-teal-700 dark:shadow-teal-900/30" : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
     }`}
   >
     {plan.recommended && (
@@ -327,13 +327,13 @@ const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: 
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-slate-800">{plan.name}</h4>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{plan.name}</h4>
           <span className="text-base font-bold text-teal-600">₹{plan.price}</span>
         </div>
-        <p className="text-[11px] text-slate-500 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
         <div className="flex flex-wrap gap-1.5 mt-2">
           {plan.features.map((f, i) => (
-            <span key={i} className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded-full">
+            <span key={i} className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">
               <IonIcon icon={checkmarkCircle} className="text-emerald-400 text-[10px]" />
               {f}
             </span>
@@ -364,15 +364,15 @@ const SponsorshipCard = ({
   const ctr = sponsorship.impressions > 0 ? ((sponsorship.clicks / sponsorship.impressions) * 100).toFixed(1) : "0.0";
 
   return (
-    <div className={`bg-white rounded-2xl border p-4 ${isPast ? "border-slate-100 opacity-70" : "border-slate-100"}`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-2xl border p-4 ${isPast ? "border-slate-100 dark:border-slate-700 opacity-70" : "border-slate-100 dark:border-slate-700"}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${typeColors[sponsorship.type]} flex items-center justify-center`}>
             <IonIcon icon={typeIcons[sponsorship.type]} className="text-white text-sm" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800">{typeLabels[sponsorship.type]} Sponsorship</p>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-xs font-bold text-slate-800 dark:text-white">{typeLabels[sponsorship.type]} Sponsorship</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
               {isPast ? "Ended" : `${daysLeft} days left`}
             </p>
           </div>
@@ -383,8 +383,8 @@ const SponsorshipCard = ({
             disabled={isUpdating}
             className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${
               sponsorship.isActive
-                ? "bg-red-50 text-red-600 border border-red-100"
-                : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800"
+                : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
             }`}
           >
             {sponsorship.isActive ? "Pause" : "Resume"}
@@ -394,30 +394,30 @@ const SponsorshipCard = ({
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 mb-3">
-        <div className="bg-slate-50 rounded-xl p-2 text-center">
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-2 text-center">
           <IonIcon icon={eyeOutline} className="text-blue-500 text-sm" />
-          <p className="text-xs font-bold text-slate-800 mt-0.5">{sponsorship.impressions}</p>
-          <p className="text-[9px] text-slate-500">Views</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{sponsorship.impressions}</p>
+          <p className="text-[9px] text-slate-500 dark:text-slate-400">Views</p>
         </div>
-        <div className="bg-slate-50 rounded-xl p-2 text-center">
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-2 text-center">
           <IonIcon icon={fingerPrintOutline} className="text-emerald-500 text-sm" />
-          <p className="text-xs font-bold text-slate-800 mt-0.5">{sponsorship.clicks}</p>
-          <p className="text-[9px] text-slate-500">Clicks</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{sponsorship.clicks}</p>
+          <p className="text-[9px] text-slate-500 dark:text-slate-400">Clicks</p>
         </div>
-        <div className="bg-slate-50 rounded-xl p-2 text-center">
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-2 text-center">
           <IonIcon icon={trendingUpOutline} className="text-amber-500 text-sm" />
-          <p className="text-xs font-bold text-slate-800 mt-0.5">{ctr}%</p>
-          <p className="text-[9px] text-slate-500">CTR</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{ctr}%</p>
+          <p className="text-[9px] text-slate-500 dark:text-slate-400">CTR</p>
         </div>
       </div>
 
       {/* Budget Progress */}
       <div>
         <div className="flex items-center justify-between text-[10px] mb-1">
-          <span className="text-slate-500">Budget Used</span>
-          <span className="font-semibold text-slate-700">₹{spent} / ₹{budget}</span>
+          <span className="text-slate-500 dark:text-slate-400">Budget Used</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300">₹{spent} / ₹{budget}</span>
         </div>
-        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>

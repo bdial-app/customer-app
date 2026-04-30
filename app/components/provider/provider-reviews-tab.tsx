@@ -53,10 +53,10 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
     <div className="animate-in fade-in duration-300">
       {/* Rating Summary */}
       {totalReviews > 0 && (
-        <div className="mx-4 mt-4 bg-white rounded-2xl border border-slate-100 p-4">
+        <div className="mx-4 mt-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-3xl font-bold text-slate-800">{avgRating}</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{avgRating}</p>
               <div className="flex items-center gap-0.5 mt-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <IonIcon
@@ -72,7 +72,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               {ratingCounts.map((r) => (
                 <div key={r.stars} className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-500 w-3">{r.stars}</span>
-                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: totalReviews > 0 ? `${(r.count / totalReviews) * 100}%` : "0%" }}
@@ -90,7 +90,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
 
       {/* Reviews List */}
       <div className="px-4 pt-4 pb-2">
-        <h3 className="text-sm font-bold text-slate-800">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
           Customer Reviews ({totalReviews})
         </h3>
       </div>
@@ -103,16 +103,16 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+              className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm dark:shadow-none"
             >
               {/* Reviewer info */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                     <IonIcon icon={personCircleOutline} className="text-xl text-slate-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
                       {review.reviewer?.name || "Customer"}
                     </p>
                     <p className="text-[10px] text-slate-400">
@@ -137,17 +137,17 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
 
               {/* Review text */}
               {review.reviewText && (
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
                   {review.reviewText}
                 </p>
               )}
 
               {/* Reply action */}
-              <div className="flex justify-end border-t border-slate-50 pt-2">
+              <div className="flex justify-end border-t border-slate-50 dark:border-slate-700 pt-2">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleOpenReply(review)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 active:bg-teal-100"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100 dark:active:bg-teal-900/50"
                 >
                   <IonIcon icon={chatbubbleOutline} className="text-teal-600 text-sm" />
                   <span className="text-xs font-semibold text-teal-600">Reply</span>
@@ -159,13 +159,13 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
       ) : (
         /* Empty State */
         <div className="px-4 py-12 text-center">
-          <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <IonIcon icon={star} className="text-4xl text-amber-300" />
           </div>
-          <h4 className="text-base font-bold text-slate-800 mb-1">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
             No reviews yet
           </h4>
-          <p className="text-sm text-slate-500 max-w-[250px] mx-auto">
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px] mx-auto">
             Reviews from customers will appear here once you start getting bookings
           </p>
         </div>

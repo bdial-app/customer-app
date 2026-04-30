@@ -136,10 +136,10 @@ const ProviderProductsTab = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white">
             Products & Services
           </h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
             {activeCount} active
             {inactiveCount > 0 && ` · ${inactiveCount} inactive`}
           </p>
@@ -160,15 +160,15 @@ const ProviderProductsTab = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className={`bg-white rounded-2xl border overflow-hidden flex shadow-sm ${
+              className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden flex shadow-sm ${
                 !p.isActive
-                  ? "border-slate-200 opacity-60"
-                  : "border-slate-100"
+                  ? "border-slate-200 dark:border-slate-600 opacity-60"
+                  : "border-slate-100 dark:border-slate-700"
               }`}
             >
               {/* Photo */}
               <div
-                className="w-[88px] h-[88px] shrink-0 bg-slate-100 cursor-pointer relative overflow-hidden"
+                className="w-[88px] h-[88px] shrink-0 bg-slate-100 dark:bg-slate-700 cursor-pointer relative overflow-hidden"
                 onClick={() => handleEdit(p)}
               >
                 {p.photoUrl ? (
@@ -200,11 +200,11 @@ const ProviderProductsTab = ({
                 className="flex-1 min-w-0 p-3 flex flex-col justify-center cursor-pointer"
                 onClick={() => handleEdit(p)}
               >
-                <p className="text-[13px] font-semibold text-slate-800 truncate">
+                <p className="text-[13px] font-semibold text-slate-800 dark:text-white truncate">
                   {p.name}
                 </p>
                 {p.description && (
-                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                     {p.description}
                   </p>
                 )}
@@ -232,7 +232,7 @@ const ProviderProductsTab = ({
                 <motion.button
                   whileTap={{ scale: 0.8 }}
                   onClick={() => handleEdit(p)}
-                  className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center"
                 >
                   <IonIcon
                     icon={createOutline}
@@ -263,13 +263,13 @@ const ProviderProductsTab = ({
         </div>
       ) : (
         <div className="px-4 py-12 text-center">
-          <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <IonIcon icon={cubeOutline} className="text-4xl text-teal-400" />
           </div>
-          <h4 className="text-base font-bold text-slate-800 mb-1">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
             No products yet
           </h4>
-          <p className="text-sm text-slate-500 max-w-[250px] mx-auto mb-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px] mx-auto mb-5">
             Add your products or services to showcase to customers
           </p>
           <motion.button
@@ -312,12 +312,12 @@ const ProviderProductsTab = ({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="w-full max-w-md bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="sticky top-0 bg-white z-10 border-b border-slate-100 px-5 py-4 flex items-center justify-between rounded-t-3xl">
-                <h3 className="text-base font-bold text-slate-800">
+              <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
+                <h3 className="text-base font-bold text-slate-800 dark:text-white">
                   {editing ? "Edit Product" : "New Product"}
                 </h3>
                 <div className="flex items-center gap-2">
@@ -331,9 +331,9 @@ const ProviderProductsTab = ({
                   )}
                   <button
                     onClick={() => !isSaving && setSheetOpen(false)}
-                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
-                  >
-                    <IonIcon icon={closeOutline} className="text-lg text-slate-500" />
+                      className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
+                    >
+                      <IonIcon icon={closeOutline} className="text-lg text-slate-500 dark:text-slate-400" />
                   </button>
                 </div>
               </div>
@@ -395,8 +395,8 @@ const ProviderProductsTab = ({
                   <Form className="p-5 space-y-5">
                     {/* Photo Upload Section */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-2">
-                        Photos <span className="text-slate-400 font-normal">({photoPreviews.length}/5, max 5 MB each)</span>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Photos <span className="text-slate-400 dark:text-slate-500 font-normal">({photoPreviews.length}/5, max 5 MB each)</span>
                       </label>
                       <div className="flex gap-2 flex-wrap">
                         {photoPreviews.map((url, i) => (
@@ -446,44 +446,44 @@ const ProviderProductsTab = ({
 
                     {/* Product Name */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">Product Name</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Product Name</label>
                       <Field
                         name="name"
                         placeholder="e.g. Bridal Mehendi Package"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
                       />
                       <ErrorMessage name="name" component="p" className="text-[10px] text-red-500 mt-1" />
                     </div>
 
                     {/* Price */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Price ({values.currency === "INR" ? "₹" : "$"})
                       </label>
                       <Field
                         name="price"
                         type="number"
                         placeholder="e.g. 2500"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
                       />
                       <ErrorMessage name="price" component="p" className="text-[10px] text-red-500 mt-1" />
                     </div>
 
                     {/* Description */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">Description</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Description</label>
                       <Field
                         as="textarea"
                         name="description"
                         rows={3}
                         placeholder="What's included, duration, special features..."
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors resize-none"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors resize-none"
                       />
                     </div>
 
                     {/* Currency */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-2">Currency</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Currency</label>
                       <div className="flex gap-2">
                         {(["INR", "USD"] as const).map((c) => (
                           <button
@@ -493,7 +493,7 @@ const ProviderProductsTab = ({
                             className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
                               values.currency === c
                                 ? "bg-teal-500 text-white border-teal-500"
-                                : "bg-white text-slate-600 border-slate-200"
+                                : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600"
                             }`}
                           >
                             {c === "INR" ? "₹ INR" : "$ USD"}

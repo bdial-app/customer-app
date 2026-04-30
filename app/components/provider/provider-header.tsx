@@ -20,12 +20,12 @@ interface ProviderHeaderProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  active: { label: "Active", color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200", icon: checkmarkCircle },
-  pending: { label: "Pending", color: "text-amber-700", bg: "bg-amber-50 border-amber-200", icon: timeOutline },
-  in_review: { label: "In Review", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: timeOutline },
-  suspended: { label: "Suspended", color: "text-red-700", bg: "bg-red-50 border-red-200", icon: alertCircleOutline },
-  unverified: { label: "Unverified", color: "text-slate-600", bg: "bg-slate-50 border-slate-200", icon: alertCircleOutline },
-  disabled: { label: "Disabled", color: "text-red-700", bg: "bg-red-50 border-red-200", icon: alertCircleOutline },
+  active: { label: "Active", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800", icon: checkmarkCircle },
+  pending: { label: "Pending", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800", icon: timeOutline },
+  in_review: { label: "In Review", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800", icon: timeOutline },
+  suspended: { label: "Suspended", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800", icon: alertCircleOutline },
+  unverified: { label: "Unverified", color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600", icon: alertCircleOutline },
+  disabled: { label: "Disabled", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800", icon: alertCircleOutline },
 };
 
 const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) => {

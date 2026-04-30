@@ -30,6 +30,7 @@ import { useAuthGate } from "@/hooks/useAuthGate";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
 import { useAppContext } from "@/app/context/AppContext";
+import { useTheme } from "@/app/context/ThemeContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
 import { shareContent, openDirections } from "@/utils/sharing";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
@@ -56,6 +57,7 @@ export default function ProductDetailsPage() {
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
+  const { isDark } = useTheme();
   const { mutate: createConversation, isPending: isCreatingChat } =
     useCreateConversation();
 
@@ -257,8 +259,8 @@ export default function ProductDetailsPage() {
             <span
               className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
                 product.isActive
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-red-50 text-red-500"
+                  ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                  : "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400"
               }`}
             >
               <IonIcon icon={checkmarkCircle} className="w-3 h-3" />
@@ -415,13 +417,14 @@ export default function ProductDetailsPage() {
       <div
         className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
         style={{
-          background:
-            "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
+          background: isDark
+            ? "linear-gradient(to top, rgba(15,23,42,1) 60%, rgba(15,23,42,0))"
+            : "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",
         }}
       >
         {isOwnProduct ? (
-          <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
+          <div className="rounded-2xl overflow-hidden border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/30 shadow-md shadow-violet-100 dark:shadow-violet-900/20">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100 dark:border-violet-800">
               <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
                 <IonIcon
                   icon={storefrontOutline}
@@ -429,14 +432,14 @@ export default function ProductDetailsPage() {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+                <p className="text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wide">
                   Your Product
                 </p>
-                <p className="text-[10px] text-violet-500 truncate">
+                <p className="text-[10px] text-violet-500 dark:text-violet-400 truncate">
                   You&apos;re viewing your own listing
                 </p>
               </div>
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 dark:text-violet-300 bg-violet-100 dark:bg-violet-800/50 px-2 py-0.5 rounded-full">
                 <IonIcon icon={eyeOutline} className="text-xs" />
                 Preview mode
               </span>
@@ -447,7 +450,7 @@ export default function ProductDetailsPage() {
                   setUserMode("provider");
                   router.push("/");
                 }}
-                className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
+                className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300 dark:shadow-violet-900"
               >
                 <IonIcon icon={createOutline} className="text-base" />
                 Manage Business
