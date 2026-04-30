@@ -231,5 +231,13 @@
     }
   ],
   "permissions": ["geolocation", "file_upload"],
-  "gcm_sender_id": "103953800507"
+  "gcm_sender_id": "103953800507",
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.tijarah.app",
+      "id": "com.tijarah.app"
+    }
+  ],
+  "prefer_related_applications": true
 }

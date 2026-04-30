@@ -268,3 +268,26 @@ navigator.serviceWorker.controller
 4. **Monitor Installation**:
    - Check DevTools for install prompts
    - Use analytics to track app installs
+
+---
+
+## TWA (Trusted Web Activity) Troubleshooting
+
+### Issue: Play Store App shows URL bar
+
+**Reason**: This usually means Digital Asset Link verification failed.
+
+**Solutions**:
+1. **Verify `assetlinks.json` path**: Must be at `https://your-domain.com/.well-known/assetlinks.json`.
+2. **Verify JSON Content**: Ensure the `package_name` and `sha256_cert_fingerprints` exactly match your Android app's signing certificate.
+3. **Check Content-Type**: The server must serve `assetlinks.json` with `Content-Type: application/json`.
+4. **Test with Google's Tool**: Use the [Digital Asset Links API](https://developers.google.com/digital-asset-links/v1/getting-started) to verify your configuration.
+
+### Issue: PWA is not "Installable" according to Lighthouse
+
+**Reason**: TWA requires the PWA to meet all installability criteria.
+
+**Solutions**:
+1. **Icons**: Ensure you have at least a 192x192 and a 512x512 PNG icon.
+2. **Service Worker**: Ensure the service worker is correctly registered and handles fetch events (offline support).
+3. **Manifest**: Ensure `start_url`, `display: standalone`, and `name`/`short_name` are present.

@@ -130,3 +130,37 @@ Supported on:
 3. **Test on Devices**: Test installation on iOS and Android
 4. **Monitor Analytics**: Track PWA installations and usage
 5. **Update Content**: Regularly update content through the app
+6. **TWA Compatibility**: Set up Digital Asset Links for Play Store distribution
+
+## Trusted Web Activity (TWA) Setup
+
+This project is now prepared for TWA (Trusted Web Activity), allowing you to package it for the Google Play Store.
+
+### 1. **Digital Asset Links (`/public/.well-known/assetlinks.json`)**
+
+To prove ownership of the website to Google Play, you must update the `assetlinks.json` file with your app's specific details:
+
+- **`package_name`**: The package name of your Android app (e.g., `com.tijarah.app`).
+- **`sha256_cert_fingerprints`**: The SHA-256 fingerprint of your app's signing certificate.
+
+### 2. **Manifest Updates**
+
+The `manifest.json` has been updated with:
+- `related_applications`: Links the PWA to its Play Store counterpart.
+- `prefer_related_applications`: Set to `true` to encourage installing the Play Store version if available.
+
+### 3. **Verification**
+
+Once deployed, verify that your Digital Asset Links are correctly served:
+- Visit `https://your-domain.com/.well-known/assetlinks.json`
+- Ensure the Content-Type is `application/json`.
+
+### 4. **Packaging for Play Store**
+
+You can use tools like **Bubblewrap CLI** or **PWA2APK** to generate the Android project and signed APK/App Bundle.
+
+```bash
+# Example using Bubblewrap
+npx @bubblewrap/cli init --manifest=https://your-domain.com/manifest.json
+npx @bubblewrap/cli build
+```
