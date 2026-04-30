@@ -1,13 +1,11 @@
 [
   {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
       "package_name": "com.tijarah.app",
       "sha256_cert_fingerprints": [
-        "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+        "21:33:BE:47:87:25:D7:D1:37:83:D0:8B:7B:56:43:EE:45:0C:84:B6:82:C6:98:FC:AE:09:7A:DF:34:ED:8C:E6"
       ]
     }
   }
