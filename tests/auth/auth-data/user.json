@@ -1,0 +1,22 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "tijarah_user_mode",
+          "value": "customer"
+        },
+        {
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ODEyZWFjMi02YzkzLTQxOWMtOTAxYS0wNGI4N2YwOGQyMzYiLCJtb2JpbGUiOiI5ODgxMDcwODc2IiwiaWF0IjoxNzc3NDY5MDEwLCJleHAiOjE3ODAwNjEwMTB9.KcNINaE3aPHxlI4lhpIGbAXiVQRmOimIwxi1mmGC1ks"
+        },
+        {
+          "name": "user",
+          "value": "{\"id\":\"5812eac2-6c93-419c-901a-04b87f08d236\",\"mobileNumber\":\"9881070876\",\"email\":null,\"name\":\"Sultankhan .S. Pathan\",\"gender\":\"male\",\"role\":\"customer\",\"city\":\"Pune\",\"area\":\"Viman Nagar\",\"pincode\":\"411014\",\"latitude\":\"18.566994\",\"longitude\":\"73.912192\",\"status\":\"active\",\"googleName\":null,\"ssoProvider\":null,\"preferredMode\":\"customer\",\"preferredLanguage\":\"en\",\"lastSeenAt\":\"2026-04-29T13:21:39.225Z\",\"createdAt\":\"2026-04-29T12:16:22.725Z\",\"updatedAt\":\"2026-04-29T13:21:39.692Z\"}"
+        }
+      ]
+    }
+  ]
+}
