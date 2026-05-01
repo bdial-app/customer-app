@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Page } from "konsta/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
@@ -30,6 +30,7 @@ import { useHeartbeat } from "@/hooks/useChat";
 import { clearPendingChat } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
+import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 
 export default function Home() {
   const router = useRouter();
@@ -112,13 +113,19 @@ export default function Home() {
     }
   }, [userMode]);
 
-  const handleTabChange = (tab: string) => {
+  // Throttle tab switches to prevent rapid mount/unmount crashes
+  const lastTabSwitch = useRef(0);
+  const handleTabChange = useCallback((tab: string) => {
+    const now = Date.now();
+    if (now - lastTabSwitch.current < 100) return; // 100ms throttle
+    lastTabSwitch.current = now;
+
     if (!user && (tab === "chats" || tab === "saved")) {
       requireAuth(() => setActiveTab(tab));
       return;
     }
     setActiveTab(tab);
-  };
+  }, [user, requireAuth]);
 
   const handleNavigateToListings = (subTab: string) => {
     setListingsSubTab(subTab);
@@ -185,34 +192,45 @@ export default function Home() {
 
       {activeTab === "home" && userMode === "customer" && <GeoLocation />}
 
-      {activeTab === "home" &&
-        (userMode === "customer" ? (
+      {/* Tab panels — mounted once, kept alive to prevent re-renders/refetches */}
+      <TabPanel id="home" activeTab={activeTab}>
+        {userMode === "customer" ? (
           <UserHome />
         ) : (
           <ProviderDashboard onNavigateToListings={handleNavigateToListings} />
-        ))}
+        )}
+      </TabPanel>
 
-      {activeTab === "explore" && <ExploreContent />}
+      <LazyTabPanel id="explore" activeTab={activeTab}>
+        <ExploreContent />
+      </LazyTabPanel>
 
-      {activeTab === "saved" && <SavedContent />}
+      <LazyTabPanel id="saved" activeTab={activeTab}>
+        <SavedContent />
+      </LazyTabPanel>
 
-      {activeTab === "listings" && (
+      <LazyTabPanel id="listings" activeTab={activeTab}>
         <ProviderListingsManager
           initialSubTab={listingsSubTab}
           onSubTabConsumed={() => setListingsSubTab(null)}
         />
-      )}
+      </LazyTabPanel>
 
-      {activeTab === "chats" &&
-        (userMode === "provider" ? (
+      <LazyTabPanel id="chats" activeTab={activeTab}>
+        {userMode === "provider" ? (
           <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
         ) : (
           <MessagesContent onChatClick={(id) => setActiveChat(id)} />
-        ))}
+        )}
+      </LazyTabPanel>
 
-      {activeTab === "profile" && <ProfileContent />}
+      <LazyTabPanel id="profile" activeTab={activeTab}>
+        <ProfileContent />
+      </LazyTabPanel>
 
-      {activeTab === "analytics" && <AnalyticsContent />}
+      <LazyTabPanel id="analytics" activeTab={activeTab}>
+        <AnalyticsContent />
+      </LazyTabPanel>
 
       {/* Provider Suspended Overlay — covers all provider views */}
       {userMode === "provider" && providerStatus === "suspended" && (

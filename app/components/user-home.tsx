@@ -1,7 +1,7 @@
 "use client";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useRouter } from "next/navigation";
-import { useRef, useMemo, lazy, Suspense, useCallback } from "react";
+import { useRef, useMemo, lazy, Suspense, useCallback, memo } from "react";
 import HeroSearchBar from "./home/hero-search-bar";
 import QuickCategories from "./home/quick-categories";
 import PromoBannerCarousel from "./home/promo-banner-carousel";
@@ -13,6 +13,8 @@ import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
 import { useHomeFeed } from "@/hooks/useHomeFeed";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useQueryClient } from "@tanstack/react-query";
+import PullToRefresh from "./pull-to-refresh";
 
 // Lazy load below-fold sections — they are not visible on initial viewport
 const CommunityReviews = lazy(() => import("./home/community-reviews"));
@@ -39,16 +41,22 @@ const mapProvider = (p: any) => ({
   distance: p.distance,
 });
 
-const UserHome = () => {
+const UserHome = memo(() => {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
 
   const { data: feed, isLoading } = useHomeFeed({
     lat: user?.latitude ?? undefined,
     lng: user?.longitude ?? undefined,
     city: user?.city ?? undefined,
   });
+
+  // Pull-to-refresh handler — invalidates home feed queries
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["home-feed"] });
+  }, [queryClient]);
 
   // Memoize mapped providers to avoid re-creating on every render
   const nearbyProviders = useMemo(
@@ -78,7 +86,7 @@ const UserHome = () => {
   const stats = feed?.platformStats;
 
   return (
-    <>
+    <PullToRefresh onRefresh={handleRefresh}>
       <div ref={scrollRef} className="flex flex-col pb-4 overflow-x-hidden">
         {/* === HERO SECTION — dark gradient continuation from header === */}
         <div
@@ -275,8 +283,10 @@ const UserHome = () => {
           </div>
         </div>
       </div>
-    </>
+    </PullToRefresh>
   );
-};
+});
+
+UserHome.displayName = "UserHome";
 
 export default UserHome;

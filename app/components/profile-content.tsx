@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import {
   List,
   ListItem,
@@ -228,7 +228,7 @@ const SlidePage = ({
 );
 
 // ─── Main Profile Content ───────────────────────────────────────────
-const ProfileContent = () => {
+const ProfileContent = memo(() => {
   const {
     providerStatus,
     userMode,
@@ -1758,7 +1758,7 @@ const ProfileContent = () => {
       />
     </>
   );
-};
+});
 
 // ─── Contact Us Slide ───────────────────────────────────────────────
 const ContactUsSlide = ({
@@ -2054,5 +2054,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
     </div>
   );
 };
+
+ProfileContent.displayName = "ProfileContent";
 
 export default ProfileContent;

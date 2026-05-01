@@ -8,8 +8,10 @@ export const useTopLevelCategories = () => {
   return useQuery({
     queryKey: ["top-level-categories"],
     queryFn: getTopLevelCategories,
-    staleTime: 5 * 60 * 1000, // 5 minutes — categories rarely change
+    staleTime: 10 * 60 * 1000, // 10 minutes — categories rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
@@ -17,5 +19,8 @@ export const useAllCategories = (page = 1, limit = 20) => {
   return useQuery({
     queryKey: ["all-categories", page, limit],
     queryFn: () => getAllCategories(page, limit),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
   });
 };

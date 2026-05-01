@@ -312,7 +312,7 @@ function BannerCarousel({
 
 /* ── Main Component ── */
 
-const ExploreContent = () => {
+const ExploreContent = memo(() => {
   const router = useRouter();
 
   // ── Discover Nearby filter state ──
@@ -1083,7 +1083,7 @@ const ExploreContent = () => {
       />
     </div>
   );
-};
+});
 
 /* ── Horizontal Scroll Provider Card (for carousels) ── */
 
@@ -1161,5 +1161,7 @@ function ExploreCarouselCard({
     </div>
   );
 }
+
+ExploreContent.displayName = "ExploreContent";
 
 export default ExploreContent;

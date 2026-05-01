@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { searchOutline, checkmarkDone, checkmark, imageOutline, chatbubblesOutline } from "ionicons/icons";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useConversations } from "@/hooks/useChat";
 import type { ConversationListItem } from "@/services/chat.service";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -66,7 +66,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
 };
 
-const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
+const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const { user } = useAppSelector((state) => state.auth);
@@ -263,6 +263,8 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
       )}
     </div>
   );
-};
+});
+
+MessagesContent.displayName = "MessagesContent";
 
 export default MessagesContent;
