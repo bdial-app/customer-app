@@ -342,6 +342,7 @@ export default function MessagesPage({
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={onBack}
+            aria-label="Go back"
             className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
           >
             <IonIcon icon={arrowBack} className="text-xl text-slate-700 dark:text-slate-300" />
@@ -349,7 +350,7 @@ export default function MessagesPage({
 
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover shrink-0" />
+              <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" decoding="async" />
             ) : (
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0">
                 <span className="text-xs font-bold text-white">{initials}</span>
@@ -386,6 +387,7 @@ export default function MessagesPage({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowMenu(!showMenu)}
+                aria-label="More options"
                 className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700"
               >
                 <IonIcon icon={ellipsisVertical} className="text-lg text-slate-600 dark:text-slate-400" />
@@ -628,7 +630,7 @@ export default function MessagesPage({
         <div className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2">
           <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl p-2">
             {attachedPreview ? (
-              <img src={attachedPreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover" />
+              <img src={attachedPreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover" loading="lazy" decoding="async" />
             ) : (
               <div className="w-14 h-14 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
                 <IonIcon icon={imageOutline} className="text-xl text-slate-400" />

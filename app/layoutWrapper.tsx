@@ -24,6 +24,8 @@ import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persist";
+import OfflineBanner from "./components/offline-banner";
+import AppUpdatePrompt from "./components/app-update-prompt";
 
 function LanguageSyncBridge() {
   useLanguageSync();
@@ -206,14 +208,15 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   // Persist critical query data when app goes to background or unloads
   useEffect(() => {
     const handlePersist = () => persistQueryCache(queryClient);
-    document.addEventListener("visibilitychange", () => {
+    const handleVisibility = () => {
       if (document.visibilityState === "hidden") handlePersist();
-    });
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("beforeunload", handlePersist);
     // Also persist periodically (every 2 min) for safety
     const interval = setInterval(handlePersist, 2 * 60 * 1000);
     return () => {
-      document.removeEventListener("visibilitychange", handlePersist);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("beforeunload", handlePersist);
       clearInterval(interval);
     };
@@ -231,6 +234,8 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <PwaHistoryGuard />
               <NotificationProvider>
                 <App theme="ios">
+                  <OfflineBanner />
+                  <AppUpdatePrompt />
                   <AppToast />
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />

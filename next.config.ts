@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Strip console.log/warn in production builds (keep console.error)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+  },
 };
 
 export default withNextIntl(nextConfig);

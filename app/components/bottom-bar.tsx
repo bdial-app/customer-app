@@ -126,6 +126,8 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                aria-label={tab.label}
+                aria-current={isActive ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-2.5 min-w-[48px] outline-none active:scale-90 transition-transform duration-100"
               >
                 {/* Active pill background — CSS transition instead of Framer Motion layoutId */}

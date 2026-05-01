@@ -580,7 +580,7 @@ const AnalyticsContent = () => {
                     <div key={p.productId} className="flex items-center gap-2.5">
                       <span className="text-[10px] font-bold text-slate-300 w-3">#{i + 1}</span>
                       {p.photoUrl ? (
-                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100" />
+                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100" loading="lazy" decoding="async" />
                       ) : (
                         <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
                           <IonIcon icon={cubeOutline} className="text-xs text-slate-300" />
@@ -747,7 +747,7 @@ const AnalyticsContent = () => {
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center shrink-0 relative">
                         {lead.isUnlocked && lead.visitor.avatar ? (
-                          <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                          <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
                         ) : (
                           <IonIcon icon={personOutline} className="text-xl text-slate-400" />
                         )}

@@ -66,7 +66,7 @@ function LeadCard({
         {/* Avatar */}
         <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0 relative">
           {lead.isUnlocked && lead.visitor.avatar ? (
-            <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+            <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <IonIcon icon={personOutline} className="text-xl text-gray-400" />
           )}

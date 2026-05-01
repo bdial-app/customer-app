@@ -168,6 +168,10 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
                     layout
                     whileTap={{ backgroundColor: "rgba(0,0,0,0.03)" }}
                     onClick={() => onChatClick(conv.id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open conversation with ${name}`}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onChatClick(conv.id); }}
                     className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-slate-50 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
                   >
                     {/* Avatar */}

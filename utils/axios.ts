@@ -40,20 +40,41 @@ export const onUnauthorized = (listener: UnauthorizedListener) => {
   };
 };
 
-// Request interceptor — attach token if present
+// ─── Token expiry check ─────────────────────────────────────────────
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // 60s buffer before actual expiry
+    return payload.exp * 1000 < Date.now() + 60_000;
+  } catch {
+    return false;
+  }
+}
+
+// Request interceptor — attach token if present, check expiry proactively
 apiClient.interceptors.request.use((config) => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
   if (token) {
+    // Proactively clear expired tokens rather than sending them
+    if (isTokenExpired(token)) {
+      localStorage.removeItem("token");
+      unauthorizedListeners.forEach((fn) => fn());
+      return Promise.reject(new axios.Cancel("Token expired — re-authentication required"));
+    }
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
+// Prevent duplicate 401 handling across concurrent requests
+let isHandling401 = false;
+
 // Response interceptor — unwrap data / handle global errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (axios.isCancel(error)) return Promise.reject(error);
     const status = error?.response?.status;
 
     // Detect paused account response
@@ -65,7 +86,6 @@ apiClient.interceptors.response.use(
     }
     // 401 or generic 403 (not paused) — trigger auth gate
     // Only fire for authenticated requests (where a token was present).
-    // Guest users (no token) get 401s naturally — don't popup the auth gate for those.
     else if (status === 401 || (status === 403 && error?.response?.data?.code !== "ACCOUNT_PAUSED")) {
       const hadToken = !!error?.config?.headers?.Authorization;
       // Clear stale token on 401
@@ -73,8 +93,12 @@ apiClient.interceptors.response.use(
         localStorage.removeItem("token");
       }
       // Only trigger auth gate if the request had a token (stale session)
-      if (hadToken) {
+      // Deduplicate: only trigger once per batch of concurrent 401s
+      if (hadToken && !isHandling401) {
+        isHandling401 = true;
         unauthorizedListeners.forEach((fn) => fn());
+        // Reset after a short delay to allow re-triggering if needed later
+        setTimeout(() => { isHandling401 = false; }, 2000);
       }
     }
 
