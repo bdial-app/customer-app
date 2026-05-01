@@ -149,9 +149,9 @@ function TopProductsList({ period }: { period: Period }) {
           <div key={p.productId} className="flex items-center gap-3">
             <span className="text-xs font-bold text-gray-300 w-4">#{i + 1}</span>
             {p.photoUrl ? (
-              <img src={p.photoUrl} alt="" className="w-9 h-9 rounded-lg object-cover bg-gray-100" />
+              <img src={p.photoUrl} alt="" className="w-9 h-9 rounded-lg object-cover bg-gray-100 dark:bg-slate-700" />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                 <IonIcon icon={cubeOutline} className="text-gray-300" />
               </div>
             )}

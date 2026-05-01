@@ -85,6 +85,43 @@ function PushNotificationBridge() {
     };
     window.addEventListener("push-notification", handlePush);
 
+    // Listen for native notification taps (Capacitor) — deep link navigation
+    const handleNativeTap = (e: Event) => {
+      const data = (e as CustomEvent).detail || {};
+      let targetUrl = "/";
+
+      if (data.route) {
+        const params = data.params ? (typeof data.params === "string" ? JSON.parse(data.params) : data.params) : {};
+
+        switch (data.route) {
+          case "/provider-details":
+            if (params.id) {
+              targetUrl = `/provider-details?id=${params.id}`;
+              if (params.tab) targetUrl += `&tab=${params.tab}`;
+            }
+            break;
+          case "/product-details":
+            if (params.id) targetUrl = `/product-details?id=${params.id}`;
+            break;
+          case "/chat":
+            if (params.conversationId) {
+              targetUrl = `/?tab=chats&conversationId=${params.conversationId}`;
+            } else {
+              targetUrl = "/?tab=chats";
+            }
+            break;
+          case "/provider-onboarding/verify":
+            targetUrl = "/provider-onboarding/verify";
+            break;
+          default:
+            targetUrl = data.route.startsWith("/") ? data.route : "/";
+        }
+      }
+
+      router.push(targetUrl);
+    };
+    window.addEventListener("native-notification-tap", handleNativeTap);
+
     // Listen for notification click messages from service worker (deep link navigation)
     const handleSWMessage = (e: MessageEvent) => {
       if (e.data?.type === "NOTIFICATION_CLICK" && e.data?.url) {
@@ -95,6 +132,7 @@ function PushNotificationBridge() {
 
     return () => {
       window.removeEventListener("push-notification", handlePush);
+      window.removeEventListener("native-notification-tap", handleNativeTap);
       navigator.serviceWorker?.removeEventListener("message", handleSWMessage);
     };
   }, [router]);

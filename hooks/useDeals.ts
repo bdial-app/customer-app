@@ -13,6 +13,10 @@ export const useDeals = (params?: Omit<DealsParams, "page">) => {
       params?.radius,
       params?.discountType,
       params?.minDiscount,
+      params?.verified,
+      params?.minRating,
+      params?.endingSoon,
+      params?.womenLed,
     ],
     queryFn: ({ pageParam = 1 }) =>
       getDeals({ ...params, page: pageParam, limit: 20 }),

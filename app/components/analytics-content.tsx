@@ -74,10 +74,10 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 
 // ─── Tier Badge Styles ────────────────────────────────────────────────
 const TIER_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
-  hot: { bg: "bg-red-50", text: "text-red-600", dot: "bg-red-500" },
-  warm: { bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-400" },
-  soft: { bg: "bg-yellow-50", text: "text-yellow-700", dot: "bg-yellow-400" },
-  cold: { bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-400" },
+  hot: { bg: "bg-red-50 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
+  warm: { bg: "bg-orange-50 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-400" },
+  soft: { bg: "bg-yellow-50 dark:bg-yellow-900/30", text: "text-yellow-700 dark:text-yellow-400", dot: "bg-yellow-400" },
+  cold: { bg: "bg-blue-50 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-400" },
 };
 
 function timeAgo(dateStr: string) {
@@ -108,11 +108,11 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
   return (
     <div className="p-4 space-y-4 pb-24">
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
-          <IonIcon icon={arrowBack} className="text-lg text-slate-600" />
+        <button onClick={onBack} className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+          <IonIcon icon={arrowBack} className="text-lg text-slate-600 dark:text-slate-300" />
         </button>
         <div className="flex-1">
-          <h3 className="text-base font-bold text-slate-900">{detail.visitor.name}</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">{detail.visitor.name}</h3>
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
             {detail.tier} · Score {detail.score}
@@ -121,42 +121,42 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-slate-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900">{detail.productsViewed.length}</p>
+        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{detail.productsViewed.length}</p>
           <p className="text-[10px] text-slate-400">Products</p>
         </div>
-        <div className="bg-slate-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900">{Math.round(detail.totalDuration / 60)}</p>
+        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{Math.round(detail.totalDuration / 60)}</p>
           <p className="text-[10px] text-slate-400">Minutes</p>
         </div>
-        <div className="bg-slate-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900">{detail.actionsPerformed.length}</p>
+        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{detail.actionsPerformed.length}</p>
           <p className="text-[10px] text-slate-400">Actions</p>
         </div>
       </div>
 
       {detail.products.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 border border-slate-100">
-          <h4 className="text-sm font-bold text-slate-900 mb-2">Products Viewed</h4>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Products Viewed</h4>
           <div className="space-y-2">
             {detail.products.map((p) => (
               <div key={p.id} className="flex items-center gap-2">
                 <IonIcon icon={cubeOutline} className="text-slate-400" />
-                <span className="text-sm text-slate-700">{p.name}</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{p.name}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-4 border border-slate-100">
-        <h4 className="text-sm font-bold text-slate-900 mb-3">Activity Timeline</h4>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Activity Timeline</h4>
         <div className="space-y-3">
           {detail.timeline.slice(0, 20).map((ev, i) => (
             <div key={i} className="flex items-start gap-3">
               <div className="w-2 h-2 mt-1.5 rounded-full bg-amber-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-700">{ev.eventType.replace(/_/g, " ")}</p>
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{ev.eventType.replace(/_/g, " ")}</p>
                 <p className="text-[10px] text-slate-400">
                   {new Date(ev.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   {ev.duration ? ` · ${ev.duration}s` : ""}
@@ -380,7 +380,7 @@ const AnalyticsContent = () => {
 
           {/* ═══ PERIOD SELECTOR ═══ */}
           <div className="px-4 mb-4">
-            <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 gap-1">
               {([
                 { value: "7d" as Period, label: "7 Days", icon: todayOutline },
                 { value: "30d" as Period, label: "30 Days", icon: calendarOutline },
@@ -391,8 +391,8 @@ const AnalyticsContent = () => {
                   onClick={() => setPeriod(o.value)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-semibold transition-all ${
                     period === o.value
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500"
+                      ? "bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400"
                   }`}
                 >
                   <IonIcon icon={o.icon} className="text-xs" />
@@ -428,23 +428,23 @@ const AnalyticsContent = () => {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.04 }}
-                      className="bg-white rounded-2xl p-3 border border-slate-100 relative overflow-hidden"
+                      className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 relative overflow-hidden"
                     >
                       <div className={`absolute top-0 left-0 right-0 h-[2px] ${k.bg} rounded-t-2xl`} />
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={k.icon} className={`text-xs ${k.accent}`} />
                         </div>
                         {k.change !== 0 && (
                           <div className={`flex items-center gap-0.5 text-[8px] font-bold px-1 py-0.5 rounded ${
-                            k.change >= 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
+                            k.change >= 0 ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30" : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"
                           }`}>
                             <IonIcon icon={k.change >= 0 ? arrowUpOutline : arrowDownOutline} className="text-[6px]" />
                             {Math.abs(k.change)}%
                           </div>
                         )}
                       </div>
-                      <div className="text-[18px] font-black text-slate-800 leading-none">{k.value}</div>
+                      <div className="text-[18px] font-black text-slate-800 dark:text-white leading-none">{k.value}</div>
                       <div className="text-[9px] text-slate-400 mt-0.5 font-medium">{k.sub}</div>
                     </motion.div>
                   ))}
@@ -456,9 +456,9 @@ const AnalyticsContent = () => {
           {/* ═══ VIEWS & ENQUIRIES CHART ═══ */}
           {chartData.length > 1 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold text-slate-800">Views & Enquiries</h3>
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">Views & Enquiries</h3>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
@@ -498,11 +498,11 @@ const AnalyticsContent = () => {
           {/* ═══ LEAD FUNNEL ═══ */}
           {summary && (summary.leads.hot + summary.leads.warm + summary.leads.soft + summary.leads.cold) > 0 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-1.5">
                     <IonIcon icon={flameOutline} className="text-sm text-orange-500" />
-                    <h3 className="text-xs font-bold text-slate-800">Lead Funnel</h3>
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-white">Lead Funnel</h3>
                   </div>
                   <button onClick={() => setView("leads")} className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
                     View all <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
@@ -516,7 +516,7 @@ const AnalyticsContent = () => {
                     return (
                       <div key={tier} className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-slate-500 w-9 capitalize">{tier}</span>
-                        <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                           <motion.div
                             className={`h-full rounded-full ${colors[tier]}`}
                             initial={{ width: 0 }}
@@ -524,7 +524,7 @@ const AnalyticsContent = () => {
                             transition={{ duration: 0.6, ease: "easeOut" }}
                           />
                         </div>
-                        <span className="text-[11px] font-bold text-slate-700 w-7 text-right">{summary.leads[tier]}</span>
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 w-7 text-right">{summary.leads[tier]}</span>
                       </div>
                     );
                   })}
@@ -536,12 +536,12 @@ const AnalyticsContent = () => {
           {/* ═══ PEAK HOURS ═══ */}
           {peakHoursData.length > 0 && peakMax > 0 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold text-slate-800">Peak Hours</h3>
-                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg">
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">Peak Hours</h3>
+                  <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-lg">
                     <IonIcon icon={flashOutline} className="text-amber-600 text-[9px]" />
-                    <span className="text-[8px] font-bold text-amber-700">{peakLabel}</span>
+                    <span className="text-[8px] font-bold text-amber-700 dark:text-amber-400">{peakLabel}</span>
                   </div>
                 </div>
                 <div className="h-[80px] -mx-1">
@@ -570,24 +570,24 @@ const AnalyticsContent = () => {
           {/* ═══ TOP PRODUCTS ═══ */}
           {topProducts && topProducts.length > 0 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-1.5 mb-2.5">
                   <IonIcon icon={cubeOutline} className="text-sm text-teal-500" />
-                  <h3 className="text-xs font-bold text-slate-800">Top Products</h3>
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">Top Products</h3>
                 </div>
                 <div className="space-y-2">
                   {topProducts.slice(0, 5).map((p, i) => (
                     <div key={p.productId} className="flex items-center gap-2.5">
                       <span className="text-[10px] font-bold text-slate-300 w-3">#{i + 1}</span>
                       {p.photoUrl ? (
-                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100" />
+                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={cubeOutline} className="text-xs text-slate-300" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+                        <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">{p.name}</p>
                         <p className="text-[10px] text-slate-400">{p.views} views · {p.uniqueVisitors} visitors</p>
                       </div>
                     </div>
@@ -600,7 +600,7 @@ const AnalyticsContent = () => {
           {/* ═══ SMART INSIGHTS ═══ */}
           <div className="px-4 mb-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-slate-800">Smart Insights</h3>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-white">Smart Insights</h3>
               <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -653,11 +653,11 @@ const AnalyticsContent = () => {
 
           {/* ═══ ENGAGEMENT STRIP ═══ */}
           <div className="px-4 mb-4">
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
               <div className="px-3.5 pt-3 pb-1.5">
-                <h3 className="text-xs font-bold text-slate-800">Engagement</h3>
+                <h3 className="text-xs font-bold text-slate-800 dark:text-white">Engagement</h3>
               </div>
-              <div className="flex divide-x divide-slate-100">
+              <div className="flex divide-x divide-slate-100 dark:divide-slate-700">
                 {[
                   { icon: heartOutline, label: "Saves", value: String(summary?.saves.count ?? 0), color: "text-pink-500" },
                   { icon: shareSocialOutline, label: "Shares", value: String(summary?.shares.count ?? 0), color: "text-blue-500" },
@@ -666,7 +666,7 @@ const AnalyticsContent = () => {
                 ].map((e) => (
                   <div key={e.label} className="flex-1 py-2.5 text-center">
                     <IonIcon icon={e.icon} className={`text-base ${e.color}`} />
-                    <div className="text-sm font-bold text-slate-800 mt-0.5">{e.value}</div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{e.value}</div>
                     <div className="text-[7px] text-slate-400 font-medium">{e.label}</div>
                   </div>
                 ))}
@@ -712,7 +712,7 @@ const AnalyticsContent = () => {
                 className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                   leadTier === t.key
                     ? "bg-slate-800 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-500 active:bg-slate-200"
+                    : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 active:bg-slate-200 dark:active:bg-slate-600"
                 }`}
               >
                 {t.label}
@@ -742,24 +742,24 @@ const AnalyticsContent = () => {
                     key={lead.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl p-4 border border-slate-100"
+                    className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center shrink-0 relative">
+                      <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 relative">
                         {lead.isUnlocked && lead.visitor.avatar ? (
                           <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                         ) : (
                           <IonIcon icon={personOutline} className="text-xl text-slate-400" />
                         )}
                         {!lead.isUnlocked && (
-                          <div className="absolute inset-0 rounded-full bg-slate-200/60 backdrop-blur-[2px] flex items-center justify-center">
+                          <div className="absolute inset-0 rounded-full bg-slate-200/60 dark:bg-slate-600/60 backdrop-blur-[2px] flex items-center justify-center">
                             <IonIcon icon={lockClosedOutline} className="text-sm text-slate-500" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-sm font-bold ${lead.isUnlocked ? "text-slate-900" : "text-slate-500"}`}>
+                          <span className={`text-sm font-bold ${lead.isUnlocked ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}>
                             {lead.visitor.name}
                           </span>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
@@ -786,7 +786,7 @@ const AnalyticsContent = () => {
                         <p className="text-[10px] text-slate-300 mt-1">Last seen {timeAgo(lead.lastSeenAt)}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-lg font-bold text-slate-800">{lead.score}</span>
+                        <span className="text-lg font-bold text-slate-800 dark:text-white">{lead.score}</span>
                         <p className="text-[9px] text-slate-400 uppercase">Score</p>
                       </div>
                     </div>
@@ -794,7 +794,7 @@ const AnalyticsContent = () => {
                       {lead.isUnlocked ? (
                         <button
                           onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
-                          className="flex-1 py-2.5 bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"
+                          className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"
                         >
                           View Details
                         </button>
@@ -821,7 +821,7 @@ const AnalyticsContent = () => {
               <button
                 disabled={leadPage <= 1}
                 onClick={() => setLeadPage((p) => p - 1)}
-                className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold disabled:opacity-40"
               >
                 Previous
               </button>
@@ -831,7 +831,7 @@ const AnalyticsContent = () => {
               <button
                 disabled={leadPage >= leadsData.meta.totalPages}
                 onClick={() => setLeadPage((p) => p + 1)}
-                className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold disabled:opacity-40"
               >
                 Next
               </button>

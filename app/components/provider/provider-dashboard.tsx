@@ -269,9 +269,9 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
   if (tips.length === 0) return null;
 
   const priorityBadge = {
-    high: "bg-red-50 text-red-600",
-    medium: "bg-amber-50 text-amber-600",
-    low: "bg-slate-50 text-slate-500",
+    high: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+    medium: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+    low: "bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400",
   };
 
   const urgentCount = tips.filter((t) => t.priority === "high").length;
@@ -598,7 +598,7 @@ const DealsOverview = ({
                 {offers.length} active deal{offers.length > 1 ? "s" : ""}
               </p>
               {nextExpiring && (
-                <p className="text-[10px] text-slate-500 mt-0.5">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                   Next expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
                 </p>
               )}
@@ -607,11 +607,11 @@ const DealsOverview = ({
           <IonIcon icon={chevronForwardOutline} className="text-slate-300 text-sm" />
         </div>
         {nextExpiring && (
-          <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
-            <span className="text-[11px] text-slate-600 truncate flex-1">
+          <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-700 flex items-center justify-between">
+            <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate flex-1">
               {nextExpiring.title}
             </span>
-            <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full ml-2 shrink-0">
+            <span className="text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded-full ml-2 shrink-0">
               {nextExpiring.discountType === "percentage"
                 ? `${Number(nextExpiring.discountValue)}% OFF`
                 : `₹${Number(nextExpiring.discountValue)} OFF`}
@@ -671,7 +671,7 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         </div>
         <div className="px-4 py-4 grid grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100 flex flex-col items-center gap-1.5">
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 flex flex-col items-center gap-1.5">
               <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 animate-pulse" />
               <div className="h-4 w-8 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
               <div className="h-2 w-12 bg-slate-50 rounded animate-pulse" />
@@ -680,7 +680,7 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         </div>
         <div className="px-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+            <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse" />
           ))}
         </div>
       </div>
