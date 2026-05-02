@@ -38,3 +38,8 @@ export const getAllCategories = async (
   });
   return data;
 };
+
+export const getSubCategories = async (parentId: string): Promise<Category[]> => {
+  const { data } = await apiClient.get(CATEGORY_URLS.SUB_CATEGORIES(parentId));
+  return data;
+};

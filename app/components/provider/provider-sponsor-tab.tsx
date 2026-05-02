@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -195,13 +196,14 @@ const ProviderSponsorTab = () => {
       )}
 
       {/* Confirm Sheet */}
+      {typeof document !== "undefined" && createPortal(
       <AnimatePresence>
         {showConfirm && selectedPlan && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-end justify-center"
             onClick={() => setShowConfirm(false)}
           >
             <motion.div
@@ -301,6 +303,7 @@ const ProviderSponsorTab = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      , document.body)}
     </div>
   );
 };

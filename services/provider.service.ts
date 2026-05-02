@@ -485,3 +485,13 @@ export const deleteMyProvider = async (): Promise<{ message: string }> => {
   const { data } = await apiClient.delete(PROVIDER_URLS.DELETE_PROVIDER);
   return data;
 };
+
+export const getProviderCooldownStatus = async (): Promise<{
+  canReEnable: boolean;
+  disableRemainingHours: number | null;
+  disabledAt: string | null;
+  cooldownHours: number;
+}> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.COOLDOWN_STATUS);
+  return data;
+};

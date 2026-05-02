@@ -11,6 +11,7 @@ import {
   LeadDetail,
   TopProduct,
 } from "@/services/analytics.service";
+import { createLeadUnlockCheckout, type LeadUnlockResponse } from "@/services/payment.service";
 
 export const ANALYTICS_SUMMARY_KEY = ["analytics-summary"];
 export const ANALYTICS_LEADS_KEY = ["analytics-leads"];
@@ -43,10 +44,15 @@ export const useLeadDetail = (leadId: string) => {
 
 export const useUnlockLead = () => {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (leadId: string) => unlockLead(leadId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ANALYTICS_LEADS_KEY });
+  return useMutation<LeadUnlockResponse, Error, { leadId: string; voucherCode?: string }>({
+    mutationFn: ({ leadId, voucherCode }) => createLeadUnlockCheckout(leadId, voucherCode),
+    onSuccess: (data) => {
+      if (data.unlocked) {
+        qc.invalidateQueries({ queryKey: ANALYTICS_LEADS_KEY });
+        qc.invalidateQueries({ queryKey: ["lead-unlock-info"] });
+      } else if (data.method === "payment_required" && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
     },
   });
 };

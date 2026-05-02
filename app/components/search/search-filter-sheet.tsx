@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Sheet, Button } from "konsta/react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
   () => import("@ionic/react").then((m) => m.IonIcon),
@@ -107,13 +108,32 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     (tempVerified ? 1 : 0) +
     (tempWomenLed ? 1 : 0);
 
-  return (
-    <Sheet
-      className="pb-safe"
-      opened={opened}
-      onBackdropClick={onClose}
-      style={{ maxHeight: "85vh" }}
-    >
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const content = (
+    <AnimatePresence>
+      {opened && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[9998] bg-black/40"
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-slate-800 rounded-t-3xl overflow-hidden"
+            style={{ maxHeight: "85vh", paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
+          >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-slate-700">
         <div className="flex items-center gap-2.5">
@@ -344,8 +364,14 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
             : "Show All Results"}
         </button>
       </div>
-    </Sheet>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 };
 
 export default SearchFilterSheet;

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
@@ -38,7 +38,7 @@ function formatSavedAt(date: string): string {
 }
 
 // ─── Main Component ─────────────────────────────────────────────
-const SavedContent = () => {
+const SavedContent = memo(() => {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
@@ -380,6 +380,8 @@ const SavedContent = () => {
       )}
     </div>
   );
-};
+});
+
+SavedContent.displayName = "SavedContent";
 
 export default SavedContent;

@@ -23,6 +23,9 @@ import { AppDialog } from "./components/app-dialog";
 import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
+import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persist";
+import OfflineBanner from "./components/offline-banner";
+import AppUpdatePrompt from "./components/app-update-prompt";
 
 function LanguageSyncBridge() {
   useLanguageSync();
@@ -225,7 +228,9 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000, // one minute default stale time
+            gcTime: 5 * 60 * 1000, // 5 minutes default garbage collection
             refetchOnWindowFocus: false,
+            refetchOnMount: false, // Prevent refetch on component remount (tab switch)
             retry: 1,
           },
         },
@@ -234,7 +239,26 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     store.dispatch(hydrateAuth());
-  }, []);
+    // Restore persisted query cache for instant load
+    restoreQueryCache(queryClient);
+  }, [queryClient]);
+
+  // Persist critical query data when app goes to background or unloads
+  useEffect(() => {
+    const handlePersist = () => persistQueryCache(queryClient);
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") handlePersist();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("beforeunload", handlePersist);
+    // Also persist periodically (every 2 min) for safety
+    const interval = setInterval(handlePersist, 2 * 60 * 1000);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("beforeunload", handlePersist);
+      clearInterval(interval);
+    };
+  }, [queryClient]);
 
   return (
     <ReduxProvider store={store}>
@@ -248,6 +272,8 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <PwaHistoryGuard />
               <NotificationProvider>
                 <App theme="ios">
+                  <OfflineBanner />
+                  <AppUpdatePrompt />
                   <AppToast />
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />

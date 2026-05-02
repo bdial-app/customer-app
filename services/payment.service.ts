@@ -48,10 +48,12 @@ export interface CheckoutResponse {
 
 export interface LeadUnlockResponse {
   unlocked: boolean;
-  method?: 'subscription_credit' | 'payment_required';
+  method?: 'subscription_credit' | 'payment_required' | 'free_quota' | 'free';
   remainingCredits?: number;
   checkoutUrl?: string;
   paymentId?: string;
+  price?: number;
+  tier?: string;
 }
 
 export interface VoucherValidation {
@@ -171,5 +173,96 @@ export const confirmPayment = async (
   const { data } = await apiClient.get('/payments/confirm', {
     params: { session_id: sessionId },
   });
+  return data;
+};
+
+// ─── Lead Unlock Info ───────────────────────────────────────────────
+
+export interface LeadUnlockInfo {
+  monetizationEnabled: boolean;
+  freeQuota: number;
+  freeUsedThisMonth: number;
+  freeRemaining: number;
+  subscriptionCreditsRemaining: number;
+  isProSubscriber: boolean;
+  isGrowthSubscriber: boolean;
+  currentPlan: string;
+}
+
+export const getLeadUnlockInfo = async (): Promise<LeadUnlockInfo> => {
+  const { data } = await apiClient.get(PAYMENT_URLS.LEAD_UNLOCK_INFO);
+  return data;
+};
+
+// ─── Deal Creation ──────────────────────────────────────────────────
+
+export interface DealCreationInfo {
+  monetizationEnabled: boolean;
+  freeQuotaLifetime: number;
+  freeDealsCreated: number;
+  freeRemaining: number;
+  activeDeals: number;
+  maxActiveDeals: number;
+  isProSubscriber: boolean;
+  isGrowthSubscriber: boolean;
+  currentPlan: string;
+}
+
+export interface DealCreationCheckoutResponse {
+  requiresPayment: boolean;
+  method: 'free' | 'subscription_unlimited' | 'subscription_credit' | 'free_quota' | 'payment_required';
+  checkoutUrl?: string;
+  paymentId?: string;
+  price?: number;
+  discounted?: boolean;
+  freeRemaining?: number;
+}
+
+export const getDealCreationInfo = async (): Promise<DealCreationInfo> => {
+  const { data } = await apiClient.get(PAYMENT_URLS.DEAL_CREATION_INFO);
+  return data;
+};
+
+export const createDealCreationCheckout = async (
+  voucherCode?: string,
+  dealData?: Record<string, any>,
+): Promise<DealCreationCheckoutResponse> => {
+  const { data } = await apiClient.post(PAYMENT_URLS.DEAL_CREATION_CHECKOUT, {
+    voucherCode,
+    dealData,
+  });
+  return data;
+};
+
+// ─── Monetization Config ────────────────────────────────────────────
+
+export interface MonetizationConfig {
+  leadPricing: {
+    hot: number;
+    warm: number;
+    soft: number;
+    cold: number;
+    hotDiscounted: number;
+    warmDiscounted: number;
+    softDiscounted: number;
+    coldDiscounted: number;
+  };
+  dealPricing: {
+    price: number;
+    discountedPrice: number;
+  };
+  freeQuotas: {
+    leadsPerMonth: number;
+    dealsLifetime: number;
+  };
+  flags: {
+    leadsMonetizationEnabled: boolean;
+    dealsMonetizationEnabled: boolean;
+    subscriptionsVisible: boolean;
+  };
+}
+
+export const getMonetizationConfig = async (): Promise<MonetizationConfig> => {
+  const { data } = await apiClient.get(PAYMENT_URLS.MONETIZATION_CONFIG);
   return data;
 };

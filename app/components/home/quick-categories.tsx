@@ -4,6 +4,7 @@ import { useTopLevelCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ROUTE_PATH } from "@/utils/contants";
+import { PersonalizedCategory } from "@/services/home.service";
 
 const CATEGORY_COLORS = [
   { gradient: "from-orange-400 to-amber-500", text: "text-white" },
@@ -33,7 +34,7 @@ const cardItem = {
   },
 };
 
-const QuickCategories = () => {
+const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: PersonalizedCategory[] | null }) => {
   const { data: categories = [], isLoading } = useTopLevelCategories();
   const router = useRouter();
 
@@ -55,7 +56,21 @@ const QuickCategories = () => {
     );
   }
 
-  const displayCategories = categories.slice(0, 10);
+  // Use personalized order if available, otherwise fall back to default order
+  let displayCategories: any[];
+  if (personalizedCategories?.length) {
+    // Map personalized weights to actual category objects
+    const catMap = new Map(categories.map((c: any) => [c.id, c]));
+    const personalized = personalizedCategories
+      .map((pc) => catMap.get(pc.id))
+      .filter(Boolean);
+    // Fill remaining with categories not in personalized list
+    const personalizedIds = new Set(personalizedCategories.map((pc) => pc.id));
+    const rest = categories.filter((c: any) => !personalizedIds.has(c.id));
+    displayCategories = [...personalized, ...rest].slice(0, 10);
+  } else {
+    displayCategories = categories.slice(0, 10);
+  }
   const hasMore = categories.length > 10;
 
   return (
@@ -114,7 +129,7 @@ const QuickCategories = () => {
           <motion.div
             variants={cardItem}
             whileTap={{ scale: 0.92 }}
-            onClick={() => router.push(ROUTE_PATH.SEARCH)}
+            onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
             className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
           >
             <div className="w-[62px] h-[62px] rounded-2xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">

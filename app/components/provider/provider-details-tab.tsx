@@ -22,7 +22,8 @@ import {
 } from "ionicons/icons";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { List, Button, Sheet, Page, Navbar, Block } from "konsta/react";
+import { List, Button } from "konsta/react";
+import { BottomSheet } from "../bottom-sheet";
 import { FormikInput } from "../formik-input";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
@@ -594,24 +595,21 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       </AnimatePresence>
 
       {/* Detail Sheet */}
-      <Sheet
+      <BottomSheet
         opened={!!detailSheet}
-        onBackdropClick={() => setDetailSheet(null)}
-        className="pb-safe rounded-t-3xl h-fit min-h-[400px] max-h-[80vh]"
+        onClose={() => setDetailSheet(null)}
+        title={detailSheet?.title || ""}
+        className="max-h-[80vh]"
+        headerLeft={
+          <button onClick={() => setDetailSheet(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+            <IonIcon icon={closeOutline} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+          </button>
+        }
       >
-        <Page className="static bg-white dark:bg-slate-900">
-          <Navbar
-            title={detailSheet?.title || ""}
-            left={
-              <Button clear onClick={() => setDetailSheet(null)}>
-                <IonIcon icon={closeOutline} className="w-5 h-5" />
-              </Button>
-            }
-          />
-          <Block className="overflow-y-auto mt-4 px-4 pb-8 space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+        <div className="overflow-y-auto px-4 pb-8 pt-4 space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
             {detailSheet?.content}
             {detailSheet?.title === "Address" && detailSheet?.content && (
-              <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative h-48 w-full bg-slate-100">
+              <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm relative h-48 w-full bg-slate-100 dark:bg-slate-800">
                 <iframe
                   width="100%"
                   height="100%"
@@ -622,9 +620,8 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                 />
               </div>
             )}
-          </Block>
-        </Page>
-      </Sheet>
+        </div>
+      </BottomSheet>
     </div>
   );
 };

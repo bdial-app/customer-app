@@ -9,4 +9,5 @@ export const ROUTE_PATH = {
     HOME: "/",
     SEARCH: "/search",
     DEALS: "/deals",
+    CATEGORIES: "/categories",
 };

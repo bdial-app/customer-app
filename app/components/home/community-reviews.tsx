@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import type { CommunityReview } from "@/services/home.service";
 
 interface DisplayReview {
@@ -49,6 +49,8 @@ interface CommunityReviewsProps {
 const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  // Use a ref so position survives effect re-runs without jumping
+  const posRef = useRef(0);
 
   const displayReviews: DisplayReview[] = useMemo(() => {
     if (!reviews || reviews.length === 0) return [];
@@ -86,16 +88,19 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || !isVisible) return;
+    if (!el || !isVisible || isPaused) return;
 
     let animFrame: number;
-    let pos = el.scrollLeft;
 
     const scroll = () => {
-      if (!isPaused && el) {
-        pos += 0.5;
-        if (pos >= el.scrollWidth / 2) pos = 0;
-        el.scrollLeft = pos;
+      if (el) {
+        posRef.current += 0.5;
+        // Seamless modular wrap — subtract half instead of jumping to 0
+        const half = el.scrollWidth / 2;
+        if (half > 0 && posRef.current >= half) {
+          posRef.current -= half;
+        }
+        el.scrollLeft = posRef.current;
       }
       animFrame = requestAnimationFrame(scroll);
     };
@@ -103,6 +108,27 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
     animFrame = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animFrame);
   }, [isPaused, isVisible]);
+
+  // Sync posRef to actual scroll position after user swipes,
+  // then resume auto-scroll after a short inertia-settle delay
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleTouchStart = useCallback(() => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    setIsPaused(true);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    // Let momentum/inertia settle before syncing position and resuming
+    resumeTimerRef.current = setTimeout(() => {
+      if (scrollRef.current) {
+        posRef.current = scrollRef.current.scrollLeft;
+        // If user scrolled backward past 0, clamp to 0
+        if (posRef.current < 0) posRef.current = 0;
+      }
+      setIsPaused(false);
+    }, 400);
+  }, []);
 
   // Duplicate for infinite scroll
   const allReviews = [...displayReviews, ...displayReviews];
@@ -155,8 +181,8 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
       ) : (
       <div
         ref={scrollRef}
-        onTouchStart={() => setIsPaused(true)}
-        onTouchEnd={() => setIsPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
       >
         {allReviews.map((review, i) => (

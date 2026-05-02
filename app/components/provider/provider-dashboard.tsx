@@ -27,6 +27,7 @@ import {
   timeOutline,
   cameraOutline,
   brushOutline,
+  diamondOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import ProviderHeader from "./provider-header";
@@ -90,7 +91,7 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
 
   const config: Record<string, { label: string; desc: string; icon: string; bg: string; border: string; text: string; iconColor: string }> = {
     pending: {
-      label: "Verification Pending",
+      label: "Verification in Review",
       desc: "Your documents are being reviewed. This usually takes 1-2 business days.",
       icon: hourglassOutline,
       bg: "bg-amber-50 dark:bg-amber-900/30",
@@ -532,6 +533,126 @@ const ProfileCompleteness = ({
   );
 };
 
+// ─── Subscription Upsell Card ───────────────────────────────────────
+const SubscriptionUpsell = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
+  return (
+    <div className="px-4 mb-4">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-5"
+      >
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-amber-400/10 -translate-y-8 translate-x-8" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-teal-400/10 translate-y-6 -translate-x-6" />
+
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-2">
+            <IonIcon icon={diamondOutline} className="text-amber-400 text-base" />
+            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Upgrade Your Plan</span>
+          </div>
+          <h3 className="text-base font-bold text-white mb-1">Get More Leads & Deals</h3>
+          <p className="text-xs text-slate-400 leading-relaxed mb-4">
+            Unlock unlimited lead access, more deal slots, and exclusive sponsorship placements with a premium plan.
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
+              <IonIcon icon={peopleOutline} className="text-teal-400 text-xs" />
+              <span className="text-[10px] text-white font-medium">More Leads</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
+              <IonIcon icon={pricetagOutline} className="text-emerald-400 text-xs" />
+              <span className="text-[10px] text-white font-medium">More Deals</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
+              <IonIcon icon={megaphoneOutline} className="text-amber-400 text-xs" />
+              <span className="text-[10px] text-white font-medium">Boost</span>
+            </div>
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => onNavigate("plans")}
+            className="w-full py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl text-slate-900 text-xs font-bold shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5"
+          >
+            View Plans
+            <IonIcon icon={chevronForwardOutline} className="text-xs" />
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ─── Revenue Boosters Section ───────────────────────────────────────
+const RevenueBoosters = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
+  const boosters = [
+    {
+      id: "deals",
+      title: "Create a Deal",
+      subtitle: "Attract new customers with limited-time offers",
+      icon: pricetagOutline,
+      gradient: "from-rose-500 to-pink-600",
+      iconBg: "bg-rose-50 dark:bg-rose-900/30",
+      iconColor: "text-rose-500",
+      action: () => onNavigate("deals"),
+      cta: "Create Deal",
+    },
+    {
+      id: "boost",
+      title: "Get Featured",
+      subtitle: "Appear in sponsored slots on the home page",
+      icon: megaphoneOutline,
+      gradient: "from-amber-400 to-orange-500",
+      iconBg: "bg-amber-50 dark:bg-amber-900/30",
+      iconColor: "text-amber-500",
+      action: () => onNavigate("boost"),
+      cta: "Boost Now",
+    },
+    {
+      id: "analytics",
+      title: "Unlock Leads",
+      subtitle: "See who's viewing your profile and reach out",
+      icon: peopleOutline,
+      gradient: "from-violet-500 to-purple-600",
+      iconBg: "bg-violet-50 dark:bg-violet-900/30",
+      iconColor: "text-violet-500",
+      action: () => onNavigate("analytics"),
+      cta: "View Leads",
+    },
+  ];
+
+  return (
+    <div className="px-4 mb-4">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Grow Your Business</h3>
+      </div>
+      <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1" style={{ WebkitOverflowScrolling: "touch" }}>
+        {boosters.map((b) => (
+          <motion.button
+            key={b.id}
+            whileTap={{ scale: 0.96 }}
+            onClick={b.action}
+            className="flex-shrink-0 w-[160px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3.5 text-left active:bg-slate-50 transition-colors"
+          >
+            <div className={`w-9 h-9 rounded-xl ${b.iconBg} flex items-center justify-center mb-2.5`}>
+              <IonIcon icon={b.icon} className={`text-lg ${b.iconColor}`} />
+            </div>
+            <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight mb-0.5">{b.title}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mb-2.5">{b.subtitle}</p>
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold text-white px-2.5 py-1 rounded-full bg-gradient-to-r ${b.gradient}`}>
+              {b.cta}
+              <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
+            </span>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ─── Deals Overview Card ────────────────────────────────────────────
 const DealsOverview = ({
   offers,
@@ -635,8 +756,13 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
   const { data: details, isLoading: detailsLoading } = useProviderDetails(providerId);
+  const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
   const isLoading = providerLoading || detailsLoading;
+
+  // If providerStatus is "approved", the provider is fully approved by admin
+  // regardless of the document verification record status
+  const isApproved = providerStatus === "approved";
 
   const providerStats: ProviderStats = {
     photos: details?.photos ?? [],
@@ -645,7 +771,8 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
     activeOffers: details?.activeOffers ?? [],
   };
 
-  const needsVerification = !verificationStatus || verificationStatus === "rejected";
+  // Only show "Get Verified" prompt if NOT already approved and no verification submitted
+  const needsVerification = !isApproved && (!verificationStatus || verificationStatus === "rejected");
 
   const handleNavigate = (subTab: string) => {
     onNavigateToListings?.(subTab);
@@ -689,26 +816,28 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
 
   return (
     <div className="pb-24">
-      <ProviderHeader provider={provider} verificationStatus={verificationStatus} />
+      <ProviderHeader provider={provider} verificationStatus={isApproved ? "approved" : verificationStatus} />
       <ProviderQuickStats stats={providerStats} />
       {needsVerification && (
         <VerificationPrompt onVerify={handleVerify} />
       )}
-      {verificationStatus && verificationStatus !== "approved" && !needsVerification && (
+      {!isApproved && verificationStatus && verificationStatus !== "approved" && !needsVerification && (
         <VerificationStatusCard status={verificationStatus} />
       )}
-      {verificationStatus === "approved" && (
-        <VerificationStatusCard status={verificationStatus} />
+      {isApproved && (
+        <VerificationStatusCard status="approved" />
       )}
       <ProfileCompleteness provider={provider} stats={providerStats} onNavigate={handleNavigate} />
       <TodayActivity stats={providerStats} />
+      <SubscriptionUpsell onNavigate={handleNavigate} />
       <GrowthTips
         stats={providerStats}
         provider={provider}
-        verificationStatus={verificationStatus}
+        verificationStatus={isApproved ? "approved" : verificationStatus}
         onNavigate={handleNavigate}
         onVerify={handleVerify}
       />
+      <RevenueBoosters onNavigate={handleNavigate} />
       <DealsOverview offers={providerStats.activeOffers} onManage={() => handleNavigate("deals")} />
       <ProductsOverview stats={providerStats} />
       <RecentReviewsList stats={providerStats} />

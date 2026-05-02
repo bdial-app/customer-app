@@ -401,7 +401,7 @@ const ProviderProductsTab = ({
                       <div className="flex gap-2 flex-wrap">
                         {photoPreviews.map((url, i) => (
                           <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <button
                               type="button"
                               onClick={() => removePhoto(i)}

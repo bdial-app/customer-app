@@ -1,5 +1,7 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
+import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
@@ -47,7 +49,10 @@ export const AppDialog = ({
   isLoading = false,
   loadingLabel,
 }: AppDialogProps) => {
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const content = (
     <AnimatePresence>
       {open && (
         <>
@@ -142,4 +147,7 @@ export const AppDialog = ({
       )}
     </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 };

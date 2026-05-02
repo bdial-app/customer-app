@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLiveActivity } from "@/hooks/useHomeFeed";
+import { inflateIfLow } from "@/utils/inflate-stats";
 
 const FALLBACK_ACTIVITIES = [
   { count: 0, text: "providers available in your area" },
@@ -21,7 +22,10 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
 
   const displayActivities = useMemo(() => {
     if (!activities || activities.length === 0) return FALLBACK_ACTIVITIES;
-    return activities;
+    return activities.map((a, i) => ({
+      ...a,
+      count: inflateIfLow(a.count, `live_activity_${i}`, 5, 15),
+    }));
   }, [activities]);
 
   const next = useCallback(() => {

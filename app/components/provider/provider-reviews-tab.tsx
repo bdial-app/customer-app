@@ -9,7 +9,8 @@ import {
   sendOutline,
   personCircleOutline,
 } from "ionicons/icons";
-import { Sheet, Page, Navbar, Button, Block, List, ListInput } from "konsta/react";
+import { List, ListInput } from "konsta/react";
+import { BottomSheet } from "../bottom-sheet";
 import { ProviderDetailsReview } from "@/services/provider.service";
 import { useReplyToReview } from "@/hooks/useMyProvider";
 
@@ -174,22 +175,19 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
       <div className="h-20" />
 
       {/* Reply Sheet */}
-      <Sheet
+      <BottomSheet
         opened={replySheet}
-        onBackdropClick={() => setReplySheet(false)}
-        className="pb-safe rounded-t-3xl min-h-[400px]"
+        onClose={() => setReplySheet(false)}
+        title="Reply to Review"
+        headerLeft={
+          <button onClick={() => setReplySheet(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+            <IonIcon icon={closeOutline} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+          </button>
+        }
       >
-        <Page className="flex flex-col">
-          <Navbar
-            title="Reply to Review"
-            left={
-              <Button clear onClick={() => setReplySheet(false)}>
-                <IonIcon icon={closeOutline} className="w-5 h-5" />
-              </Button>
-            }
-          />
+        <div className="flex flex-col flex-1 overflow-y-auto">
           {selectedReview && (
-            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-1 mb-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <IonIcon
@@ -199,7 +197,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
                   />
                 ))}
               </div>
-              <p className="text-sm text-slate-600 line-clamp-2">
+              <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
                 {selectedReview.reviewText || "No comment"}
               </p>
             </div>
@@ -214,7 +212,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               inputClassName="!h-32 resize-none"
             />
           </List>
-          <Block className="mt-auto px-4">
+          <div className="px-4 pb-4 mt-auto">
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSubmitReply}
@@ -224,9 +222,9 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               <IonIcon icon={sendOutline} className="text-lg" />
               Send Reply
             </motion.button>
-          </Block>
-        </Page>
-      </Sheet>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 };

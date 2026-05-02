@@ -33,6 +33,54 @@ html, body {
   user-select: none;
 }
 
+/* ─── Native Mobile Performance ──────────────────────────────────── */
+
+/* Prevent overscroll/bounce on app shell (native apps don't bounce) */
+html {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+/* All interactive elements: fast tap, no highlight */
+button, a, [role="button"], input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection only in inputs/textareas */
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* GPU-accelerated scrolling for scroll containers */
+.scroll-container,
+[data-scroll],
+.k-page-content {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  will-change: scroll-position;
+  scroll-behavior: smooth;
+}
+
+/* Tab panel optimization — prevent layout thrash on hidden tabs */
+.tab-panel {
+  will-change: auto;
+  contain: layout style;
+}
+
+.tab-panel[style*="display: none"] {
+  contain: strict;
+}
+
 /* Hide native search clear button across all browsers */
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
