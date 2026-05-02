@@ -442,10 +442,10 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                       {/* GPS detect */}
                       <button type="button" onClick={handleDetectGPS} disabled={isDetectingLocation}
                         className="w-full flex items-center gap-3 p-2.5 mb-2 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-900/20 hover:border-teal-300 dark:hover:border-teal-700 transition-all active:scale-[0.99] disabled:opacity-60">
-                          className={`w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0 ${isDetectingLocation ? "animate-pulse" : ""}`}
+                        <div className={`w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0 ${isDetectingLocation ? "animate-pulse" : ""}`}>
                           <IonIcon icon={navigateOutline} className="text-teal-600 text-base" />
                         </div>
-                          <span className="text-[11px] font-bold text-teal-700 dark:text-teal-400">
+                        <span className="text-[11px] font-bold text-teal-700 dark:text-teal-400">
                           {isDetectingLocation ? "Detecting..." : "Use Current Location"}
                         </span>
                       </button>

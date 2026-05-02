@@ -24,6 +24,7 @@ import {
   chevronDownOutline,
 } from "ionicons/icons";
 import { CITY_NAMES } from "@/app/data/locations";
+import FeatureGate from "@/app/components/feature-gate";
 
 // ─── Validation ─────────────────────────────────────────────────
 const validationSchemas = {
@@ -719,8 +720,10 @@ function CreateAccountContent() {
 
 export default function CreateAccountPage() {
   return (
-    <Suspense>
-      <CreateAccountContent />
-    </Suspense>
+    <FeatureGate flag="registration_enabled">
+      <Suspense>
+        <CreateAccountContent />
+      </Suspense>
+    </FeatureGate>
   );
 }

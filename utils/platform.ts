@@ -24,7 +24,7 @@ export function isNativePlatform(): boolean {
     _isNative = false;
   }
 
-  return _isNative;
+  return _isNative!;
 }
 
 /**

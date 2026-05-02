@@ -55,6 +55,7 @@ import { AppDialog } from "../components/app-dialog";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
+import FeatureGate from "@/app/components/feature-gate";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -2235,7 +2236,9 @@ export default function ProviderOnboardingExport() {
       title="Become a Provider"
       description="Sign in to register your business and start reaching customers on Tijarah Connect."
     >
-      <ProviderOnboardingPage />
+      <FeatureGate flag="provider_onboarding_enabled">
+        <ProviderOnboardingPage />
+      </FeatureGate>
     </PrivateRoute>
   );
 }

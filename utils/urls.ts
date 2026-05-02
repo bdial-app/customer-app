@@ -165,3 +165,7 @@ export const PAYMENT_URLS = {
   CONFIRM: '/payments/confirm',
   MONETIZATION_CONFIG: '/config/monetization',
 };
+
+export const CONFIG_URLS = {
+  FEATURE_FLAGS: '/config/feature-flags',
+};

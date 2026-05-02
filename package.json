@@ -33,6 +33,7 @@
     "framework7-icons": "^5.0.5",
     "konsta": "^5.0.8",
     "leo-profanity": "^1.9.0",
+    "lucide-react": "^1.14.0",
     "next": "16.2.2",
     "next-intl": "^4.9.1",
     "postcss": "^8.5.8",

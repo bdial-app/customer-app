@@ -21,16 +21,15 @@ const CATEGORY_COLORS = [
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.03 } },
 };
 
 const cardItem = {
-  hidden: { opacity: 0, y: 20, scale: 0.9 },
+  hidden: { opacity: 0, y: 12 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { type: "spring" as const, stiffness: 260, damping: 20 },
+    transition: { type: "tween" as const, duration: 0.25, ease: "easeOut" as const },
   },
 };
 
@@ -103,6 +102,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
                     alt={cat.name}
                     fill
                     sizes="62px"
+                    priority={i < 5}
                     className="object-cover"
                   />
                 ) : cat.icon ? (
@@ -111,6 +111,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
                     alt={cat.name}
                     fill
                     sizes="62px"
+                    priority={i < 5}
                     className="object-cover"
                   />
                 ) : (

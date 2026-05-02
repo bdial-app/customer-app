@@ -14,6 +14,7 @@ export type ProviderStatus =
 export type UserMode = "customer" | "provider";
 
 const USER_MODE_KEY = "tijarah_user_mode";
+const PROVIDER_STATUS_KEY = "tijarah_provider_status";
 
 function readStoredMode(): UserMode {
   if (typeof window === "undefined") return "customer";
@@ -22,6 +23,19 @@ function readStoredMode(): UserMode {
     return v === "provider" ? "provider" : "customer";
   } catch {
     return "customer";
+  }
+}
+
+function readStoredProviderStatus(): ProviderStatus {
+  if (typeof window === "undefined") return "not_applied";
+  try {
+    const v = localStorage.getItem(PROVIDER_STATUS_KEY);
+    if (v && ["not_applied", "pending", "in_review", "approved", "rejected", "disabled", "deleted", "suspended"].includes(v)) {
+      return v as ProviderStatus;
+    }
+    return "not_applied";
+  } catch {
+    return "not_applied";
   }
 }
 
@@ -44,12 +58,17 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [providerStatus, setProviderStatus] =
-    useState<ProviderStatus>("not_applied");
+  const [providerStatus, _setProviderStatus] =
+    useState<ProviderStatus>(readStoredProviderStatus);
   const [userMode, _setUserMode] = useState<UserMode>("customer");
   const [providerInfo, setProviderInfo] = useState<ProviderInfo | null>(null);
   const lastToggleRef = useRef(0);
   const hydratedRef = useRef(false);
+
+  const setProviderStatus = useCallback((status: ProviderStatus) => {
+    _setProviderStatus(status);
+    try { localStorage.setItem(PROVIDER_STATUS_KEY, status); } catch {}
+  }, []);
 
   // Hydrate from localStorage on mount (avoids SSR mismatch)
   useEffect(() => {
@@ -82,8 +101,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setProviderStatus("not_applied");
     _setUserMode("customer");
     setProviderInfo(null);
-    try { localStorage.removeItem(USER_MODE_KEY); } catch {}
-  }, []);
+    try { localStorage.removeItem(USER_MODE_KEY); localStorage.removeItem(PROVIDER_STATUS_KEY); } catch {}
+  }, [setProviderStatus]);
 
   return (
     <AppContext.Provider

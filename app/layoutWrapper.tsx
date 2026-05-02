@@ -26,6 +26,7 @@ import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persist";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
+import MaintenanceGate from "./components/maintenance-gate";
 
 function LanguageSyncBridge() {
   useLanguageSync();
@@ -272,6 +273,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <PwaHistoryGuard />
               <NotificationProvider>
                 <App theme="ios">
+                  <MaintenanceGate>
                   <OfflineBanner />
                   <AppUpdatePrompt />
                   <AppToast />
@@ -280,6 +282,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <AccountPausedHandler />
                   <AuthGateSheet />
                   {children}
+                  </MaintenanceGate>
                 </App>
               </NotificationProvider>
               </AuthGateProvider>

@@ -31,6 +31,7 @@ import { clearPendingChat } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
+import FeatureGate from "./components/feature-gate";
 
 export default function Home() {
   const router = useRouter();
@@ -217,11 +218,13 @@ export default function Home() {
       </LazyTabPanel>
 
       <LazyTabPanel id="chats" activeTab={activeTab}>
-        {userMode === "provider" ? (
-          <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
-        ) : (
-          <MessagesContent onChatClick={(id) => setActiveChat(id)} />
-        )}
+        <FeatureGate flag="chat_enabled">
+          {userMode === "provider" ? (
+            <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
+          ) : (
+            <MessagesContent onChatClick={(id) => setActiveChat(id)} />
+          )}
+        </FeatureGate>
       </LazyTabPanel>
 
       <LazyTabPanel id="profile" activeTab={activeTab}>
