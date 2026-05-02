@@ -21,6 +21,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { submitVerification, getMyProviderStatus } from "@/services/provider.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { PROVIDER_STATUS_KEY } from "@/hooks/useMyProvider";
 import PrivateRoute from "@/app/components/private-route";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -100,7 +101,7 @@ function VerifyContent() {
 
     try {
       await submitVerification(file, docType);
-      queryClient.invalidateQueries({ queryKey: ["my-provider"] });
+      queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
       setSubmitted(true);
     } catch (err: any) {
       const message =
@@ -146,9 +147,9 @@ function VerifyContent() {
               Your identity has been verified. You have a verified badge on your profile.
             </p>
           </div>
-          <Button large rounded className="w-full mt-4" onClick={() => goBack("/")}>
+          <button className="w-full mt-4 flex items-center justify-center h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900" onClick={() => goBack("/")}>
             Go Back
-          </Button>
+          </button>
         </div>
       </Page>
     );
@@ -172,14 +173,14 @@ function VerifyContent() {
             <IonIcon icon={hourglassOutline} className="text-5xl text-amber-500" />
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Verification Pending</h2>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Verification in Review</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               Your documents are being reviewed. This usually takes 1-2 business days.
             </p>
           </div>
-          <Button large rounded className="w-full mt-4" onClick={() => goBack("/")}>
+          <button className="w-full mt-4 flex items-center justify-center h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900" onClick={() => goBack("/")}>
             Go Back
-          </Button>
+          </button>
         </div>
       </Page>
     );
@@ -214,9 +215,9 @@ function VerifyContent() {
               Once verified, you&apos;ll receive a verified badge and improved search ranking.
             </p>
           </div>
-          <Button large rounded className="w-full mt-2" onClick={() => goBack("/")}>
-            Back to Dashboard
-          </Button>
+          <button className="w-full mt-2 flex items-center justify-center h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900" onClick={() => goBack("/")}>
+            Done — Verification in Review
+          </button>
         </div>
       </Page>
     );
@@ -429,21 +430,16 @@ function VerifyContent() {
       {/* Bottom action bar */}
       <div className="fixed bottom-0 left-0 w-full pb-safe z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-t border-slate-100 dark:border-slate-700 px-4 pt-3 pb-5">
         <div className="flex gap-3">
-          <Button
-            large
-            rounded
-            clear
-            className="flex-1"
+          <button
+            className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
             onClick={() => goBack("/")}
             disabled={isSubmitting}
             type="button"
           >
             Cancel
-          </Button>
-          <Button
-            large
-            rounded
-            className="flex-1"
+          </button>
+          <button
+            className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900"
             onClick={handleSubmit}
             disabled={!file || isSubmitting}
             type="button"
@@ -456,7 +452,7 @@ function VerifyContent() {
             ) : (
               "Submit"
             )}
-          </Button>
+          </button>
         </div>
       </div>
     </Page>

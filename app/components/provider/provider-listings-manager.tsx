@@ -9,6 +9,7 @@ import {
   starOutline,
   pricetagsOutline,
   rocketOutline,
+  diamondOutline,
 } from "ionicons/icons";
 import ProviderDetailsTab from "./provider-details-tab";
 import ProviderProductsTab from "./provider-products-tab";
@@ -16,17 +17,20 @@ import ProviderPhotosTab from "./provider-photos-tab";
 import ProviderReviewsTab from "./provider-reviews-tab";
 import ProviderDealsTab from "./provider-deals-tab";
 import ProviderSponsorTab from "./provider-sponsor-tab";
+import ProviderSubscriptionTab from "./provider-subscription-tab";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useProviderDetails } from "@/hooks/useProvider";
+import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 
-type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "boost";
+type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "plans" | "boost";
 
-const tabs: { id: ManagerTab; label: string; icon: string }[] = [
+const allTabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "details", label: "Details", icon: storefrontOutline },
   { id: "products", label: "Products", icon: cubeOutline },
   { id: "photos", label: "Photos", icon: imagesOutline },
   { id: "reviews", label: "Reviews", icon: starOutline },
   { id: "deals", label: "Deals", icon: pricetagsOutline },
+  { id: "plans", label: "Plans", icon: diamondOutline },
   { id: "boost", label: "Boost", icon: rocketOutline },
 ];
 
@@ -38,7 +42,16 @@ interface ProviderListingsManagerProps {
 const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderListingsManagerProps) => {
   const [activeTab, setActiveTab] = useState<ManagerTab>("details");
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
+  const { data: monetizationConfig } = useMonetizationConfig();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Filter tabs based on feature flags
+  const subscriptionsVisible = monetizationConfig?.flags.subscriptionsVisible ?? false;
+  const tabs = allTabs.filter((t) => {
+    if (t.id === "boost" && !subscriptionsVisible) return false;
+    if (t.id === "plans" && !subscriptionsVisible) return false;
+    return true;
+  });
 
   // Sync external sub-tab navigation requests
   useEffect(() => {
@@ -160,6 +173,10 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
 
       {activeTab === "deals" && (
         <ProviderDealsTab />
+      )}
+
+      {activeTab === "plans" && (
+        <ProviderSubscriptionTab />
       )}
 
       {activeTab === "boost" && (

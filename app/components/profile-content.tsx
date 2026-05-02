@@ -71,7 +71,6 @@ import {
   getMyProviderStatus,
   disableMyProvider,
   enableMyProvider,
-  deleteMyProvider,
 } from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
 import {
@@ -252,9 +251,7 @@ const ProfileContent = memo(() => {
   const [isExporting, setIsExporting] = useState(false);
   const [disableProviderSheetOpen, setDisableProviderSheetOpen] =
     useState(false);
-  const [deleteProviderSheetOpen, setDeleteProviderSheetOpen] = useState(false);
   const [isDisablingProvider, setIsDisablingProvider] = useState(false);
-  const [isDeletingProvider, setIsDeletingProvider] = useState(false);
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
@@ -340,6 +337,11 @@ const ProfileContent = memo(() => {
     resetProviderState();
     setLogoutActionSheetOpen(false);
     router.push("/");
+    notify({
+      title: "Logged out",
+      subtitle: "You have been successfully logged out.",
+      variant: "success",
+    });
   };
 
   const handleDeleteAccount = async () => {
@@ -463,38 +465,17 @@ const ProfileContent = memo(() => {
         subtitle: "Your provider profile is now visible again.",
         variant: "success",
       });
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        "Failed to enable provider. Please try again.";
       notify({
-        title: "Error",
-        subtitle: "Failed to enable provider. Please try again.",
+        title: "Cannot Re-enable Yet",
+        subtitle: message,
         variant: "error",
       });
     } finally {
       setIsDisablingProvider(false);
-    }
-  };
-
-  const handleDeleteProvider = async () => {
-    setIsDeletingProvider(true);
-    try {
-      await deleteMyProvider();
-      setProviderStatus("deleted");
-      setUserMode("customer");
-      resetProviderState();
-      setDeleteProviderSheetOpen(false);
-      notify({
-        title: "Provider Deleted",
-        subtitle: "Your provider profile has been removed.",
-        variant: "success",
-      });
-    } catch {
-      notify({
-        title: "Error",
-        subtitle: "Failed to delete provider. Please try again.",
-        variant: "error",
-      });
-    } finally {
-      setIsDeletingProvider(false);
     }
   };
 
@@ -994,15 +975,6 @@ const ProfileContent = memo(() => {
                   onClick={() => setDisableProviderSheetOpen(true)}
                 />
               )}
-              <MenuRow
-                icon={trashOutline}
-                iconColor="text-red-500"
-                iconBg="bg-red-50"
-                label="Delete Provider"
-                sublabel="Permanently remove your provider profile"
-                danger
-                onClick={() => setDeleteProviderSheetOpen(true)}
-              />
             </MenuSection>
           )}
 
@@ -1732,29 +1704,13 @@ const ProfileContent = memo(() => {
         iconColor="text-amber-500"
         iconBg="bg-amber-50"
         title="Disable Provider?"
-        description="Your provider profile will be hidden from all listings and search results. Customers won't be able to find you. You can re-enable it anytime from your profile."
+        description="Your provider profile will be hidden from all listings and search results. Once disabled, you must wait a minimum of 2 days before you can re-enable it. This is to prevent profile spamming and ensure platform quality."
         confirmLabel="Yes, Disable Provider"
         cancelLabel="Cancel"
         onConfirm={handleDisableProvider}
         confirmColor="red"
         isLoading={isDisablingProvider}
         loadingLabel="Disabling..."
-      />
-
-      <AppDialog
-        open={deleteProviderSheetOpen}
-        onClose={() => setDeleteProviderSheetOpen(false)}
-        icon={trashOutline}
-        iconColor="text-red-500"
-        iconBg="bg-red-50"
-        title="Delete Provider Profile?"
-        description="This will permanently remove your provider profile, including all your products, photos, and reviews. You will switch back to customer mode. This action cannot be undone."
-        confirmLabel="Yes, Delete Provider"
-        cancelLabel="Cancel"
-        onConfirm={handleDeleteProvider}
-        confirmColor="red"
-        isLoading={isDeletingProvider}
-        loadingLabel="Deleting..."
       />
     </>
   );

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -25,6 +26,10 @@ import {
   useOfferLimits,
 } from "@/hooks/useMyProvider";
 import { ProviderOfferFull } from "@/services/provider.service";
+import { useDealCreationInfo, useMonetizationConfig } from "@/hooks/useMonetizationConfig";
+import { DealPaymentSheet } from "@/app/components/monetization/deal-payment-sheet";
+import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
+import { createDealCreationCheckout } from "@/services/payment.service";
 
 const offerSchema = Yup.object({
   title: Yup.string().required("Title is required").max(150),
@@ -67,25 +72,51 @@ const ProviderDealsTab = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<ProviderOfferFull | null>(null);
   const [paymentPrompt, setPaymentPrompt] = useState(false);
+  const [dealCheckoutLoading, setDealCheckoutLoading] = useState(false);
 
   const { data: offers = [], isLoading } = useMyOffers();
   const { data: limits } = useOfferLimits();
+  const { data: dealInfo } = useDealCreationInfo();
+  const { data: monetizationConfig } = useMonetizationConfig();
   const createMutation = useCreateOffer();
   const updateMutation = useUpdateOffer();
   const deleteMutation = useDeleteOffer();
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  const canCreateDeal = !limits?.requiresPayment && (limits ? limits.totalDeals < limits.maxTotalDeals : true);
+  const monetizationEnabled = monetizationConfig?.flags.dealsMonetizationEnabled ?? false;
+  const canCreateDeal = !monetizationEnabled || !limits?.requiresPayment || (dealInfo && (dealInfo.isProSubscriber || dealInfo.freeRemaining > 0));
   const canCreateActive = limits ? limits.activeDeals < limits.maxActiveDeals : true;
 
   const handleAdd = () => {
-    if (limits?.requiresPayment) {
+    if (monetizationEnabled && limits?.requiresPayment && dealInfo && dealInfo.freeRemaining <= 0 && !dealInfo.isProSubscriber) {
       setPaymentPrompt(true);
       return;
     }
     setEditing(null);
     setSheetOpen(true);
+  };
+
+  const handleDealPaymentConfirm = async (voucherCode?: string) => {
+    setDealCheckoutLoading(true);
+    try {
+      const result = await createDealCreationCheckout(voucherCode);
+      if (result.requiresPayment && result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      } else {
+        // Free creation allowed — close sheet and open create form
+        setPaymentPrompt(false);
+        setEditing(null);
+        setSheetOpen(true);
+      }
+    } catch {
+      // fallback: just open create form
+      setPaymentPrompt(false);
+      setEditing(null);
+      setSheetOpen(true);
+    } finally {
+      setDealCheckoutLoading(false);
+    }
   };
 
   const handleEdit = (offer: ProviderOfferFull) => {
@@ -126,17 +157,19 @@ const ProviderDealsTab = () => {
       {limits && (
         <div className="px-4 mb-3">
           <div className={`rounded-2xl p-3.5 border ${
-            limits.requiresPayment
+            (limits.requiresPayment && monetizationEnabled) || (!canCreateActive)
               ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700"
               : "bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600"
           }`}>
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                limits.requiresPayment ? "bg-amber-100 dark:bg-amber-900/50" : "bg-white dark:bg-slate-800"
+                (limits.requiresPayment && monetizationEnabled) || (!canCreateActive)
+                  ? "bg-amber-100 dark:bg-amber-900/50"
+                  : "bg-white dark:bg-slate-800"
               }`}>
                 <IonIcon
-                  icon={limits.requiresPayment ? lockClosedOutline : pricetagOutline}
-                  className={`text-base ${limits.requiresPayment ? "text-amber-600" : "text-slate-500"}`}
+                  icon={(limits.requiresPayment && monetizationEnabled) || (!canCreateActive) ? lockClosedOutline : pricetagOutline}
+                  className={`text-base ${(limits.requiresPayment && monetizationEnabled) || (!canCreateActive) ? "text-amber-600" : "text-slate-500"}`}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -145,7 +178,7 @@ const ProviderDealsTab = () => {
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       {limits.totalDeals}/{limits.maxTotalDeals}
                     </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">deals</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">total</span>
                   </div>
                   <div className="w-px h-3 bg-slate-200" />
                   <div className="flex items-center gap-1">
@@ -154,6 +187,12 @@ const ProviderDealsTab = () => {
                     </span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500">active</span>
                   </div>
+                  {dealInfo && !monetizationEnabled && (
+                    <>
+                      <div className="w-px h-3 bg-slate-200" />
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Free tier</span>
+                    </>
+                  )}
                 </div>
                 {/* Progress bars */}
                 <div className="flex gap-2">
@@ -162,7 +201,7 @@ const ProviderDealsTab = () => {
                       className={`h-full rounded-full transition-all ${
                         limits.totalDeals >= limits.maxTotalDeals ? "bg-amber-500" : "bg-teal-500"
                       }`}
-                      style={{ width: `${(limits.totalDeals / limits.maxTotalDeals) * 100}%` }}
+                      style={{ width: `${Math.min(100, (limits.totalDeals / limits.maxTotalDeals) * 100)}%` }}
                     />
                   </div>
                   <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
@@ -170,26 +209,41 @@ const ProviderDealsTab = () => {
                       className={`h-full rounded-full transition-all ${
                         limits.activeDeals >= limits.maxActiveDeals ? "bg-red-400" : "bg-emerald-500"
                       }`}
-                      style={{ width: `${(limits.activeDeals / limits.maxActiveDeals) * 100}%` }}
+                      style={{ width: `${Math.min(100, (limits.activeDeals / limits.maxActiveDeals) * 100)}%` }}
                     />
                   </div>
                 </div>
               </div>
             </div>
-            {limits.requiresPayment && (
+            {/* Monetization enabled + limit reached: show buy CTA */}
+            {limits.requiresPayment && monetizationEnabled && (
               <button
                 onClick={() => setPaymentPrompt(true)}
                 className="mt-3 w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
               >
                 <IonIcon icon={diamondOutline} className="text-sm" />
-                Upgrade to Add More Deals
+                {dealInfo?.freeRemaining === 0 ? `Create Deal ₹${monetizationConfig?.dealPricing.price ?? 149}` : "Upgrade to Add More Deals"}
               </button>
             )}
-            {!limits.requiresPayment && !canCreateActive && (
-              <p className="mt-2 text-[10px] text-red-500 flex items-center gap-1">
-                <IonIcon icon={alertCircleOutline} className="text-xs" />
-                Max 3 active deals reached. Deactivate one or wait for it to expire.
-              </p>
+            {/* Monetization disabled but total limit reached */}
+            {!monetizationEnabled && limits.totalDeals >= limits.maxTotalDeals && (
+              <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-amber-100/60 dark:bg-amber-900/30 rounded-xl">
+                <IonIcon icon={alertCircleOutline} className="text-amber-600 dark:text-amber-400 text-sm mt-0.5 shrink-0" />
+                <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                  You&apos;ve reached the maximum of <span className="font-bold">{limits.maxTotalDeals} total deals</span>. 
+                  Delete an expired or inactive deal to free up a slot.
+                </p>
+              </div>
+            )}
+            {/* Active limit reached (regardless of monetization) */}
+            {!canCreateActive && limits.totalDeals < limits.maxTotalDeals && (
+              <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                <IonIcon icon={alertCircleOutline} className="text-red-500 dark:text-red-400 text-sm mt-0.5 shrink-0" />
+                <p className="text-[11px] text-red-600 dark:text-red-300 leading-relaxed">
+                  All <span className="font-bold">{limits.maxActiveDeals} active deal slots</span> are in use. 
+                  Deactivate or delete an active deal, or wait for one to expire.
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -284,13 +338,14 @@ const ProviderDealsTab = () => {
       )}
 
       {/* Full-screen Form Modal */}
+      {typeof document !== "undefined" && createPortal(
       <AnimatePresence>
         {sheetOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9990] flex items-end justify-center"
             onClick={() => !isSaving && setSheetOpen(false)}
           >
             <motion.div
@@ -471,6 +526,7 @@ const ProviderDealsTab = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      , document.body)}
 
       {/* Delete Confirmation Dialog */}
       <AppDialog
@@ -486,56 +542,27 @@ const ProviderDealsTab = () => {
         onConfirm={() => editing && handleDelete(editing.id)}
       />
 
-      {/* Payment / Upgrade Prompt */}
-      <AnimatePresence>
-        {paymentPrompt && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-6"
-            onClick={() => setPaymentPrompt(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full text-center shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <IonIcon icon={diamondOutline} className="text-3xl text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
-                Upgrade Your Plan
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                You&apos;ve reached the free limit of{" "}
-                <span className="font-bold text-slate-700">5 deals</span>.
-              </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">
-                Upgrade to our Pro plan to create unlimited deals, unlock advanced
-                analytics, and get featured placement.
-              </p>
-              <div className="space-y-2.5">
-                <button
-                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                  onClick={() => setPaymentPrompt(false)}
-                >
-                  <IonIcon icon={diamondOutline} className="text-base" />
-                  Coming Soon
-                </button>
-                <button
-                  onClick={() => setPaymentPrompt(false)}
-                  className="w-full py-3 text-sm text-slate-500 font-medium"
-                >
-                  Maybe Later
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Deal Payment Sheet */}
+      <DealPaymentSheet
+        open={paymentPrompt}
+        onClose={() => setPaymentPrompt(false)}
+        onConfirm={handleDealPaymentConfirm}
+        price={(() => {
+          if (!monetizationConfig) return 149;
+          return dealInfo?.isGrowthSubscriber
+            ? monetizationConfig.dealPricing.discountedPrice
+            : monetizationConfig.dealPricing.price;
+        })()}
+        originalPrice={dealInfo?.isGrowthSubscriber ? monetizationConfig?.dealPricing.price : undefined}
+        freeRemaining={dealInfo?.freeRemaining ?? 3}
+        freeTotal={monetizationConfig?.freeQuotas.dealsLifetime ?? 3}
+        isProSubscriber={dealInfo?.isProSubscriber ?? false}
+        isGrowthSubscriber={dealInfo?.isGrowthSubscriber ?? false}
+        monetizationEnabled={monetizationEnabled}
+        activeDeals={dealInfo?.activeDeals ?? 0}
+        maxActiveDeals={dealInfo?.maxActiveDeals ?? 3}
+        isLoading={dealCheckoutLoading}
+      />
     </div>
   );
 };

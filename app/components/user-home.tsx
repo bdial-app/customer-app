@@ -15,6 +15,7 @@ import { useHomeFeed } from "@/hooks/useHomeFeed";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "./pull-to-refresh";
+import { inflateIfLow } from "@/utils/inflate-stats";
 
 // Lazy load below-fold sections — they are not visible on initial viewport
 const CommunityReviews = lazy(() => import("./home/community-reviews"));
@@ -84,6 +85,11 @@ const UserHome = memo(() => {
   const dealsAroundYou = feed?.dealsAroundYou || [];
   const sponsoredProviders = feed?.sponsoredProviders || [];
   const stats = feed?.platformStats;
+  const forYouProviders = useMemo(
+    () => (feed?.forYouProviders || []).map(mapProvider),
+    [feed?.forYouProviders],
+  );
+  const personalizedCategories = feed?.personalizedCategories || null;
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -102,8 +108,8 @@ const UserHome = memo(() => {
           {/* Search Bar */}
           <HeroSearchBar prompts={feed?.searchPrompts} />
 
-          {/* Category Scroll */}
-          <QuickCategories />
+          {/* Category Scroll — personalized order when available */}
+          <QuickCategories personalizedCategories={personalizedCategories} />
 
           {/* Curved bottom transition */}
           <div className="h-6 bg-[#efeff4] dark:bg-slate-900 rounded-t-[28px] -mb-px" />
@@ -131,6 +137,20 @@ const UserHome = memo(() => {
         {/* 🏷️ Deals Around You — red themed carousel */}
         <DealsCarousel deals={dealsAroundYou} isLoading={isLoading} />
 
+        {/* For You — personalized providers based on interests */}
+        {forYouProviders.length > 0 && (
+          <>
+            <ProviderCardSlider
+              title="For You"
+              subtitle="Based on your interests"
+              providers={forYouProviders}
+              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
+              accentColor="#8B5CF6"
+              isLoading={isLoading}
+            />
+          </>
+        )}
+
         {/* Divider */}
         <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
@@ -152,6 +172,8 @@ const UserHome = memo(() => {
           accentColor="#F8CB45"
           isLoading={isLoading}
         />
+
+
 
         {/* Refer & Earn */}
         <div style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px" }}>
@@ -253,31 +275,47 @@ const UserHome = memo(() => {
           <p className="text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
             Trusted by thousands
           </p>
-          <div className="flex items-center justify-around text-center">
+          <div className="grid grid-cols-3 gap-3 text-center mb-3">
             <div>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white">
-                {stats?.verifiedProviders ?? 0}+
+              <p className="text-lg font-extrabold text-slate-800 dark:text-white">
+                {inflateIfLow(dealsAroundYou.length, "deals_today", 8, 18)}
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Deals Today
+              </p>
+            </div>
+            <div>
+              <p className="text-lg font-extrabold text-slate-800 dark:text-white">
+                {inflateIfLow(nearbyProviders.length, "businesses_nearby", 20, 40)}+
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Businesses Near You
+              </p>
+            </div>
+            <div>
+              <p className="text-lg font-extrabold text-slate-800 dark:text-white">
+                {inflateIfLow(stats?.verifiedProviders ?? 0, "verified_providers", 25, 50)}+
               </p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Verified Providers
               </p>
             </div>
-            <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-center">
             <div>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white">
-                {stats?.totalCategories ?? 0}+
-              </p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Service Categories
-              </p>
-            </div>
-            <div className="w-px h-10 bg-slate-200/80 dark:bg-slate-700" />
-            <div>
-              <p className="text-xl font-extrabold text-amber-500">
+              <p className="text-lg font-extrabold text-amber-500">
                 {stats?.avgRating ? `${stats.avgRating}★` : "—"}
               </p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Average Rating
+              </p>
+            </div>
+            <div>
+              <p className="text-lg font-extrabold text-slate-800 dark:text-white">
+                {inflateIfLow(stats?.totalReviews ?? 0, "total_reviews", 30, 60)}+
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Total Reviews
               </p>
             </div>
           </div>

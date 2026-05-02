@@ -113,6 +113,15 @@ export interface HomeSponsoredProvider {
   endsAt: string;
 }
 
+export interface PersonalizedCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  weight: number;
+  source: 'behavioral' | 'default' | 'explicit';
+}
+
 export interface HomeFeedResponse {
   nearbyProviders: HomeProvider[];
   featuredCategory: FeaturedCategory | null;
@@ -121,6 +130,8 @@ export interface HomeFeedResponse {
   newArrivals: HomeProvider[];
   promoBanners: PromoBanner[];
   trendingCategories: TrendingCategory[];
+  personalizedCategories: PersonalizedCategory[] | null;
+  forYouProviders: HomeProvider[] | null;
   communityReviews: CommunityReview[];
   platformStats: PlatformStats;
   searchPrompts: string[];

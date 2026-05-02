@@ -43,7 +43,7 @@ import type {
   SponsoredProvider,
   ProviderWithOffer,
 } from "@/services/explore.service";
-import ProviderBadgeList from "./explore/provider-badge";
+
 import ProviderCard from "./provider-card";
 import InfiniteScroll from "./infinite-scroll";
 import QuickFilterPills, { type QuickFilters } from "./all-services-quick-filters";
@@ -606,7 +606,6 @@ const ExploreContent = memo(() => {
                     ) : (
                       <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">New</span>
                     )}
-                    <ProviderBadgeList badges={p.badges} />
                   </div>
                 </div>
               </div>
@@ -1156,7 +1155,6 @@ function ExploreCarouselCard({
             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">New</span>
           )}
         </div>
-        <ProviderBadgeList badges={p.badges} />
       </div>
     </div>
   );

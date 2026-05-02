@@ -12,6 +12,10 @@ export const USER_URLS = {
   PAUSE_ME: "/users/me/pause",
   RESUME_ME: "/users/me/resume",
   DATA_EXPORT: "/users/me/data-export",
+  CATEGORY_WEIGHTS: "/users/me/category-weights",
+  RECOMMENDED_CATEGORIES: "/users/me/recommended-categories",
+  CATEGORY_PREFERENCES: "/users/me/category-preferences",
+  CATEGORY_INTERACTION: "/users/me/category-interaction",
 };
 
 export const CATEGORY_URLS = {
@@ -53,6 +57,7 @@ export const PROVIDER_URLS = {
   DISABLE_PROVIDER: "/providers/my-provider/disable",
   ENABLE_PROVIDER: "/providers/my-provider/enable",
   DELETE_PROVIDER: "/providers/my-provider",
+  COOLDOWN_STATUS: "/providers/my-provider/cooldown-status",
 };
 
 export const PHOTO_URLS = {
@@ -146,6 +151,9 @@ export const BUG_REPORT_URLS = {
 export const PAYMENT_URLS = {
   SPONSORSHIP_CHECKOUT: '/payments/sponsorship/checkout',
   LEAD_UNLOCK_CHECKOUT: '/payments/lead-unlock/checkout',
+  LEAD_UNLOCK_INFO: '/payments/lead-unlock/info',
+  DEAL_CREATION_CHECKOUT: '/payments/deal-creation/checkout',
+  DEAL_CREATION_INFO: '/payments/deal-creation/info',
   SUBSCRIPTION_CHECKOUT: '/payments/subscriptions/checkout',
   SUBSCRIPTION_PLANS: '/payments/subscriptions/plans',
   SUBSCRIPTION_CURRENT: '/payments/subscriptions/current',
@@ -155,4 +163,5 @@ export const PAYMENT_URLS = {
   VALIDATE_VOUCHER: '/payments/vouchers/validate',
   HISTORY: '/payments/history',
   CONFIRM: '/payments/confirm',
+  MONETIZATION_CONFIG: '/config/monetization',
 };

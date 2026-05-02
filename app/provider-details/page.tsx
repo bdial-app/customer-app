@@ -1,5 +1,6 @@
 "use client";
-import { Page, Sheet } from "konsta/react";
+import { Page } from "konsta/react";
+import { BottomSheet } from "../components/bottom-sheet";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
@@ -1086,10 +1087,9 @@ export default function ProviderDetailsPage() {
       </div>
 
       {/* Call Sheet */}
-      <Sheet
+      <BottomSheet
         opened={callSheetOpened}
-        onBackdropClick={() => setCallSheetOpened(false)}
-        className="pb-safe !rounded-t-3xl"
+        onClose={() => setCallSheetOpened(false)}
       >
         <div className="px-5 pt-5 pb-8">
           <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
@@ -1165,13 +1165,12 @@ export default function ProviderDetailsPage() {
             )}
           </div>
         </div>
-      </Sheet>
+      </BottomSheet>
 
       {/* Review Sheet */}
-      <Sheet
+      <BottomSheet
         opened={sheetOpened}
-        onBackdropClick={() => setSheetOpened(false)}
-        className="pb-safe !rounded-t-3xl"
+        onClose={() => setSheetOpened(false)}
       >
         <div className="px-5 pt-5 pb-8">
           <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
@@ -1264,7 +1263,7 @@ export default function ProviderDetailsPage() {
             </button>
           </div>
         </div>
-      </Sheet>
+      </BottomSheet>
 
       {/* Report Sheet */}
       {id && (

@@ -302,7 +302,7 @@ export default function ProviderLeadsTab() {
               key={lead.id}
               lead={lead}
               onSelect={() => setSelectedLeadId(lead.id)}
-              onUnlock={() => unlockMutation.mutate(lead.id)}
+              onUnlock={() => unlockMutation.mutate({ leadId: lead.id })}
               isUnlocking={unlockMutation.isPending}
             />
           ))}

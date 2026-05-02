@@ -17,7 +17,7 @@ import {
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchSuggestions } from "@/hooks/useSearch";
-import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
+import { addRecentSearch, setCategoryIds, resetFilters, setActiveTab, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { SearchSuggestion } from "@/services/search.service";
@@ -114,6 +114,7 @@ const SearchPageContent = () => {
         // Category: filter by category and show all businesses in it
         dispatch(resetFilters());
         dispatch(setCategoryIds([suggestion.id]));
+        dispatch(setActiveTab("all"));
         setQuery(suggestion.text);
         handleSubmit(suggestion.text);
       }
@@ -304,6 +305,7 @@ const SearchPageContent = () => {
                 onCategoryTap={(name, id) => {
                   dispatch(resetFilters());
                   dispatch(setCategoryIds([id]));
+                  dispatch(setActiveTab("all"));
                   setQuery(name);
                   handleSubmit(name);
                 }}

@@ -32,7 +32,8 @@ export const useMyProvider = () => {
   return useQuery<ProviderStatusResponse>({
     queryKey: PROVIDER_STATUS_KEY,
     queryFn: getMyProviderStatus,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: true,
   });
 };
 

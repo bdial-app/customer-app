@@ -152,7 +152,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                   />
                   {/* Unread badge */}
                   {tab.id === "chats" && badgeCount > 0 && (
-                    <div className={`absolute -top-1 -right-2 min-w-[16px] h-4 rounded-full flex items-center justify-center px-1 ${isProvider ? "bg-teal-500" : "bg-red-500"}`}>
+                    <div className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 ring-2 ring-white dark:ring-slate-800 shadow-sm ${isProvider ? "bg-teal-500" : "bg-red-500"}`}>
                       <span className="text-[9px] font-bold text-white leading-none">
                         {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
