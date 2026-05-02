@@ -17,6 +17,9 @@ import {
   flashOutline,
   globeOutline,
   navigateOutline,
+  shieldCheckmarkOutline,
+  femaleOutline,
+  trendingUpOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +33,8 @@ import type { ProviderWithOffer } from "@/services/explore.service";
 type SortOption = "discount" | "ending_soon" | "distance" | "newest";
 type DiscountFilter = "all" | "percentage" | "flat";
 type AreaMode = "nearby" | "city" | "all";
+type MinDiscountLevel = 0 | 10 | 20 | 30 | 50;
+type MinRatingLevel = 0 | 3 | 4 | 4.5;
 
 const SORT_OPTIONS: { value: SortOption; label: string; icon?: string }[] = [
   { value: "discount", label: "Best Discount" },
@@ -48,6 +53,21 @@ const DISCOUNT_FILTERS: { value: DiscountFilter; label: string }[] = [
   { value: "all", label: "All Types" },
   { value: "percentage", label: "% Off" },
   { value: "flat", label: "₹ Off" },
+];
+
+const MIN_DISCOUNT_OPTIONS: { value: MinDiscountLevel; label: string }[] = [
+  { value: 0, label: "Any" },
+  { value: 10, label: "10%+" },
+  { value: 20, label: "20%+" },
+  { value: 30, label: "30%+" },
+  { value: 50, label: "50%+" },
+];
+
+const MIN_RATING_OPTIONS: { value: MinRatingLevel; label: string }[] = [
+  { value: 0, label: "Any" },
+  { value: 3, label: "3★+" },
+  { value: 4, label: "4★+" },
+  { value: 4.5, label: "4.5★+" },
 ];
 
 const formatOfferLabel = (type: string, value: number) =>
@@ -199,6 +219,11 @@ const DealsPageContent = () => {
   const [areaMode, setAreaMode] = useState<AreaMode>("city");
   const [discountFilter, setDiscountFilter] = useState<DiscountFilter>("all");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [minDiscount, setMinDiscount] = useState<MinDiscountLevel>(0);
+  const [minRating, setMinRating] = useState<MinRatingLevel>(0);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [endingSoon, setEndingSoon] = useState(false);
+  const [womenLed, setWomenLed] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch categories for filter
@@ -225,6 +250,11 @@ const DealsPageContent = () => {
     radius,
     category: selectedCategory,
     discountType: discountFilter === "all" ? undefined : discountFilter,
+    minDiscount: minDiscount > 0 ? minDiscount : undefined,
+    verified: verifiedOnly || undefined,
+    minRating: minRating > 0 ? minRating : undefined,
+    endingSoon: endingSoon || undefined,
+    womenLed: womenLed || undefined,
   });
 
   const deals = useMemo(
@@ -239,14 +269,24 @@ const DealsPageContent = () => {
     if (discountFilter !== "all") count++;
     if (selectedCategory) count++;
     if (areaMode !== "city") count++;
+    if (minDiscount > 0) count++;
+    if (minRating > 0) count++;
+    if (verifiedOnly) count++;
+    if (endingSoon) count++;
+    if (womenLed) count++;
     return count;
-  }, [discountFilter, selectedCategory, areaMode]);
+  }, [discountFilter, selectedCategory, areaMode, minDiscount, minRating, verifiedOnly, endingSoon, womenLed]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
     setDiscountFilter("all");
     setSelectedCategory(undefined);
     setAreaMode("city");
+    setMinDiscount(0);
+    setMinRating(0);
+    setVerifiedOnly(false);
+    setEndingSoon(false);
+    setWomenLed(false);
   }, []);
 
   // Infinite scroll observer
@@ -369,7 +409,44 @@ const DealsPageContent = () => {
 
         {/* Expandable Filter Panel */}
         {showFilters && (
-          <div className="px-4 pb-3 border-t border-slate-100 dark:border-slate-700 pt-3 space-y-3 bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="px-4 pb-3 border-t border-slate-100 dark:border-slate-700 pt-3 space-y-3.5 bg-slate-50/50 dark:bg-slate-800/50">
+            {/* Quick Toggle Filters */}
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setVerifiedOnly(!verifiedOnly)}
+                className={`flex items-center gap-1 text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                  verifiedOnly
+                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800"
+                    : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600"
+                }`}
+              >
+                <IonIcon icon={shieldCheckmarkOutline} className="w-3 h-3" />
+                Verified Only
+              </button>
+              <button
+                onClick={() => setEndingSoon(!endingSoon)}
+                className={`flex items-center gap-1 text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                  endingSoon
+                    ? "bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 ring-1 ring-orange-200 dark:ring-orange-800"
+                    : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600"
+                }`}
+              >
+                <IonIcon icon={flashOutline} className="w-3 h-3" />
+                Ending This Week
+              </button>
+              <button
+                onClick={() => setWomenLed(!womenLed)}
+                className={`flex items-center gap-1 text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                  womenLed
+                    ? "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 ring-1 ring-purple-200 dark:ring-purple-800"
+                    : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600"
+                }`}
+              >
+                <IonIcon icon={femaleOutline} className="w-3 h-3" />
+                Women-Led
+              </button>
+            </div>
+
             {/* Discount Type */}
             <div>
               <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
@@ -386,6 +463,51 @@ const DealsPageContent = () => {
                         : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600"
                     }`}
                   >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Minimum Discount */}
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                Minimum Discount
+              </p>
+              <div className="flex gap-2">
+                {MIN_DISCOUNT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setMinDiscount(opt.value)}
+                    className={`text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                      minDiscount === opt.value
+                        ? "bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800"
+                        : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Rating Filter */}
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                Provider Rating
+              </p>
+              <div className="flex gap-2">
+                {MIN_RATING_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setMinRating(opt.value)}
+                    className={`flex items-center gap-0.5 text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                      minRating === opt.value
+                        ? "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800"
+                        : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600"
+                    }`}
+                  >
+                    {opt.value > 0 && <IonIcon icon={star} className="w-2.5 h-2.5" />}
                     {opt.label}
                   </button>
                 ))}
@@ -449,6 +571,46 @@ const DealsPageContent = () => {
               {discountFilter === "percentage" ? "% Off" : "₹ Off"}
               <button onClick={() => setDiscountFilter("all")}>
                 <IonIcon icon={closeCircle} className="w-3 h-3 text-rose-400" />
+              </button>
+            </span>
+          )}
+          {minDiscount > 0 && (
+            <span className="shrink-0 flex items-center gap-1 text-[9px] font-semibold bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-full">
+              {minDiscount}%+ off
+              <button onClick={() => setMinDiscount(0)}>
+                <IonIcon icon={closeCircle} className="w-3 h-3 text-rose-400" />
+              </button>
+            </span>
+          )}
+          {minRating > 0 && (
+            <span className="shrink-0 flex items-center gap-1 text-[9px] font-semibold bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full">
+              {minRating}★+
+              <button onClick={() => setMinRating(0)}>
+                <IonIcon icon={closeCircle} className="w-3 h-3 text-amber-400" />
+              </button>
+            </span>
+          )}
+          {verifiedOnly && (
+            <span className="shrink-0 flex items-center gap-1 text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full">
+              Verified
+              <button onClick={() => setVerifiedOnly(false)}>
+                <IonIcon icon={closeCircle} className="w-3 h-3 text-emerald-400" />
+              </button>
+            </span>
+          )}
+          {endingSoon && (
+            <span className="shrink-0 flex items-center gap-1 text-[9px] font-semibold bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full">
+              Ending Soon
+              <button onClick={() => setEndingSoon(false)}>
+                <IonIcon icon={closeCircle} className="w-3 h-3 text-orange-400" />
+              </button>
+            </span>
+          )}
+          {womenLed && (
+            <span className="shrink-0 flex items-center gap-1 text-[9px] font-semibold bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 px-2.5 py-1 rounded-full">
+              Women-Led
+              <button onClick={() => setWomenLed(false)}>
+                <IonIcon icon={closeCircle} className="w-3 h-3 text-purple-400" />
               </button>
             </span>
           )}

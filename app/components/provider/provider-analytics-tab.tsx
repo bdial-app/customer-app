@@ -151,7 +151,7 @@ function TopProductsList({ period }: { period: Period }) {
             {p.photoUrl ? (
               <img src={p.photoUrl} alt="" className="w-9 h-9 rounded-lg object-cover bg-gray-100" loading="lazy" decoding="async" />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                 <IonIcon icon={cubeOutline} className="text-gray-300" />
               </div>
             )}

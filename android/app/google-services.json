@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "426738425106",
+    "project_id": "tijarah-fe6c1",
+    "storage_bucket": "tijarah-fe6c1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426738425106:android:28bc23c6966b55b10fa7cb",
+        "android_client_info": {
+          "package_name": "com.tijarah.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAi07MIAwadBcoVDlqxeeKTdhjPc9gq-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

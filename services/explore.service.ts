@@ -120,6 +120,10 @@ export interface DealsParams {
   category?: string;
   discountType?: 'percentage' | 'flat';
   minDiscount?: number;
+  verified?: boolean;
+  minRating?: number;
+  endingSoon?: boolean;
+  womenLed?: boolean;
   page?: number;
   limit?: number;
   sort?: 'discount' | 'ending_soon' | 'distance' | 'newest';

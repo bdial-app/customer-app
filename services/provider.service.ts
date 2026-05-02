@@ -245,9 +245,7 @@ export const becomeProvider = async (
     });
   }
 
-  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData);
   return data;
 };
 
