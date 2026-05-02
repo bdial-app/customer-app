@@ -26,6 +26,8 @@ import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/g
 import type { SearchGeocodeResult } from "@/services/geocode.service";
 
 // ─── Constants ──────────────────────────────────────────────────
+// TODO: Re-enable when native Google + Apple SSO are implemented
+const SHOW_SSO_BUTTONS = false;
 const MINI_MAP_STYLE = { width: "100%", height: "100%" };
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -746,7 +748,7 @@ function AuthGateSheetContent() {
             )}
 
             {/* ─── Social Login (mobile step only) ─── */}
-            {step === "mobile" && (
+            {SHOW_SSO_BUTTONS && step === "mobile" && (
               <>
                 <div className="flex items-center gap-3 my-5">
                   <div className="flex-1 h-px bg-white/[0.08]" />

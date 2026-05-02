@@ -14,6 +14,9 @@ import { logoApple } from "ionicons/icons";
 
 type LoginStep = "mobile" | "otp";
 
+// TODO: Re-enable when native Google + Apple SSO are implemented
+const SHOW_SSO_BUTTONS = false;
+
 const schemas = {
   mobile: Yup.object({
     mobile: Yup.string()
@@ -431,7 +434,7 @@ function LoginContent() {
               </button>
 
               {/* ── Divider ── */}
-              {step === "mobile" && (
+              {SHOW_SSO_BUTTONS && step === "mobile" && (
                 <div className="flex items-center gap-3 my-6">
                   <div className="flex-1 h-px bg-gray-100 dark:bg-slate-800" />
                   <span className="text-[11px] font-medium text-gray-300 dark:text-slate-600 uppercase tracking-widest">
@@ -442,7 +445,7 @@ function LoginContent() {
               )}
 
               {/* ── Social buttons ── */}
-              {step === "mobile" && (
+              {SHOW_SSO_BUTTONS && step === "mobile" && (
                 <div className="space-y-3">
                   <button
                     type="button"

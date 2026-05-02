@@ -47,5 +47,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Tijarah needs your location to show nearby services and providers</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Tijarah needs camera access to take photos for your business profile</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Tijarah needs photo library access to upload images for your business</string>
 </dict>
 </plist>
