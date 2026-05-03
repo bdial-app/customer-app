@@ -102,9 +102,14 @@ function PushNotificationBridge() {
     // Listen for native notification taps (Capacitor) — deep link navigation
     const handleNativeTap = (e: Event) => {
       const data = (e as CustomEvent).detail || {};
-      const params = data.params
-        ? typeof data.params === "string" ? JSON.parse(data.params) : data.params
-        : {};
+      let params = {};
+      if (data.params) {
+        if (typeof data.params === "string") {
+          try { params = JSON.parse(data.params); } catch { params = {}; }
+        } else {
+          params = data.params;
+        }
+      }
       const targetUrl = resolveDeepLink({ route: data.route, params });
       router.push(targetUrl);
     };

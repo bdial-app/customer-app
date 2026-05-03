@@ -39,6 +39,7 @@ export function usePushNotifications() {
   const { permissionStatus, fcmToken } = useAppSelector((s) => s.notification);
   const isAuthenticated = useAppSelector((s) => s.auth.token !== null);
   const unsubRef = useRef<(() => void) | null>(null);
+  const isRegisteringRef = useRef(false);
   const [pushError, setPushError] = useState<string | null>(null);
 
   const isNative = isNativePlatform();
@@ -72,28 +73,33 @@ export function usePushNotifications() {
 
   // ─── Auto-register token if permission already granted & authenticated ───
   useEffect(() => {
-    if (permissionStatus === "granted" && isAuthenticated && !fcmToken) {
+    if (permissionStatus === "granted" && isAuthenticated && !fcmToken && !isRegisteringRef.current) {
+      isRegisteringRef.current = true;
       (async () => {
-        if (isNative) {
-          const result = await requestNativePushToken();
-          if (result.token) {
-            dispatch(setFcmToken(result.token));
-            try {
-              await registerDevice(result.token, getNativePlatform(), getDeviceInfo());
-            } catch (err) {
-              console.warn("[Push] Failed to register device token:", err);
+        try {
+          if (isNative) {
+            const result = await requestNativePushToken();
+            if (result.token) {
+              dispatch(setFcmToken(result.token));
+              try {
+                await registerDevice(result.token, getNativePlatform(), getDeviceInfo());
+              } catch (err) {
+                console.warn("[Push] Failed to register device token:", err);
+              }
+            }
+          } else {
+            const result = await requestFCMToken();
+            if (result.token) {
+              dispatch(setFcmToken(result.token));
+              try {
+                await registerDevice(result.token, detectPlatform(), getDeviceInfo());
+              } catch (err) {
+                console.warn("[Push] Failed to register device token:", err);
+              }
             }
           }
-        } else {
-          const result = await requestFCMToken();
-          if (result.token) {
-            dispatch(setFcmToken(result.token));
-            try {
-              await registerDevice(result.token, detectPlatform(), getDeviceInfo());
-            } catch (err) {
-              console.warn("[Push] Failed to register device token:", err);
-            }
-          }
+        } finally {
+          isRegisteringRef.current = false;
         }
       })();
     }

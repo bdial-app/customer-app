@@ -58,12 +58,13 @@ export function usePermissionReminder(): PermissionReminderState {
     if (!isNative) return;
 
     let cleanup: (() => void) | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     (async () => {
       // Initial check (slightly delayed to not block render)
       if (!checkedRef.current) {
         checkedRef.current = true;
-        setTimeout(() => checkPermissions(), 3000);
+        timeoutId = setTimeout(() => checkPermissions(), 3000);
       }
 
       // Listen for app resume
@@ -79,6 +80,7 @@ export function usePermissionReminder(): PermissionReminderState {
     })();
 
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
       cleanup?.();
     };
   }, [isNative, checkPermissions]);

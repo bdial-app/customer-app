@@ -8,11 +8,26 @@ export type NativePushTokenResult =
   | { token: string; error: null }
   | { token: null; error: string };
 
+// Singleton in-flight promise to prevent duplicate concurrent token requests
+let _tokenRequestInFlight: Promise<NativePushTokenResult> | null = null;
+
 /**
  * Request native push notification permission and register for push.
  * Returns the FCM/APNs token on success.
+ * Deduplicates concurrent calls — only one registration runs at a time.
  */
 export async function requestNativePushToken(): Promise<NativePushTokenResult> {
+  if (_tokenRequestInFlight) return _tokenRequestInFlight;
+
+  _tokenRequestInFlight = _doRequestNativePushToken();
+  try {
+    return await _tokenRequestInFlight;
+  } finally {
+    _tokenRequestInFlight = null;
+  }
+}
+
+async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
   try {
     // Check current permission status
     const permStatus = await PushNotifications.checkPermissions();
@@ -40,19 +55,30 @@ export async function requestNativePushToken(): Promise<NativePushTokenResult> {
 
     // Wait for the registration event to fire with the token
     const token = await new Promise<string>((resolve, reject) => {
+      let regListener: { remove: () => void } | null = null;
+      let errListener: { remove: () => void } | null = null;
+
+      const cleanup = () => {
+        regListener?.remove();
+        errListener?.remove();
+      };
+
       const timeout = setTimeout(() => {
+        cleanup();
         reject(new Error('Push registration timed out'));
       }, 15000);
 
       PushNotifications.addListener('registration', (t: Token) => {
         clearTimeout(timeout);
+        cleanup();
         resolve(t.value);
-      });
+      }).then((l) => { regListener = l; });
 
       PushNotifications.addListener('registrationError', (err) => {
         clearTimeout(timeout);
+        cleanup();
         reject(new Error(err.error || 'Push registration failed'));
-      });
+      }).then((l) => { errListener = l; });
     });
 
     return { token, error: null };
@@ -82,25 +108,43 @@ export type NativePushListeners = {
 /**
  * Register listeners for native push events.
  * Returns a cleanup function to remove all listeners.
+ * Handles the async nature of addListener — if cleanup is called before
+ * listeners are registered, they are removed as soon as they resolve.
  */
 export function addNativePushListeners(handlers: NativePushListeners): () => void {
+  let cleaned = false;
   const listeners: Array<{ remove: () => void }> = [];
+
+  const trackListener = (promise: Promise<{ remove: () => void }>) => {
+    promise.then((l) => {
+      if (cleaned) {
+        l.remove();
+      } else {
+        listeners.push(l);
+      }
+    });
+  };
 
   if (handlers.onForegroundPush) {
     const handler = handlers.onForegroundPush;
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      handler(notification);
-    }).then((l) => listeners.push(l));
+    trackListener(
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        handler(notification);
+      })
+    );
   }
 
   if (handlers.onNotificationTap) {
     const handler = handlers.onNotificationTap;
-    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      handler(action);
-    }).then((l) => listeners.push(l));
+    trackListener(
+      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+        handler(action);
+      })
+    );
   }
 
   return () => {
+    cleaned = true;
     listeners.forEach((l) => l.remove());
   };
 }

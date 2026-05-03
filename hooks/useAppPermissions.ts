@@ -62,12 +62,14 @@ export function useAppPermissions(): UseAppPermissionsReturn {
     notifications: "unknown",
   });
   const [requesting, setRequesting] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const isNative = isNativePlatform();
 
   // Check current permission status on mount (native only)
   useEffect(() => {
     if (!isNative) {
       setPermissions({ location: "granted", notifications: "granted" });
+      setInitialized(true);
       return;
     }
 
@@ -77,6 +79,7 @@ export function useAppPermissions(): UseAppPermissionsReturn {
         checkNotificationPermission(),
       ]);
       setPermissions({ location: loc, notifications: notif });
+      setInitialized(true);
     })();
   }, [isNative]);
 
@@ -135,6 +138,7 @@ export function useAppPermissions(): UseAppPermissionsReturn {
 
   const needsPrompt =
     isNative &&
+    initialized &&
     !loadPersistedState().initialFlowDone &&
     (permissions.location === "prompt" ||
       permissions.location === "unknown" ||

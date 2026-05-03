@@ -66,13 +66,23 @@ export function useDeepLinks() {
  * - https://www.tijarah.com/...
  * - https://develop.tijarah.com/...
  * - https://uat.tijarah.com/...
- * - tijarah://provider-details?id=xxx
+ * - tijarah://provider-details?id=xxx (custom scheme)
  * - Deep link data format used by notifications
  */
 function parseAppUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
-    const pathname = parsed.pathname.replace(/\/$/, "") || "/";
+    let pathname: string;
+
+    // Custom schemes (e.g., tijarah://chat?id=123) put the "path" in hostname
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      // For tijarah://provider-details?id=xxx → hostname = "provider-details", pathname = ""
+      pathname = "/" + (parsed.hostname || "") + (parsed.pathname || "");
+      pathname = pathname.replace(/\/+$/, "") || "/";
+    } else {
+      pathname = parsed.pathname.replace(/\/$/, "") || "/";
+    }
+
     const params: Record<string, string> = {};
     parsed.searchParams.forEach((value, key) => {
       params[key] = value;

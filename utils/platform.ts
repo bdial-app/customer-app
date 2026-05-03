@@ -7,24 +7,24 @@ let _isNative: boolean | null = null;
 /**
  * Returns true if the app is running inside a Capacitor native shell (Android/iOS).
  * Returns false for web browsers and PWA mode.
+ * Only caches `true` permanently — `false` is recomputed until Capacitor is ready.
  */
 export function isNativePlatform(): boolean {
-  if (_isNative !== null) return _isNative;
+  if (_isNative === true) return true;
 
   if (typeof window === 'undefined') {
-    _isNative = false;
     return false;
   }
 
   try {
     // Capacitor injects this on the window object in native shells
     const cap = (window as any).Capacitor;
-    _isNative = cap?.isNativePlatform?.() ?? false;
+    const result = cap?.isNativePlatform?.() ?? false;
+    if (result) _isNative = true;
+    return result;
   } catch {
-    _isNative = false;
+    return false;
   }
-
-  return _isNative!;
 }
 
 /**
