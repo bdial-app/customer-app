@@ -80,6 +80,7 @@ const RecentlyAdded = ({
                     className="w-full h-full"
                     width={150}
                     height={120}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">

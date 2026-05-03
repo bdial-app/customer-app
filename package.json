@@ -28,6 +28,7 @@
     "@supabase/supabase-js": "^2.104.0",
     "@tanstack/react-query": "^5.99.1",
     "axios": "^1.15.0",
+    "browser-image-compression": "^2.0.2",
     "firebase": "^12.12.1",
     "formik": "^2.4.9",
     "framer-motion": "^12.38.0",

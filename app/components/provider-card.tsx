@@ -81,7 +81,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
         {/* Image */}
         <div className="relative w-[110px] shrink-0 overflow-hidden bg-gray-100 dark:bg-slate-800">
           {provider.image ? (
-            <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" loading="lazy" />
+            <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-700">
               <span className="text-2xl font-bold text-amber-200 dark:text-slate-600">{provider.name?.charAt(0)?.toUpperCase()}</span>

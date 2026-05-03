@@ -103,6 +103,7 @@ const DealsCarousel = ({
                     width={170}
                     height={100}
                     priority={i < 3}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

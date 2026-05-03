@@ -1,7 +1,7 @@
 const CACHE_NAME = "bohri-connect-v2";
 const RUNTIME_CACHE = "bohri-runtime-cache-v2";
-const IMAGE_CACHE = "bohri-image-cache-v1";
-const IMAGE_CACHE_MAX = 150;
+const IMAGE_CACHE = "bohri-image-cache-v2";
+const IMAGE_CACHE_MAX = 300;
 const ASSETS_TO_CACHE = ["/", "/manifest.json"];
 
 // Install event - cache essential files
@@ -59,7 +59,7 @@ self.addEventListener("fetch", (event) => {
   // Supabase storage images — cache-first (images rarely change)
   if (
     url.hostname.includes("supabase.co") &&
-    url.pathname.includes("/storage/v1/object/public/")
+    (url.pathname.includes("/storage/v1/object/public/") || url.pathname.includes("/storage/v1/render/image/public/"))
   ) {
     event.respondWith(
       caches.open(IMAGE_CACHE).then((cache) => {

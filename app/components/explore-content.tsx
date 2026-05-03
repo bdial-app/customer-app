@@ -577,7 +577,7 @@ const ExploreContent = memo(() => {
               >
                 <div className="relative h-[115px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
                   {p.image ? (
-                    <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={170} height={115} priority={i < 3} />
+                    <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={170} height={115} priority={i < 3} preset="card" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-3xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
@@ -643,7 +643,7 @@ const ExploreContent = memo(() => {
               >
                 <div className="relative h-[100px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
                   {p.image ? (
-                    <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={170} height={100} priority={i < 3} />
+                    <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={170} height={100} priority={i < 3} preset="card" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-2xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
@@ -1108,7 +1108,7 @@ function ExploreCarouselCard({
     >
       <div className="relative h-[110px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
         {p.image ? (
-          <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={160} height={110} priority={index < 3} />
+          <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={160} height={110} priority={index < 3} preset="card" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-3xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>

@@ -84,6 +84,7 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
                     width={200}
                     height={110}
                     priority={idx < 2}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">

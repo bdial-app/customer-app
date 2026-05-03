@@ -89,6 +89,7 @@ const SponsoredCarousel = ({
                     width={220}
                     height={130}
                     priority={i < 3}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-950/30 dark:to-slate-800">

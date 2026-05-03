@@ -238,6 +238,15 @@ export const getProviderDetails = async (
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
 ): Promise<{ provider: any; verification: any; products: any[] }> => {
+  const { compressImageFile, compressImageFiles, COMPRESS_PRESETS } = await import("@/utils/compress-image");
+
+  // Compress images before building FormData
+  const [compressedBanner, compressedProfile, compressedProductImages] = await Promise.all([
+    payload.bannerImage ? compressImageFile(payload.bannerImage, COMPRESS_PRESETS.profile) : Promise.resolve(undefined),
+    payload.profileImage ? compressImageFile(payload.profileImage, COMPRESS_PRESETS.profile) : Promise.resolve(undefined),
+    payload.productImages?.length ? compressImageFiles(payload.productImages, COMPRESS_PRESETS.product) : Promise.resolve([]),
+  ]);
+
   const formData = new FormData();
   formData.append("userId", payload.userId);
   formData.append("brandName", payload.brandName);
@@ -256,8 +265,8 @@ export const becomeProvider = async (
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
   if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
-  if (payload.bannerImage) formData.append("bannerImage", payload.bannerImage);
-  if (payload.profileImage) formData.append("profileImage", payload.profileImage);
+  if (compressedBanner) formData.append("bannerImage", compressedBanner);
+  if (compressedProfile) formData.append("profileImage", compressedProfile);
   if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
   if (payload.categoryIds?.length) {
     payload.categoryIds.forEach((id) => formData.append("categoryIds", id));
@@ -265,7 +274,7 @@ export const becomeProvider = async (
   // Products as JSON string + individual image files
   if (payload.products?.length) {
     formData.append("products", JSON.stringify(payload.products));
-    payload.productImages?.forEach((img) => {
+    compressedProductImages?.forEach((img) => {
       formData.append("productImages", img);
     });
   }

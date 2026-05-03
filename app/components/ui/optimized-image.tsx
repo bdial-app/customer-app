@@ -1,5 +1,8 @@
 "use client";
 import { useState, useRef, useEffect, memo } from "react";
+import { getOptimizedImageUrl, IMAGE_SIZES } from "@/utils/image-optimization";
+
+export type ImagePreset = keyof typeof IMAGE_SIZES | "none";
 
 interface OptimizedImageProps {
   src: string;
@@ -9,15 +12,19 @@ interface OptimizedImageProps {
   height?: number;
   priority?: boolean;
   fallback?: React.ReactNode;
+  /** Apply Supabase image transform preset for server-side resizing */
+  preset?: ImagePreset;
 }
 
 /**
- * Lightweight image component with:
+ * Production-ready image component with:
+ * - Supabase server-side image transforms (resize/format/quality)
  * - Native lazy loading + async decoding
  * - Blur-up fade-in on load
  * - Skeleton placeholder while loading
  * - Error fallback
  * - Priority flag for above-fold images
+ * - srcSet for 1x/2x density
  */
 const OptimizedImage = memo(function OptimizedImage({
   src,
@@ -27,6 +34,7 @@ const OptimizedImage = memo(function OptimizedImage({
   height,
   priority = false,
   fallback,
+  preset = "none",
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
@@ -52,6 +60,17 @@ const OptimizedImage = memo(function OptimizedImage({
     );
   }
 
+  // Apply Supabase image transforms for optimized delivery
+  const transformOptions = preset !== "none" ? IMAGE_SIZES[preset] : undefined;
+  const optimizedSrc = transformOptions
+    ? getOptimizedImageUrl(src, transformOptions)
+    : src;
+
+  // Generate srcSet for 2x displays if using a preset with width
+  const srcSet = transformOptions?.width
+    ? `${optimizedSrc} 1x, ${getOptimizedImageUrl(src, { ...transformOptions, width: transformOptions.width * 2 })} 2x`
+    : undefined;
+
   return (
     <div className={`relative overflow-hidden ${className}`}>
       {/* Skeleton placeholder */}
@@ -60,7 +79,8 @@ const OptimizedImage = memo(function OptimizedImage({
       )}
       <img
         ref={imgRef}
-        src={src}
+        src={optimizedSrc}
+        srcSet={srcSet}
         alt={alt}
         width={width}
         height={height}

@@ -97,8 +97,10 @@ export const deleteProduct = async (id: string): Promise<void> => {
 export const uploadProductImage = async (
   file: File,
 ): Promise<{ url: string; storageKey: string }> => {
+  const { compressImageFile, COMPRESS_PRESETS } = await import("@/utils/compress-image");
+  const compressed = await compressImageFile(file, COMPRESS_PRESETS.product);
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", compressed);
   const { data } = await apiClient.post(PRODUCT_URLS.UPLOAD_IMAGE, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });

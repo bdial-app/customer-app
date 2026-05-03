@@ -132,6 +132,7 @@ export interface HomeFeedResponse {
   trendingCategories: TrendingCategory[];
   personalizedCategories: PersonalizedCategory[] | null;
   forYouProviders: HomeProvider[] | null;
+  womenLedProviders: HomeProvider[] | null;
   communityReviews: CommunityReview[];
   platformStats: PlatformStats;
   searchPrompts: string[];

@@ -60,7 +60,7 @@ import FeatureGate from "@/app/components/feature-gate";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // Accept up to 15MB — we compress client-side before upload
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -107,7 +107,7 @@ const step4Schema = Yup.object({});
 const step5Schema = Yup.object({
   identity_doc: Yup.mixed<File>()
     .nullable()
-    .test("fileSize", "File must be less than 5 MB", (val) =>
+    .test("fileSize", "File must be less than 15 MB", (val) =>
       !val || (val instanceof File && val.size <= MAX_FILE_SIZE),
     )
     .test("fileType", "Only JPEG, PNG or PDF allowed", (val) =>

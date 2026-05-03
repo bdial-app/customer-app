@@ -106,6 +106,7 @@ const ProviderCardSlider = ({
                     width={150}
                     height={120}
                     priority={idx < 3}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

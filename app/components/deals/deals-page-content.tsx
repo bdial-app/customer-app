@@ -126,6 +126,7 @@ const DealCard = ({
             className="w-full h-full"
             width={200}
             height={120}
+            preset="card"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
