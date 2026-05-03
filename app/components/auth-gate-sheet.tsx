@@ -615,7 +615,7 @@ function AuthGateSheetContent() {
                           value={locationSearch}
                           onChange={(e) => handleLocationSearch(e.target.value)}
                           placeholder="Search area, landmark, address…"
-                          className="flex-1 h-full bg-transparent px-2 text-[13px] outline-none text-white placeholder:text-slate-600"
+                          className="flex-1 h-full bg-transparent px-2 text-base outline-none text-white placeholder:text-slate-600"
                         />
                         {locationSearch && (
                           <button type="button" onClick={() => { setLocationSearch(""); setLocationSuggestions([]); }}

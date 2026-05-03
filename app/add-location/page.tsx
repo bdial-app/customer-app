@@ -216,7 +216,7 @@ const AddLocationContent = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsFocused(true)}
-                className="w-full h-11 pl-10 pr-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 outline-none focus:ring-2 focus:ring-amber-400/50 transition-all"
+                className="w-full h-11 pl-10 pr-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-base text-neutral-900 dark:text-white placeholder-neutral-400 outline-none focus:ring-2 focus:ring-amber-400/50 transition-all"
               />
               {searchQuery && (
                 <button

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { useReverseGeocode, useSearchGeocode } from "@/hooks/useGeocode";
@@ -357,6 +358,7 @@ const GeoLocation = () => {
       <NotificationDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
 
       {/* ── Bottom Sheet ── */}
+      {typeof document !== "undefined" && createPortal(
       <AnimatePresence>
         {open && (
           <>
@@ -367,7 +369,7 @@ const GeoLocation = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]"
+              className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-[2px]"
             />
 
             {/* Sheet */}
@@ -381,7 +383,7 @@ const GeoLocation = () => {
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.4 }}
               onDragEnd={handleDragEnd}
-              className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-slate-900 rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
+              className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               {/* Drag handle */}
@@ -414,7 +416,7 @@ const GeoLocation = () => {
                     placeholder="Search for area, street name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                    className="flex-1 bg-transparent text-base text-slate-800 placeholder:text-slate-400 outline-none"
                   />
                   {searchQuery && (
                     <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchQuery("")}>
@@ -607,16 +609,19 @@ const GeoLocation = () => {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
 
       {/* ── Map Picker Overlay ── */}
+      {typeof document !== "undefined" && createPortal(
       <AnimatePresence>
         {showMap && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-white dark:bg-slate-900 flex flex-col"
+            className="fixed inset-0 z-[9999] bg-white dark:bg-slate-900 flex flex-col"
           >
             {/* Map Header — back button + search bar */}
             <div
@@ -645,7 +650,7 @@ const GeoLocation = () => {
                       value={mapSearchQuery}
                       onChange={(e) => handleMapSearch(e.target.value)}
                       placeholder="Search landmark, area, address…"
-                      className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none"
+                      className="flex-1 bg-transparent text-base text-slate-800 dark:text-white placeholder:text-slate-400 outline-none"
                     />
                     {mapSearchQuery && (
                       <button onClick={() => { setMapSearchQuery(""); setMapSearchResults([]); }}
@@ -733,7 +738,9 @@ const GeoLocation = () => {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
     </>
   );
 };
