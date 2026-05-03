@@ -676,7 +676,7 @@ const ExploreContent = memo(() => {
 
       {/* ── 5. Quick Categories — discovery grid ── */}
       <div className="mt-5">
-        <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">Curated Collections</h2>
+        <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
         <div className="grid grid-cols-2 gap-2.5 px-4">
           {collections.slice(0, 4).map((col: any, i: number) => (
             <div
@@ -703,7 +703,7 @@ const ExploreContent = memo(() => {
       {/* ── 6. Trending Categories ── */}
       {(feed?.quickCategories?.length ?? 0) > 0 && (
         <div className="mt-5">
-          <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">Trending Now</h2>
+          <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Trending Now</h2>
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
             {feed!.quickCategories.map((cat, i) => (
               <button

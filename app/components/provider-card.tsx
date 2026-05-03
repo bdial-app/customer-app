@@ -112,7 +112,10 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
                 <IonIcon icon={shieldCheckmarkOutline} className="w-3.5 h-3.5 text-emerald-500" />
               )}
               {provider.womenLed && (
-                <IonIcon icon={ribbonOutline} className="w-3.5 h-3.5 text-purple-500" />
+                <span className="flex items-center gap-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 text-[8px] font-bold px-1.5 py-[2px] rounded-md">
+                  <IonIcon icon={ribbonOutline} className="w-2.5 h-2.5" />
+                  <span>Women-Led</span>
+                </span>
               )}
             </div>
           </div>
@@ -184,8 +187,9 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
 
         {/* Top-right: Women-Led */}
         {provider.womenLed && (
-          <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm text-purple-600 text-[8px] font-bold px-1.5 py-[2px] rounded-md flex items-center gap-0.5 shadow-sm">
+          <div className="absolute top-2 right-2 bg-purple-600/90 backdrop-blur-sm text-white text-[8px] font-bold px-1.5 py-[2px] rounded-md flex items-center gap-0.5 shadow-sm">
             <IonIcon icon={ribbonOutline} className="w-2.5 h-2.5" />
+            <span>♀</span>
           </div>
         )}
 

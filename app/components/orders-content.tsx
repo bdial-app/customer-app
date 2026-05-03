@@ -327,7 +327,7 @@ const OrdersContent = () => {
                         />
                         {booking.date} • {booking.time}
                       </div>
-                      <div className="ml-auto text-[13px] font-bold text-slate-800">
+                      <div className="ml-auto text-[13px] font-bold text-slate-800 dark:text-white">
                         {booking.price}
                       </div>
                     </div>

@@ -375,6 +375,7 @@ export default function ProviderDetailsPage() {
 
   return (
     <Page className={`!bg-white dark:!bg-slate-900 ${isSponsored ? "sponsored-provider" : ""}`}>
+      <div className="h-full overflow-y-auto overscroll-contain">
       {/* Sponsored Premium Banner */}
       {isSponsored && (
         <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-4 py-2 flex items-center justify-center gap-2 shadow-md relative z-10">
@@ -782,9 +783,9 @@ export default function ProviderDetailsPage() {
                   {initialsOf(owner.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-gray-900 truncate">{owner.name}</h4>
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{owner.name}</h4>
                   {user ? (
-                    <p className="text-xs text-gray-500">{owner.mobileNumber}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">{owner.mobileNumber}</p>
                   ) : (
                     <button
                       onClick={() => requireAuth(() => {})}
@@ -1266,6 +1267,7 @@ export default function ProviderDetailsPage() {
       </BottomSheet>
 
       {/* Report Sheet */}
+      </div>{/* end scroll wrapper */}
       {id && (
         <ReportSheet
           entityType="provider"

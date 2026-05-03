@@ -1461,6 +1461,7 @@ const ProviderOnboardingPage = () => {
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [isWomenLed, setIsWomenLed] = useState(false);
   const [detectedLocationLabel, setDetectedLocationLabel] = useState<
     string | null
   >(null);
@@ -1674,6 +1675,7 @@ const ProviderOnboardingPage = () => {
         aadhaarFile: values.identity_doc || undefined,
         latitude,
         longitude,
+        isWomenLed,
         categoryIds: selectedCategoryIds.length
           ? selectedCategoryIds
           : undefined,
@@ -1884,6 +1886,43 @@ const ProviderOnboardingPage = () => {
                           </button>
                         </div>
                       )}
+                    </div>
+
+                    {/* Women-Led Business Toggle */}
+                    <div className="px-4 mb-4">
+                      <div className={`p-4 rounded-2xl border-2 transition-colors ${
+                        isWomenLed
+                          ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-600"
+                          : "border-slate-200 bg-slate-50/50 dark:bg-slate-800 dark:border-slate-700"
+                      }`}>
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">♀</span>
+                              <h4 className="text-sm font-bold text-gray-800 dark:text-white">Women-Led Business</h4>
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
+                              Mark this if your business is owned or led by a woman. Women-led businesses get extra visibility, featured placement, and bonus free leads on Tijarah.
+                            </p>
+                            {isWomenLed && (
+                              <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1.5 font-medium">
+                                ✓ Admin verification required — your badge will appear once approved
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsWomenLed(!isWomenLed)}
+                            className={`shrink-0 w-12 h-7 rounded-full transition-colors relative ${
+                              isWomenLed ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-600"
+                            }`}
+                          >
+                            <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                              isWomenLed ? "translate-x-6" : "translate-x-1"
+                            }`} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <SectionHeader

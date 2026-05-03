@@ -132,6 +132,7 @@ export default function ProductDetailsPage() {
 
   return (
     <Page className="!bg-gray-50/80 dark:!bg-slate-900">
+      <div className="h-full overflow-y-auto overscroll-contain">
       <div className="relative">
         <div className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
           <img
@@ -496,6 +497,7 @@ export default function ProductDetailsPage() {
       </div>
 
       {/* Report Sheet */}
+      </div>{/* end scroll wrapper */}
       {id && (
         <ReportSheet
           entityType="product"

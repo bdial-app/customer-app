@@ -331,7 +331,7 @@ const ProviderHome = () => {
                   title="Service"
                   titleWrapClassName="text-sm"
                   after={
-                    <span className="text-slate-800">{details.service}</span>
+                    <span className="text-slate-800 dark:text-slate-200">{details.service}</span>
                   }
                   media={
                     <IonIcon
@@ -366,7 +366,7 @@ const ProviderHome = () => {
                   title="Phone"
                   titleWrapClassName="text-sm"
                   after={
-                    <span className="text-slate-800">{details.phone}</span>
+                    <span className="text-slate-800 dark:text-slate-200">{details.phone}</span>
                   }
                   media={
                     <IonIcon icon={callOutline} className="text-slate-400" />
@@ -398,7 +398,7 @@ const ProviderHome = () => {
                   title="Experience"
                   titleWrapClassName="text-sm"
                   after={
-                    <span className="text-slate-800">{details.experience}</span>
+                    <span className="text-slate-800 dark:text-slate-200">{details.experience}</span>
                   }
                   media={
                     <IonIcon icon={mapOutline} className="text-slate-400" />

@@ -89,6 +89,10 @@ const UserHome = memo(() => {
     () => (feed?.forYouProviders || []).map(mapProvider),
     [feed?.forYouProviders],
   );
+  const womenLedProviders = useMemo(
+    () => (feed?.womenLedProviders || []).map(mapProvider),
+    [feed?.womenLedProviders],
+  );
   const personalizedCategories = feed?.personalizedCategories || null;
 
   return (
@@ -146,6 +150,21 @@ const UserHome = memo(() => {
               providers={forYouProviders}
               viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
               accentColor="#8B5CF6"
+              isLoading={isLoading}
+            />
+          </>
+        )}
+
+        {/* ♀ Women-Led Businesses — purple themed section */}
+        {womenLedProviders.length > 0 && (
+          <>
+            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
+            <ProviderCardSlider
+              title="Women-Led Businesses"
+              subtitle="Support women entrepreneurs"
+              providers={womenLedProviders}
+              viewAllLink="/women-led"
+              accentColor="#9333EA"
               isLoading={isLoading}
             />
           </>

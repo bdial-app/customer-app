@@ -38,6 +38,7 @@ export const SAVED_LOCATION_URLS = {
 export const PROVIDER_URLS = {
   NEARBY: "/providers/nearby",
   FEATURED: "/providers/featured",
+  WOMEN_LED: "/providers/women-led",
   BY_ID: (id: string) => `/providers/${id}`,
   DETAILS: (id: string) => `/providers/${id}/details`,
   UPDATE: (id: string) => `/providers/${id}`,

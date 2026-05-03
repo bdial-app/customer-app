@@ -50,6 +50,7 @@ export interface BecomeProviderPayload {
   latitude?: string;
   longitude?: string;
   aadhaarFile?: File;
+  isWomenLed?: boolean;
   categoryIds?: string[];
   products?: Array<{ name: string; description?: string; price?: number; currency?: string; imageCount?: number }>;
   productImages?: File[];
@@ -110,6 +111,30 @@ export const getNearbyProviders = async (
   params: ProviderNearbyParams,
 ): Promise<NearbyProviderResponse> => {
   const { data } = await apiClient.get(PROVIDER_URLS.NEARBY, { params });
+  return data;
+};
+
+export interface WomenLedHubParams {
+  page?: number;
+  limit?: number;
+  city?: string;
+  categoryIds?: string;
+  sortBy?: 'rating' | 'newest' | 'reviews';
+  minRating?: number;
+  lat?: number;
+  lng?: number;
+}
+
+export interface WomenLedHubResponse {
+  providers: any[];
+  stats: { total: number; categoriesCovered: number; avgRating: number };
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+export const getWomenLedHub = async (
+  params: WomenLedHubParams,
+): Promise<WomenLedHubResponse> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.WOMEN_LED, { params });
   return data;
 };
 
