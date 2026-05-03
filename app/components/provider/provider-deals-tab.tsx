@@ -152,7 +152,7 @@ const ProviderDealsTab = () => {
   }
 
   return (
-    <div className="relative min-h-[60vh]">
+    <div className="min-h-[60vh]">
       {/* Limits Banner */}
       {limits && (
         <div className="px-4 mb-3">
@@ -326,15 +326,16 @@ const ProviderDealsTab = () => {
         </div>
       )}
 
-      {/* FAB */}
-      {offers.length > 0 && (
+      {/* FAB — rendered via portal for true fixed positioning */}
+      {offers.length > 0 && typeof document !== "undefined" && createPortal(
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleAdd}
-          className="fixed bottom-28 right-5 z-30 w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/30"
+          className="fixed bottom-24 right-5 z-[60] w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/30"
         >
           <IonIcon icon={addOutline} className="text-2xl" />
-        </motion.button>
+        </motion.button>,
+        document.body,
       )}
 
       {/* Full-screen Form Modal */}

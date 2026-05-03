@@ -49,6 +49,12 @@ body {
   width: 100%;
 }
 
+/* Next.js root must fill viewport for absolute-positioned children */
+#__next, [data-nextjs-scroll-focus-boundary] {
+  height: 100%;
+  position: relative;
+}
+
 /* All interactive elements: fast tap, no highlight */
 button, a, [role="button"], input, select, textarea {
   touch-action: manipulation;
@@ -75,10 +81,16 @@ input, textarea, [contenteditable="true"] {
 .tab-panel {
   will-change: auto;
   contain: layout style;
+  overscroll-behavior: contain;
 }
 
 .tab-panel[style*="display: none"] {
   contain: strict;
+}
+
+/* Force Konsta Page to not scroll — tabs handle their own scroll */
+.k-page {
+  overflow: hidden !important;
 }
 
 /* Hide native search clear button across all browsers */
@@ -93,10 +105,16 @@ input[type="search"]::-webkit-search-decoration {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Prevent scroll chaining on ALL scrollable elements — no scroll leaks to parent */
+[class*="overflow-y-auto"],
+[class*="overflow-auto"],
+[style*="overflow"] {
+  overscroll-behavior: contain;
+}
+
 /* Safe area support for notched devices */
 body {
   padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Skeleton shimmer animation */

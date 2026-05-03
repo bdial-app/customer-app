@@ -277,7 +277,7 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
               onClick={() => open(idx)}
               className={`
                 relative overflow-hidden
-                bg-gray-100 dark:bg-neutral-900
+                bg-gray-100 dark:bg-slate-800
                 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500
                 active:opacity-70 active:scale-[0.98] transition-all duration-150
                 ${idx === 0 ? "rounded-tl-2xl" : ""}

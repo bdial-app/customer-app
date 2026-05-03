@@ -21,15 +21,15 @@ const CATEGORY_COLORS = [
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.03 } },
+  show: { transition: { staggerChildren: 0.015 } },
 };
 
 const cardItem = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { opacity: 0, y: 6 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { type: "tween" as const, duration: 0.25, ease: "easeOut" as const },
+    transition: { type: "tween" as const, duration: 0.15, ease: "easeOut" as const },
   },
 };
 

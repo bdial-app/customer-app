@@ -19,8 +19,8 @@ export default function NotificationBell({ onClick, className = "" }: Notificati
     >
       <IonIcon icon={notificationsOutline} className="text-xl text-white" />
       {unreadCount > 0 && (
-        <div className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center px-1 border-2 border-slate-900">
-          <span className="text-[9px] font-bold text-white leading-none">
+        <div className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] rounded-full bg-red-500 flex items-center justify-center px-[3px] ring-2 ring-slate-900">
+          <span className="text-[8px] font-bold text-white leading-none tracking-tight">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         </div>

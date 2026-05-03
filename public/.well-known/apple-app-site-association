@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.tijarah.app",
+        "paths": [
+          "/provider-details*",
+          "/product-details*",
+          "/search*",
+          "/provider-onboarding/*",
+          "/deals*",
+          "/categories*",
+          "/all-services*",
+          "/service-providers*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.com.tijarah.app"
+    ]
+  }
+}

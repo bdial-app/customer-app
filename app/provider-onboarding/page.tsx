@@ -1507,13 +1507,9 @@ const ProviderOnboardingPage = () => {
     if (!formikRef.current) return;
     setIsDetectingLocation(true);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 10000,
-          enableHighAccuracy: true,
-        }),
-      );
-      const { latitude: lat, longitude: lng } = pos.coords;
+      const { getCurrentPosition } = await import("@/utils/geolocation");
+      const pos = await getCurrentPosition({ timeout: 10000, enableHighAccuracy: true });
+      const { latitude: lat, longitude: lng } = pos;
       setDetectedCoords({ lat, lng });
 
       try {
@@ -1726,7 +1722,7 @@ const ProviderOnboardingPage = () => {
   }
 
   return (
-    <Page>
+    <Page className="!bg-white dark:!bg-slate-900">
       <Navbar
         title="Become a Provider"
         leftClassName="w-11"

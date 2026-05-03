@@ -81,7 +81,7 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col pb-20">
       {/* Search bar */}
       <div className="px-4 pt-2 pb-1">
         <div className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3.5 py-2.5">

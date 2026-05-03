@@ -12,6 +12,7 @@ export const useTopLevelCategories = () => {
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    placeholderData: (prev: any) => prev, // Show cached data instantly
   });
 };
 

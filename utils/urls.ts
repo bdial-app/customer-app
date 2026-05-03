@@ -58,10 +58,12 @@ export const PROVIDER_URLS = {
   ENABLE_PROVIDER: "/providers/my-provider/enable",
   DELETE_PROVIDER: "/providers/my-provider",
   COOLDOWN_STATUS: "/providers/my-provider/cooldown-status",
+  UPDATE_CATEGORIES: (id: string) => `/providers/${id}/categories`,
 };
 
 export const PHOTO_URLS = {
   UPLOAD_PROVIDER: (providerId: string) => `/photos/provider/${providerId}`,
+  UPLOAD_PROFILE_IMAGE: (providerId: string) => `/photos/provider/${providerId}/profile-image`,
   DELETE_PROVIDER: (photoId: string) => `/photos/provider/${photoId}`,
   REORDER_PROVIDER: (providerId: string) => `/photos/provider/${providerId}/reorder`,
 };

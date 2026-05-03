@@ -1,7 +1,7 @@
 "use client";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useRouter } from "next/navigation";
-import { useRef, useMemo, lazy, Suspense, useCallback, memo, useState, useEffect } from "react";
+import { useRef, useMemo, lazy, Suspense, useCallback, memo } from "react";
 import HeroSearchBar from "./home/hero-search-bar";
 import QuickCategories from "./home/quick-categories";
 import PromoBannerCarousel from "./home/promo-banner-carousel";
@@ -16,7 +16,6 @@ import { useAppSelector } from "@/hooks/useAppStore";
 import { useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "./pull-to-refresh";
 import { inflateIfLow } from "@/utils/inflate-stats";
-import HomeSplashScreen from "./home/home-splash-screen";
 
 // Lazy load below-fold sections — they are not visible on initial viewport
 const CommunityReviews = lazy(() => import("./home/community-reviews"));
@@ -54,16 +53,6 @@ const UserHome = memo(() => {
     lng: user?.longitude ?? undefined,
     city: user?.city ?? undefined,
   });
-
-  // Show splash until data is ready + brief settle time for images to start loading
-  const [showSplash, setShowSplash] = useState(true);
-  useEffect(() => {
-    if (!isLoading && feed) {
-      // Give images a brief moment to begin loading before revealing
-      const timer = setTimeout(() => setShowSplash(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, feed]);
 
   // Pull-to-refresh handler — invalidates home feed queries
   const handleRefresh = useCallback(async () => {
@@ -103,11 +92,8 @@ const UserHome = memo(() => {
   const personalizedCategories = feed?.personalizedCategories || null;
 
   return (
-    <>
-    {showSplash && <HomeSplashScreen />}
-    <div className={showSplash ? "h-0 overflow-hidden opacity-0" : "h-full opacity-100 transition-opacity duration-500"}>
     <PullToRefresh onRefresh={handleRefresh}>
-      <div ref={scrollRef} className="flex flex-col pb-24 overflow-x-hidden">
+      <div ref={scrollRef} className="flex flex-col pb-20 overflow-x-hidden">
         {/* === HERO SECTION — dark gradient continuation from header === */}
         <div
           className="relative overflow-hidden"
@@ -336,8 +322,6 @@ const UserHome = memo(() => {
         </div>
       </div>
     </PullToRefresh>
-    </div>
-    </>
   );
 });
 

@@ -4,5 +4,14 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:tijarah.com</string>
+		<string>applinks:www.tijarah.com</string>
+		<string>applinks:develop.tijarah.com</string>
+		<string>applinks:www.develop.tijarah.com</string>
+		<string>applinks:uat.tijarah.com</string>
+		<string>applinks:www.uat.tijarah.com</string>
+	</array>
 </dict>
 </plist>

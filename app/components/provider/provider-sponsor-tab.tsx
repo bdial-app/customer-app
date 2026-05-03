@@ -17,6 +17,9 @@ import {
   arrowForwardOutline,
   shieldCheckmarkOutline,
   ticketOutline,
+  informationCircleOutline,
+  chevronDownOutline,
+  chevronUpOutline,
 } from "ionicons/icons";
 import {
   useSponsorshipPlans,
@@ -310,42 +313,110 @@ const ProviderSponsorTab = () => {
 
 // ─── Plan Card ──────────────────────────────────────────────────────
 
-const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: SponsorshipPlan) => void }) => (
-  <motion.div
-    whileTap={{ scale: 0.98 }}
-    onClick={() => onSelect(plan)}
-    className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 cursor-pointer transition-all ${
-      plan.recommended ? "border-teal-200 shadow-lg shadow-teal-100/50 dark:border-teal-700 dark:shadow-teal-900/30" : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
-    }`}
-  >
-    {plan.recommended && (
-      <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-        RECOMMENDED
-      </div>
-    )}
+const boostBenefits: Record<string, { where: string; benefit: string; tip: string }> = {
+  carousel: {
+    where: "Homepage featured carousel",
+    benefit: "Your business is shown prominently on the homepage carousel — the first thing customers see when they open the app.",
+    tip: "Best for brand awareness. Carousel placements typically get 3-5× more impressions than organic listings.",
+  },
+  inline: {
+    where: "In-feed search results",
+    benefit: "Your listing appears within search results marked as sponsored — customers discover you while actively browsing.",
+    tip: "Best for steady traffic. In-feed ads blend naturally and get high click-through rates from motivated searchers.",
+  },
+  top_result: {
+    where: "Top of search results",
+    benefit: "Your business appears as the very first result when customers search — maximum visibility for high-intent buyers.",
+    tip: "Best for conversions. Top-result placement captures customers who are ready to buy, driving up to 10× more leads.",
+  },
+};
 
-    <div className="flex items-start gap-3">
-      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${typeColors[plan.type]} flex items-center justify-center flex-shrink-0`}>
-        <IonIcon icon={typeIcons[plan.type]} className="text-white text-xl" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white">{plan.name}</h4>
-          <span className="text-base font-bold text-teal-600">₹{plan.price}</span>
+const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: SponsorshipPlan) => void }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const benefits = boostBenefits[plan.type];
+
+  return (
+    <motion.div
+      whileTap={{ scale: 0.98 }}
+      className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 transition-all ${
+        plan.recommended ? "border-teal-200 shadow-lg shadow-teal-100/50 dark:border-teal-700 dark:shadow-teal-900/30" : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
+      }`}
+    >
+      {plan.recommended && (
+        <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+          RECOMMENDED
         </div>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          {plan.features.map((f, i) => (
-            <span key={i} className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-              <IonIcon icon={checkmarkCircle} className="text-emerald-400 text-[10px]" />
-              {f}
-            </span>
-          ))}
+      )}
+
+      <div className="flex items-start gap-3" onClick={() => onSelect(plan)}>
+        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${typeColors[plan.type]} flex items-center justify-center flex-shrink-0`}>
+          <IonIcon icon={typeIcons[plan.type]} className="text-white text-xl" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white">{plan.name}</h4>
+            <span className="text-base font-bold text-teal-600">₹{plan.price}</span>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {plan.features.map((f, i) => (
+              <span key={i} className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+                <IonIcon icon={checkmarkCircle} className="text-emerald-400 text-[10px]" />
+                {f}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  </motion.div>
-);
+
+      {/* Expandable "How it works" section */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+        className="flex items-center gap-1 mt-3 text-[11px] font-semibold text-teal-600 dark:text-teal-400"
+      >
+        <IonIcon icon={informationCircleOutline} className="text-sm" />
+        How it helps you
+        <IonIcon icon={isExpanded ? chevronUpOutline : chevronDownOutline} className="text-xs" />
+      </button>
+
+      <AnimatePresence>
+        {isExpanded && benefits && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 space-y-2.5">
+              <div className="flex gap-2">
+                <IonIcon icon={eyeOutline} className="text-blue-500 text-sm flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">Where you appear</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{benefits.where}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <IonIcon icon={trendingUpOutline} className="text-emerald-500 text-sm flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">What it does</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{benefits.benefit}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <IonIcon icon={flashOutline} className="text-amber-500 text-sm flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">Pro tip</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{benefits.tip}</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
 
 // ─── Active/Past Sponsorship Card ───────────────────────────────────
 

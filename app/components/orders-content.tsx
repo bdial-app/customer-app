@@ -171,7 +171,7 @@ const OrdersContent = () => {
   ).length;
 
   return (
-    <div className="flex flex-col pb-4">
+    <div className="flex flex-col pb-20">
       {/* Stats strip */}
       <div className="px-4 pt-2 pb-3">
         <div className="flex gap-3">
@@ -268,7 +268,7 @@ const OrdersContent = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.04 }}
-                  className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
+                  className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden"
                 >
                   {/* In progress live indicator */}
                   {booking.status === "in_progress" && (
@@ -373,7 +373,7 @@ const OrdersContent = () => {
                       )}
 
                       {booking.status === "completed" && booking.rated && (
-                        <div className="flex items-center gap-1 px-3 py-2 bg-slate-50 rounded-xl">
+                        <div className="flex items-center gap-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl">
                           <span className="text-[11px] text-slate-500">
                             You rated
                           </span>
@@ -415,7 +415,7 @@ const OrdersContent = () => {
                   {/* Progress tracker for in_progress */}
                   {booking.status === "in_progress" && (
                     <div className="px-3.5 pb-3.5">
-                      <div className="bg-slate-50 rounded-xl p-3">
+                      <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3">
                         <div className="flex items-center gap-3">
                           {[
                             { label: "Booked", done: true },

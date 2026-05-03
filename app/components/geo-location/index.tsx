@@ -37,6 +37,7 @@ import {
   mapOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { getCurrentPosition } from "@/utils/geolocation";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 const DEFAULT_MAP_CENTER = { lat: 18.5204, lng: 73.8567 };
@@ -138,34 +139,31 @@ const GeoLocation = () => {
     });
   };
 
-  const handleUseCurrentLocation = () => {
-    if (typeof window === "undefined" || !navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        if (user) {
-          dispatch(setProfile({ ...user, latitude, longitude }));
-          updateUserMutation.mutate({ latitude, longitude });
-        } else {
-          dispatch(setGuestCoords({ lat: latitude, lng: longitude }));
-        }
-        if (addressData) {
-          dispatch(
-            addRecentLocation({
-              placeId: addressData.placeId,
-              description: addressData.fullAddress,
-              mainText: addressData.label,
-              secondaryText: "",
-              lat: latitude,
-              lng: longitude,
-            }),
-          );
-        }
-        setOpen(false);
-      },
-      () => {},
-    );
+  const handleUseCurrentLocation = async () => {
+    try {
+      const { latitude, longitude } = await getCurrentPosition({ timeout: 10000 });
+      if (user) {
+        dispatch(setProfile({ ...user, latitude, longitude }));
+        updateUserMutation.mutate({ latitude, longitude });
+      } else {
+        dispatch(setGuestCoords({ lat: latitude, lng: longitude }));
+      }
+      if (addressData) {
+        dispatch(
+          addRecentLocation({
+            placeId: addressData.placeId,
+            description: addressData.fullAddress,
+            mainText: addressData.label,
+            secondaryText: "",
+            lat: latitude,
+            lng: longitude,
+          }),
+        );
+      }
+      setOpen(false);
+    } catch {
+      // silently ignore – user denied or timed out
+    }
   };
 
   const handleDragEnd = (_: any, info: PanInfo) => {
@@ -204,32 +202,29 @@ const GeoLocation = () => {
     }
   }, []);
 
-  const handleMapLocateMe = useCallback(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        const newPos = { lat, lng };
-        setMapMarker(newPos);
-        setMapSearchQuery("");
-        setMapSearchResults([]);
-        if (mapRef.current) {
-          mapRef.current.panTo(newPos);
-          mapRef.current.setZoom(16);
-        }
-        setIsMapReverseLoading(true);
-        try {
-          const geo = await reverseGeocodeApi({ lat, lng });
-          setMapAddress(geo.fullAddress || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-        } catch {
-          setMapAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-        } finally {
-          setIsMapReverseLoading(false);
-        }
-      },
-      () => {},
-      { timeout: 10000 },
-    );
+  const handleMapLocateMe = useCallback(async () => {
+    try {
+      const { latitude: lat, longitude: lng } = await getCurrentPosition({ timeout: 10000 });
+      const newPos = { lat, lng };
+      setMapMarker(newPos);
+      setMapSearchQuery("");
+      setMapSearchResults([]);
+      if (mapRef.current) {
+        mapRef.current.panTo(newPos);
+        mapRef.current.setZoom(16);
+      }
+      setIsMapReverseLoading(true);
+      try {
+        const geo = await reverseGeocodeApi({ lat, lng });
+        setMapAddress(geo.fullAddress || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      } catch {
+        setMapAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      } finally {
+        setIsMapReverseLoading(false);
+      }
+    } catch {
+      // silently ignore
+    }
   }, []);
 
   const handleMapSearch = useCallback((query: string) => {
@@ -479,13 +474,13 @@ const GeoLocation = () => {
                               key={loc.id}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => handleSelectSavedLocation(loc)}
-                              className="shrink-0 flex items-center gap-2 bg-white border border-slate-150 shadow-sm rounded-xl px-3 py-2.5"
+                              className="shrink-0 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-700 shadow-sm rounded-xl px-3 py-2.5"
                             >
-                              <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center">
-                                <IonIcon icon={savedLocationIcon(loc.title)} className="text-sm text-slate-500" />
+                              <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center">
+                                <IonIcon icon={savedLocationIcon(loc.title)} className="text-sm text-slate-500 dark:text-slate-400" />
                               </div>
                               <div className="text-left">
-                                <p className="text-[12px] font-semibold text-slate-800 capitalize leading-tight">{loc.title}</p>
+                                <p className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 capitalize leading-tight">{loc.title}</p>
                                 <p className="text-[10px] text-slate-400 line-clamp-1 max-w-[120px]">{loc.label}</p>
                               </div>
                             </motion.button>
@@ -494,9 +489,9 @@ const GeoLocation = () => {
                           <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={handleAddAddress}
-                            className="shrink-0 flex items-center gap-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3 py-2.5"
+                            className="shrink-0 flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5"
                           >
-                            <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center">
+                            <div className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 flex items-center justify-center">
                               <IonIcon icon={addOutline} className="text-sm text-slate-400" />
                             </div>
                             <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">Add New</span>
@@ -510,13 +505,13 @@ const GeoLocation = () => {
                       <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={handleAddAddress}
-                        className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-3.5 text-left"
+                        className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-left"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                          <IonIcon icon={addOutline} className="text-xl text-slate-500" />
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                          <IonIcon icon={addOutline} className="text-xl text-slate-500 dark:text-slate-400" />
                         </div>
                         <div>
-                          <p className="text-[13px] font-semibold text-slate-800">Add New Address</p>
+                          <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">Add New Address</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">Home, Work, or Other</p>
                         </div>
                       </motion.button>
@@ -527,9 +522,9 @@ const GeoLocation = () => {
                       <div className="mt-4">
                         <div className="flex items-center gap-2 px-4 mb-2">
                           <IonIcon icon={timeOutline} className="text-sm text-slate-400" />
-                          <h3 className="text-[13px] font-bold text-slate-700">Recent</h3>
+                          <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Recent</h3>
                         </div>
-                        <div className="mx-4 bg-white border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-50">
+                        <div className="mx-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
                           {recentLocations.slice(0, 5).map((loc) => (
                             <motion.button
                               key={loc.placeId}
@@ -537,11 +532,11 @@ const GeoLocation = () => {
                               onClick={() => handleSelectLocation(loc)}
                               className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
                             >
-                              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+                              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0">
                                 <IonIcon icon={timeOutline} className="text-sm text-slate-400" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium text-slate-800 line-clamp-1">{loc.mainText}</p>
+                                <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200 line-clamp-1">{loc.mainText}</p>
                                 <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{loc.description}</p>
                               </div>
                             </motion.button>
@@ -574,7 +569,7 @@ const GeoLocation = () => {
                     )}
 
                     {searchResults && searchResults.length > 0 && (
-                      <div className="mx-4 bg-white border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-50">
+                      <div className="mx-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
                         {searchResults.map((loc, i) => (
                           <motion.button
                             key={loc.placeId}

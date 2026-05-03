@@ -1,5 +1,6 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, checkmarkDoneOutline } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +25,8 @@ export default function NotificationList({ open, onClose }: NotificationListProp
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const { data, isLoading } = useNotifications(page, undefined, filter);
   const markRead = useMarkAsRead();
@@ -52,7 +55,9 @@ export default function NotificationList({ open, onClose }: NotificationListProp
   const notifications = data?.data || [];
   const meta = data?.meta;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -154,6 +159,7 @@ export default function NotificationList({ open, onClose }: NotificationListProp
           )}
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

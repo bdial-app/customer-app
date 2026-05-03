@@ -78,7 +78,7 @@ const SavedContent = memo(() => {
   }), [savedItems]);
 
   return (
-    <div className="pb-4">
+    <div className="pb-20">
       {/* ── Summary Strip ── */}
       <div className="mx-4 mt-3 mb-4">
         <div className="bg-gradient-to-r from-violet-600 to-purple-700 rounded-2xl p-4 relative overflow-hidden">

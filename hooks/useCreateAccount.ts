@@ -32,42 +32,27 @@ export const useCreateAccount = (initialMobile?: string) => {
     }, 1000);
   }, []);
 
-  const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) {
+  const requestLocation = useCallback(async () => {
+    try {
+      const { getCurrentPosition } = await import("@/utils/geolocation");
+      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      setLocation({ lat: pos.latitude, lng: pos.longitude });
       notify({
-        title: "Geolocation Error",
-        subtitle: "Your browser does not support geolocation.",
-        variant: "error",
+        title: "Location Secured",
+        subtitle: "We've accurately pinned your location.",
+        variant: "success",
       });
-      return;
+    } catch (error: any) {
+      const message =
+        error?.code === 1 || error?.message?.includes("denied")
+          ? "Location access denied. Please enable it in settings and try again."
+          : "Please enable location to complete registration.";
+      notify({
+        title: "Location Required",
+        subtitle: message,
+        variant: "warning",
+      });
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        notify({
-          title: "Location Secured",
-          subtitle: "We've accurately pinned your location.",
-          variant: "success",
-        });
-      },
-      (error) => {
-        let message = "Please enable location to complete registration.";
-        if (error.code === error.PERMISSION_DENIED) {
-          message =
-            "Location access denied. Please enable it in browser settings and try again.";
-        }
-        notify({
-          title: "Location Required",
-          subtitle: message,
-          variant: "warning",
-        });
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   }, [notify]);
 
   useEffect(

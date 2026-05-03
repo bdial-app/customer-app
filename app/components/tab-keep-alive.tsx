@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect, useCallback, ReactNode } from "react";
+import { useRef, useEffect, ReactNode } from "react";
 
 interface TabPanelProps {
   id: string;
@@ -9,7 +9,8 @@ interface TabPanelProps {
 
 /**
  * Keeps tab content mounted but hidden when inactive.
- * Preserves scroll position per tab, restoring on re-activation.
+ * Each TabPanel is its own scroll container that fills the viewport.
+ * Preserves scroll position per tab.
  */
 export function TabPanel({ id, activeTab, children }: TabPanelProps) {
   const isActive = activeTab === id;
@@ -33,14 +34,10 @@ export function TabPanel({ id, activeTab, children }: TabPanelProps) {
   return (
     <div
       ref={containerRef}
-      className="tab-panel"
+      className="tab-panel absolute inset-0 bg-white dark:bg-slate-900 overflow-y-auto overscroll-contain"
       style={{
         display: isActive ? "block" : "none",
-        height: "100%",
-        overflow: isActive ? "auto" : "hidden",
-        // Prevent layout recalculation while hidden
-        containIntrinsicSize: isActive ? undefined : "auto 100vh",
-        contentVisibility: isActive ? "visible" : "hidden",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       {children}

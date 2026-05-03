@@ -300,7 +300,7 @@ function BannerCarousel({
               className={`rounded-full transition-all duration-300 ${
                 i === current
                   ? "w-5 h-1.5 bg-amber-500"
-                  : "w-1.5 h-1.5 bg-gray-300"
+                  : "w-1.5 h-1.5 bg-slate-300 dark:bg-slate-600"
               }`}
             />
           ))}
@@ -523,7 +523,7 @@ const ExploreContent = memo(() => {
   );
 
   return (
-    <div className="flex flex-col pb-4">
+    <div className="flex flex-col pb-20">
 
       {/* ── 1. Search Bar ── */}
       <div className="px-4 pt-2 pb-1">

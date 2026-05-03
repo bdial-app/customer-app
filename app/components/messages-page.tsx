@@ -530,7 +530,7 @@ export default function MessagesPage({
                     transition={{ duration: 0.2 }}
                     className={`max-w-[78%] px-3 py-2 ${
                       isSent
-                        ? `bg-[#1a1a2e] text-white ${
+                        ? `bg-slate-800 dark:bg-slate-700 text-white ${
                             isFirst && isLast
                               ? "rounded-2xl rounded-br-md"
                               : isFirst
@@ -702,7 +702,7 @@ export default function MessagesPage({
             disabled={sendMutation.isPending || uploadMutation.isPending}
             className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 transition-colors ${
               messageText.trim() || attachedFile
-                ? "bg-[#1a1a2e] shadow-lg"
+                ? "bg-slate-800 dark:bg-slate-600 shadow-lg"
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
           >

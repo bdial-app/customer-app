@@ -33,6 +33,22 @@ import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 import FeatureGate from "./components/feature-gate";
 
+/** Sticky header used inside individual TabPanels */
+function TabHeader({ title }: { title: string }) {
+  return (
+    <div
+      className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
+      style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+    >
+      <div className="px-4 py-3 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+          {title}
+        </h1>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -165,36 +181,11 @@ export default function Home() {
 
   return (
     <Page
-      className="!overflow-x-hidden dark:!bg-slate-900"
-      style={{
-        background:
-          activeTab === "home" && userMode === "customer"
-            ? undefined
-            : undefined,
-      }}
+      className="!overflow-hidden !bg-white dark:!bg-slate-900"
     >
-      {/* Modern header for non-home tabs (skip for provider views which have own headers) */}
-      {activeTab !== "home" &&
-        !(
-          userMode === "provider" &&
-          (activeTab === "listings" || activeTab === "analytics")
-        ) && (
-          <div
-            className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
-            style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
-          >
-            <div className="px-4 py-3 flex items-center justify-between">
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
-                {getPageTitle()}
-              </h1>
-            </div>
-          </div>
-        )}
-
-      {activeTab === "home" && userMode === "customer" && <GeoLocation />}
-
-      {/* Tab panels — mounted once, kept alive to prevent re-renders/refetches */}
+      {/* Tab panels — absolute inset-0, each is its own scroll container */}
       <TabPanel id="home" activeTab={activeTab}>
+        {userMode === "customer" && <GeoLocation />}
         {userMode === "customer" ? (
           <UserHome />
         ) : (
@@ -203,10 +194,12 @@ export default function Home() {
       </TabPanel>
 
       <LazyTabPanel id="explore" activeTab={activeTab}>
+        <TabHeader title="Explore" />
         <ExploreContent />
       </LazyTabPanel>
 
       <LazyTabPanel id="saved" activeTab={activeTab}>
+        <TabHeader title="Saved" />
         <SavedContent />
       </LazyTabPanel>
 
@@ -218,6 +211,7 @@ export default function Home() {
       </LazyTabPanel>
 
       <LazyTabPanel id="chats" activeTab={activeTab}>
+        <TabHeader title="Messages" />
         <FeatureGate flag="chat_enabled">
           {userMode === "provider" ? (
             <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
@@ -228,6 +222,7 @@ export default function Home() {
       </LazyTabPanel>
 
       <LazyTabPanel id="profile" activeTab={activeTab}>
+        <TabHeader title="My Profile" />
         <ProfileContent />
       </LazyTabPanel>
 
@@ -239,9 +234,6 @@ export default function Home() {
       {userMode === "provider" && providerStatus === "suspended" && (
         <ProviderSuspendedOverlay />
       )}
-
-      {/* Spacer for floating bottom bar */}
-      <div className="h-24"></div>
 
       {/* Provider notification nudge — only shown in customer mode for logged-in users */}
       <AnimatePresence>

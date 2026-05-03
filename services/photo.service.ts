@@ -29,3 +29,20 @@ export const reorderProviderPhotos = async (
 ): Promise<void> => {
   await apiClient.patch(PHOTO_URLS.REORDER_PROVIDER(providerId), { orderedIds });
 };
+
+export const uploadProviderProfileImage = async (
+  providerId: string,
+  file: File,
+  field: "bannerImageUrl" | "profilePhotoUrl",
+): Promise<{ url: string; field: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("field", field);
+
+  const { data } = await apiClient.post(
+    PHOTO_URLS.UPLOAD_PROFILE_IMAGE(providerId),
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return data;
+};

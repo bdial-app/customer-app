@@ -1054,7 +1054,7 @@ export default function ProviderDetailsPage() {
                   },
                 });
               });
-            }} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50 ${isSponsored ? "bg-white border-2 border-amber-200 text-amber-800 shadow-amber-100" : "bg-white border border-gray-200 text-gray-700"}`}>
+            }} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50 ${isSponsored ? "bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 shadow-amber-100 dark:shadow-none" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200"}`}>
               <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
               {isCreatingChat ? "Opening..." : "Message"}
             </button>

@@ -275,6 +275,17 @@ export const updateProvider = async (
   return data;
 };
 
+export const updateProviderCategories = async (
+  id: string,
+  categoryIds: string[],
+): Promise<{ id: string; name: string; slug: string }[]> => {
+  const { data } = await apiClient.patch(
+    PROVIDER_URLS.UPDATE_CATEGORIES(id),
+    { categoryIds },
+  );
+  return data;
+};
+
 export const submitVerification = async (
   file: File,
   docType?: string,

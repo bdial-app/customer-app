@@ -24,9 +24,14 @@ import { pauseCircleOutline } from "ionicons/icons";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persist";
+import { useDeepLinks } from "@/hooks/useDeepLinks";
+import { resolveDeepLink } from "@/utils/deep-link";
+import { isNativePlatform } from "@/utils/platform";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
+import PermissionPrompt from "./components/permission-prompt";
+import PermissionReminderBanner from "./components/permission-reminder-banner";
 
 function LanguageSyncBridge() {
   useLanguageSync();
@@ -74,6 +79,11 @@ function PwaHistoryGuard() {
   return null;
 }
 
+function DeepLinkBridge() {
+  useDeepLinks();
+  return null;
+}
+
 function PushNotificationBridge() {
   usePushNotifications();
   const router = useRouter();
@@ -92,36 +102,10 @@ function PushNotificationBridge() {
     // Listen for native notification taps (Capacitor) — deep link navigation
     const handleNativeTap = (e: Event) => {
       const data = (e as CustomEvent).detail || {};
-      let targetUrl = "/";
-
-      if (data.route) {
-        const params = data.params ? (typeof data.params === "string" ? JSON.parse(data.params) : data.params) : {};
-
-        switch (data.route) {
-          case "/provider-details":
-            if (params.id) {
-              targetUrl = `/provider-details?id=${params.id}`;
-              if (params.tab) targetUrl += `&tab=${params.tab}`;
-            }
-            break;
-          case "/product-details":
-            if (params.id) targetUrl = `/product-details?id=${params.id}`;
-            break;
-          case "/chat":
-            if (params.conversationId) {
-              targetUrl = `/?tab=chats&conversationId=${params.conversationId}`;
-            } else {
-              targetUrl = "/?tab=chats";
-            }
-            break;
-          case "/provider-onboarding/verify":
-            targetUrl = "/provider-onboarding/verify";
-            break;
-          default:
-            targetUrl = data.route.startsWith("/") ? data.route : "/";
-        }
-      }
-
+      const params = data.params
+        ? typeof data.params === "string" ? JSON.parse(data.params) : data.params
+        : {};
+      const targetUrl = resolveDeepLink({ route: data.route, params });
       router.push(targetUrl);
     };
     window.addEventListener("native-notification-tap", handleNativeTap);
@@ -270,10 +254,13 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <AuthGateProvider>
               <LanguageSyncBridge />
               <PushNotificationBridge />
+              <DeepLinkBridge />
               <PwaHistoryGuard />
+              {isNativePlatform() && <PermissionPrompt />}
               <NotificationProvider>
                 <App theme="ios">
                   <MaintenanceGate>
+                  {isNativePlatform() && <PermissionReminderBanner />}
                   <OfflineBanner />
                   <AppUpdatePrompt />
                   <AppToast />

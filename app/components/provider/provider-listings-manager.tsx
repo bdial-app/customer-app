@@ -10,6 +10,7 @@ import {
   pricetagsOutline,
   rocketOutline,
   diamondOutline,
+  gridOutline,
 } from "ionicons/icons";
 import ProviderDetailsTab from "./provider-details-tab";
 import ProviderProductsTab from "./provider-products-tab";
@@ -18,11 +19,12 @@ import ProviderReviewsTab from "./provider-reviews-tab";
 import ProviderDealsTab from "./provider-deals-tab";
 import ProviderSponsorTab from "./provider-sponsor-tab";
 import ProviderSubscriptionTab from "./provider-subscription-tab";
+import ProviderCategoriesTab from "./provider-categories-tab";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useProviderDetails } from "@/hooks/useProvider";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 
-type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "plans" | "boost";
+type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "categories" | "plans" | "boost";
 
 const allTabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "details", label: "Details", icon: storefrontOutline },
@@ -30,6 +32,7 @@ const allTabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "photos", label: "Photos", icon: imagesOutline },
   { id: "reviews", label: "Reviews", icon: starOutline },
   { id: "deals", label: "Deals", icon: pricetagsOutline },
+  { id: "categories", label: "Categories", icon: gridOutline },
   { id: "plans", label: "Plans", icon: diamondOutline },
   { id: "boost", label: "Boost", icon: rocketOutline },
 ];
@@ -173,6 +176,13 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
 
       {activeTab === "deals" && (
         <ProviderDealsTab />
+      )}
+
+      {activeTab === "categories" && (
+        <ProviderCategoriesTab
+          providerId={providerId}
+          currentCategories={details?.categories ?? []}
+        />
       )}
 
       {activeTab === "plans" && (

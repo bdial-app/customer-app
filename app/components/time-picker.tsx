@@ -233,6 +233,7 @@ export default function TimePicker({
   const [portalPosition, setPortalPosition] = useState({ top: 0, right: 0 });
   const anchorRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isDark = typeof window !== "undefined" && document.documentElement.classList.contains("dark");
 
   // Parses both 24-hour ("09:00") and 12-hour ("9:00 AM") formats
   const parseTime = (str: string) => {
@@ -342,26 +343,28 @@ export default function TimePicker({
   return (
     <div className="relative">
       <style>{`
+        .dark [data-state="sel"]  { color: rgba(255,255,255,0.92) !important; font-weight: 600 !important; }
+        .dark [data-state="near"] { color: rgba(255,255,255,0.50) !important; }
         [data-state="sel"]  { color: rgba(0,0,0,0.88) !important; font-weight: 600 !important; }
         [data-state="near"] { color: rgba(0,0,0,0.55) !important; }
       `}</style>
 
       {/* List Item Style Toggle */}
       <div
-        className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 last:border-b-0 active:bg-slate-50 transition-colors"
+        className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 last:border-b-0 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
         onClick={() => (open ? setOpen(false) : handleOpen())}
         ref={anchorRef}
       >
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm text-slate-600">{label}</span>
+          <span className="text-sm text-slate-600 dark:text-slate-300">{label}</span>
         </div>
 
         {/* iOS style time pill */}
         <div
           className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
             open
-              ? "bg-[#0a84ff29] !text-[#0a84ff] shadow-md shadow-indigo-100 scale-105"
-              : "bg-slate-100 text-slate-800"
+              ? "bg-[#0a84ff29] !text-[#0a84ff] shadow-md shadow-indigo-100 dark:shadow-indigo-900/30 scale-105"
+              : "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white"
           }`}
         >
           {timeStr(committed)}
@@ -384,12 +387,13 @@ export default function TimePicker({
               transformOrigin: "top right",
               pointerEvents: "all",
               transition: "opacity 0.18s ease, transform 0.18s ease",
-              background: "rgba(255,255,255,0.72)",
+              background: isDark ? "rgba(30,41,59,0.92)" : "rgba(255,255,255,0.72)",
               backdropFilter: "blur(40px) saturate(1.9)",
               WebkitBackdropFilter: "blur(40px) saturate(1.9)",
-              border: "0.5px solid rgba(255,255,255,0.5)",
-              boxShadow:
-                "0 12px 32px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)",
+              border: isDark ? "0.5px solid rgba(255,255,255,0.1)" : "0.5px solid rgba(255,255,255,0.5)",
+              boxShadow: isDark
+                ? "0 12px 32px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.3)"
+                : "0 12px 32px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)",
               maxHeight: "90vh",
               overflowY: "auto",
             }}
@@ -414,10 +418,10 @@ export default function TimePicker({
                   zIndex: 4,
                   top: DRUM_H / 2 - ITEM_H / 2,
                   height: ITEM_H,
-                  background: "rgba(0,0,0,0.03)",
+                  background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)",
                   borderRadius: 8,
-                  borderTop: "0.5px solid rgba(0,0,0,0.05)",
-                  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+                  borderTop: isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(0,0,0,0.05)",
+                  borderBottom: isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(0,0,0,0.05)",
                 }}
               />
 
@@ -431,8 +435,9 @@ export default function TimePicker({
                   height: 60,
                   pointerEvents: "none",
                   zIndex: 3,
-                  background:
-                    "linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, transparent 100%)",
+                  background: isDark
+                    ? "linear-gradient(to bottom, rgba(30,41,59,0.9) 0%, transparent 100%)"
+                    : "linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, transparent 100%)",
                 }}
               />
               {/* Fade bottom */}
@@ -445,8 +450,9 @@ export default function TimePicker({
                   height: 60,
                   pointerEvents: "none",
                   zIndex: 3,
-                  background:
-                    "linear-gradient(to top, rgba(255,255,255,0.85) 0%, transparent 100%)",
+                  background: isDark
+                    ? "linear-gradient(to top, rgba(30,41,59,0.9) 0%, transparent 100%)"
+                    : "linear-gradient(to top, rgba(255,255,255,0.85) 0%, transparent 100%)",
                 }}
               />
 
@@ -477,7 +483,7 @@ export default function TimePicker({
             <div
               style={{
                 display: "flex",
-                borderTop: "0.5px solid rgba(0,0,0,0.08)",
+                borderTop: isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(0,0,0,0.08)",
                 padding: "8px",
                 gap: "8px",
               }}
@@ -490,10 +496,10 @@ export default function TimePicker({
                   padding: "13px 0",
                   fontSize: 16,
                   fontWeight: 400,
-                  color: "rgba(0,0,0,0.45)",
+                  color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)",
                   background: "transparent",
                   border: "none",
-                  borderRight: "0.5px solid rgba(0,0,0,0.12)",
+                  borderRight: isDark ? "0.5px solid rgba(255,255,255,0.1)" : "0.5px solid rgba(0,0,0,0.12)",
                   cursor: "pointer",
                   fontFamily: "inherit",
                 }}

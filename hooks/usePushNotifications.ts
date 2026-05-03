@@ -43,9 +43,6 @@ export function usePushNotifications() {
 
   const isNative = isNativePlatform();
 
-  // Derived: iOS but not installed as PWA (only relevant for web mode)
-  const isIOSNotStandalone = !isNative && isIOS() && !isStandalone();
-
   // ─── Check support & current permission on mount ───
   useEffect(() => {
     (async () => {
@@ -60,7 +57,7 @@ export function usePushNotifications() {
       }
 
       // Web/PWA path
-      if (isIOSNotStandalone) {
+      if (!isNative && isIOS() && !isStandalone()) {
         dispatch(setPermissionStatus("unsupported"));
         return;
       }
@@ -71,7 +68,7 @@ export function usePushNotifications() {
       }
       dispatch(setPermissionStatus(getPermissionStatus() as any));
     })();
-  }, [dispatch, isIOSNotStandalone, isNative]);
+  }, [dispatch, isNative]);
 
   // ─── Auto-register token if permission already granted & authenticated ───
   useEffect(() => {
@@ -102,12 +99,29 @@ export function usePushNotifications() {
     }
   }, [permissionStatus, isAuthenticated, fcmToken, dispatch, isNative]);
 
+  // ─── Native notification TAP listener (unconditional — must not be gated) ───
+  // Registered immediately on native regardless of auth/permission state so that
+  // cold-start taps (app killed → user taps notification) are never missed.
+  // Capacitor queues pushNotificationActionPerformed until a listener registers.
+  useEffect(() => {
+    if (!isNative) return;
+    const cleanup = addNativePushListeners({
+      onNotificationTap: (action) => {
+        const data = action.notification.data || {};
+        window.dispatchEvent(
+          new CustomEvent("native-notification-tap", { detail: data })
+        );
+      },
+    });
+    return cleanup;
+  }, [isNative]);
+
   // ─── Listen for foreground messages ───
   useEffect(() => {
     if (!isAuthenticated || permissionStatus !== "granted") return;
 
     if (isNative) {
-      // Native foreground push listener
+      // Native foreground push listener (no tap handler here — handled above)
       const cleanup = addNativePushListeners({
         onForegroundPush: (notification) => {
           qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
@@ -124,12 +138,6 @@ export function usePushNotifications() {
               })
             );
           }
-        },
-        onNotificationTap: (action) => {
-          const data = action.notification.data || {};
-          window.dispatchEvent(
-            new CustomEvent("native-notification-tap", { detail: data })
-          );
         },
       });
       unsubRef.current = cleanup;
@@ -226,7 +234,6 @@ export function usePushNotifications() {
     requestPermission,
     unregisterPush,
     isSupported: permissionStatus !== "unsupported",
-    isIOSNotStandalone,
   };
 }
 

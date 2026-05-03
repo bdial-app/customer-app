@@ -1,4 +1,6 @@
 "use client";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { IonIcon } from "@ionic/react";
 import { arrowBack } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,7 +53,9 @@ function SettingRow({
 export default function NotificationSettings({ open, onClose }: NotificationSettingsProps) {
   const { data: prefs, isLoading } = useNotificationPreferences();
   const updatePrefs = useUpdatePreferences();
-  const { permissionStatus, requestPermission, isSupported, pushError, isIOSNotStandalone } = usePushNotifications();
+  const { permissionStatus, requestPermission, isSupported, pushError } = usePushNotifications();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const handleToggle = (field: string, value: boolean) => {
     updatePrefs.mutate({ [field]: value });
@@ -66,7 +70,9 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
 
   const masterEnabled = prefs?.pushEnabled ?? true;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -101,24 +107,6 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
             </div>
           ) : (
             <div className="px-4 py-4 space-y-3">
-              {/* iOS not-standalone guidance */}
-              {isIOSNotStandalone && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-2xl p-4 mb-2">
-                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">
-                    Add to Home Screen Required
-                  </h3>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
-                    On iPhone and iPad, push notifications only work when the app is installed to your Home Screen.
-                  </p>
-                  <ol className="text-xs text-blue-600 dark:text-blue-400 list-decimal list-inside space-y-1">
-                    <li>Tap the <strong>Share</strong> button (square with arrow) in Safari</li>
-                    <li>Scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong></li>
-                    <li>Open the app from your Home Screen</li>
-                    <li>Come back here to enable push notifications</li>
-                  </ol>
-                </div>
-              )}
-
               {/* Push Permission Banner */}
               {isSupported && permissionStatus !== "granted" && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 mb-2">
@@ -259,6 +247,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
           )}
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

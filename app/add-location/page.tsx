@@ -27,6 +27,7 @@ import {
 import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
 import PrivateRoute from "@/app/components/private-route";
+import { getCurrentPosition } from "@/utils/geolocation";
 
 
 
@@ -161,25 +162,19 @@ const AddLocationContent = () => {
     }
   };
 
-  const handleLocateMe = useCallback(() => {
-    if (typeof window === "undefined" || !navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const newPos = { lat: latitude, lng: longitude };
-        setMarker(newPos);
-        getAddress(latitude, longitude);
-        if (mapRef.current) {
-          mapRef.current.panTo(newPos);
-          mapRef.current.setZoom(16);
-        }
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-      },
-      { timeout: 10000, maximumAge: 60000 },
-    );
+  const handleLocateMe = useCallback(async () => {
+    try {
+      const { latitude, longitude } = await getCurrentPosition({ timeout: 10000, maximumAge: 60000 });
+      const newPos = { lat: latitude, lng: longitude };
+      setMarker(newPos);
+      getAddress(latitude, longitude);
+      if (mapRef.current) {
+        mapRef.current.panTo(newPos);
+        mapRef.current.setZoom(16);
+      }
+    } catch (error) {
+      console.error("Geolocation error:", error);
+    }
   }, []);
 
   const handleClearSearch = () => {

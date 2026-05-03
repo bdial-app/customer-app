@@ -220,35 +220,32 @@ function AuthGateSheetContent() {
   }, [resendCountdown]);
 
   // Auto-request location when entering details step, then reverse geocode to auto-fill
-  const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
+  const requestLocation = useCallback(async () => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setGeoLocation(coords);
-        setIsLocating(false);
-        notify({ title: "Location Pinned", subtitle: "GPS location captured", variant: "success" });
+    try {
+      const { getCurrentPosition } = await import("@/utils/geolocation");
+      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const coords = { lat: pos.latitude, lng: pos.longitude };
+      setGeoLocation(coords);
+      notify({ title: "Location Pinned", subtitle: "GPS location captured", variant: "success" });
 
-        // Reverse geocode to auto-populate city, area, pincode
-        try {
-          const geo = await reverseGeocodeApi(coords);
-          const sfv = setFieldValueRef.current;
-          if (sfv && geo) {
-            if (geo.city) sfv("city", geo.city);
-            if (geo.area) sfv("area", geo.area);
-            if (geo.pincode) sfv("pincode", geo.pincode);
-          }
-        } catch {
-          // Reverse geocode failed silently — user can fill manually
+      // Reverse geocode to auto-populate city, area, pincode
+      try {
+        const geo = await reverseGeocodeApi(coords);
+        const sfv = setFieldValueRef.current;
+        if (sfv && geo) {
+          if (geo.city) sfv("city", geo.city);
+          if (geo.area) sfv("area", geo.area);
+          if (geo.pincode) sfv("pincode", geo.pincode);
         }
-      },
-      () => {
-        setIsLocating(false);
-        notify({ title: "Location Required", subtitle: "Please enable location access", variant: "warning" });
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+      } catch {
+        // Reverse geocode failed silently — user can fill manually
+      }
+    } catch {
+      notify({ title: "Location Required", subtitle: "Please enable location access", variant: "warning" });
+    } finally {
+      setIsLocating(false);
+    }
   }, [notify]);
 
   const handleLocationSearch = useCallback((query: string) => {

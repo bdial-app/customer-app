@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, memo } from "react";
+import { createPortal } from "react-dom";
 import {
   List,
   ListItem,
@@ -191,40 +192,46 @@ const SlidePage = ({
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-}) => (
-  <AnimatePresence>
-    {open && (
-      <motion.div
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <div
-          className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+}) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto overscroll-contain"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <div className="flex items-center justify-between px-4 py-3">
-            <button
-              onClick={onClose}
-              className="text-blue-500 font-semibold text-sm active:opacity-50 flex items-center gap-1"
-            >
-              <IonIcon icon={arrowBack} className="text-lg" />
-              Back
-            </button>
-            <h2 className="text-base font-bold text-slate-800 dark:text-white">
-              {title}
-            </h2>
-            <div className="w-12" />
+          <div
+            className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
+            style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          >
+            <div className="flex items-center justify-between px-4 py-3">
+              <button
+                onClick={onClose}
+                className="text-blue-500 font-semibold text-sm active:opacity-50 flex items-center gap-1"
+              >
+                <IonIcon icon={arrowBack} className="text-lg" />
+                Back
+              </button>
+              <h2 className="text-base font-bold text-slate-800 dark:text-white">
+                {title}
+              </h2>
+              <div className="w-12" />
+            </div>
           </div>
-        </div>
-        <div className="px-5 py-5">{children}</div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+          <div className="px-5 py-5">{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+};
 
 // ─── Main Profile Content ───────────────────────────────────────────
 const ProfileContent = memo(() => {
@@ -497,7 +504,7 @@ const ProfileContent = memo(() => {
   // so that all SlidePage components at the bottom are shared.
 
   return (
-    <>
+    <div className="pb-20">
       {!user ? (
         <>
           {/* Guest Header */}
@@ -1712,7 +1719,7 @@ const ProfileContent = memo(() => {
         isLoading={isDisablingProvider}
         loadingLabel="Disabling..."
       />
-    </>
+    </div>
   );
 });
 

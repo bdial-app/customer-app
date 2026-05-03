@@ -16,6 +16,9 @@ import {
   arrowForwardOutline,
   ticketOutline,
   refreshOutline,
+  informationCircleOutline,
+  chevronDownOutline,
+  chevronUpOutline,
 } from "ionicons/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -53,6 +56,7 @@ const ProviderSubscriptionTab = () => {
   const [voucherResult, setVoucherResult] = useState<any>(null);
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ["subscription-plans"],
@@ -241,13 +245,13 @@ const ProviderSubscriptionTab = () => {
           const price = billingInterval === "yearly" ? plan.priceYearly : plan.priceMonthly;
           const perMonth = billingInterval === "yearly" ? Math.round(plan.priceYearly / 12) : plan.priceMonthly;
           const isCurrent = currentPlan?.slug === plan.slug;
+          const isExpanded = expandedPlan === plan.id;
 
           return (
             <motion.div
               key={plan.id}
               whileTap={{ scale: 0.98 }}
-              onClick={() => !isCurrent && handleSelectPlan(plan)}
-              className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 cursor-pointer transition-all ${
+              className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 transition-all ${
                 isCurrent
                   ? "border-teal-300 bg-teal-50/50 dark:bg-teal-900/30 ring-1 ring-teal-200 dark:ring-teal-800"
                   : plan.slug === "growth"
@@ -267,7 +271,7 @@ const ProviderSubscriptionTab = () => {
                 </div>
               )}
 
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3" onClick={() => !isCurrent && handleSelectPlan(plan)}>
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${planColors[plan.slug] ?? planColors.starter} flex items-center justify-center flex-shrink-0`}>
                   <IonIcon icon={planIcons[plan.slug] ?? diamondOutline} className="text-white text-xl" />
                 </div>
@@ -289,6 +293,55 @@ const ProviderSubscriptionTab = () => {
                   )}
                 </div>
               </div>
+
+              {/* Expandable "What you get" section */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpandedPlan(isExpanded ? null : plan.id); }}
+                className="flex items-center gap-1 mt-3 text-[11px] font-semibold text-teal-600 dark:text-teal-400"
+              >
+                <IonIcon icon={informationCircleOutline} className="text-sm" />
+                What&apos;s included
+                <IonIcon icon={isExpanded ? chevronUpOutline : chevronDownOutline} className="text-xs" />
+              </button>
+
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2 bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 space-y-2.5">
+                      <PlanBenefit
+                        title={`${plan.maxActiveDeals === -1 ? "Unlimited" : plan.maxActiveDeals} Active Deals`}
+                        description={plan.maxActiveDeals === -1
+                          ? "Post as many deals as you want — no limits. Keep your storefront fresh and attract more customers."
+                          : `Run up to ${plan.maxActiveDeals} deals at a time. Each deal is shown to customers searching nearby.`}
+                      />
+                      <PlanBenefit
+                        title={`${plan.monthlyLeadUnlocks === -1 ? "Unlimited" : plan.monthlyLeadUnlocks} Lead Unlocks / Month`}
+                        description={plan.monthlyLeadUnlocks === -1
+                          ? "Unlock every interested customer's contact details — never miss a potential sale."
+                          : `Unlock up to ${plan.monthlyLeadUnlocks} customer contacts per month. See who's interested and reach out directly.`}
+                      />
+                      {plan.sponsorshipTypes && plan.sponsorshipTypes.length > 0 && (
+                        <PlanBenefit
+                          title={`${plan.sponsorshipTypes.length} Boost Type${plan.sponsorshipTypes.length > 1 ? "s" : ""}`}
+                          description={`Access ${plan.sponsorshipTypes.join(", ")} placements to get featured in search results and the homepage — drive up to 5× more views.`}
+                        />
+                      )}
+                      <PlanBenefit
+                        title="Priority Listing"
+                        description={plan.slug === "pro"
+                          ? "Your business appears at the top of search results with a verified badge — maximum visibility."
+                          : "Your business ranks higher in search results, helping customers find you faster."}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           );
         })}
@@ -407,6 +460,16 @@ const FeatureChip = ({ label }: { label: string }) => (
     <IonIcon icon={checkmarkCircle} className="text-emerald-400 text-[10px]" />
     {label}
   </span>
+);
+
+const PlanBenefit = ({ title, description }: { title: string; description: string }) => (
+  <div className="flex gap-2">
+    <IonIcon icon={checkmarkCircle} className="text-teal-500 text-sm flex-shrink-0 mt-0.5" />
+    <div>
+      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{title}</p>
+      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{description}</p>
+    </div>
+  </div>
 );
 
 export default ProviderSubscriptionTab;

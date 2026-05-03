@@ -27,6 +27,7 @@ import { BottomSheet } from "../bottom-sheet";
 import { FormikInput } from "../formik-input";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
+import { useUploadProfileImage } from "@/hooks/usePhotos";
 import TimePicker from "../time-picker";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
@@ -82,10 +83,13 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [detailSheet, setDetailSheet] = useState<{ title: string; content: string } | null>(null);
   const updateMutation = useUpdateProvider();
+  const uploadImageMutation = useUploadProfileImage();
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const [bannerError, setBannerError] = useState(false);
   const [profileError, setProfileError] = useState(false);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
 
   // Map / location state for edit mode
   const { isLoaded } = useGoogleMapsLoader();
@@ -151,10 +155,9 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const handleDetectGPS = useCallback(async () => {
     setIsDetectingLocation(true);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, enableHighAccuracy: true }),
-      );
-      handleMapSelect(pos.coords.latitude, pos.coords.longitude);
+      const { getCurrentPosition } = await import("@/utils/geolocation");
+      const pos = await getCurrentPosition({ timeout: 10000, enableHighAccuracy: true });
+      handleMapSelect(pos.latitude, pos.longitude);
     } catch {
       alert("Could not detect location. Please allow location access and try again.");
     } finally {
@@ -187,24 +190,32 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
 
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      updateMutation.mutate({
-        id: provider.id,
-        payload: { bannerImageUrl: url },
-      });
-    }
+    if (!file) return;
+    setBannerError(false);
+    setBannerPreview(URL.createObjectURL(file));
+    uploadImageMutation.mutate(
+      { providerId: provider.id, file, field: "bannerImageUrl" },
+      {
+        onSuccess: () => setBannerPreview(null),
+        onError: () => { setBannerPreview(null); setBannerError(true); },
+      },
+    );
+    e.target.value = "";
   };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      updateMutation.mutate({
-        id: provider.id,
-        payload: { profilePhotoUrl: url },
-      });
-    }
+    if (!file) return;
+    setProfileError(false);
+    setProfilePreview(URL.createObjectURL(file));
+    uploadImageMutation.mutate(
+      { providerId: provider.id, file, field: "profilePhotoUrl" },
+      {
+        onSuccess: () => setProfilePreview(null),
+        onError: () => { setProfilePreview(null); setProfileError(true); },
+      },
+    );
+    e.target.value = "";
   };
 
   const handleToggleAvailability = () => {
@@ -242,16 +253,23 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       <div className="relative mx-4 mt-3 mb-6">
         {/* Banner */}
         <div
-          onClick={() => bannerInputRef.current?.click()}
+          onClick={() => !uploadImageMutation.isPending && bannerInputRef.current?.click()}
           className="relative w-full h-36 rounded-2xl overflow-hidden bg-gradient-to-br from-teal-100 to-teal-50 cursor-pointer group"
         >
-          {provider.bannerImageUrl && !bannerError ? (
-            <img
-              src={provider.bannerImageUrl}
-              alt="Banner"
-              className="w-full h-full object-cover"
-              onError={() => setBannerError(true)}
-            />
+          {(bannerPreview || provider.bannerImageUrl) && !bannerError ? (
+            <>
+              <img
+                src={bannerPreview || provider.bannerImageUrl!}
+                alt="Banner"
+                className={`w-full h-full object-cover transition-opacity ${bannerPreview ? "opacity-60" : ""}`}
+                onError={() => { if (!bannerPreview) setBannerError(true); }}
+              />
+              {bannerPreview && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">
               <IonIcon icon={imageOutline} className="text-3xl text-teal-300 mb-1" />
@@ -277,16 +295,23 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
         {/* Profile Photo */}
         <div className="absolute -bottom-5 left-4">
           <div
-            onClick={() => profileInputRef.current?.click()}
+            onClick={() => !uploadImageMutation.isPending && profileInputRef.current?.click()}
             className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-700 bg-white dark:bg-slate-700 shadow-md overflow-hidden cursor-pointer relative group"
           >
-            {provider.profilePhotoUrl && !profileError ? (
-              <img
-                src={provider.profilePhotoUrl}
-                alt={provider.brandName}
-                className="w-full h-full object-cover"
-                onError={() => setProfileError(true)}
-              />
+            {(profilePreview || provider.profilePhotoUrl) && !profileError ? (
+              <>
+                <img
+                  src={profilePreview || provider.profilePhotoUrl!}
+                  alt={provider.brandName}
+                  className={`w-full h-full object-cover transition-opacity ${profilePreview ? "opacity-60" : ""}`}
+                  onError={() => { if (!profilePreview) setProfileError(true); }}
+                />
+                {profilePreview && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="w-full h-full bg-teal-50 flex items-center justify-center">
                 <IonIcon icon={personCircleOutline} className="text-3xl text-teal-300" />
@@ -475,7 +500,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
 
                       {/* Google Map */}
                       {isLoaded ? (
-                        <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm mb-2">
+                        <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 shadow-sm mb-2">
                           <GoogleMap
                             mapContainerStyle={{ width: "100%", height: "200px", borderRadius: "12px" }}
                             center={mapCenter}

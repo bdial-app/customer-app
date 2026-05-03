@@ -93,6 +93,27 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+// ─── Timeline Event Info ──────────────────────────────────────────────
+const TIMELINE_EVENTS: Record<string, { label: string; description: string; icon: string; color: string; bg: string }> = {
+  profile_view: { label: "Viewed Your Profile", description: "Opened your business page", icon: eyeOutline, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" },
+  product_view: { label: "Viewed a Product", description: "Checked out one of your products", icon: cubeOutline, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/30" },
+  search_appear: { label: "Found via Search", description: "Your business appeared in their search", icon: searchOutline, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
+  call_click: { label: "Tapped Call", description: "Clicked to call your business", icon: callOutline, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
+  direction_click: { label: "Got Directions", description: "Opened directions to your location", icon: navigateOutline, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-900/30" },
+  save: { label: "Saved Your Business", description: "Added you to their saved list", icon: bookmarkOutline, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30" },
+  share: { label: "Shared Your Profile", description: "Shared your business with someone", icon: shareSocialOutline, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-900/30" },
+  enquiry: { label: "Sent an Enquiry", description: "Reached out with a question", icon: chatbubbleOutline, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
+  like: { label: "Liked Your Business", description: "Showed appreciation for your page", icon: heartOutline, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30" },
+};
+const getTimelineEventInfo = (eventType: string) =>
+  TIMELINE_EVENTS[eventType] || {
+    label: eventType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    description: "Interacted with your business",
+    icon: pulseOutline,
+    color: "text-slate-500",
+    bg: "bg-slate-100 dark:bg-slate-700",
+  };
+
 // ─── Lead Detail View ─────────────────────────────────────────────────
 function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void }) {
   const { data: detail, isLoading } = useLeadDetail(leadId);
@@ -123,9 +144,6 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
     <div className="p-4 space-y-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-          <IonIcon icon={arrowBack} className="text-lg text-slate-600 dark:text-slate-300" />
-        </button>
         <div className="flex-1">
           <h3 className="text-base font-bold text-slate-900 dark:text-white">{detail.visitor.name}</h3>
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
@@ -219,20 +237,36 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
 
       {/* Activity Timeline */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
-        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Activity Timeline</h4>
-        <div className="space-y-3">
-          {detail.timeline.slice(0, 20).map((ev, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-2 h-2 mt-1.5 rounded-full bg-amber-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{ev.eventType.replace(/_/g, " ")}</p>
-                <p className="text-[10px] text-slate-400">
-                  {new Date(ev.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  {ev.duration ? ` · ${ev.duration}s` : ""}
-                </p>
-              </div>
-            </div>
-          ))}
+        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-1.5">
+          <IonIcon icon={timeOutline} className="text-blue-500" />
+          Activity Timeline
+        </h4>
+        <div className="relative">
+          {/* Vertical line */}
+          <div className="absolute left-[15px] top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-600" />
+          <div className="space-y-0">
+            {detail.timeline.slice(0, 20).map((ev, i) => {
+              const info = getTimelineEventInfo(ev.eventType);
+              const time = new Date(ev.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              return (
+                <div key={i} className="flex items-start gap-3 relative py-2">
+                  <div className={`w-[30px] h-[30px] rounded-full flex items-center justify-center shrink-0 z-10 ${info.bg}`}>
+                    <IonIcon icon={info.icon} className={`text-sm ${info.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{info.label}</p>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">{time}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      {info.description}
+                      {ev.duration ? ` · ${ev.duration}s` : ""}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -298,7 +332,7 @@ const AnalyticsContent = () => {
   // Lead detail drill-in
   if (view === "lead-detail" && selectedLeadId) {
     return (
-      <div className="pb-8 overflow-x-hidden">
+      <div className="pb-24">
         <div
           className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
           style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
@@ -316,7 +350,7 @@ const AnalyticsContent = () => {
   }
 
   return (
-    <div className="pb-8 overflow-x-hidden">
+    <div className="pb-24">
 
       {/* ═══ HEADER ═══ */}
       <div
