@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export function SplashScreen() {
   const [isVisible, setIsVisible] = useState(false);
@@ -15,9 +15,9 @@ export function SplashScreen() {
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
 
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function SplashScreen() {
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-500 ${
-        isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
       <Image
