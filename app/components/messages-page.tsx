@@ -95,6 +95,7 @@ export default function MessagesPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initiallyScrolled = useRef(false);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+  const lastMarkedMessageRef = useRef<string | null>(null);
 
   const { user } = useAppSelector((state) => state.auth);
   const typingUsers = useAppSelector((state) => state.chat.typingUsers);
@@ -165,11 +166,12 @@ export default function MessagesPage({
   const isOtherTyping = typingEntries.length > 0;
   const typingName = isOtherTyping ? typingEntries[0][1].userName : "";
 
-  // Mark as read on open and when new messages arrive
+  // Mark as read on open and when new messages arrive (debounced — skip if already marked)
   useEffect(() => {
     if (conversationId && allMessages.length > 0) {
       const lastMsg = allMessages[allMessages.length - 1];
-      if (lastMsg.senderId !== user?.id) {
+      if (lastMsg.senderId !== user?.id && lastMsg.id !== lastMarkedMessageRef.current) {
+        lastMarkedMessageRef.current = lastMsg.id;
         markReadMutation.mutate(lastMsg.id);
       }
     }

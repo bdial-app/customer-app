@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/utils/supabase";
 import { useAppDispatch, useAppSelector } from "./useAppStore";
-import { setUnreadCount, incrementUnread, setTyping } from "@/store/slices/chatSlice";
+import { setUnreadCount, incrementUnread } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "./useChat";
 
 /**
@@ -13,9 +13,13 @@ import { useUnreadCount } from "./useChat";
  */
 export function useChatSubscription() {
   const { user } = useAppSelector((state) => state.auth);
+  const activeConversationId = useAppSelector((state) => state.chat.activeConversationId);
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const channelRef = useRef<any>(null);
+  // Keep a ref so the broadcast callback always has the latest value
+  const activeConversationRef = useRef(activeConversationId);
+  activeConversationRef.current = activeConversationId;
 
   // Fetch initial unread count
   const { data: unreadData } = useUnreadCount(!!user);
@@ -39,9 +43,19 @@ export function useChatSubscription() {
 
     channel
       .on("broadcast", { event: "conversation_update" }, (payload) => {
-        // A new message arrived in one of our conversations
+        const conversationId: string | undefined = payload?.payload?.conversationId;
         const role: "customer" | "provider" | undefined =
           payload?.payload?.role ?? undefined;
+
+        // Don't increment unread if the user is currently viewing this conversation
+        // (markAsRead will fire from the messages page and correct the count)
+        if (conversationId && conversationId === activeConversationRef.current) {
+          // Still refresh the list to show latest message preview
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+          return;
+        }
+
         dispatch(incrementUnread(role));
         // Refresh conversation list
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
