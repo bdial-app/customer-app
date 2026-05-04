@@ -14,6 +14,21 @@ const config: CapacitorConfig = {
       // Show push notifications when app is in foreground
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    SplashScreen: {
+      launchAutoHide: true,
+      launchShowDuration: 2000,
+      backgroundColor: '#F59E0B',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#F59E0B',
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true,
+    },
   },
 };
 

@@ -112,10 +112,7 @@ input[type="search"]::-webkit-search-decoration {
   overscroll-behavior: contain;
 }
 
-/* Safe area support for notched devices */
-body {
-  padding-top: env(safe-area-inset-top);
-}
+/* Safe area handled per-component (sticky headers, tab panels) */
 
 /* Skeleton shimmer animation */
 @keyframes shimmer {

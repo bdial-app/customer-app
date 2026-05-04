@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface NetworkStatus {
   isOnline: boolean;
@@ -10,7 +10,8 @@ interface NetworkStatus {
 
 /**
  * Detects online/offline state and provides reactive status.
- * Also tracks whether the app was recently offline (for showing reconnection toasts).
+ * Uses @capacitor/network on native for reliable detection,
+ * falls back to browser online/offline events on web.
  */
 export function useNetworkStatus(): NetworkStatus {
   const [isOnline, setIsOnline] = useState(() =>
@@ -19,6 +20,7 @@ export function useNetworkStatus(): NetworkStatus {
   const [wasOffline, setWasOffline] = useState(false);
   const [offlineSince, setOfflineSince] = useState<number | null>(null);
   const [offlineDuration, setOfflineDuration] = useState<number | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const handleOnline = useCallback(() => {
     setIsOnline(true);
@@ -37,11 +39,40 @@ export function useNetworkStatus(): NetworkStatus {
   }, []);
 
   useEffect(() => {
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    // Use Capacitor Network plugin on native for reliable detection
+    if ((window as any).Capacitor?.isNativePlatform?.()) {
+      import("@capacitor/network").then(({ Network }) => {
+        // Get initial status
+        Network.getStatus().then((status) => {
+          setIsOnline(status.connected);
+          if (!status.connected) setOfflineSince(Date.now());
+        });
+
+        // Listen for changes
+        const listener = Network.addListener("networkStatusChange", (status) => {
+          if (status.connected) {
+            handleOnline();
+          } else {
+            handleOffline();
+          }
+        });
+
+        cleanupRef.current = () => {
+          listener.then((l) => l.remove());
+        };
+      });
+    } else {
+      // Web fallback
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+      cleanupRef.current = () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    }
+
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      cleanupRef.current?.();
     };
   }, [handleOnline, handleOffline]);
 

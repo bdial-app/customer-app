@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { HOME_FEED_QUERY_KEY } from "@/hooks/useHomeFeed";
+import { getItem, setItem, removeItem } from "@/utils/storage";
 
 const CACHE_KEY = "tijarah-query-cache";
 const CACHE_VERSION = 1;
@@ -12,7 +13,8 @@ interface CacheEntry {
 }
 
 /**
- * Persists critical query data (home feed) to localStorage for instant load.
+ * Persists critical query data (home feed) to platform storage for instant load.
+ * Uses @capacitor/preferences on native, localStorage on web.
  * Only persists specific queries to keep storage small and fast.
  */
 const PERSIST_QUERIES = [HOME_FEED_QUERY_KEY, "top-level-categories"];
@@ -37,22 +39,22 @@ export function persistQueryCache(queryClient: QueryClient) {
       timestamp: Date.now(),
       data: cache,
     };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+    setItem(CACHE_KEY, JSON.stringify(entry));
   } catch {
     // Storage full or unavailable — silently ignore
   }
 }
 
-export function restoreQueryCache(queryClient: QueryClient) {
+export async function restoreQueryCache(queryClient: QueryClient) {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = await getItem(CACHE_KEY);
     if (!raw) return;
 
     const entry: CacheEntry = JSON.parse(raw);
 
     // Version mismatch or expired
     if (entry.version !== CACHE_VERSION || Date.now() - entry.timestamp > MAX_AGE) {
-      localStorage.removeItem(CACHE_KEY);
+      removeItem(CACHE_KEY);
       return;
     }
 
@@ -63,6 +65,6 @@ export function restoreQueryCache(queryClient: QueryClient) {
     }
   } catch {
     // Corrupted cache — remove and continue
-    localStorage.removeItem(CACHE_KEY);
+    removeItem(CACHE_KEY);
   }
 }

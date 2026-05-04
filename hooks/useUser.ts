@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { updateUser, UpdateUserPayload } from "@/services/user.service";
 import { useAppDispatch } from "./useAppStore";
 import { setUser } from "@/store/slices/authSlice";
+import { getTokenSync } from "@/utils/storage";
 
 export const useUpdateUser = () => {
   const dispatch = useAppDispatch();
@@ -11,7 +12,7 @@ export const useUpdateUser = () => {
       // Sync updated profile back into Redux
       dispatch(
         setUser({
-          token: localStorage.getItem("token") ?? "",
+          token: getTokenSync() ?? "",
           user: data,
         }),
       );

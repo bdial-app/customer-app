@@ -4,7 +4,9 @@
  * Falls back to original URL for non-Supabase images.
  */
 
-const SUPABASE_STORAGE_HOST = "uisrqgvmwnswishxelou.supabase.co";
+const SUPABASE_STORAGE_HOST = new URL(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+).hostname;
 
 interface ImageTransformOptions {
   width?: number;

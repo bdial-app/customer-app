@@ -19,3 +19,24 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# ─── Capacitor ───────────────────────────────────────────────────────
+-keep class com.getcapacitor.** { *; }
+-keep class com.tijarah.app.** { *; }
+-dontwarn com.getcapacitor.**
+
+# ─── Firebase / Google Services ──────────────────────────────────────
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# ─── WebView JavaScript Interface ────────────────────────────────────
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# ─── Keep annotations ────────────────────────────────────────────────
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses

@@ -1,6 +1,6 @@
-const CACHE_NAME = "bohri-connect-v2";
-const RUNTIME_CACHE = "bohri-runtime-cache-v2";
-const IMAGE_CACHE = "bohri-image-cache-v2";
+const CACHE_NAME = "tijarah-v2";
+const RUNTIME_CACHE = "tijarah-runtime-cache-v2";
+const IMAGE_CACHE = "tijarah-image-cache-v2";
 const IMAGE_CACHE_MAX = 300;
 const ASSETS_TO_CACHE = ["/", "/manifest.json"];
 

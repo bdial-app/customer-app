@@ -38,7 +38,7 @@ function TabHeader({ title }: { title: string }) {
   return (
     <div
       className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
-      style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)" }}
     >
       <div className="px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 dark:text-white">

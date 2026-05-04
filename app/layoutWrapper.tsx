@@ -2,7 +2,7 @@
 import { App } from "konsta/react";
 import { AppProvider } from "./context/AppContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Provider as ReduxProvider } from "react-redux";
@@ -32,6 +32,24 @@ import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
+import { initSentry } from "@/utils/sentry";
+import { hydrateStorageCache } from "@/utils/storage";
+import { useStatusBar } from "@/hooks/useStatusBar";
+
+// Initialize Sentry as early as possible
+initSentry();
+
+// Wire react-query's onlineManager to Capacitor Network plugin for native offline support
+if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
+  import("@capacitor/network").then(({ Network }) => {
+    Network.getStatus().then((status) => {
+      onlineManager.setOnline(status.connected);
+    });
+    Network.addListener("networkStatusChange", (status) => {
+      onlineManager.setOnline(status.connected);
+    });
+  });
+}
 
 function LanguageSyncBridge() {
   useLanguageSync();
@@ -41,6 +59,7 @@ function LanguageSyncBridge() {
 
 function PostHogIdentifyBridge() {
   usePostHogIdentify();
+  useStatusBar();
   return null;
 }
 
@@ -228,9 +247,12 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 
   useEffect(() => {
-    store.dispatch(hydrateAuth());
-    // Restore persisted query cache for instant load
-    restoreQueryCache(queryClient);
+    // Hydrate Capacitor Preferences cache before reading tokens
+    hydrateStorageCache().then(() => {
+      store.dispatch(hydrateAuth());
+      // Restore persisted query cache for instant load
+      restoreQueryCache(queryClient);
+    });
   }, [queryClient]);
 
   // Persist critical query data when app goes to background or unloads

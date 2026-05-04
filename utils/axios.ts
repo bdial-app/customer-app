@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getTokenSync, removeItem, setTokenCache } from "@/utils/storage";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
@@ -51,16 +52,53 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
+/** Returns true if the token will expire within 7 days (proactive refresh window) */
+function shouldRefreshToken(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    return payload.exp * 1000 < Date.now() + sevenDaysMs;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Silent token refresh ───────────────────────────────────────────
+let isRefreshing = false;
+async function silentRefresh(): Promise<void> {
+  if (isRefreshing) return;
+  isRefreshing = true;
+  try {
+    const { data } = await axios.post(
+      `${apiClient.defaults.baseURL}/api/auth/refresh`,
+      {},
+      { headers: { Authorization: `Bearer ${getTokenSync()}` } },
+    );
+    if (data?.accessToken) {
+      setTokenCache(data.accessToken);
+      await import("@/utils/storage").then((m) => m.setItem("token", data.accessToken));
+    }
+  } catch {
+    // Refresh failed — token may already be expired, let normal 401 flow handle
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 // Request interceptor — attach token if present, check expiry proactively
 apiClient.interceptors.request.use((config) => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = getTokenSync();
   if (token) {
     // Proactively clear expired tokens rather than sending them
     if (isTokenExpired(token)) {
-      localStorage.removeItem("token");
+      setTokenCache(null);
+      removeItem("token");
       unauthorizedListeners.forEach((fn) => fn());
       return Promise.reject(new axios.Cancel("Token expired — re-authentication required"));
+    }
+    // Proactively refresh if token is within 7-day expiry window
+    if (shouldRefreshToken(token)) {
+      silentRefresh();
     }
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -90,7 +128,8 @@ apiClient.interceptors.response.use(
       const hadToken = !!error?.config?.headers?.Authorization;
       // Clear stale token on 401
       if (status === 401 && typeof window !== "undefined") {
-        localStorage.removeItem("token");
+        setTokenCache(null);
+        removeItem("token");
       }
       // Only trigger auth gate if the request had a token (stale session)
       // Deduplicate: only trigger once per batch of concurrent 401s

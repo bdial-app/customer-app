@@ -319,14 +319,14 @@ const GeoLocation = () => {
       <div
         className="sticky top-0 z-40"
         style={{
-          paddingTop: "env(safe-area-inset-top)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)",
           background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
         }}
       >
         <div className="absolute inset-x-0 bottom-0 h-px bg-white/[0.06]" />
         <div
           onClick={() => setOpen(true)}
-          className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer active:bg-white/[0.04] transition-colors"
+          className="flex items-center justify-between gap-3 px-4 py-2.5 pb-3 cursor-pointer active:bg-white/[0.04] transition-colors"
         >
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="shrink-0 w-9 h-9 rounded-2xl bg-amber-400/15 border border-amber-400/20 flex items-center justify-center">

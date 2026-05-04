@@ -53,5 +53,7 @@
 	<string>Tijarah needs camera access to take photos for your business profile</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Tijarah needs photo library access to upload images for your business</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Tijarah may need microphone access when recording video for your business profile</string>
 </dict>
 </plist>

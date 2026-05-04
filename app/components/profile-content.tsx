@@ -1345,9 +1345,9 @@ const ProfileContent = memo(() => {
             Contact
           </h4>
           <p>
-            Email: support@bohriconnect.com
+            Email: support@tijarah.app
             <br />
-            Website: www.bohriconnect.com
+            Website: www.tijarah.com
           </p>
           <p className="text-xs text-slate-400 pt-4 text-center">
             © {new Date().getFullYear()} Tijarah. All rights reserved.

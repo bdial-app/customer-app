@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { captureError } from "@/utils/sentry";
 
 export default function GlobalError({
   error,
@@ -9,8 +10,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to error reporting service (Sentry, PostHog, etc.)
-    console.error("[GlobalError]", error);
+    captureError(error, { digest: error.digest });
   }, [error]);
 
   return (
