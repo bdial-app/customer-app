@@ -3,7 +3,6 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { LayoutWrapper } from "./layoutWrapper";
 import { CSPostHogProvider } from "./providers/PostHogProvider";
-import { SplashScreen } from "./components/SplashScreen";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -74,7 +73,6 @@ export default async function RootLayout({
         className="min-h-full flex flex-col bg-[#FAFAFA] dark:bg-slate-900 transition-colors duration-300 overflow-hidden h-full"
         suppressHydrationWarning
       >
-        <SplashScreen />
         <CSPostHogProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </CSPostHogProvider>
