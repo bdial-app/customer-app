@@ -179,7 +179,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           pincode: values.pincode || undefined,
           openTime: values.openTime || undefined,
           closeTime: values.closeTime || undefined,
-          ...(mapCoords ? { latitude: mapCoords.lat, longitude: mapCoords.lng } : {}),
+          ...(mapCoords ? { latitude: String(mapCoords.lat), longitude: String(mapCoords.lng) } : {}),
         },
       });
       setIsEditing(false);

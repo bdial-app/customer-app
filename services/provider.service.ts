@@ -95,8 +95,8 @@ export interface UpdateProviderPayload {
   city?: string;
   area?: string;
   pincode?: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: string;
+  longitude?: string;
   contactNumber?: string;
   openTime?: string;
   closeTime?: string;
@@ -264,6 +264,7 @@ export const becomeProvider = async (
   if (payload.ijamatNumber) formData.append("ijamatNumber", payload.ijamatNumber);
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
+  if (payload.isWomenLed != null) formData.append("isWomenLed", String(payload.isWomenLed));
   if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
   if (compressedBanner) formData.append("bannerImage", compressedBanner);
   if (compressedProfile) formData.append("profileImage", compressedProfile);
