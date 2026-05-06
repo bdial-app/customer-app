@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { LayoutWrapper } from "./layoutWrapper";
@@ -9,6 +9,15 @@ const openSans = Open_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
 });
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Tijarah",
@@ -17,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,
-      statusBarStyle: "default",
+      statusBarStyle: "black-translucent",
       title: "Tijarah",
     },
     formatDetection: {
@@ -43,10 +52,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=resizes-content"
-        />
         <meta
           name="theme-color"
           content="#F59E0B"

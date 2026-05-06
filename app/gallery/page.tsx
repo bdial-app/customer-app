@@ -18,7 +18,7 @@ export default function GalleryPage() {
   return (
     <Page className="!bg-gray-50/80 dark:!bg-slate-900">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 bg-white dark:bg-slate-900 border-b border-gray-100/80 dark:border-slate-800">
+      <div className="flex items-center gap-3 px-4 pt-[calc(var(--sat,0px)+12px)] pb-3 bg-white dark:bg-slate-900 border-b border-gray-100/80 dark:border-slate-800">
         <button
           onClick={() => goBack("/")}
           className="w-9 h-9 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center active:scale-90 transition-transform"

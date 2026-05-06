@@ -155,7 +155,7 @@ const SearchPageContent = () => {
       {/* ── Header ─────────────────────────────────── */}
       <div
         className="sticky top-0 z-50 bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:shadow-none"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
+        style={{ paddingTop: "var(--sat,0px)" }}
       >
         <div className="flex items-center gap-2 px-3 py-2">
           {/* Back button */}

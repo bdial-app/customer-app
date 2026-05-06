@@ -70,7 +70,7 @@ function InviteFriendsContent() {
   return (
     <Page className="bg-gray-50 dark:!bg-slate-900">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800">
+      <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800" style={{ paddingTop: "var(--sat,0px)" }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => goBack("/")}

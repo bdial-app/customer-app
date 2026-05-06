@@ -141,7 +141,7 @@ export default function ProductDetailsPage() {
             className="w-full h-full object-cover transition-opacity duration-300"
           />
 
-          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3">
+          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(var(--sat,0px)+12px)] pb-3">
             <button
               onClick={() => goBack("/")}
               className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
@@ -183,7 +183,7 @@ export default function ProductDetailsPage() {
           </div>
 
           {provider?.communityVerified && (
-            <span className="absolute top-[calc(env(safe-area-inset-top)+56px)] left-4 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white">
+            <span className="absolute top-[calc(var(--sat,0px)+56px)] left-4 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white">
               Community Verified
             </span>
           )}

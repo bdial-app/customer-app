@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- WebView sits below the status bar on Android; brand colour fills the bar -->
+        <item name="android:statusBarColor">#F59E0B</item>
     </style>
 
 

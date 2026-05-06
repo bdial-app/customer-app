@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
     <Page className="bg-white dark:bg-slate-900!">
       <div
         className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="flex items-center justify-between px-4 py-3">
           <button

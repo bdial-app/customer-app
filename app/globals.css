@@ -3,6 +3,12 @@
 /* Tailwind v4: class-based dark mode toggle */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Safe area CSS variables — overridden by native Android bridge injection at runtime */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
 /* import Konsta UI theme */
 @import 'konsta/react/theme.css';
 

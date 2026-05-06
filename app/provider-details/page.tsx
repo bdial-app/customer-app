@@ -376,17 +376,6 @@ export default function ProviderDetailsPage() {
   return (
     <Page className={`!bg-white dark:!bg-slate-900 ${isSponsored ? "sponsored-provider" : ""}`}>
       <div className="h-full overflow-y-auto overscroll-contain">
-      {/* Sponsored Premium Banner */}
-      {isSponsored && (
-        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-4 py-2 flex items-center justify-center gap-2 shadow-md relative z-10">
-          <IonIcon icon={shieldCheckmark} className="w-4 h-4 text-white" />
-          <span className="text-[11px] font-bold text-white tracking-wide uppercase">
-            Featured Business
-          </span>
-          <span className="text-[9px] text-white/80 font-medium">• Premium Partner</span>
-        </div>
-      )}
-
       {/* Hero */}
       <div
         className="relative"
@@ -408,8 +397,23 @@ export default function ProviderDetailsPage() {
           )}
           <div className={`absolute inset-0 ${isSponsored ? "bg-gradient-to-t from-black/70 via-black/20 to-amber-900/10" : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"}`} />
 
+          {/* Sponsored Premium Banner — inside hero, clears status bar */}
+          {isSponsored && (
+            <div
+              className="absolute top-0 inset-x-0 flex items-center justify-center gap-2 z-20 bg-gradient-to-r from-amber-500/90 via-amber-400/90 to-yellow-400/90 backdrop-blur-sm"
+              style={{ paddingTop: "calc(var(--sat,0px) + 6px)", paddingBottom: "6px" }}
+            >
+              <IonIcon icon={shieldCheckmark} className="w-4 h-4 text-white" />
+              <span className="text-[11px] font-bold text-white tracking-wide uppercase">Featured Business</span>
+              <span className="text-[9px] text-white/80 font-medium">• Premium Partner</span>
+            </div>
+          )}
+
           {/* Top Actions */}
-          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3">
+          <div
+            className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pb-3"
+            style={{ paddingTop: isSponsored ? "calc(var(--sat,0px) + 46px)" : "calc(var(--sat,0px) + 12px)" }}
+          >
             <button
               onClick={() => goBack("/")}
               className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"

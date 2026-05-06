@@ -5,12 +5,17 @@ import android.app.NotificationManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.core.view.WindowCompat;
+
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Android: keep WebView below the status bar (no overlay, no safe-area insets needed)
+        // iOS handles edge-to-edge separately via the Capacitor iOS layer + CSS env()
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         createNotificationChannel();
     }
 

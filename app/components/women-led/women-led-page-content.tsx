@@ -76,7 +76,7 @@ export default function WomenLedPageContent() {
   return (
     <div className="min-h-screen bg-[#efeff4] dark:bg-slate-900">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-purple-700 dark:bg-purple-900 text-white safe-top">
+      <div className="sticky top-0 z-30 bg-purple-700 dark:bg-purple-900 text-white" style={{ paddingTop: "var(--sat,0px)" }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => router.back()} className="p-1 -ml-1">
             <IonIcon icon={chevronBackOutline} className="w-6 h-6" />

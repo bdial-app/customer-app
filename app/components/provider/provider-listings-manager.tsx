@@ -89,7 +89,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
       <div className="pb-24">
         <div
           className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100/60"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
         >
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="h-6 w-32 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse" />
@@ -113,7 +113,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
       {/* Header + Tabs fused into sticky bar */}
       <div
         className="sticky top-0 z-40 bg-teal-600"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="px-4 py-3">
           <h1 className="text-base font-bold text-white">Manage Business</h1>

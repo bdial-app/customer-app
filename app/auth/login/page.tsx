@@ -260,7 +260,7 @@ function LoginContent() {
       {/* ── Top safe-area (no skip) ── */}
       <div
         className="shrink-0"
-        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 12px)" }}
       />
 
       {/* ── Logo area ── */}

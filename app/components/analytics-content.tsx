@@ -335,7 +335,7 @@ const AnalyticsContent = () => {
       <div className="pb-24">
         <div
           className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
         >
           <div className="px-4 py-3 flex items-center gap-3">
             <button onClick={() => { setView("leads"); setSelectedLeadId(null); }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
@@ -355,7 +355,7 @@ const AnalyticsContent = () => {
       {/* ═══ HEADER ═══ */}
       <div
         className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="px-4 py-3 flex items-center justify-between">
           <div>
