@@ -38,6 +38,18 @@
       "purpose": "maskable"
     },
     {
+      "src": "/icons/96.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/96.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "maskable"
+    },
+    {
       "src": "/icons/128.png",
       "type": "image/png",
       "sizes": "128x128",
@@ -47,6 +59,18 @@
       "src": "/icons/128.png",
       "type": "image/png",
       "sizes": "128x128",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/192.png",
+      "type": "image/png",
+      "sizes": "192x192",
       "purpose": "maskable"
     },
     {
@@ -90,8 +114,9 @@
       "url": "/all-services",
       "icons": [
         {
-          "src": "/icons/92.png",
-          "sizes": "92x92"
+          "src": "/icons/128.png",
+          "sizes": "128x128",
+          "type": "image/png"
         }
       ]
     },
@@ -102,8 +127,9 @@
       "url": "/profile",
       "icons": [
         {
-          "src": "/icons/92.png",
-          "sizes": "92x92"
+          "src": "/icons/128.png",
+          "sizes": "128x128",
+          "type": "image/png"
         }
       ]
     }
