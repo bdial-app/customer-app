@@ -956,6 +956,11 @@ export default function ProviderDetailsPage() {
                             <IonIcon icon={imagesOutline} className="w-8 h-8" />
                           </div>
                         )}
+                        {(product.photoUrls?.length ?? 0) > 1 && (
+                          <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                            +{(product.photoUrls?.length ?? 1) - 1}
+                          </span>
+                        )}
                       </div>
                       <div className="p-3">
                         <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
