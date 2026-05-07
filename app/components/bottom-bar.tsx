@@ -111,12 +111,12 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
   );
 
   const isProvider = userMode === "provider";
-  const { isIOS } = useNativePlatform();
+  const { isIOS, isAndroid } = useNativePlatform();
 
   return (
     <div
       className={`fixed left-0 right-0 z-30 ${
-        isIOS ? "bottom-[-24px]" : "bottom-0"
+        isIOS ? "bottom-[-32px]" : isAndroid ? "-bottom-3" : "-bottom-2"
       }`}
     >
       {/* Provider mode indicator */}
