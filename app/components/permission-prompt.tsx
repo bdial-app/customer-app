@@ -68,8 +68,9 @@ export default function PermissionPrompt() {
             className="flex flex-col flex-1 px-6"
           >
             {/* Header */}
-            <div className="flex justify-end">
+            <div className="relative z-10 flex justify-end">
               <button
+                type="button"
                 onClick={handleDismiss}
                 className="text-sm text-slate-400 active:text-slate-600 py-2 px-3"
               >
