@@ -20,7 +20,7 @@ export default function PermissionReminderBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           className="fixed top-0 left-0 right-0 z-[150] px-4"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
         >
           <div className="bg-amber-50 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-3.5 mt-2 shadow-lg shadow-black/5 flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center flex-shrink-0">

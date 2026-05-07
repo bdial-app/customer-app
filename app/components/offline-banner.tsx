@@ -16,7 +16,7 @@ const OfflineBanner = memo(function OfflineBanner() {
             ? "translate-y-0 opacity-100"
             : "-translate-y-full opacity-0"
       }`}
-      style={{ paddingTop: "max(env(safe-area-inset-top), 0px)" }}
+      style={{ paddingTop: "max(var(--sat,0px), 0px)" }}
     >
       <div
         className={`px-4 py-2.5 text-center text-xs font-semibold ${

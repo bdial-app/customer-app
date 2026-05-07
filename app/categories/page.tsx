@@ -51,7 +51,7 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-slate-900">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 px-4 py-3">
+      <div className="sticky top-0 z-20 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 px-4 pb-3" style={{ paddingTop: "var(--sat,0px)" }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => (selectedParent ? setSelectedParent(null) : router.back())}

@@ -307,13 +307,8 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
 
             {/* iOS nav bar */}
             <div
-              className="
-                relative z-10 flex-shrink-0 flex items-center justify-between
-                h-14 px-1.5
-                bg-neutral-950/90 dark:bg-neutral-950/90
-                backdrop-blur-2xl
-                border-b border-white/10
-              "
+              className="relative z-10 flex-shrink-0 flex items-center justify-between px-1.5 pb-2 bg-neutral-950/90 dark:bg-neutral-950/90 backdrop-blur-2xl border-b border-white/10"
+              style={{ paddingTop: "calc(var(--sat,0px) + 8px)" }}
             >
               {/* Back */}
               <button

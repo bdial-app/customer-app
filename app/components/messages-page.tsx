@@ -338,7 +338,7 @@ export default function MessagesPage({
       {/* Header */}
       <div
         className="shrink-0 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-30"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="flex items-center gap-2 px-3 py-2.5">
           <motion.button

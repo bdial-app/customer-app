@@ -34,7 +34,12 @@ import ProviderHeader from "./provider-header";
 import ProviderQuickStats from "./provider-quick-stats";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useProviderDetails } from "@/hooks/useProvider";
-import { ProviderDetailsPhoto, ProviderDetailsProduct, ProviderDetailsReview, ProviderDetailsOffer } from "@/services/provider.service";
+import {
+  ProviderDetailsPhoto,
+  ProviderDetailsProduct,
+  ProviderDetailsReview,
+  ProviderDetailsOffer,
+} from "@/services/provider.service";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
@@ -49,7 +54,10 @@ const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
-            <IonIcon icon={shieldCheckmarkOutline} className="text-white text-lg" />
+            <IonIcon
+              icon={shieldCheckmarkOutline}
+              className="text-white text-lg"
+            />
           </div>
           <div>
             <h3 className="text-white font-bold text-sm">Get Verified</h3>
@@ -57,7 +65,8 @@ const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
           </div>
         </div>
         <p className="text-white/70 text-xs leading-relaxed mb-3">
-          Verified providers get higher search rankings and build more customer trust. Complete verification to stand out.
+          Verified providers get higher search rankings and build more customer
+          trust. Complete verification to stand out.
         </p>
         <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center gap-1.5 text-white/60 text-[10px]">
@@ -89,7 +98,18 @@ const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
 const VerificationStatusCard = ({ status }: { status: string | null }) => {
   if (!status) return null;
 
-  const config: Record<string, { label: string; desc: string; icon: string; bg: string; border: string; text: string; iconColor: string }> = {
+  const config: Record<
+    string,
+    {
+      label: string;
+      desc: string;
+      icon: string;
+      bg: string;
+      border: string;
+      text: string;
+      iconColor: string;
+    }
+  > = {
     pending: {
       label: "Verification in Review",
       desc: "Your documents are being reviewed. This usually takes 1-2 business days.",
@@ -126,12 +146,18 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
     <div className="px-4 mb-4">
       <div className={`${cfg.bg} ${cfg.border} border rounded-2xl p-4`}>
         <div className="flex items-start gap-3">
-          <div className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}>
+          <div
+            className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}
+          >
             <IonIcon icon={cfg.icon} className={`text-lg ${cfg.iconColor}`} />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className={`text-xs font-bold ${cfg.text}`}>{cfg.label}</h4>
-            <p className={`text-[11px] ${cfg.text} opacity-70 mt-0.5 leading-relaxed`}>{cfg.desc}</p>
+            <p
+              className={`text-[11px] ${cfg.text} opacity-70 mt-0.5 leading-relaxed`}
+            >
+              {cfg.desc}
+            </p>
           </div>
         </div>
       </div>
@@ -157,24 +183,41 @@ const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Today's Activity</h3>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+          Today's Activity
+        </h3>
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
           <IonIcon icon={calendarOutline} className="text-xs" />
-          {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+          {new Date().toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+          })}
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xl font-bold text-teal-600 dark:text-teal-400">{todayReviews.length}</p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">New Reviews</p>
+          <p className="text-xl font-bold text-teal-600 dark:text-teal-400">
+            {todayReviews.length}
+          </p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            New Reviews
+          </p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.products.length}</p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">Products</p>
+          <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
+            {stats.products.length}
+          </p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            Products
+          </p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{stats.photos.length}</p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">Photos</p>
+          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+            {stats.photos.length}
+          </p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            Photos
+          </p>
         </div>
       </div>
     </div>
@@ -190,12 +233,21 @@ interface GrowthTipsProps {
   onVerify: () => void;
 }
 
-const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify }: GrowthTipsProps) => {
+const GrowthTips = ({
+  stats,
+  provider,
+  verificationStatus,
+  onNavigate,
+  onVerify,
+}: GrowthTipsProps) => {
   const totalPhotos = stats.photos.length;
   const totalProducts = stats.products.length;
   const totalOffers = stats.activeOffers.length;
-  const unrepliedReviews = stats.reviews.filter((r) => r.status === "active" && !r.replyText).length;
-  const needsVerification = !verificationStatus || verificationStatus === "rejected";
+  const unrepliedReviews = stats.reviews.filter(
+    (r) => r.status === "active" && !r.replyText,
+  ).length;
+  const needsVerification =
+    !verificationStatus || verificationStatus === "rejected";
 
   const tips = [
     (!provider?.description || !provider?.address) && {
@@ -242,7 +294,9 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
     },
     unrepliedReviews > 0 && {
       icon: chatbubbleOutline,
-      title: `Reply to ${unrepliedReviews} review${unrepliedReviews > 1 ? "s" : ""}`,
+      title: `Reply to ${unrepliedReviews} review${
+        unrepliedReviews > 1 ? "s" : ""
+      }`,
       desc: "Responding boosts trust & search ranking",
       priority: "medium" as const,
       action: () => onNavigate("reviews"),
@@ -261,17 +315,28 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
       priority: "low" as const,
       action: () => {
         if (navigator.share) {
-          navigator.share({ title: provider?.brandName || "My Business", text: "Check out my business!", url: window.location.origin });
+          navigator.share({
+            title: provider?.brandName || "My Business",
+            text: "Check out my business!",
+            url: window.location.origin,
+          });
         }
       },
     },
-  ].filter(Boolean) as { icon: string; title: string; desc: string; priority: "high" | "medium" | "low"; action: () => void }[];
+  ].filter(Boolean) as {
+    icon: string;
+    title: string;
+    desc: string;
+    priority: "high" | "medium" | "low";
+    action: () => void;
+  }[];
 
   if (tips.length === 0) return null;
 
   const priorityBadge = {
     high: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-    medium: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+    medium:
+      "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
     low: "bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400",
   };
 
@@ -282,7 +347,9 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-white">Growth Tips</h3>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            Growth Tips
+          </h3>
         </div>
         {urgentCount > 0 && (
           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
@@ -301,18 +368,32 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
             className="flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700 cursor-pointer"
           >
             <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center shrink-0">
-              <IonIcon icon={tip.icon} className="text-base text-teal-600 dark:text-teal-400" />
+              <IonIcon
+                icon={tip.icon}
+                className="text-base text-teal-600 dark:text-teal-400"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-800 dark:text-white">{tip.title}</span>
-                <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full uppercase ${priorityBadge[tip.priority]}`}>
+                <span className="text-xs font-bold text-slate-800 dark:text-white">
+                  {tip.title}
+                </span>
+                <span
+                  className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full uppercase ${
+                    priorityBadge[tip.priority]
+                  }`}
+                >
                   {tip.priority}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{tip.desc}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                {tip.desc}
+              </p>
             </div>
-            <IonIcon icon={chevronForwardOutline} className="text-slate-300 dark:text-slate-600 text-sm shrink-0" />
+            <IonIcon
+              icon={chevronForwardOutline}
+              className="text-slate-300 dark:text-slate-600 text-sm shrink-0"
+            />
           </motion.div>
         ))}
       </div>
@@ -323,7 +404,9 @@ const GrowthTips = ({ stats, provider, verificationStatus, onNavigate, onVerify 
 // ─── Recent Reviews ─────────────────────────────────────────────────
 const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
   const allReviews = [...stats.reviews]
-    .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
+    .sort(
+      (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
+    )
     .slice(0, 3);
 
   if (allReviews.length === 0) return null;
@@ -331,7 +414,9 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Recent Reviews</h3>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+          Recent Reviews
+        </h3>
       </div>
       <div className="space-y-2">
         {allReviews.map((r, i) => (
@@ -344,7 +429,10 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
           >
             <div className="flex items-center gap-2.5 mb-1.5">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shrink-0">
-                <IonIcon icon={personCircleOutline} className="text-white text-lg" />
+                <IonIcon
+                  icon={personCircleOutline}
+                  className="text-white text-lg"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
@@ -352,7 +440,10 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
                     {r.reviewer?.name || "Customer"}
                   </span>
                   <span className="text-[9px] text-slate-400 dark:text-slate-500">
-                    {new Date(r.postedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    {new Date(r.postedAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}
                   </span>
                 </div>
                 <div className="flex items-center gap-0.5">
@@ -360,7 +451,9 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
                     <IonIcon
                       key={s}
                       icon={star}
-                      className={`text-[9px] ${s <= r.starRating ? "text-amber-400" : "text-slate-200"}`}
+                      className={`text-[9px] ${
+                        s <= r.starRating ? "text-amber-400" : "text-slate-200"
+                      }`}
                     />
                   ))}
                 </div>
@@ -387,8 +480,12 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
           <div className="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <IonIcon icon={ribbonOutline} className="text-2xl text-teal-400" />
           </div>
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">No products yet</h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Add products to showcase to customers</p>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
+            No products yet
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            Add products to showcase to customers
+          </p>
         </div>
       </div>
     );
@@ -397,8 +494,12 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
   return (
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-sm font-bold text-slate-800 dark:text-white">My Products</h3>
-        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{stats.products.length} total</span>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+          My Products
+        </h3>
+        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+          {stats.products.length} total
+        </span>
       </div>
       <div className="space-y-2">
         {stats.products.slice(0, 3).map((p, i) => (
@@ -422,7 +523,10 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <IonIcon icon={cubeOutline} className="text-lg text-slate-300" />
+                  <IonIcon
+                    icon={cubeOutline}
+                    className="text-lg text-slate-300"
+                  />
                 </div>
               )}
             </div>
@@ -431,14 +535,21 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
                 <p className="text-xs font-bold text-slate-800 dark:text-white truncate flex-1 mr-2">
                   {p.name}
                 </p>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
-                  p.isActive ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30" : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700"
-                }`}>
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+                    p.isActive
+                      ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30"
+                      : "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700"
+                  }`}
+                >
                   {p.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
               {p.price != null && (
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.currency === "INR" ? "₹" : p.currency}{Number(p.price).toLocaleString()}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {p.currency === "INR" ? "₹" : p.currency}
+                  {Number(p.price).toLocaleString()}
+                </p>
               )}
             </div>
           </motion.div>
@@ -461,12 +572,32 @@ const ProfileCompleteness = ({
   const checks = [
     { label: "Brand name", done: !!provider?.brandName, target: "details" },
     { label: "Description", done: !!provider?.description, target: "details" },
-    { label: "Contact number", done: !!provider?.contactNumber, target: "details" },
+    {
+      label: "Contact number",
+      done: !!provider?.contactNumber,
+      target: "details",
+    },
     { label: "Address", done: !!provider?.address, target: "details" },
-    { label: "Operating hours", done: !!provider?.openTime && !!provider?.closeTime, target: "details" },
-    { label: "Profile photo", done: !!provider?.profilePhotoUrl, target: "details" },
-    { label: "At least 1 product", done: stats.products.length > 0, target: "products" },
-    { label: "At least 3 photos", done: stats.photos.length >= 3, target: "photos" },
+    {
+      label: "Operating hours",
+      done: !!provider?.openTime && !!provider?.closeTime,
+      target: "details",
+    },
+    {
+      label: "Profile photo",
+      done: !!provider?.profilePhotoUrl,
+      target: "details",
+    },
+    {
+      label: "At least 1 product",
+      done: stats.products.length > 0,
+      target: "products",
+    },
+    {
+      label: "At least 3 photos",
+      done: stats.photos.length >= 3,
+      target: "photos",
+    },
   ];
 
   const done = checks.filter((c) => c.done).length;
@@ -484,17 +615,31 @@ const ProfileCompleteness = ({
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="font-bold text-sm">Complete Your Profile</h3>
-              <p className="text-white/60 text-[11px] mt-0.5">{done}/{checks.length} steps done</p>
+              <p className="text-white/60 text-[11px] mt-0.5">
+                {done}/{checks.length} steps done
+              </p>
             </div>
             <div className="relative w-12 h-12">
               <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
                 <circle
-                  cx="24" cy="24" r="20" fill="none"
+                  cx="24"
+                  cy="24"
+                  r="20"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.15)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="20"
+                  fill="none"
                   stroke="white"
                   strokeWidth="4"
                   strokeLinecap="round"
-                  strokeDasharray={`${(pct / 100) * 2 * Math.PI * 20} ${2 * Math.PI * 20}`}
+                  strokeDasharray={`${(pct / 100) * 2 * Math.PI * 20} ${
+                    2 * Math.PI * 20
+                  }`}
                 />
               </svg>
               <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">
@@ -514,7 +659,10 @@ const ProfileCompleteness = ({
                   <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
                   {c.label}
                 </div>
-                <IonIcon icon={chevronForwardOutline} className="text-white/40 text-xs" />
+                <IonIcon
+                  icon={chevronForwardOutline}
+                  className="text-white/40 text-xs"
+                />
               </motion.div>
             ))}
           </div>
@@ -534,7 +682,11 @@ const ProfileCompleteness = ({
 };
 
 // ─── Subscription Upsell Card ───────────────────────────────────────
-const SubscriptionUpsell = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
+const SubscriptionUpsell = ({
+  onNavigate,
+}: {
+  onNavigate: (tab: string) => void;
+}) => {
   return (
     <div className="px-4 mb-4">
       <motion.div
@@ -548,25 +700,43 @@ const SubscriptionUpsell = ({ onNavigate }: { onNavigate: (tab: string) => void 
 
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
-            <IonIcon icon={diamondOutline} className="text-amber-400 text-base" />
-            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Upgrade Your Plan</span>
+            <IonIcon
+              icon={diamondOutline}
+              className="text-amber-400 text-base"
+            />
+            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+              Upgrade Your Plan
+            </span>
           </div>
-          <h3 className="text-base font-bold text-white mb-1">Get More Leads & Deals</h3>
+          <h3 className="text-base font-bold text-white mb-1">
+            Get More Leads & Deals
+          </h3>
           <p className="text-xs text-slate-400 leading-relaxed mb-4">
-            Unlock unlimited lead access, more deal slots, and exclusive sponsorship placements with a premium plan.
+            Unlock unlimited lead access, more deal slots, and exclusive
+            sponsorship placements with a premium plan.
           </p>
 
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
               <IonIcon icon={peopleOutline} className="text-teal-400 text-xs" />
-              <span className="text-[10px] text-white font-medium">More Leads</span>
+              <span className="text-[10px] text-white font-medium">
+                More Leads
+              </span>
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
-              <IonIcon icon={pricetagOutline} className="text-emerald-400 text-xs" />
-              <span className="text-[10px] text-white font-medium">More Deals</span>
+              <IonIcon
+                icon={pricetagOutline}
+                className="text-emerald-400 text-xs"
+              />
+              <span className="text-[10px] text-white font-medium">
+                More Deals
+              </span>
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
-              <IonIcon icon={megaphoneOutline} className="text-amber-400 text-xs" />
+              <IonIcon
+                icon={megaphoneOutline}
+                className="text-amber-400 text-xs"
+              />
               <span className="text-[10px] text-white font-medium">Boost</span>
             </div>
           </div>
@@ -586,7 +756,11 @@ const SubscriptionUpsell = ({ onNavigate }: { onNavigate: (tab: string) => void 
 };
 
 // ─── Revenue Boosters Section ───────────────────────────────────────
-const RevenueBoosters = ({ onNavigate }: { onNavigate: (tab: string) => void }) => {
+const RevenueBoosters = ({
+  onNavigate,
+}: {
+  onNavigate: (tab: string) => void;
+}) => {
   const boosters = [
     {
       id: "deals",
@@ -627,9 +801,14 @@ const RevenueBoosters = ({ onNavigate }: { onNavigate: (tab: string) => void }) 
     <div className="px-4 mb-4">
       <div className="flex items-center gap-1.5 mb-2.5">
         <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
-        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Grow Your Business</h3>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+          Grow Your Business
+        </h3>
       </div>
-      <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1" style={{ WebkitOverflowScrolling: "touch" }}>
+      <div
+        className="flex gap-3 overflow-x-auto scrollbar-none pb-1"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         {boosters.map((b) => (
           <motion.button
             key={b.id}
@@ -637,12 +816,20 @@ const RevenueBoosters = ({ onNavigate }: { onNavigate: (tab: string) => void }) 
             onClick={b.action}
             className="flex-shrink-0 w-[160px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3.5 text-left active:bg-slate-50 transition-colors"
           >
-            <div className={`w-9 h-9 rounded-xl ${b.iconBg} flex items-center justify-center mb-2.5`}>
+            <div
+              className={`w-9 h-9 rounded-xl ${b.iconBg} flex items-center justify-center mb-2.5`}
+            >
               <IonIcon icon={b.icon} className={`text-lg ${b.iconColor}`} />
             </div>
-            <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight mb-0.5">{b.title}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mb-2.5">{b.subtitle}</p>
-            <span className={`inline-flex items-center gap-1 text-[10px] font-bold text-white px-2.5 py-1 rounded-full bg-gradient-to-r ${b.gradient}`}>
+            <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight mb-0.5">
+              {b.title}
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mb-2.5">
+              {b.subtitle}
+            </p>
+            <span
+              className={`inline-flex items-center gap-1 text-[10px] font-bold text-white px-2.5 py-1 rounded-full bg-gradient-to-r ${b.gradient}`}
+            >
               {b.cta}
               <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
             </span>
@@ -666,9 +853,14 @@ const DealsOverview = ({
       <div className="px-4 mb-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 text-center">
           <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <IonIcon icon={pricetagOutline} className="text-xl text-amber-400" />
+            <IonIcon
+              icon={pricetagOutline}
+              className="text-xl text-amber-400"
+            />
           </div>
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">No active deals</h4>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
+            No active deals
+          </h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
             Create deals to attract more customers and boost sales
           </p>
@@ -686,11 +878,17 @@ const DealsOverview = ({
   }
 
   const nextExpiring = [...offers].sort(
-    (a, b) => new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime()
+    (a, b) => new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime(),
   )[0];
 
   const daysLeft = nextExpiring
-    ? Math.max(0, Math.ceil((new Date(nextExpiring.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(nextExpiring.endsAt).getTime() - Date.now()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
     : 0;
 
   return (
@@ -698,7 +896,9 @@ const DealsOverview = ({
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <IonIcon icon={pricetagOutline} className="text-amber-500 text-sm" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-white">Active Deals</h3>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            Active Deals
+          </h3>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -725,7 +925,10 @@ const DealsOverview = ({
               )}
             </div>
           </div>
-          <IonIcon icon={chevronForwardOutline} className="text-slate-300 text-sm" />
+          <IonIcon
+            icon={chevronForwardOutline}
+            className="text-slate-300 text-sm"
+          />
         </div>
         {nextExpiring && (
           <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-700 flex items-center justify-between">
@@ -749,13 +952,16 @@ interface ProviderDashboardProps {
   onNavigateToListings?: (subTab: string) => void;
 }
 
-const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => {
+const ProviderDashboard = ({
+  onNavigateToListings,
+}: ProviderDashboardProps) => {
   const router = useRouter();
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
-  const { data: details, isLoading: detailsLoading } = useProviderDetails(providerId);
+  const { data: details, isLoading: detailsLoading } =
+    useProviderDetails(providerId);
   const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
   const isLoading = providerLoading || detailsLoading;
@@ -772,7 +978,8 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
   };
 
   // Only show "Get Verified" prompt if NOT already approved and no verification submitted
-  const needsVerification = !isApproved && (!verificationStatus || verificationStatus === "rejected");
+  const needsVerification =
+    !isApproved && (!verificationStatus || verificationStatus === "rejected");
 
   const handleNavigate = (subTab: string) => {
     onNavigateToListings?.(subTab);
@@ -798,7 +1005,10 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         </div>
         <div className="px-4 py-4 grid grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 flex flex-col items-center gap-1.5">
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 flex flex-col items-center gap-1.5"
+            >
               <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 animate-pulse" />
               <div className="h-4 w-8 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
               <div className="h-2 w-12 bg-slate-50 rounded animate-pulse" />
@@ -807,7 +1017,10 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         </div>
         <div className="px-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse" />
+            <div
+              key={i}
+              className="h-20 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse"
+            />
           ))}
         </div>
       </div>
@@ -816,18 +1029,24 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
 
   return (
     <div className="pb-24">
-      <ProviderHeader provider={provider} verificationStatus={isApproved ? "approved" : verificationStatus} />
+      <ProviderHeader
+        provider={provider}
+        verificationStatus={isApproved ? "approved" : verificationStatus}
+      />
       <ProviderQuickStats stats={providerStats} />
-      {needsVerification && (
-        <VerificationPrompt onVerify={handleVerify} />
-      )}
-      {!isApproved && verificationStatus && verificationStatus !== "approved" && !needsVerification && (
-        <VerificationStatusCard status={verificationStatus} />
-      )}
-      {isApproved && (
-        <VerificationStatusCard status="approved" />
-      )}
-      <ProfileCompleteness provider={provider} stats={providerStats} onNavigate={handleNavigate} />
+      {needsVerification && <VerificationPrompt onVerify={handleVerify} />}
+      {!isApproved &&
+        verificationStatus &&
+        verificationStatus !== "approved" &&
+        !needsVerification && (
+          <VerificationStatusCard status={verificationStatus} />
+        )}
+      {isApproved && <VerificationStatusCard status="approved" />}
+      <ProfileCompleteness
+        provider={provider}
+        stats={providerStats}
+        onNavigate={handleNavigate}
+      />
       <TodayActivity stats={providerStats} />
       <SubscriptionUpsell onNavigate={handleNavigate} />
       <GrowthTips
@@ -838,7 +1057,10 @@ const ProviderDashboard = ({ onNavigateToListings }: ProviderDashboardProps) => 
         onVerify={handleVerify}
       />
       <RevenueBoosters onNavigate={handleNavigate} />
-      <DealsOverview offers={providerStats.activeOffers} onManage={() => handleNavigate("deals")} />
+      <DealsOverview
+        offers={providerStats.activeOffers}
+        onManage={() => handleNavigate("deals")}
+      />
       <ProductsOverview stats={providerStats} />
       <RecentReviewsList stats={providerStats} />
     </div>

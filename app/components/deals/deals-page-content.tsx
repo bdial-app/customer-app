@@ -317,7 +317,7 @@ const DealsPageContent = () => {
   return (
     <div className="min-h-screen bg-[#efeff4] dark:bg-slate-900 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 safe-top shadow-sm">
+      <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 shadow-sm" style={{ paddingTop: "var(--sat,0px)" }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => router.back()}

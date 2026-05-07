@@ -117,7 +117,7 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="fixed right-3 top-[calc(env(safe-area-inset-top)+52px)] z-[100] w-[calc(100vw-24px)] max-w-[360px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-black/15 border border-slate-100 dark:border-slate-700 overflow-hidden"
+            className="fixed right-3 top-[calc(var(--sat,0px)+52px)] z-[100] w-[calc(100vw-24px)] max-w-[360px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-black/15 border border-slate-100 dark:border-slate-700 overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">

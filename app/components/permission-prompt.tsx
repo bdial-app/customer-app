@@ -57,7 +57,7 @@ export default function PermissionPrompt() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[200] bg-white dark:bg-slate-900 flex flex-col"
         style={{
-          paddingTop: "max(env(safe-area-inset-top), 20px)",
+          paddingTop: "max(var(--sat,0px), 20px)",
           paddingBottom: "max(env(safe-area-inset-bottom), 20px)",
         }}
       >
@@ -79,9 +79,11 @@ export default function PermissionPrompt() {
 
             <div className="flex-1 flex flex-col items-center justify-center -mt-10">
               {/* App icon area */}
-              <div className="w-20 h-20 rounded-[22px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mb-6 shadow-lg shadow-amber-200 dark:shadow-amber-900/30">
-                <span className="text-3xl font-bold text-white">T</span>
-              </div>
+              <img
+                src="/icons/512.png"
+                alt="Tijarah"
+                className="w-20 h-20 rounded-[22px] mb-6 shadow-lg shadow-black/20"
+              />
 
               <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-2">
                 Welcome to Tijarah

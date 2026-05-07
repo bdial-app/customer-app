@@ -319,7 +319,7 @@ const GeoLocation = () => {
       <div
         className="sticky top-0 z-40"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)",
+          paddingTop: "calc(var(--sat,0px) + 6px)",
           background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
         }}
       >
@@ -626,7 +626,7 @@ const GeoLocation = () => {
             {/* Map Header — back button + search bar */}
             <div
               className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 shrink-0"
-              style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+              style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
             >
               <div className="flex items-center gap-2 px-3 py-2">
                 <button

@@ -186,7 +186,7 @@ const AddLocationContent = () => {
     <Page className="bg-white dark:bg-neutral-950">
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-800">
+        <div className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-800" style={{ paddingTop: "var(--sat,0px)" }}>
           <div className="flex items-center gap-3 px-4 pt-3 pb-2">
             <button
               onClick={handleBack}

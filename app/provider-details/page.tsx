@@ -137,7 +137,9 @@ function RatingBar({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-5 text-right text-gray-400 dark:text-slate-500">{count}</span>
+      <span className="w-5 text-right text-gray-400 dark:text-slate-500">
+        {count}
+      </span>
     </div>
   );
 }
@@ -284,7 +286,9 @@ export default function ProviderDetailsPage() {
   }, [categories, provider?.description]);
 
   const hours = provider
-    ? `${provider.openTime?.slice(0, 5) || "09:00"} – ${provider.closeTime?.slice(0, 5) || "21:00"}`
+    ? `${provider.openTime?.slice(0, 5) || "09:00"} – ${
+        provider.closeTime?.slice(0, 5) || "21:00"
+      }`
     : "";
 
   useEffect(() => {
@@ -302,7 +306,9 @@ export default function ProviderDetailsPage() {
     trackShare();
     const shareData = {
       title: provider.brandName,
-      text: `Check out ${provider.brandName} – ${categoryLabel}\n⭐ ${stats?.rating ?? 0}\n${provider.description || ""}`,
+      text: `Check out ${provider.brandName} – ${categoryLabel}\n⭐ ${
+        stats?.rating ?? 0
+      }\n${provider.description || ""}`,
       url: window.location.href,
     };
     try {
@@ -362,7 +368,10 @@ export default function ProviderDetailsPage() {
           onClick={() => goBack("/")}
           className="w-9 h-9 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center active:scale-90 transition-transform"
         >
-          <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <IonIcon
+            icon={arrowBack}
+            className="w-5 h-5 text-gray-700 dark:text-gray-300"
+          />
         </button>
       </Page>
     );
@@ -374,437 +383,914 @@ export default function ProviderDetailsPage() {
   const owner = (provider as any)?.user;
 
   return (
-    <Page className={`!bg-white dark:!bg-slate-900 ${isSponsored ? "sponsored-provider" : ""}`}>
+    <Page
+      className={`!bg-white dark:!bg-slate-900 ${
+        isSponsored ? "sponsored-provider" : ""
+      }`}
+    >
       <div className="h-full overflow-y-auto overscroll-contain">
-      {/* Sponsored Premium Banner */}
-      {isSponsored && (
-        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-4 py-2 flex items-center justify-center gap-2 shadow-md relative z-10">
-          <IonIcon icon={shieldCheckmark} className="w-4 h-4 text-white" />
-          <span className="text-[11px] font-bold text-white tracking-wide uppercase">
-            Featured Business
-          </span>
-          <span className="text-[9px] text-white/80 font-medium">• Premium Partner</span>
-        </div>
-      )}
-
-      {/* Hero */}
-      <div
-        className="relative"
-        style={{ display: isLightboxOpen ? "none" : "block" }}
-      >
-        <div className={`relative h-72 overflow-hidden ${isSponsored ? "h-80" : ""} bg-gradient-to-br from-slate-200 to-slate-100`}>
-          {heroImage ? (
-            <img
-              src={heroImage}
-              alt={provider.brandName}
-              className="w-full h-full object-cover"
+        {/* Hero */}
+        <div
+          className="relative"
+          style={{ display: isLightboxOpen ? "none" : "block" }}
+        >
+          <div
+            className={`relative h-72 overflow-hidden ${
+              isSponsored ? "h-80" : ""
+            } bg-gradient-to-br from-slate-200 to-slate-100`}
+          >
+            {heroImage ? (
+              <img
+                src={heroImage}
+                alt={provider.brandName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-6xl font-bold text-slate-300">
+                  {provider.brandName?.charAt(0)?.toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div
+              className={`absolute inset-0 ${
+                isSponsored
+                  ? "bg-gradient-to-t from-black/70 via-black/20 to-amber-900/10"
+                  : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"
+              }`}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-6xl font-bold text-slate-300">
-                {provider.brandName?.charAt(0)?.toUpperCase()}
-              </span>
-            </div>
-          )}
-          <div className={`absolute inset-0 ${isSponsored ? "bg-gradient-to-t from-black/70 via-black/20 to-amber-900/10" : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"}`} />
 
-          {/* Top Actions */}
-          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3">
-            <button
-              onClick={() => goBack("/")}
-              className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            {/* Sponsored Premium Banner — inside hero, clears status bar */}
+            {isSponsored && (
+              <div
+                className="absolute top-0 inset-x-0 flex items-center justify-center gap-2 z-20 bg-gradient-to-r from-amber-500/90 via-amber-400/90 to-yellow-400/90 backdrop-blur-sm"
+                style={{
+                  paddingTop: "calc(var(--sat,0px) + 6px)",
+                  paddingBottom: "6px",
+                }}
+              >
+                <IonIcon
+                  icon={shieldCheckmark}
+                  className="w-4 h-4 text-white"
+                />
+                <span className="text-[11px] font-bold text-white tracking-wide uppercase">
+                  Featured Business
+                </span>
+                <span className="text-[9px] text-white/80 font-medium">
+                  • Premium Partner
+                </span>
+              </div>
+            )}
+
+            {/* Top Actions */}
+            <div
+              className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pb-3"
+              style={{
+                paddingTop: isSponsored
+                  ? "calc(var(--sat,0px) + 46px)"
+                  : "calc(var(--sat,0px) + 12px)",
+              }}
             >
-              <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
-            </button>
-            <div className="flex gap-2">
-              {!isOwnProvider && (
-                <button
-                  onClick={handleToggleSaved}
-                  className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                >
-                  <IonIcon
-                    icon={liked ? heart : heartOutline}
-                    className={`w-5 h-5 ${liked ? "text-red-400" : "text-white"}`}
-                  />
-                </button>
-              )}
               <button
-                onClick={handleShare}
+                onClick={() => goBack("/")}
                 className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
               >
-                <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
+                <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
               </button>
-              {!isOwnProvider && (
-                <button onClick={() => requireAuth(() => setReportSheetOpen(true))} className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform">
-                  <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Photo Count */}
-          {galleryImages.length > 0 && (
-            <button
-              onClick={() => setActiveTab("Photos")}
-              className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white text-xs font-medium px-3 py-1.5 rounded-full active:scale-95 transition-transform"
-            >
-              <IonIcon icon={imagesOutline} className="w-3.5 h-3.5" />
-              {galleryImages.length} Photos
-            </button>
-          )}
-
-          {/* Provider Name */}
-          <div className="absolute bottom-4 left-4 right-20">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl font-bold text-white leading-tight truncate">
-                {provider.brandName}
-              </h1>
-              {provider.status === "active" && (
-                <IonIcon
-                  icon={checkmarkCircle}
-                  className="w-5 h-5 text-blue-400 flex-shrink-0"
-                />
-              )}
-              {isSponsored && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm">
-                  ⭐ Premium
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-white/80 text-sm truncate">{categoryLabel}</p>
-              {badges.length > 0 &&
-                badges.slice(0, 3).map((b) => (
-                  <span
-                    key={b.id}
-                    className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
+              <div className="flex gap-2">
+                {!isOwnProvider && (
+                  <button
+                    onClick={handleToggleSaved}
+                    className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
                   >
-                    {b.type === "gold_seller"
-                      ? "🥇"
-                      : b.type === "top_rated"
-                        ? "⭐"
-                        : b.type === "trusted"
-                          ? "🛡️"
-                          : b.type === "express_service"
-                            ? "⚡"
-                            : "🌟"}
-                    {b.type.replace(/_/g, " ")}
-                  </span>
-                ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className={`flex items-center justify-between px-5 py-3 border-b ${isSponsored ? "bg-gradient-to-r from-amber-50/50 to-white dark:from-amber-950/20 dark:to-slate-800 border-amber-100/80 dark:border-amber-900/40" : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"}`}>
-          <div className="flex items-center gap-1.5">
-            {reviewCount > 0 ? (
-              <>
-                <svg width={16} height={16} viewBox="0 0 20 20" fill="#FBBF24">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-                </svg>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">
-                  {rating.toFixed(1)}
-                </span>
-                <span className="text-xs text-gray-400 dark:text-slate-500">({reviewCount})</span>
-              </>
-            ) : (
-              <span className="text-sm font-semibold text-indigo-600">New</span>
-            )}
-          </div>
-          <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
-          <span className="text-sm font-semibold text-amber-600">
-            {priceLabel || "Contact for price"}
-          </span>
-          <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
-          <div className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
-            <IonIcon icon={locationOutline} className="w-3.5 h-3.5" />
-            <span className="text-xs truncate max-w-[100px]">
-              {provider.city}
-              {provider.area ? `, ${provider.area}` : ""}
-            </span>
-          </div>
-        </div>
-
-        {/* Tab Bar */}
-        <div className={`border-b overflow-x-auto no-scrollbar ${isSponsored ? "bg-gradient-to-r from-amber-50/30 to-white dark:from-amber-950/10 dark:to-slate-800 border-amber-100/60 dark:border-amber-900/30" : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"}`}>
-          <div className="flex px-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  trackTabSwitch(tab);
-                }}
-                className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${activeTab === tab ? "text-amber-600" : "text-gray-400 dark:text-slate-500"}`}
-              >
-                {tab}
-                {activeTab === tab && (
-                  <span className={`absolute bottom-0 left-1/4 right-1/4 h-[2.5px] rounded-full ${isSponsored ? "bg-gradient-to-r from-amber-500 to-yellow-400" : "bg-amber-500"}`} />
+                    <IonIcon
+                      icon={liked ? heart : heartOutline}
+                      className={`w-5 h-5 ${
+                        liked ? "text-red-400" : "text-white"
+                      }`}
+                    />
+                  </button>
                 )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* === OVERVIEW === */}
-      {activeTab === "Overview" && (
-        <div className="px-5 pt-5 pb-28 space-y-5">
-          {/* Premium Trust Banner — Sponsored Only */}
-          {isSponsored && (
-            <div className="relative overflow-hidden rounded-2xl border border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50 via-white to-yellow-50 dark:from-amber-950/30 dark:via-slate-800 dark:to-yellow-950/20 p-4 shadow-[0_2px_12px_rgba(245,158,11,0.1)]">
-              {/* Decorative sparkle */}
-              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-400/10 rounded-full blur-xl" />
-              <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-yellow-400/10 rounded-full blur-lg" />
-
-              <div className="flex items-start gap-3 relative">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <IonIcon icon={shieldCheckmark} className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-[13px] font-bold text-slate-800 dark:text-white">
-                    Premium Verified Business
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                    This business has been verified and is a featured partner on our platform. Premium businesses go through additional quality checks.
-                  </p>
-                  <div className="flex items-center gap-3 mt-2.5">
-                    <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                      Identity Verified
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                      Quality Assured
-                    </div>
-                  </div>
-                </div>
+                <button
+                  onClick={handleShare}
+                  className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
+                </button>
+                {!isOwnProvider && (
+                  <button
+                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                    className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                  >
+                    <IonIcon
+                      icon={flagOutline}
+                      className="w-5 h-5 text-white"
+                    />
+                  </button>
+                )}
               </div>
             </div>
-          )}
 
-          {/* Gallery Preview */}
-          {galleryImages.length > 0 && (
-            <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
-              {galleryImages.slice(0, 3).map((img, i) => (
+            {/* Photo Count */}
+            {galleryImages.length > 0 && (
+              <button
+                onClick={() => setActiveTab("Photos")}
+                className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white text-xs font-medium px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+              >
+                <IonIcon icon={imagesOutline} className="w-3.5 h-3.5" />
+                {galleryImages.length} Photos
+              </button>
+            )}
+
+            {/* Provider Name */}
+            <div className="absolute bottom-4 left-4 right-20">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-xl font-bold text-white leading-tight truncate">
+                  {provider.brandName}
+                </h1>
+                {provider.status === "active" && (
+                  <IonIcon
+                    icon={checkmarkCircle}
+                    className="w-5 h-5 text-blue-400 flex-shrink-0"
+                  />
+                )}
+                {isSponsored && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm">
+                    ⭐ Premium
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-white/80 text-sm truncate">
+                  {categoryLabel}
+                </p>
+                {badges.length > 0 &&
+                  badges.slice(0, 3).map((b) => (
+                    <span
+                      key={b.id}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
+                    >
+                      {b.type === "gold_seller"
+                        ? "🥇"
+                        : b.type === "top_rated"
+                        ? "⭐"
+                        : b.type === "trusted"
+                        ? "🛡️"
+                        : b.type === "express_service"
+                        ? "⚡"
+                        : "🌟"}
+                      {b.type.replace(/_/g, " ")}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div
+            className={`flex items-center justify-between px-5 py-3 border-b ${
+              isSponsored
+                ? "bg-gradient-to-r from-amber-50/50 to-white dark:from-amber-950/20 dark:to-slate-800 border-amber-100/80 dark:border-amber-900/40"
+                : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              {reviewCount > 0 ? (
+                <>
+                  <svg
+                    width={16}
+                    height={16}
+                    viewBox="0 0 20 20"
+                    fill="#FBBF24"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+                  </svg>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    {rating.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-gray-400 dark:text-slate-500">
+                    ({reviewCount})
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-semibold text-indigo-600">
+                  New
+                </span>
+              )}
+            </div>
+            <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
+            <span className="text-sm font-semibold text-amber-600">
+              {priceLabel || "Contact for price"}
+            </span>
+            <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
+            <div className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
+              <IonIcon icon={locationOutline} className="w-3.5 h-3.5" />
+              <span className="text-xs truncate max-w-[100px]">
+                {provider.city}
+                {provider.area ? `, ${provider.area}` : ""}
+              </span>
+            </div>
+          </div>
+
+          {/* Tab Bar */}
+          <div
+            className={`border-b overflow-x-auto no-scrollbar ${
+              isSponsored
+                ? "bg-gradient-to-r from-amber-50/30 to-white dark:from-amber-950/10 dark:to-slate-800 border-amber-100/60 dark:border-amber-900/30"
+                : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"
+            }`}
+          >
+            <div className="flex px-1">
+              {TABS.map((tab) => (
                 <button
-                  key={i}
-                  onClick={() => setActiveTab("Photos")}
-                  className={`relative aspect-square overflow-hidden active:opacity-80 transition-opacity ${i === 0 ? "col-span-2 row-span-2" : ""}`}
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    trackTabSwitch(tab);
+                  }}
+                  className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${
+                    activeTab === tab
+                      ? "text-amber-600"
+                      : "text-gray-400 dark:text-slate-500"
+                  }`}
                 >
-                  {img && (
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-full object-cover"
+                  {tab}
+                  {activeTab === tab && (
+                    <span
+                      className={`absolute bottom-0 left-1/4 right-1/4 h-[2.5px] rounded-full ${
+                        isSponsored
+                          ? "bg-gradient-to-r from-amber-500 to-yellow-400"
+                          : "bg-amber-500"
+                      }`}
                     />
-                  )}
-                  {i === 2 && galleryImages.length > 3 && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        +{galleryImages.length - 3}
-                      </span>
-                    </div>
                   )}
                 </button>
               ))}
             </div>
-          )}
-
-          {/* Info Chips */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <InfoChip
-              icon={ribbonOutline}
-              label="Products"
-              value={`${stats?.productCount ?? 0}`}
-            />
-            <InfoChip icon={time} label="Hours" value={hours} />
-            <InfoChip
-              icon={storefrontOutline}
-              label="Status"
-              value={provider.isAvailable ? "Open Now" : "Closed"}
-            />
-            <InfoChip
-              icon={shieldCheckmark}
-              label="Verified"
-              value={provider.status === "active" ? "Verified" : "Pending"}
-            />
           </div>
+        </div>
 
-          {/* Active Offers */}
-          {activeOffers.length > 0 && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40">
-              <div className="flex items-center gap-2 mb-3">
-                <IonIcon icon={pricetag} className="w-4 h-4 text-amber-600" />
-                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                  Active Deals
-                </h3>
+        {/* === OVERVIEW === */}
+        {activeTab === "Overview" && (
+          <div className="px-5 pt-5 pb-28 space-y-5">
+            {/* Premium Trust Banner — Sponsored Only */}
+            {isSponsored && (
+              <div className="relative overflow-hidden rounded-2xl border border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50 via-white to-yellow-50 dark:from-amber-950/30 dark:via-slate-800 dark:to-yellow-950/20 p-4 shadow-[0_2px_12px_rgba(245,158,11,0.1)]">
+                {/* Decorative sparkle */}
+                <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-400/10 rounded-full blur-xl" />
+                <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-yellow-400/10 rounded-full blur-lg" />
+
+                <div className="flex items-start gap-3 relative">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <IonIcon
+                      icon={shieldCheckmark}
+                      className="w-5 h-5 text-white"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-[13px] font-bold text-slate-800 dark:text-white">
+                      Premium Verified Business
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      This business has been verified and is a featured partner
+                      on our platform. Premium businesses go through additional
+                      quality checks.
+                    </p>
+                    <div className="flex items-center gap-3 mt-2.5">
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Identity Verified
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Quality Assured
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2.5">
-                {activeOffers.map((offer) => (
-                  <div
-                    key={offer.id}
-                    className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none"
+            )}
+
+            {/* Gallery Preview */}
+            {galleryImages.length > 0 && (
+              <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
+                {galleryImages.slice(0, 3).map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveTab("Photos")}
+                    className={`relative aspect-square overflow-hidden active:opacity-80 transition-opacity ${
+                      i === 0 ? "col-span-2 row-span-2" : ""
+                    }`}
                   >
-                    {offer.discountValue && (
-                      <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-bold">
-                          {offer.discountType === "percentage"
-                            ? `${Number(offer.discountValue)}%`
-                            : `₹${Number(offer.discountValue)}`}
+                    {img && (
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    {i === 2 && galleryImages.length > 3 && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="text-white font-semibold text-sm">
+                          +{galleryImages.length - 3}
                         </span>
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
-                        {offer.title}
-                      </p>
-                      <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
-                        {offer.description}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Info Chips */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <InfoChip
+                icon={ribbonOutline}
+                label="Products"
+                value={`${stats?.productCount ?? 0}`}
+              />
+              <InfoChip icon={time} label="Hours" value={hours} />
+              <InfoChip
+                icon={storefrontOutline}
+                label="Status"
+                value={provider.isAvailable ? "Open Now" : "Closed"}
+              />
+              <InfoChip
+                icon={shieldCheckmark}
+                label="Verified"
+                value={provider.status === "active" ? "Verified" : "Pending"}
+              />
+            </div>
+
+            {/* Active Offers */}
+            {activeOffers.length > 0 && (
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <IonIcon icon={pricetag} className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
+                    Active Deals
+                  </h3>
+                </div>
+                <div className="space-y-2.5">
+                  {activeOffers.map((offer) => (
+                    <div
+                      key={offer.id}
+                      className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none"
+                    >
+                      {offer.discountValue && (
+                        <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">
+                            {offer.discountType === "percentage"
+                              ? `${Number(offer.discountValue)}%`
+                              : `₹${Number(offer.discountValue)}`}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
+                          {offer.title}
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
+                          {offer.description}
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-amber-600 font-semibold whitespace-nowrap">
+                        Ends{" "}
+                        {new Date(offer.endsAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* About */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
+                About
+              </h3>
+              <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed">
+                {provider.description || "No description provided yet."}
+              </p>
+            </div>
+
+            {/* Categories */}
+            {categories.length > 0 && (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
+                  Services ({categories.length})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((c) => (
+                    <span
+                      key={c.id}
+                      className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[12px] font-medium"
+                    >
+                      {c.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Address */}
+            {provider.address && (
+              <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <h3 className="text-[15px] font-bold text-gray-900 mb-2">
+                  Location
+                </h3>
+
+                {user ? (
+                  /* Logged-in: show full address + directions */
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <IonIcon
+                          icon={locationOutline}
+                          className="w-[18px] h-[18px] text-gray-500"
+                        />
+                      </div>
+                      <p className="text-[13px] text-gray-600 leading-relaxed flex-1">
+                        {provider.address}
+                        {provider.city ? `, ${provider.city}` : ""}
+                        {provider.pincode ? ` - ${provider.pincode}` : ""}
                       </p>
                     </div>
-                    <span className="text-[10px] text-amber-600 font-semibold whitespace-nowrap">
-                      Ends{" "}
-                      {new Date(offer.endsAt).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
+                    {provider.latitude && provider.longitude && (
+                      <button
+                        onClick={() => {
+                          trackDirection();
+                          openDirections(
+                            Number(provider.latitude),
+                            Number(provider.longitude),
+                            provider.brandName,
+                          );
+                        }}
+                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+                      >
+                        <IonIcon icon={navigateOutline} className="w-4 h-4" />
+                        Get Directions
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  /* Guest: blurred lock overlay */
+                  <button
+                    onClick={() => requireAuth()}
+                    className="w-full relative rounded-xl overflow-hidden"
+                  >
+                    {/* Blurred address text behind */}
+                    <div
+                      className="flex items-start gap-3 select-none pointer-events-none"
+                      aria-hidden
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <IonIcon
+                          icon={locationOutline}
+                          className="w-[18px] h-[18px] text-gray-400"
+                        />
+                      </div>
+                      <p className="text-[13px] text-gray-400 leading-relaxed flex-1 blur-[5px]">
+                        {provider.address}
+                        {provider.city ? `, ${provider.city}` : ""}
+                        {provider.pincode ? ` - ${provider.pincode}` : ""}
+                      </p>
+                    </div>
+                    {/* Frosted overlay */}
+                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
+                      <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
+                        <IonIcon icon={lockClosedOutline} className="text-sm" />
+                        <span className="text-[12px] font-bold">
+                          Sign in to see location
+                        </span>
+                        <IonIcon
+                          icon={logInOutline}
+                          className="text-sm text-amber-400"
+                        />
+                      </div>
+                    </div>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Invite Friends */}
+            <button
+              onClick={() => router.push("/invite")}
+              className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40 active:scale-[0.98] transition-transform"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-200">
+                <IonIcon icon={peopleOutline} className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-[13px] font-bold text-gray-900 dark:text-white">
+                  Know someone who&apos;d love this?
+                </p>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                  Invite friends to discover local businesses
+                </p>
+              </div>
+              <IonIcon icon={shareSocial} className="w-4 h-4 text-amber-500" />
+            </button>
+
+            {/* Business Owner */}
+            {owner && (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
+                  Business Contact
+                </h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    {initialsOf(owner.name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                      {owner.name}
+                    </h4>
+                    {user ? (
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
+                        {owner.mobileNumber}
+                      </p>
+                    ) : (
+                      <button
+                        onClick={() => requireAuth(() => {})}
+                        className="flex items-center gap-1 mt-0.5"
+                      >
+                        <p className="text-xs text-gray-400 blur-[4px] select-none pointer-events-none">
+                          +91 98765 43210
+                        </p>
+                        <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5 ml-1">
+                          <IonIcon icon={logInOutline} className="text-xs" />
+                          Sign in
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === REVIEWS === */}
+        {activeTab === "Reviews" && (
+          <div className="px-5 pt-5 pb-28 space-y-4">
+            {/* Rating Summary */}
+            {reviewCount > 0 ? (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+                <div className="flex gap-5">
+                  <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100 dark:border-slate-700">
+                    <span className="text-4xl font-extrabold text-gray-900 dark:text-white leading-none">
+                      {rating.toFixed(1)}
+                    </span>
+                    <StarRow rating={Math.round(rating)} size={13} />
+                    <span className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">
+                      {reviewCount} reviews
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* About */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">About</h3>
-            <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed">
-              {provider.description || "No description provided yet."}
-            </p>
-          </div>
-
-          {/* Categories */}
-          {categories.length > 0 && (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
-                Services ({categories.length})
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((c) => (
-                  <span
-                    key={c.id}
-                    className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[12px] font-medium"
-                  >
-                    {c.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Address */}
-          {provider.address && (
-            <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <h3 className="text-[15px] font-bold text-gray-900 mb-2">Location</h3>
-
-              {user ? (
-                /* Logged-in: show full address + directions */
-                <>
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <IonIcon icon={locationOutline} className="w-[18px] h-[18px] text-gray-500" />
-                    </div>
-                    <p className="text-[13px] text-gray-600 leading-relaxed flex-1">{provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}</p>
+                  <div className="flex-1 flex flex-col gap-1.5 justify-center">
+                    {[5, 4, 3, 2, 1].map((s) => (
+                      <RatingBar
+                        key={s}
+                        starCount={s}
+                        count={ratingDist[s - 1] ?? 0}
+                        total={reviewCount}
+                      />
+                    ))}
                   </div>
-                  {provider.latitude && provider.longitude && (
-                    <button
-                      onClick={() => { trackDirection(); openDirections(Number(provider.latitude), Number(provider.longitude), provider.brandName); }}
-                      className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
-                    >
-                      <IonIcon icon={navigateOutline} className="w-4 h-4" />
-                      Get Directions
-                    </button>
-                  )}
-                </>
-              ) : (
-                /* Guest: blurred lock overlay */
-                <button onClick={() => requireAuth()} className="w-full relative rounded-xl overflow-hidden">
-                  {/* Blurred address text behind */}
-                  <div className="flex items-start gap-3 select-none pointer-events-none" aria-hidden>
-                    <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <IonIcon icon={locationOutline} className="w-[18px] h-[18px] text-gray-400" />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 text-center">
+                <p className="text-lg font-bold text-indigo-600 mb-1">
+                  New Provider
+                </p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">
+                  No ratings yet — be the first to review!
+                </p>
+              </div>
+            )}
+
+            {/* Review Cards */}
+            {reviews.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
+                  No reviews yet. Be the first to share your experience!
+                </p>
+              </div>
+            ) : (
+              reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
+                >
+                  <div className="flex items-start justify-between mb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 flex-shrink-0">
+                        {initialsOf(review.reviewer?.name)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[13px] font-semibold text-gray-900 dark:text-white">
+                            {review.reviewer?.name || "Anonymous"}
+                          </span>
+                          <IonIcon
+                            icon={checkmarkCircle}
+                            className="w-3.5 h-3.5 text-blue-500"
+                          />
+                        </div>
+                        <span className="text-[11px] text-gray-400">
+                          {formatRelative(review.postedAt)}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-[13px] text-gray-400 leading-relaxed flex-1 blur-[5px]">
-                      {provider.address}{provider.city ? `, ${provider.city}` : ""}{provider.pincode ? ` - ${provider.pincode}` : ""}
+                    <StarRow rating={review.starRating} size={12} />
+                  </div>
+                  {review.reviewText && (
+                    <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
+                      {review.reviewText}
                     </p>
-                  </div>
-                  {/* Frosted overlay */}
-                  <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
-                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
-                      <IonIcon icon={lockClosedOutline} className="text-sm" />
-                      <span className="text-[12px] font-bold">Sign in to see location</span>
-                      <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
+                  )}
+                  {review.photos && review.photos.length > 0 && (
+                    <div className="flex gap-1.5 mb-3">
+                      {review.photos
+                        .slice(0, 3)
+                        .map((p: any) =>
+                          p.imageUrl ? (
+                            <img
+                              key={p.id}
+                              src={p.imageUrl}
+                              alt=""
+                              className="w-14 h-14 rounded-lg object-cover"
+                            />
+                          ) : null,
+                        )}
                     </div>
+                  )}
+                </div>
+              ))
+            )}
+
+            {/* Write Review — hidden for own provider, and if already reviewed */}
+            {!isOwnProvider && !hasAlreadyReviewed && (
+              <button
+                onClick={() =>
+                  requireAuth(() => {
+                    setReviewError("");
+                    setReviewSuccess(false);
+                    setSheetOpened(true);
+                  })
+                }
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors"
+              >
+                <IonIcon icon={star} className="w-4 h-4" />
+                Write a Review
+              </button>
+            )}
+            {!isOwnProvider && hasAlreadyReviewed && (
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
+                <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                  You&apos;ve already reviewed this provider
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === PRODUCTS === */}
+        {activeTab === "Products" && (
+          <div className="px-5 pt-5 pb-28">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
+                {products.length} Products
+              </h3>
+            </div>
+            {products.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
+                  This provider hasn&apos;t added any products yet.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {products.map((product) => {
+                  const currencySymbol =
+                    product.currency === "INR" ? "₹" : product.currency + " ";
+                  return (
+                    <Link
+                      key={product.id}
+                      href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}
+                    >
+                      <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-slate-700">
+                          {product.photoUrl ? (
+                            <img
+                              src={product.photoUrl}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <IonIcon
+                                icon={imagesOutline}
+                                className="w-8 h-8"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
+                            {product.name}
+                          </h4>
+                          <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2 line-clamp-1">
+                            {product.description || ""}
+                          </p>
+                          <span className="text-[15px] font-bold text-amber-600">
+                            {product.price !== null
+                              ? `${currencySymbol}${Number(
+                                  product.price,
+                                ).toLocaleString()}`
+                              : "Enquire"}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === PHOTOS === */}
+        {activeTab === "Photos" && (
+          <div className="pt-2 pb-28">
+            {galleryImages.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 mx-5 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center mt-4">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
+                  No photos uploaded yet.
+                </p>
+              </div>
+            ) : (
+              <PhotoGallary ref={photoGalleryRef} images={galleryItems} />
+            )}
+          </div>
+        )}
+
+        {/* Floating CTA */}
+        <div
+          className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
+          style={{
+            background:
+              "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
+            display: isLightboxOpen ? "none" : "block",
+          }}
+        >
+          {isOwnProvider ? (
+            /* Owner mode — manage business banner */
+            <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
+              <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
+                <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
+                  <IonIcon
+                    icon={storefrontOutline}
+                    className="text-white text-sm"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+                    Your Business
+                  </p>
+                  <p className="text-[10px] text-violet-500 truncate">
+                    You&apos;re viewing your own provider profile
+                  </p>
+                </div>
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
+                  <IonIcon icon={eyeOutline} className="text-xs" />
+                  Preview mode
+                </span>
+              </div>
+              <div className="flex gap-2.5 px-4 py-3">
+                <button
+                  onClick={() => {
+                    setUserMode("provider");
+                    router.push("/");
+                  }}
+                  className="flex flex-1 items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
+                >
+                  <IonIcon icon={createOutline} className="text-base" />
+                  Manage Business
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Customer mode — message & call */
+            <div className="flex gap-3">
+              <button
+                disabled={isCreatingChat}
+                onClick={() => {
+                  requireAuth(() => {
+                    if (!provider?.id) return;
+                    trackChat();
+                    createConversation(
+                      {
+                        providerId: provider.id,
+                        contextType: "provider",
+                        contextId: provider.id,
+                      },
+                      {
+                        onSuccess: (conv) => {
+                          dispatch(openChat(conv.id));
+                          router.push("/");
+                        },
+                        onError: (err: any) => {
+                          const msg =
+                            err?.response?.data?.message ||
+                            err?.message ||
+                            "Could not start conversation";
+                          alert(Array.isArray(msg) ? msg.join(", ") : msg);
+                        },
+                      },
+                    );
+                  });
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50 ${
+                  isSponsored
+                    ? "bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 shadow-amber-100 dark:shadow-none"
+                    : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200"
+                }`}
+              >
+                <IonIcon
+                  icon={chatbubbleOutline}
+                  className="w-[18px] h-[18px]"
+                />
+                {isCreatingChat ? "Opening..." : "Message"}
+              </button>
+
+              {/* Call button — blurred + gated for guests */}
+              {user ? (
+                <button
+                  onClick={() => setCallSheetOpened(true)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition-transform ${
+                    isSponsored
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 shadow-amber-200"
+                      : "bg-amber-500 shadow-amber-200"
+                  }`}
+                >
+                  <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
+                  Call Now
+                </button>
+              ) : (
+                <button
+                  onClick={() => requireAuth()}
+                  className="flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold overflow-hidden"
+                >
+                  {/* Blurred background */}
+                  <div className="absolute inset-0 bg-amber-500 blur-[2px] opacity-40 rounded-2xl" />
+                  {/* Frosted glass overlay */}
+                  <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5">
+                    <IonIcon
+                      icon={lockClosedOutline}
+                      className="text-white text-base"
+                    />
+                    <span className="text-white text-[10px] font-bold">
+                      Sign in to call
+                    </span>
                   </div>
+                  {/* Hidden content behind (creates correct height) */}
+                  <IonIcon
+                    icon={callOutline}
+                    className="w-[18px] h-[18px] opacity-0"
+                  />
+                  <span className="opacity-0">Call Now</span>
                 </button>
               )}
             </div>
           )}
-
-          {/* Invite Friends */}
-          <button
-            onClick={() => router.push("/invite")}
-            className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40 active:scale-[0.98] transition-transform"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-200">
-              <IonIcon icon={peopleOutline} className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-[13px] font-bold text-gray-900 dark:text-white">
-                Know someone who&apos;d love this?
-              </p>
-              <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                Invite friends to discover local businesses
-              </p>
-            </div>
-            <IonIcon icon={shareSocial} className="w-4 h-4 text-amber-500" />
-          </button>
-
-          {/* Business Owner */}
-          {owner && (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
-                Business Contact
-              </h3>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                  {initialsOf(owner.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{owner.name}</h4>
-                  {user ? (
-                    <p className="text-xs text-gray-500 dark:text-slate-400">{owner.mobileNumber}</p>
-                  ) : (
-                    <button
-                      onClick={() => requireAuth(() => {})}
-                      className="flex items-center gap-1 mt-0.5"
-                    >
-                      <p className="text-xs text-gray-400 blur-[4px] select-none pointer-events-none">+91 98765 43210</p>
-                      <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5 ml-1">
-                        <IonIcon icon={logInOutline} className="text-xs" />
-                        Sign in
-                      </span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      )}
 
+<<<<<<< HEAD
       {/* === REVIEWS === */}
       {activeTab === "Reviews" && (
         <div className="px-5 pt-5 pb-28 space-y-4">
@@ -1011,268 +1497,209 @@ export default function ProviderDetailsPage() {
           <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
               <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
+=======
+        {/* Call Sheet */}
+        <BottomSheet
+          opened={callSheetOpened}
+          onClose={() => setCallSheetOpened(false)}
+        >
+          <div className="px-5 pt-5 pb-8">
+            <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center">
+>>>>>>> b92c8e766ebc1aba294cd910500a95c733381dd8
                 <IonIcon
-                  icon={storefrontOutline}
-                  className="text-white text-sm"
+                  icon={callOutline}
+                  className="text-3xl text-amber-500"
                 />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
-                  Your Business
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">
+                  Call
                 </p>
-                <p className="text-[10px] text-violet-500 truncate">
-                  You&apos;re viewing your own provider profile
-                </p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {provider?.brandName}
+                </h3>
               </div>
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
-                <IonIcon icon={eyeOutline} className="text-xs" />
-                Preview mode
-              </span>
-            </div>
-            <div className="flex gap-2.5 px-4 py-3">
-              <button
-                onClick={() => {
-                  setUserMode("provider");
-                  router.push("/");
-                }}
-                className="flex flex-1 items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
-              >
-                <IonIcon icon={createOutline} className="text-base" />
-                Manage Business
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Customer mode — message & call */
-          <div className="flex gap-3">
-            <button disabled={isCreatingChat} onClick={() => {
-              requireAuth(() => {
-                if (!provider?.id) return;
-                trackChat();
-                createConversation({ providerId: provider.id, contextType: 'provider', contextId: provider.id }, {
-                  onSuccess: (conv) => {
-                    dispatch(openChat(conv.id));
-                    router.push('/');
-                  },
-                  onError: (err: any) => {
-                    const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                    alert(Array.isArray(msg) ? msg.join(', ') : msg);
-                  },
-                });
-              });
-            }} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform disabled:opacity-50 ${isSponsored ? "bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 shadow-amber-100 dark:shadow-none" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200"}`}>
-              <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-              {isCreatingChat ? "Opening..." : "Message"}
-            </button>
 
-            {/* Call button — blurred + gated for guests */}
-            {user ? (
-              <button onClick={() => setCallSheetOpened(true)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition-transform ${isSponsored ? "bg-gradient-to-r from-amber-500 to-amber-400 shadow-amber-200" : "bg-amber-500 shadow-amber-200"}`}>
-                <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
-                Call Now
-              </button>
-            ) : (
-              <button
-                onClick={() => requireAuth()}
-                className="flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold overflow-hidden"
-              >
-                {/* Blurred background */}
-                <div className="absolute inset-0 bg-amber-500 blur-[2px] opacity-40 rounded-2xl" />
-                {/* Frosted glass overlay */}
-                <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5">
-                  <IonIcon icon={lockClosedOutline} className="text-white text-base" />
-                  <span className="text-white text-[10px] font-bold">Sign in to call</span>
-                </div>
-                {/* Hidden content behind (creates correct height) */}
-                <IonIcon icon={callOutline} className="w-[18px] h-[18px] opacity-0" />
-                <span className="opacity-0">Call Now</span>
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Call Sheet */}
-      <BottomSheet
-        opened={callSheetOpened}
-        onClose={() => setCallSheetOpened(false)}
-      >
-        <div className="px-5 pt-5 pb-8">
-          <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center">
-              <IonIcon icon={callOutline} className="text-3xl text-amber-500" />
-            </div>
-            <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">
-                Call
-              </p>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {provider?.brandName}
-              </h3>
-            </div>
-
-            {user ? (
-              /* Logged-in: show the real number as a tappable link */
-              <a
-                href={`tel:${provider?.contactNumber}`}
-                onClick={() => trackCall()}
-                className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
-              >
-                <IonIcon icon={callOutline} className="text-base text-gray-500" />
-                <span className="text-base font-semibold text-gray-800 tracking-wide">
-                  {provider?.contactNumber || "Not available"}
-                </span>
-              </a>
-            ) : (
-              /* Guest: blurred number + sign-in prompt */
-              <div className="w-full relative">
-                {/* Blurred placeholder number */}
-                <div className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl select-none pointer-events-none" aria-hidden>
-                  <IonIcon icon={callOutline} className="text-base text-gray-400" />
-                  <span className="text-base font-semibold text-gray-400 tracking-[0.2em] blur-[6px]">
-                    +91 98765 43210
+              {user ? (
+                /* Logged-in: show the real number as a tappable link */
+                <a
+                  href={`tel:${provider?.contactNumber}`}
+                  onClick={() => trackCall()}
+                  className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
+                >
+                  <IonIcon
+                    icon={callOutline}
+                    className="text-base text-gray-500"
+                  />
+                  <span className="text-base font-semibold text-gray-800 tracking-wide">
+                    {provider?.contactNumber || "Not available"}
                   </span>
-                </div>
-                {/* Overlay */}
-                <div className="absolute inset-0 rounded-2xl bg-white/70 backdrop-blur-[2px] flex items-center justify-center">
-                  <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
-                    <IonIcon icon={lockClosedOutline} className="text-sm" />
-                    <span className="text-[12px] font-bold">Sign in to see number</span>
-                    <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
+                </a>
+              ) : (
+                /* Guest: blurred number + sign-in prompt */
+                <div className="w-full relative">
+                  {/* Blurred placeholder number */}
+                  <div
+                    className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl select-none pointer-events-none"
+                    aria-hidden
+                  >
+                    <IonIcon
+                      icon={callOutline}
+                      className="text-base text-gray-400"
+                    />
+                    <span className="text-base font-semibold text-gray-400 tracking-[0.2em] blur-[6px]">
+                      +91 98765 43210
+                    </span>
+                  </div>
+                  {/* Overlay */}
+                  <div className="absolute inset-0 rounded-2xl bg-white/70 backdrop-blur-[2px] flex items-center justify-center">
+                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
+                      <IonIcon icon={lockClosedOutline} className="text-sm" />
+                      <span className="text-[12px] font-bold">
+                        Sign in to see number
+                      </span>
+                      <IonIcon
+                        icon={logInOutline}
+                        className="text-sm text-amber-400"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setCallSheetOpened(false)}
-              className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
-            >
-              Cancel
-            </button>
-            {user ? (
-              <a
-                href={`tel:${provider?.contactNumber}`}
-                className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold text-center shadow-sm shadow-amber-200 active:scale-[0.98] transition-all"
-              >
-                Call Now
-              </a>
-            ) : (
+            <div className="flex gap-3 mt-6">
               <button
-                onClick={() => { setCallSheetOpened(false); requireAuth(); }}
-                className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm shadow-amber-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                onClick={() => setCallSheetOpened(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
               >
-                <IonIcon icon={logInOutline} className="text-base" />
-                Sign in to Call
+                Cancel
               </button>
-            )}
-          </div>
-        </div>
-      </BottomSheet>
-
-      {/* Review Sheet */}
-      <BottomSheet
-        opened={sheetOpened}
-        onClose={() => setSheetOpened(false)}
-      >
-        <div className="px-5 pt-5 pb-8">
-          <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">
-            Write a Review
-          </h3>
-          <div className="flex justify-center gap-3 mb-6">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <button
-                key={s}
-                onClick={() => setReviewRating(s)}
-                className="active:scale-110 transition-transform"
-              >
-                <svg
-                  width={36}
-                  height={36}
-                  viewBox="0 0 20 20"
-                  fill={s <= reviewRating ? "#FBBF24" : "#E5E7EB"}
+              {user ? (
+                <a
+                  href={`tel:${provider?.contactNumber}`}
+                  className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold text-center shadow-sm shadow-amber-200 active:scale-[0.98] transition-all"
                 >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-                </svg>
-              </button>
-            ))}
+                  Call Now
+                </a>
+              ) : (
+                <button
+                  onClick={() => {
+                    setCallSheetOpened(false);
+                    requireAuth();
+                  }}
+                  className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm shadow-amber-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <IonIcon icon={logInOutline} className="text-base" />
+                  Sign in to Call
+                </button>
+              )}
+            </div>
           </div>
-          <textarea
-            className="w-full h-28 px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
-            placeholder="Share your experience with this provider..."
-            value={reviewComment}
-            onChange={(e) => {
-              setReviewComment(e.target.value);
-              setReviewError("");
-            }}
-          />
-          {reviewError && (
-            <p className="text-xs text-red-500 mt-2 px-1">{reviewError}</p>
-          )}
-          {reviewSuccess && (
-            <p className="text-xs text-green-600 mt-2 px-1">
-              Review submitted successfully!
-            </p>
-          )}
-          <div className="flex gap-3 mt-5">
-            <button
-              onClick={() => setSheetOpened(false)}
-              className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={!reviewComment.trim() || isSubmittingReview}
-              onClick={() => {
-                setReviewError("");
-                // Frontend profanity check
-                const contentCheck = checkContent(reviewComment);
-                if (contentCheck.flagged) {
-                  setReviewError(
-                    "Your review contains inappropriate language. Please revise and try again.",
-                  );
-                  return;
-                }
-                submitReviewMutation(
-                  {
-                    providerId: id,
-                    starRating: reviewRating,
-                    reviewText: reviewComment.trim(),
-                  },
-                  {
-                    onSuccess: () => {
-                      setReviewSuccess(true);
-                      setReviewComment("");
-                      setReviewRating(5);
-                      setTimeout(() => {
-                        setSheetOpened(false);
-                        setReviewSuccess(false);
-                      }, 1500);
-                    },
-                    onError: (err: any) => {
-                      const msg =
-                        err?.response?.data?.message ||
-                        err?.message ||
-                        "Failed to submit review";
-                      setReviewError(Array.isArray(msg) ? msg.join(", ") : msg);
-                    },
-                  },
-                );
-              }}
-              className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-sm shadow-amber-200"
-            >
-              {isSubmittingReview ? "Submitting..." : "Submit Review"}
-            </button>
-          </div>
-        </div>
-      </BottomSheet>
+        </BottomSheet>
 
-      {/* Report Sheet */}
-      </div>{/* end scroll wrapper */}
+        {/* Review Sheet */}
+        <BottomSheet opened={sheetOpened} onClose={() => setSheetOpened(false)}>
+          <div className="px-5 pt-5 pb-8">
+            <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">
+              Write a Review
+            </h3>
+            <div className="flex justify-center gap-3 mb-6">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setReviewRating(s)}
+                  className="active:scale-110 transition-transform"
+                >
+                  <svg
+                    width={36}
+                    height={36}
+                    viewBox="0 0 20 20"
+                    fill={s <= reviewRating ? "#FBBF24" : "#E5E7EB"}
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="w-full h-28 px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
+              placeholder="Share your experience with this provider..."
+              value={reviewComment}
+              onChange={(e) => {
+                setReviewComment(e.target.value);
+                setReviewError("");
+              }}
+            />
+            {reviewError && (
+              <p className="text-xs text-red-500 mt-2 px-1">{reviewError}</p>
+            )}
+            {reviewSuccess && (
+              <p className="text-xs text-green-600 mt-2 px-1">
+                Review submitted successfully!
+              </p>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setSheetOpened(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!reviewComment.trim() || isSubmittingReview}
+                onClick={() => {
+                  setReviewError("");
+                  // Frontend profanity check
+                  const contentCheck = checkContent(reviewComment);
+                  if (contentCheck.flagged) {
+                    setReviewError(
+                      "Your review contains inappropriate language. Please revise and try again.",
+                    );
+                    return;
+                  }
+                  submitReviewMutation(
+                    {
+                      providerId: id,
+                      starRating: reviewRating,
+                      reviewText: reviewComment.trim(),
+                    },
+                    {
+                      onSuccess: () => {
+                        setReviewSuccess(true);
+                        setReviewComment("");
+                        setReviewRating(5);
+                        setTimeout(() => {
+                          setSheetOpened(false);
+                          setReviewSuccess(false);
+                        }, 1500);
+                      },
+                      onError: (err: any) => {
+                        const msg =
+                          err?.response?.data?.message ||
+                          err?.message ||
+                          "Failed to submit review";
+                        setReviewError(
+                          Array.isArray(msg) ? msg.join(", ") : msg,
+                        );
+                      },
+                    },
+                  );
+                }}
+                className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-sm shadow-amber-200"
+              >
+                {isSubmittingReview ? "Submitting..." : "Submit Review"}
+              </button>
+            </div>
+          </div>
+        </BottomSheet>
+
+        {/* Report Sheet */}
+      </div>
+      {/* end scroll wrapper */}
       {id && (
         <ReportSheet
           entityType="provider"

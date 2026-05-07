@@ -18,9 +18,11 @@ export default function HomeSplashScreen() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative z-10 mb-8"
       >
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-          <span className="text-2xl font-black text-white tracking-tighter">T</span>
-        </div>
+        <img
+          src="/icons/512.png"
+          alt="Tijarah"
+          className="w-20 h-20 rounded-2xl shadow-lg shadow-black/30"
+        />
       </motion.div>
 
       {/* Loading indicator */}

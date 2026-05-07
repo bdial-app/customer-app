@@ -221,7 +221,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
       {/* ── Header ── */}
       <div
         className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800"
-        style={{ paddingTop: isSheet ? "0px" : "env(safe-area-inset-top)" }}
+        style={{ paddingTop: isSheet ? "0px" : "var(--sat,0px)" }}
       >
         {/* Title row */}
         {!isSheet && (

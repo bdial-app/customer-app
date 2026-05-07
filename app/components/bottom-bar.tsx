@@ -21,6 +21,7 @@ import {
 import { memo } from "react";
 import { useAppContext } from "../context/AppContext";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useNativePlatform } from "@/hooks/useNativePlatform";
 
 interface BottomBarProps {
   activeTab: string;
@@ -93,21 +94,31 @@ const TABS: TabItem[] = [
 const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
   const { userMode } = useAppContext();
   const user = useAppSelector((state) => state.auth.user);
-  const customerUnreadCount = useAppSelector((state) => state.chat.customerUnreadCount);
-  const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
-  const badgeCount = userMode === "provider" ? providerUnreadCount : customerUnreadCount;
+  const customerUnreadCount = useAppSelector(
+    (state) => state.chat.customerUnreadCount,
+  );
+  const providerUnreadCount = useAppSelector(
+    (state) => state.chat.providerUnreadCount,
+  );
+  const badgeCount =
+    userMode === "provider" ? providerUnreadCount : customerUnreadCount;
 
   const visibleTabs = TABS.filter(
     (tab) =>
       (!tab.mode || tab.mode === userMode) &&
       // Provider-only tabs still hidden for guests; customer tabs always visible
-      (!tab.requiresAuth || !!user || tab.mode !== "provider")
+      (!tab.requiresAuth || !!user || tab.mode !== "provider"),
   );
 
   const isProvider = userMode === "provider";
+  const { isIOS } = useNativePlatform();
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 z-30" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <div
+      className={`fixed left-0 right-0 z-30 ${
+        isIOS ? "bottom-[-24px]" : "bottom-0"
+      }`}
+    >
       {/* Provider mode indicator */}
       {isProvider && (
         <div className="flex justify-center mb-1">
@@ -118,7 +129,10 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
       )}
 
       {/* Frosted glass bar */}
-      <div className="mx-3 mb-2 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-[0_-2px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.3)]">
+      <div
+        className="mx-0 mb-2 w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-[0_-2px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.3)]"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="flex items-center justify-around py-1.5">
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -146,13 +160,19 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                     icon={isActive ? tab.iconFilled : tab.iconOutline}
                     className={`text-[22px] transition-colors duration-200 ${
                       isActive
-                        ? isProvider ? "text-teal-600" : "text-amber-600"
+                        ? isProvider
+                          ? "text-teal-600"
+                          : "text-amber-600"
                         : "text-slate-400 dark:text-slate-500"
                     }`}
                   />
                   {/* Unread badge */}
                   {tab.id === "chats" && badgeCount > 0 && (
-                    <div className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 ring-2 ring-white dark:ring-slate-800 shadow-sm ${isProvider ? "bg-teal-500" : "bg-red-500"}`}>
+                    <div
+                      className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 ring-2 ring-white dark:ring-slate-800 shadow-sm ${
+                        isProvider ? "bg-teal-500" : "bg-red-500"
+                      }`}
+                    >
                       <span className="text-[9px] font-bold text-white leading-none">
                         {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
@@ -163,7 +183,9 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                 <span
                   className={`relative z-10 text-[10px] font-semibold transition-colors duration-200 ${
                     isActive
-                      ? isProvider ? "text-teal-600" : "text-amber-600"
+                      ? isProvider
+                        ? "text-teal-600"
+                        : "text-amber-600"
                       : "text-slate-400 dark:text-slate-500"
                   }`}
                 >
