@@ -44,8 +44,8 @@ export function useNativePlatform(): NativePlatformInfo {
       runtime,
       isNative: runtime === "capacitor",
       isPWA: runtime === "pwa",
-      isIOS: platform === "ios",
-      isAndroid: platform === "android",
+      isIOS: platform === "ios" && runtime === "capacitor",
+      isAndroid: platform === "android" && runtime === "capacitor",
       isMobile: platform === "ios" || platform === "android",
     };
   }, []);
