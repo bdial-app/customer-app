@@ -52,12 +52,12 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-/** Returns true if the token will expire within 7 days (proactive refresh window) */
+/** Returns true if the token will expire within 30 days (proactive refresh window) */
 function shouldRefreshToken(token: string): boolean {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-    return payload.exp * 1000 < Date.now() + sevenDaysMs;
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    return payload.exp * 1000 < Date.now() + thirtyDaysMs;
   } catch {
     return false;
   }
@@ -93,10 +93,13 @@ apiClient.interceptors.request.use((config) => {
     if (isTokenExpired(token)) {
       setTokenCache(null);
       removeItem("token");
+      // Notify listeners so auth gate can open, but don't cancel the request —
+      // let it proceed without auth. Protected endpoints will return 401 which
+      // is handled gracefully by the response interceptor.
       unauthorizedListeners.forEach((fn) => fn());
-      return Promise.reject(new axios.Cancel("Token expired — re-authentication required"));
+      return config;
     }
-    // Proactively refresh if token is within 7-day expiry window
+    // Proactively refresh if token is within 30-day expiry window
     if (shouldRefreshToken(token)) {
       silentRefresh();
     }

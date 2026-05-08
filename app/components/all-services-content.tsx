@@ -144,7 +144,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const providers = useMemo(() => {
     if (!data) return [];
     const mapped = data.pages.flatMap((page) =>
-      page.data.map((p: any) => ({
+      (Array.isArray(page?.data) ? page.data : []).map((p: any) => ({
         id: p.id,
         name: p.brandName,
         image: p.profilePhotoUrl || p.bannerImageUrl || "",

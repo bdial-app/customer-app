@@ -16,7 +16,9 @@ export const useNearbyProviders = (params: Omit<ProviderNearbyParams, "page">) =
       getNearbyProviders({ ...params, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      const { page, totalPages } = lastPage.meta;
+      const page = lastPage?.meta?.page;
+      const totalPages = lastPage?.meta?.totalPages;
+      if (typeof page !== "number" || typeof totalPages !== "number") return undefined;
       return page < totalPages ? page + 1 : undefined;
     },
     enabled: !!params.lat && !!params.lng,
