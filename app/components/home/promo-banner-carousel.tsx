@@ -309,10 +309,13 @@ const PromoBannerCarousel = ({
             key={i}
             animate={{
               width: i === current ? 20 : 6,
-              backgroundColor: i === current ? "#1a1a2e" : "#d1d5db",
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="h-[5px] rounded-full cursor-pointer"
+            className={`h-[5px] rounded-full cursor-pointer ${
+              i === current
+                ? "bg-slate-800 dark:bg-white"
+                : "bg-slate-300 dark:bg-slate-600"
+            }`}
             onClick={() => handleDot(i)}
           />
         ))}
