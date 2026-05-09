@@ -15,8 +15,8 @@ export default function AddLocationLoading() {
 
   return (
     <div
-      className="min-h-screen dark:bg-slate-900"
-      // style={{ background: isDark ? "#0f172a" : "#f8fafc" }}
+      className="min-h-screen"
+      style={{ background: isDark ? "#0f172a" : "#f8fafc" }}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
