@@ -407,18 +407,15 @@ const AnalyticsContent = () => {
           </button>
         </div>
 
-        {/* Active plan & boost indicators */}
-        {(hasActivePlan || activeSponsorships.length > 0) && (
-          <div className="px-4 pb-3">
-            {hasActivePlan && (
-              <ActivePlanBanner subscription={currentSub!} compact />
-            )}
-            {activeSponsorships.length > 0 && (
-              <ActiveBoostBanner sponsorships={activeSponsorships} compact />
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Active plan & boost banners — prominent, outside header */}
+      {hasActivePlan && (
+        <ActivePlanBanner subscription={currentSub!} onManage={() => {}} />
+      )}
+      {activeSponsorships.length > 0 && (
+        <ActiveBoostBanner sponsorships={activeSponsorships} onManage={() => {}} />
+      )}
 
       {view === "overview" ? (
         <>
