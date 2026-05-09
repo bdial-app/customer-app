@@ -161,7 +161,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
     return (
       <div className="p-4 space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />
+          <div key={i} className="h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
         ))}
       </div>
     );

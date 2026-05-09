@@ -61,8 +61,8 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
             <div key={i} className="shrink-0 w-[200px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-50 dark:border-slate-700 animate-pulse">
               <div className="h-[110px] bg-slate-100 dark:bg-slate-700" />
               <div className="p-2.5 space-y-2">
-                <div className="h-3.5 bg-slate-100 rounded-full w-4/5" />
-                <div className="h-2.5 bg-slate-50 rounded-full w-3/5" />
+                <div className="h-3.5 bg-slate-100 dark:bg-slate-700 rounded-full w-4/5" />
+                <div className="h-2.5 bg-slate-200 dark:bg-slate-600 rounded-full w-3/5" />
               </div>
             </div>
           ))}

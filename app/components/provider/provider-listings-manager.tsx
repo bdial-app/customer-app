@@ -97,7 +97,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
           </div>
         </div>
         <div className="px-4 py-3">
-          <div className="h-10 bg-slate-100 rounded-2xl animate-pulse" />
+          <div className="h-10 bg-slate-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
         </div>
         <div className="px-4 space-y-3">
           {[1, 2, 3, 4].map((i) => (

@@ -161,19 +161,19 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
               <div className="flex items-center gap-2.5 mb-2.5">
                 <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3 bg-slate-100 rounded-full w-24" />
-                  <div className="h-2 bg-slate-50 rounded-full w-32" />
+                  <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full w-24" />
+                  <div className="h-2 bg-slate-200 dark:bg-slate-600 rounded-full w-32" />
                 </div>
                 <div className="flex gap-px">
                   {[1, 2, 3, 4, 5].map((j) => (
-                    <div key={j} className="w-2.5 h-2.5 bg-slate-100 rounded-sm" />
+                    <div key={j} className="w-2.5 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-sm" />
                   ))}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <div className="h-2.5 bg-slate-100 rounded-full w-full" />
-                <div className="h-2.5 bg-slate-100 rounded-full w-5/6" />
-                <div className="h-2.5 bg-slate-50 rounded-full w-2/3" />
+                <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full w-full" />
+                <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full w-5/6" />
+                <div className="h-2.5 bg-slate-200 dark:bg-slate-600 rounded-full w-2/3" />
               </div>
             </div>
           ))}

@@ -1,17 +1,24 @@
 "use client";
 import { Page, Block } from "konsta/react";
+import { useEffect, useState } from "react";
 
 const Skeleton = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded-md ${className}`} />
 );
 
 export default function Loading() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
   return (
     <Page
       className="dark:!bg-slate-900"
       style={{
-        background:
-          "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
+        background: isDark
+          ? "#0f172a"
+          : "radial-gradient(at 0% 10%, #f0eff4, #f0ecff)",
       }}
     >
       {/* Search / header area */}
@@ -47,7 +54,7 @@ export default function Loading() {
       <Block className="pt-0">
         <div className="grid grid-cols-2 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl overflow-hidden">
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden">
               <Skeleton className="h-32 w-full rounded-none" />
               <div className="p-2 flex flex-col gap-1.5">
                 <Skeleton className="h-3.5 w-3/4" />

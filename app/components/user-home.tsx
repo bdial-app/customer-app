@@ -64,11 +64,11 @@ const UserHome = memo(() => {
     city: user?.city ?? undefined,
   });
 
-  // Show splash until data is ready + brief settle time for images to start loading
-  const [showSplash, setShowSplash] = useState(true);
+  // Only show splash on a true cold load — if feed is already cached (e.g. back-navigation),
+  // skip it entirely so the user isn't shown a loading screen on return visits.
+  const [showSplash, setShowSplash] = useState(!feed);
   useEffect(() => {
     if (!isLoading && feed) {
-      // Give images a brief moment to begin loading before revealing
       const timer = setTimeout(() => setShowSplash(false), 300);
       return () => clearTimeout(timer);
     }
