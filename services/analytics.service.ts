@@ -28,6 +28,9 @@ export interface LeadVisitor {
   name: string;
   avatar: string | null;
   userId: string | null;
+  phone: string | null;
+  email: string | null;
+  city: string | null;
 }
 
 export interface LeadItem {
@@ -42,6 +45,7 @@ export interface LeadItem {
   firstSeenAt: string;
   lastSeenAt: string;
   isUnlocked: boolean;
+  isAnonymous: boolean;
   visitor: LeadVisitor;
 }
 

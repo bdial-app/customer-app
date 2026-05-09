@@ -32,6 +32,9 @@ import {
   arrowBack,
   megaphoneOutline,
   cashOutline,
+  mailOutline,
+  locationOutline,
+  analyticsOutline,
 } from "ionicons/icons";
 import {
   AreaChart,
@@ -411,12 +414,16 @@ const AnalyticsContent = () => {
 
       </div>
 
-      {/* Active plan & boost banners — prominent, outside header */}
-      {hasActivePlan && (
-        <ActivePlanBanner subscription={currentSub!} onManage={() => {}} />
-      )}
-      {activeSponsorships.length > 0 && (
-        <ActiveBoostBanner sponsorships={activeSponsorships} onManage={() => {}} />
+      {/* Active plan & boost banners — only on overview */}
+      {view === "overview" && (hasActivePlan || activeSponsorships.length > 0) && (
+        <div className="pt-3">
+          {hasActivePlan && (
+            <ActivePlanBanner subscription={currentSub!} onManage={() => {}} />
+          )}
+          {activeSponsorships.length > 0 && (
+            <ActiveBoostBanner sponsorships={activeSponsorships} onManage={() => {}} />
+          )}
+        </div>
       )}
 
       {view === "overview" ? (
@@ -1032,10 +1039,12 @@ const AnalyticsContent = () => {
                       <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 relative">
                         {lead.isUnlocked && lead.visitor.avatar ? (
                           <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
+                        ) : lead.isAnonymous ? (
+                          <IonIcon icon={analyticsOutline} className="text-xl text-slate-400" />
                         ) : (
                           <IonIcon icon={personOutline} className="text-xl text-slate-400" />
                         )}
-                        {!lead.isUnlocked && (
+                        {!lead.isUnlocked && !lead.isAnonymous && (
                           <div className="absolute inset-0 rounded-full bg-slate-200/60 dark:bg-slate-600/60 backdrop-blur-[2px] flex items-center justify-center">
                             <IonIcon icon={lockClosedOutline} className="text-sm text-slate-500" />
                           </div>
@@ -1043,7 +1052,11 @@ const AnalyticsContent = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {lead.isUnlocked ? (
+                          {lead.isAnonymous ? (
+                            <span className="text-sm font-bold text-slate-500 dark:text-slate-400 italic">
+                              Anonymous Visitor
+                            </span>
+                          ) : lead.isUnlocked ? (
                             <span className="text-sm font-bold text-slate-900 dark:text-white">
                               {lead.visitor.name}
                             </span>
@@ -1057,7 +1070,37 @@ const AnalyticsContent = () => {
                             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
                             {lead.tier}
                           </span>
+                          {lead.isAnonymous && (
+                            <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase bg-slate-100 dark:bg-slate-700 text-slate-400">
+                              Signal
+                            </span>
+                          )}
                         </div>
+
+                        {/* Contact info for unlocked non-anonymous leads */}
+                        {lead.isUnlocked && !lead.isAnonymous && (lead.visitor.phone || lead.visitor.email) && (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+                            {lead.visitor.phone && (
+                              <a href={`tel:${lead.visitor.phone}`} className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                <IonIcon icon={callOutline} className="text-[10px]" />
+                                {lead.visitor.phone}
+                              </a>
+                            )}
+                            {lead.visitor.email && (
+                              <a href={`mailto:${lead.visitor.email}`} className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+                                <IonIcon icon={mailOutline} className="text-[10px]" />
+                                {lead.visitor.email}
+                              </a>
+                            )}
+                            {lead.visitor.city && (
+                              <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <IonIcon icon={locationOutline} className="text-[10px]" />
+                                {lead.visitor.city}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
                           {lead.searchQuery && (
                             <span className="flex items-center gap-1">
@@ -1082,7 +1125,16 @@ const AnalyticsContent = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3">
-                      {lead.isUnlocked ? (
+                      {lead.isAnonymous ? (
+                        /* Anonymous leads — show as interest signal, no unlock needed */
+                        <button
+                          onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
+                          className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"
+                        >
+                          <IonIcon icon={analyticsOutline} className="text-sm" />
+                          View Activity
+                        </button>
+                      ) : lead.isUnlocked ? (
                         <button
                           onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
                           className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"

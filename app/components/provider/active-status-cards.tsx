@@ -74,12 +74,12 @@ export const ActivePlanBanner = ({ subscription, compact, onManage }: ActivePlan
             </div>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[9px] text-white/60">{leadsLeft} leads left</span>
-            <span className="text-[9px] text-white/40">·</span>
-            <span className="text-[9px] text-white/60">Renews {renewDate}</span>
+            <span className="text-[9px] text-white/80">{leadsLeft} leads left</span>
+            <span className="text-[9px] text-white/60">·</span>
+            <span className="text-[9px] text-white/80">Renews {renewDate}</span>
           </div>
         </div>
-        <IonIcon icon={chevronForwardOutline} className="text-white/40 text-xs" />
+        <IonIcon icon={chevronForwardOutline} className="text-white/60 text-xs" />
       </motion.div>
     );
   }
@@ -104,7 +104,7 @@ export const ActivePlanBanner = ({ subscription, compact, onManage }: ActivePlan
               </div>
               <div>
                 <h3 className="text-base font-bold text-white">{plan.name} Plan</h3>
-                <p className="text-[10px] text-white/60">
+                <p className="text-[10px] text-white/80">
                   {subscription.billingInterval === "yearly" ? "Yearly" : "Monthly"} · Renews {renewDate}
                 </p>
               </div>
@@ -117,45 +117,45 @@ export const ActivePlanBanner = ({ subscription, compact, onManage }: ActivePlan
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <IonIcon icon={peopleOutline} className="text-white/70 text-xs" />
+                <IonIcon icon={peopleOutline} className="text-white/90 text-xs" />
               </div>
               <p className="text-lg font-bold text-white">{leadsLeft}</p>
-              <p className="text-[9px] text-white/50">Leads Left</p>
+              <p className="text-[9px] text-white/75 font-medium">Leads Left</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <IonIcon icon={pricetagOutline} className="text-white/70 text-xs" />
+                <IonIcon icon={pricetagOutline} className="text-white/90 text-xs" />
               </div>
               <p className="text-lg font-bold text-white">{dealsLimit}</p>
-              <p className="text-[9px] text-white/50">Deal Slots</p>
+              <p className="text-[9px] text-white/75 font-medium">Deal Slots</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <IonIcon icon={trendingUpOutline} className="text-white/70 text-xs" />
+                <IonIcon icon={trendingUpOutline} className="text-white/90 text-xs" />
               </div>
               <p className="text-lg font-bold text-white">
                 {plan.sponsorshipTypes?.length ?? 0}
               </p>
-              <p className="text-[9px] text-white/50">Boost Types</p>
+              <p className="text-[9px] text-white/75 font-medium">Boost Types</p>
             </div>
           </div>
 
           {/* Perks row */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
               <IonIcon icon={checkmarkCircle} className="text-emerald-300 text-[10px]" />
-              <span className="text-[9px] text-white/80 font-medium">Priority listing</span>
+              <span className="text-[9px] text-white font-medium">Priority listing</span>
             </div>
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
               <IonIcon icon={checkmarkCircle} className="text-emerald-300 text-[10px]" />
-              <span className="text-[9px] text-white/80 font-medium">Higher search rank</span>
+              <span className="text-[9px] text-white font-medium">Higher search rank</span>
             </div>
             {plan.slug === "pro" && (
-              <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
+              <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
                 <IonIcon icon={checkmarkCircle} className="text-emerald-300 text-[10px]" />
-                <span className="text-[9px] text-white/80 font-medium">Unlimited access</span>
+                <span className="text-[9px] text-white font-medium">Unlimited access</span>
               </div>
             )}
           </div>
@@ -223,7 +223,7 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
               <span className="text-[8px] font-bold text-white/90">BOOSTED</span>
             </div>
           </div>
-          <span className="text-[9px] text-white/60">{daysLeft}d remaining · {active.map(s => boostMeta[s.type]?.label ?? s.type).join(", ")}</span>
+          <span className="text-[9px] text-white/80">{daysLeft}d remaining · {active.map(s => boostMeta[s.type]?.label ?? s.type).join(", ")}</span>
         </div>
         <IonIcon icon={chevronForwardOutline} className="text-white/40 text-xs" />
       </motion.div>
@@ -252,7 +252,7 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
                 <h3 className="text-base font-bold text-white">
                   You&apos;re Boosted!
                 </h3>
-                <p className="text-[10px] text-white/60">
+                <p className="text-[10px] text-white/80">
                   {active.length} active boost{active.length > 1 ? "s" : ""} · {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
                 </p>
               </div>
@@ -283,12 +283,12 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-white/60">₹{s.budgetAmount} budget</span>
-                      <span className="text-[10px] text-white/40">·</span>
-                      <span className="text-[10px] text-white/60">Ends {endDate}</span>
+                      <span className="text-[10px] text-white/80">₹{s.budgetAmount} budget</span>
+                      <span className="text-[10px] text-white/60">·</span>
+                      <span className="text-[10px] text-white/80">Ends {endDate}</span>
                       {slotDaysLeft <= 3 && (
                         <>
-                          <span className="text-[10px] text-white/40">·</span>
+                          <span className="text-[10px] text-white/60">·</span>
                           <span className="text-[10px] text-yellow-200 font-semibold">{slotDaysLeft}d left</span>
                         </>
                       )}
@@ -310,15 +310,15 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
           <div className="flex items-center gap-3 flex-wrap mb-4">
             <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
               <IonIcon icon={eyeOutline} className="text-yellow-200 text-[10px]" />
-              <span className="text-[9px] text-white/80 font-medium">5× more views</span>
+              <span className="text-[9px] text-white font-medium">5× more views</span>
             </div>
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
               <IonIcon icon={pulseOutline} className="text-yellow-200 text-[10px]" />
-              <span className="text-[9px] text-white/80 font-medium">Featured placement</span>
+              <span className="text-[9px] text-white font-medium">Featured placement</span>
             </div>
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
               <IonIcon icon={trendingUpOutline} className="text-yellow-200 text-[10px]" />
-              <span className="text-[9px] text-white/80 font-medium">Higher conversions</span>
+              <span className="text-[9px] text-white font-medium">Higher conversions</span>
             </div>
           </div>
 
