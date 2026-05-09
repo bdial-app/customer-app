@@ -1,7 +1,7 @@
 "use client";
 import { Page } from "konsta/react";
 import { BottomSheet } from "../components/bottom-sheet";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
@@ -49,6 +49,7 @@ import {
 } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
 import { checkContent } from "@/utils/content-sanitizer";
+import { motion, AnimatePresence } from "framer-motion";
 
 const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -155,7 +156,7 @@ function InfoChip({
 }) {
   return (
     <div className="flex items-center gap-2.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-4 py-3 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-      <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+      <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
         <IonIcon icon={icon} className="w-[18px] h-[18px] text-amber-600" />
       </div>
       <div className="min-w-0">
@@ -183,6 +184,13 @@ export default function ProviderDetailsPage() {
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
+  const [headerVisible, setHeaderVisible] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setHeaderVisible(el.scrollTop > 220);
+  }, []);
   const [sheetOpened, setSheetOpened] = useState(false);
   const [callSheetOpened, setCallSheetOpened] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -388,7 +396,53 @@ export default function ProviderDetailsPage() {
         isSponsored ? "sponsored-provider" : ""
       }`}
     >
-      <div className="h-full overflow-y-auto overscroll-contain">
+      {/* Scroll-aware app bar */}
+      <AnimatePresence>
+        {headerVisible && (
+          <motion.div
+            key="scroll-header"
+            initial={{ opacity: 0, y: -52 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -52 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="fixed top-0 inset-x-0 z-50 bg-white/92 dark:bg-slate-900/92 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-700/60"
+            style={{ paddingTop: "var(--sat, 0px)" }}
+          >
+            <div className="flex items-center gap-3 px-4 h-14">
+              <button
+                onClick={() => goBack("/")}
+                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+              >
+                <IonIcon icon={arrowBack} className="w-5 h-5 text-slate-800 dark:text-white" />
+              </button>
+              <p className="flex-1 text-[15px] font-bold text-slate-900 dark:text-white truncate">
+                {provider.brandName}
+              </p>
+              <div className="flex gap-2 shrink-0">
+                {!isOwnProvider && (
+                  <button
+                    onClick={handleToggleSaved}
+                    className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                  >
+                    <IonIcon
+                      icon={liked ? heart : heartOutline}
+                      className={`w-5 h-5 ${liked ? "text-red-500" : "text-slate-600 dark:text-slate-300"}`}
+                    />
+                  </button>
+                )}
+                <button
+                  onClick={handleShare}
+                  className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                >
+                  <IonIcon icon={shareSocial} className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain">
         {/* Hero */}
         <div
           className="relative"
@@ -505,25 +559,25 @@ export default function ProviderDetailsPage() {
             {/* Provider Name */}
             <div className="absolute bottom-4 left-4 right-20">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-white leading-tight truncate">
+                <h1 className="text-xl font-bold text-white leading-tight truncate min-w-0">
                   {provider.brandName}
                 </h1>
                 {provider.status === "active" && (
                   <IonIcon
                     icon={checkmarkCircle}
-                    className="w-5 h-5 text-blue-400 flex-shrink-0"
+                    className="w-5 h-5 text-blue-400 shrink-0"
                   />
-                )}
-                {isSponsored && (
-                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm">
-                    ⭐ Premium
-                  </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-white/80 text-sm truncate">
                   {categoryLabel}
                 </p>
+                {isSponsored && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-linear-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm shrink-0">
+                    ⭐ Premium
+                  </span>
+                )}
                 {badges.length > 0 &&
                   badges.slice(0, 3).map((b) => (
                     <span
@@ -592,41 +646,44 @@ export default function ProviderDetailsPage() {
             </div>
           </div>
 
-          {/* Tab Bar */}
-          <div
-            className={`border-b overflow-x-auto no-scrollbar ${
-              isSponsored
-                ? "bg-gradient-to-r from-amber-50/30 to-white dark:from-amber-950/10 dark:to-slate-800 border-amber-100/60 dark:border-amber-900/30"
-                : "bg-white dark:bg-slate-800 border-gray-100/80 dark:border-slate-700"
-            }`}
-          >
-            <div className="flex px-1">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setActiveTab(tab);
-                    trackTabSwitch(tab);
-                  }}
-                  className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${
-                    activeTab === tab
-                      ? "text-amber-600"
-                      : "text-gray-400 dark:text-slate-500"
-                  }`}
-                >
-                  {tab}
-                  {activeTab === tab && (
-                    <span
-                      className={`absolute bottom-0 left-1/4 right-1/4 h-[2.5px] rounded-full ${
-                        isSponsored
-                          ? "bg-gradient-to-r from-amber-500 to-yellow-400"
-                          : "bg-amber-500"
-                      }`}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
+        </div>
+
+        {/* Tab Bar — direct child of scroll container so sticky works across full scroll height */}
+        <div
+          className={`sticky z-40 border-b overflow-x-auto no-scrollbar backdrop-blur-md transition-[top] duration-200 shadow-sm ${
+            headerVisible ? "top-14" : "top-0"
+          } ${
+            isSponsored
+              ? "bg-amber-50/95 dark:bg-slate-900/95 border-amber-100/60 dark:border-slate-700/80"
+              : "bg-white/95 dark:bg-slate-900/95 border-gray-100/80 dark:border-slate-700/80"
+          }`}
+        >
+          <div className="flex px-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  trackTabSwitch(tab);
+                }}
+                className={`relative flex-1 min-w-0 px-3 py-3 text-[13px] font-semibold text-center whitespace-nowrap transition-colors duration-200 ${
+                  activeTab === tab
+                    ? "text-amber-600"
+                    : "text-gray-400 dark:text-slate-500"
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <span
+                    className={`absolute bottom-0 left-1/4 right-1/4 h-[2.5px] rounded-full ${
+                      isSponsored
+                        ? "bg-linear-to-r from-amber-500 to-yellow-400"
+                        : "bg-amber-500"
+                    }`}
+                  />
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -641,7 +698,7 @@ export default function ProviderDetailsPage() {
                 <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-yellow-400/10 rounded-full blur-lg" />
 
                 <div className="flex items-start gap-3 relative">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-md">
                     <IonIcon
                       icon={shieldCheckmark}
                       className="w-5 h-5 text-white"
@@ -757,7 +814,7 @@ export default function ProviderDetailsPage() {
                       className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none"
                     >
                       {offer.discountValue && (
-                        <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shrink-0">
                           <span className="text-white text-xs font-bold">
                             {offer.discountType === "percentage"
                               ? `${Number(offer.discountValue)}%`
@@ -817,8 +874,8 @@ export default function ProviderDetailsPage() {
 
             {/* Address */}
             {provider.address && (
-              <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <h3 className="text-[15px] font-bold text-gray-900 mb-2">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
                   Location
                 </h3>
 
@@ -826,13 +883,13 @@ export default function ProviderDetailsPage() {
                   /* Logged-in: show full address + directions */
                   <>
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-slate-700 flex items-center justify-center shrink-0 mt-0.5">
                         <IonIcon
                           icon={locationOutline}
-                          className="w-[18px] h-[18px] text-gray-500"
+                          className="w-[18px] h-[18px] text-gray-500 dark:text-slate-400"
                         />
                       </div>
-                      <p className="text-[13px] text-gray-600 leading-relaxed flex-1">
+                      <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed flex-1">
                         {provider.address}
                         {provider.city ? `, ${provider.city}` : ""}
                         {provider.pincode ? ` - ${provider.pincode}` : ""}
@@ -848,7 +905,7 @@ export default function ProviderDetailsPage() {
                             provider.brandName,
                           );
                         }}
-                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[13px] font-semibold active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
                       >
                         <IonIcon icon={navigateOutline} className="w-4 h-4" />
                         Get Directions
@@ -866,21 +923,21 @@ export default function ProviderDetailsPage() {
                       className="flex items-start gap-3 select-none pointer-events-none"
                       aria-hidden
                     >
-                      <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-slate-700 flex items-center justify-center shrink-0 mt-0.5">
                         <IonIcon
                           icon={locationOutline}
-                          className="w-[18px] h-[18px] text-gray-400"
+                          className="w-[18px] h-[18px] text-gray-400 dark:text-slate-500"
                         />
                       </div>
-                      <p className="text-[13px] text-gray-400 leading-relaxed flex-1 blur-[5px]">
+                      <p className="text-[13px] text-gray-400 dark:text-slate-500 leading-relaxed flex-1 blur-[5px]">
                         {provider.address}
                         {provider.city ? `, ${provider.city}` : ""}
                         {provider.pincode ? ` - ${provider.pincode}` : ""}
                       </p>
                     </div>
                     {/* Frosted overlay */}
-                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
-                      <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
+                    <div className="absolute inset-0 bg-white/70 dark:bg-slate-800/80 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
+                      <div className="flex items-center gap-2 bg-slate-900 dark:bg-slate-700 text-white px-4 py-2 rounded-full shadow-lg">
                         <IonIcon icon={lockClosedOutline} className="text-sm" />
                         <span className="text-[12px] font-bold">
                           Sign in to see location
@@ -901,7 +958,7 @@ export default function ProviderDetailsPage() {
               onClick={() => router.push("/invite")}
               className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40 active:scale-[0.98] transition-transform"
             >
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-200">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center shrink-0 shadow-sm shadow-amber-200">
                 <IonIcon icon={peopleOutline} className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 text-left">
@@ -1008,7 +1065,7 @@ export default function ProviderDetailsPage() {
                 >
                   <div className="flex items-start justify-between mb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">
                         {initialsOf(review.reviewer?.name)}
                       </div>
                       <div>

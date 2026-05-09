@@ -676,7 +676,7 @@ const ProfileContent = memo(() => {
                   {profile.name || "User"}
                 </h2>
                 <p className="text-xs text-slate-500 truncate">
-                  {profile.mobileNumber || "No phone"}
+                  {profile.mobileNumber ? `+91 ${profile.mobileNumber}` : "No phone"}
                 </p>
                 {profile.city && (
                   <p className="text-[11px] text-slate-400 mt-0.5">
@@ -807,53 +807,6 @@ const ProfileContent = memo(() => {
           )}
 
           {/* Provider Business Card - shown when in provider mode */}
-          {(providerStatus === "approved" ||
-            providerStatus === "pending" ||
-            providerStatus === "in_review") &&
-            userMode === "provider" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mx-4 mb-3"
-              >
-                <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
-                      <IonIcon
-                        icon={businessOutline}
-                        className="text-xl text-white"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm truncate">
-                        {profile.name || "Your Business"}
-                      </p>
-                      <p className="text-white/70 text-[11px]">
-                        Business Profile
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        // Navigate back to home/dashboard tab to manage business
-                      }}
-                      className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
-                    >
-                      Manage Business
-                    </motion.button>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={toggleMode}
-                      className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
-                    >
-                      Switch to Customer
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
 
           {/* Provider Suspended Card */}
           {providerStatus === "suspended" && (
