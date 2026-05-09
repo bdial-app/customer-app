@@ -42,7 +42,7 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { useProviderAnalytics } from "@/hooks/useMyProvider";
+import { useProviderAnalytics, useMySponsorships } from "@/hooks/useMyProvider";
 import {
   useAnalyticsSummary,
   useTopProducts,
@@ -55,6 +55,9 @@ import { useLeadUnlockInfo, useMonetizationConfig } from "@/hooks/useMonetizatio
 import { LeadUnlockSheet } from "@/app/components/monetization/lead-unlock-sheet";
 import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
 import { MonetizationBanner } from "@/app/components/monetization/monetization-banner";
+import { ActivePlanBanner, ActiveBoostBanner } from "@/app/components/provider/active-status-cards";
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentSubscription } from "@/services/payment.service";
 import type { StatWithTrend } from "@/services/analytics.service";
 
 type Period = "7d" | "30d" | "90d";
@@ -289,7 +292,18 @@ const AnalyticsContent = () => {
   const unlockMutation = useUnlockLead();
   const { data: leadUnlockInfo } = useLeadUnlockInfo();
   const { data: monetizationConfig } = useMonetizationConfig();
+  const { data: currentSub } = useQuery({
+    queryKey: ["current-subscription"],
+    queryFn: getCurrentSubscription,
+    staleTime: 1000 * 60 * 2,
+  });
+  const { data: sponsorships } = useMySponsorships();
   const [unlockSheetLead, setUnlockSheetLead] = useState<{ id: string; tier: string } | null>(null);
+
+  const hasActivePlan = currentSub && currentSub.status === "active" && currentSub.plan;
+  const activeSponsorships = sponsorships?.filter(
+    (s) => s.isActive && new Date(s.endsAt) > new Date(),
+  ) ?? [];
 
   // Build sparkline chart data from summary
   const chartData = summary?.profileViews.sparkline?.map((v, i) => ({
@@ -392,6 +406,18 @@ const AnalyticsContent = () => {
             )}
           </button>
         </div>
+
+        {/* Active plan & boost indicators */}
+        {(hasActivePlan || activeSponsorships.length > 0) && (
+          <div className="px-4 pb-3">
+            {hasActivePlan && (
+              <ActivePlanBanner subscription={currentSub!} compact />
+            )}
+            {activeSponsorships.length > 0 && (
+              <ActiveBoostBanner sponsorships={activeSponsorships} compact />
+            )}
+          </div>
+        )}
       </div>
 
       {view === "overview" ? (
