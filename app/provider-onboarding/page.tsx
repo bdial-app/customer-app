@@ -1913,12 +1913,12 @@ const ProviderOnboardingPage = () => {
                           <button
                             type="button"
                             onClick={() => setIsWomenLed(!isWomenLed)}
-                            className={`shrink-0 w-12 h-7 rounded-full transition-colors relative ${
+                            className={`shrink-0 w-12 h-6 rounded-full transition-colors relative ${
                               isWomenLed ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-600"
                             }`}
                           >
-                            <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                              isWomenLed ? "translate-x-6" : "translate-x-1"
+                            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-200 ${
+                              isWomenLed ? "left-[26px]" : "left-0.5"
                             }`} />
                           </button>
                         </div>
