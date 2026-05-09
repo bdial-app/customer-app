@@ -794,6 +794,23 @@ function AuthGateSheetContent() {
 export default function AuthGateSheet() {
   const { isAuthGateOpen, closeAuthGate } = useAuthGateContext();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      // Keyboard height = difference between layout viewport and visual viewport
+      const offset = window.innerHeight - vv.height - vv.offsetTop;
+      setKeyboardOffset(Math.max(0, offset));
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
 
   return (
     <AnimatePresence>
@@ -817,11 +834,13 @@ export default function AuthGateSheet() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="fixed bottom-0 inset-x-0 z-[9999] rounded-t-3xl shadow-2xl overflow-hidden"
+            className="fixed inset-x-0 z-[9999] rounded-t-3xl shadow-2xl overflow-hidden"
             style={{
+              bottom: keyboardOffset,
               maxHeight: "92vh",
-              paddingBottom: "max(env(safe-area-inset-bottom), 12px)",
+              paddingBottom: keyboardOffset > 0 ? 8 : "max(env(safe-area-inset-bottom), 12px)",
               background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
+              transition: "bottom 0.2s ease-out, padding-bottom 0.2s ease-out",
             }}
           >
             {/* Abstract background decorations */}
