@@ -155,7 +155,7 @@ function InfoChip({
 }) {
   return (
     <div className="flex items-center gap-2.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-4 py-3 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-      <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+      <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
         <IonIcon icon={icon} className="w-[18px] h-[18px] text-amber-600" />
       </div>
       <div className="min-w-0">
@@ -511,7 +511,7 @@ export default function ProviderDetailsPage() {
                 {provider.status === "active" && (
                   <IonIcon
                     icon={checkmarkCircle}
-                    className="w-5 h-5 text-blue-400 flex-shrink-0"
+                    className="w-5 h-5 text-blue-400 shrink-0"
                   />
                 )}
                 {isSponsored && (
@@ -641,7 +641,7 @@ export default function ProviderDetailsPage() {
                 <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-yellow-400/10 rounded-full blur-lg" />
 
                 <div className="flex items-start gap-3 relative">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-md">
                     <IonIcon
                       icon={shieldCheckmark}
                       className="w-5 h-5 text-white"
@@ -757,7 +757,7 @@ export default function ProviderDetailsPage() {
                       className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none"
                     >
                       {offer.discountValue && (
-                        <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shrink-0">
                           <span className="text-white text-xs font-bold">
                             {offer.discountType === "percentage"
                               ? `${Number(offer.discountValue)}%`
@@ -817,8 +817,8 @@ export default function ProviderDetailsPage() {
 
             {/* Address */}
             {provider.address && (
-              <div className="bg-white rounded-2xl p-4 border border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <h3 className="text-[15px] font-bold text-gray-900 mb-2">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
                   Location
                 </h3>
 
@@ -826,13 +826,13 @@ export default function ProviderDetailsPage() {
                   /* Logged-in: show full address + directions */
                   <>
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-slate-700 flex items-center justify-center shrink-0 mt-0.5">
                         <IonIcon
                           icon={locationOutline}
-                          className="w-[18px] h-[18px] text-gray-500"
+                          className="w-[18px] h-[18px] text-gray-500 dark:text-slate-400"
                         />
                       </div>
-                      <p className="text-[13px] text-gray-600 leading-relaxed flex-1">
+                      <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed flex-1">
                         {provider.address}
                         {provider.city ? `, ${provider.city}` : ""}
                         {provider.pincode ? ` - ${provider.pincode}` : ""}
@@ -848,7 +848,7 @@ export default function ProviderDetailsPage() {
                             provider.brandName,
                           );
                         }}
-                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-semibold active:bg-blue-100 transition-colors"
+                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[13px] font-semibold active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
                       >
                         <IonIcon icon={navigateOutline} className="w-4 h-4" />
                         Get Directions
@@ -866,21 +866,21 @@ export default function ProviderDetailsPage() {
                       className="flex items-start gap-3 select-none pointer-events-none"
                       aria-hidden
                     >
-                      <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-slate-700 flex items-center justify-center shrink-0 mt-0.5">
                         <IonIcon
                           icon={locationOutline}
-                          className="w-[18px] h-[18px] text-gray-400"
+                          className="w-[18px] h-[18px] text-gray-400 dark:text-slate-500"
                         />
                       </div>
-                      <p className="text-[13px] text-gray-400 leading-relaxed flex-1 blur-[5px]">
+                      <p className="text-[13px] text-gray-400 dark:text-slate-500 leading-relaxed flex-1 blur-[5px]">
                         {provider.address}
                         {provider.city ? `, ${provider.city}` : ""}
                         {provider.pincode ? ` - ${provider.pincode}` : ""}
                       </p>
                     </div>
                     {/* Frosted overlay */}
-                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
-                      <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
+                    <div className="absolute inset-0 bg-white/70 dark:bg-slate-800/80 backdrop-blur-[2px] rounded-xl flex items-center justify-center gap-2.5">
+                      <div className="flex items-center gap-2 bg-slate-900 dark:bg-slate-700 text-white px-4 py-2 rounded-full shadow-lg">
                         <IonIcon icon={lockClosedOutline} className="text-sm" />
                         <span className="text-[12px] font-bold">
                           Sign in to see location
@@ -901,7 +901,7 @@ export default function ProviderDetailsPage() {
               onClick={() => router.push("/invite")}
               className="w-full flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40 active:scale-[0.98] transition-transform"
             >
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-200">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center shrink-0 shadow-sm shadow-amber-200">
                 <IonIcon icon={peopleOutline} className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 text-left">
@@ -1008,7 +1008,7 @@ export default function ProviderDetailsPage() {
                 >
                   <div className="flex items-start justify-between mb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">
                         {initialsOf(review.reviewer?.name)}
                       </div>
                       <div>
