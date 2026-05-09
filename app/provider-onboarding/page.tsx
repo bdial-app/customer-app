@@ -32,6 +32,7 @@ import {
   callOutline,
   shieldOutline,
   mapOutline,
+  lockClosedOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -256,14 +257,14 @@ const TipBanner = ({
   color?: string;
 }) => {
   const colors: Record<string, string> = {
-    indigo: "bg-indigo-50/70 border-indigo-100 text-indigo-700",
-    amber: "bg-amber-50/70 border-amber-100 text-amber-800",
-    emerald: "bg-emerald-50/70 border-emerald-100 text-emerald-700",
+    indigo: "bg-indigo-50/70 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300",
+    amber: "bg-amber-50/70 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300",
+    emerald: "bg-emerald-50/70 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300",
   };
   const iconColors: Record<string, string> = {
-    indigo: "text-indigo-500",
-    amber: "text-amber-500",
-    emerald: "text-emerald-500",
+    indigo: "text-indigo-500 dark:text-indigo-400",
+    amber: "text-amber-500 dark:text-amber-400",
+    emerald: "text-emerald-500 dark:text-emerald-400",
   };
   return (
     <div
@@ -361,13 +362,13 @@ const MapLocationPicker = ({
     <div className="px-4 space-y-3 mb-3">
       {/* GPS button */}
       <button type="button" onClick={onDetectGPS} disabled={isDetecting}
-        className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 transition-all active:scale-[0.99] disabled:opacity-60">
-        <div className={`w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0 ${isDetecting ? "animate-pulse" : ""}`}>
-          <IonIcon icon={navigateOutline} className="text-indigo-600 text-lg" />
+        className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-indigo-200 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/20 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all active:scale-[0.99] disabled:opacity-60">
+        <div className={`w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 ${isDetecting ? "animate-pulse" : ""}`}>
+          <IonIcon icon={navigateOutline} className="text-indigo-600 dark:text-indigo-400 text-lg" />
         </div>
         <div className="text-left flex-1 min-w-0">
-          <p className="text-xs font-bold text-indigo-700">{isDetecting ? "Detecting..." : "Use My Current Location"}</p>
-          <p className="text-[10px] text-indigo-500/70 truncate">{detectedLabel || "Auto-fill from GPS"}</p>
+          <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{isDetecting ? "Detecting..." : "Use My Current Location"}</p>
+          <p className="text-[10px] text-indigo-500/70 dark:text-indigo-400/70 truncate">{detectedLabel || "Auto-fill from GPS"}</p>
         </div>
         {detectedLabel && !isDetecting && <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-lg shrink-0" />}
       </button>
@@ -384,8 +385,8 @@ const MapLocationPicker = ({
             {searchResults.map((r) => (
               <button key={r.placeId} type="button" onClick={() => selectResult(r)}
                 className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-50 dark:border-slate-700 last:border-b-0 flex items-start gap-2.5">
-                <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center">
-                  <IonIcon icon={locationOutline} className="text-xs text-amber-500" />
+                <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-xs text-amber-500 dark:text-amber-400" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate">{r.mainText}</p>
@@ -413,7 +414,7 @@ const MapLocationPicker = ({
           </div>
         </div>
       ) : (
-        <div className="h-[260px] rounded-2xl bg-slate-100 flex items-center justify-center">
+        <div className="h-[260px] rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
         </div>
       )}
@@ -516,9 +517,9 @@ const CategorySelector = ({
 
       {/* Max selection hint */}
       {atLimit && (
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-          <IonIcon icon={informationCircleOutline} className="text-amber-500 text-base flex-shrink-0" />
-          <p className="text-[11px] text-amber-700 font-medium">
+        <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2">
+          <IonIcon icon={informationCircleOutline} className="text-amber-500 dark:text-amber-400 text-base flex-shrink-0" />
+          <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
             Maximum {maxSelect} categories allowed. Remove one to change.
           </p>
         </div>
@@ -526,20 +527,20 @@ const CategorySelector = ({
 
       {/* Selected chips (pinned at top) */}
       {selectedCats.length > 0 && (
-        <div className="bg-indigo-50/70 rounded-2xl p-3 border border-indigo-100">
+        <div className="bg-indigo-50/70 dark:bg-indigo-900/20 rounded-2xl p-3 border border-indigo-100 dark:border-indigo-800">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
                 <span className="text-[10px] font-bold text-white">{selectedCats.length}</span>
               </div>
-              <p className="text-xs font-semibold text-indigo-700">
-                Selected <span className="font-normal text-indigo-400">({selectedCats.length}/{maxSelect})</span>
+              <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                Selected <span className="font-normal text-indigo-400 dark:text-indigo-500">({selectedCats.length}/{maxSelect})</span>
               </p>
             </div>
             <button
               type="button"
               onClick={() => selectedIds.forEach((id) => onToggle(id))}
-              className="text-[11px] font-medium text-indigo-400 hover:text-red-500 transition-colors"
+              className="text-[11px] font-medium text-indigo-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
             >
               Clear all
             </button>
@@ -550,7 +551,7 @@ const CategorySelector = ({
                 key={cat.id}
                 type="button"
                 onClick={() => onToggle(cat.id)}
-                className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full text-[11px] font-semibold bg-white text-indigo-700 border border-indigo-200 shadow-sm hover:border-red-300 hover:bg-red-50 hover:text-red-600 transition-all active:scale-[0.96]"
+                className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 shadow-sm hover:border-red-300 dark:hover:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-[0.96]"
               >
                 {hasValidIcon(cat) ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -561,7 +562,7 @@ const CategorySelector = ({
                   </div>
                 )}
                 {cat.name}
-                <IonIcon icon={closeCircle} className="text-indigo-300 group-hover:text-red-400 text-sm transition-colors" />
+                <IonIcon icon={closeCircle} className="text-indigo-300 dark:text-indigo-500 group-hover:text-red-400 dark:group-hover:text-red-400 text-sm transition-colors" />
               </button>
             ))}
           </div>
@@ -572,15 +573,15 @@ const CategorySelector = ({
       <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-sm">
         {categories.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center animate-pulse">
-              <IonIcon icon={layersOutline} className="text-slate-300 text-xl" />
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center animate-pulse">
+              <IonIcon icon={layersOutline} className="text-slate-300 dark:text-slate-500 text-xl" />
             </div>
             <p className="text-xs text-slate-400">Loading categories...</p>
           </div>
         )}
         {filtered.length === 0 && categories.length > 0 && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
               <IonIcon icon={searchOutline} className="text-slate-300 text-xl" />
             </div>
             <p className="text-xs text-slate-400">
@@ -608,17 +609,17 @@ const CategorySelector = ({
                   disabled={disabled}
                   onClick={() => onToggle(cat.id)}
                   className={`flex items-center gap-3 w-full px-3 py-3 text-left transition-all ${
-                    !isLast ? "border-b border-slate-50" : ""
+                    !isLast ? "border-b border-slate-50 dark:border-slate-700/50" : ""
                   } ${
                     disabled
                       ? "opacity-40 cursor-not-allowed"
                       : "active:scale-[0.98]"
                   } ${
                     selected
-                      ? "bg-indigo-50/80"
+                      ? "bg-indigo-50/80 dark:bg-indigo-900/20"
                       : disabled
                         ? ""
-                        : "hover:bg-slate-50"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   }`}
                 >
                   {/* Icon / Placeholder */}
@@ -1346,7 +1347,7 @@ const UnderReviewBanner = ({
                   className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 ${
                     s.done
                       ? "bg-green-500 border-green-500"
-                      : "bg-white border-slate-200"
+                      : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-500"
                   }`}
                 >
                   {s.done && (
@@ -1358,35 +1359,35 @@ const UnderReviewBanner = ({
                 </div>
                 <p
                   className={`text-sm font-medium ${
-                    s.done ? "text-slate-800" : "text-slate-400"
+                    s.done ? "text-slate-800 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"
                   }`}
                 >
                   {s.label}
                 </p>
               </div>
               {i < config.steps.length - 1 && (
-                <div className="ml-3 w-0.5 h-3 bg-slate-100 rounded-full" />
+                <div className="ml-3 w-0.5 h-3 bg-slate-100 dark:bg-slate-600 rounded-full" />
               )}
             </div>
           ))}
         </div>
         {status === "approved" ? (
-          <div className="w-full bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex items-start gap-2">
+          <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-3 flex items-start gap-2">
             <IonIcon
               icon={storefrontOutline}
-              className="text-emerald-500 text-lg shrink-0 mt-0.5"
+              className="text-emerald-500 dark:text-emerald-400 text-lg shrink-0 mt-0.5"
             />
-            <p className="text-xs text-emerald-700 leading-relaxed">
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
               Your provider dashboard is ready. Switch to Provider Mode from your profile to manage products, bookings, and business settings.
             </p>
           </div>
         ) : (
-          <div className="w-full bg-indigo-50 border border-indigo-100 rounded-2xl p-3 flex items-start gap-2">
+          <div className="w-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-3 flex items-start gap-2">
             <IonIcon
               icon={informationCircleOutline}
               className="text-indigo-400 text-lg shrink-0 mt-0.5"
             />
-            <p className="text-xs text-indigo-700 leading-relaxed">
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
               Your application is being reviewed. You'll be notified once approved.
             </p>
           </div>
@@ -1400,7 +1401,7 @@ const UnderReviewBanner = ({
                 setUserMode("provider");
                 router.replace("/");
               }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-600 active:bg-emerald-700 transition-colors shadow-md shadow-emerald-200"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-600 active:bg-emerald-700 transition-colors shadow-md shadow-emerald-200/30"
             >
               <IonIcon icon={storefrontOutline} className="text-white text-xl" />
               <span className="text-white font-semibold text-[15px]">Continue as Provider</span>
@@ -1409,7 +1410,7 @@ const UnderReviewBanner = ({
             <button
               type="button"
               onClick={onGoBack}
-              className="w-full py-3 px-4 rounded-2xl bg-white border border-slate-200 text-slate-500 font-medium text-sm active:bg-slate-50 transition-colors"
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-medium text-sm active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
             >
               Back to Home
             </button>
@@ -1418,7 +1419,7 @@ const UnderReviewBanner = ({
           <button
             type="button"
             onClick={onGoBack}
-            className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 text-slate-600 font-semibold text-[15px] active:bg-slate-50 transition-colors"
+            className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-[15px] active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
           >
             Go Back
           </button>
@@ -1845,43 +1846,52 @@ const ProviderOnboardingPage = () => {
                           </div>
                         </div>
                       ) : !otpSent ? (
-                        <button type="button" disabled={values.contact_number.length !== 10 || otpSending}
-                          onClick={() => handleSendOtp(values.contact_number)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 transition-all active:scale-[0.99] disabled:opacity-50">
-                          {otpSending ? (
-                            <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                          ) : (
-                            <IonIcon icon={shieldOutline} className="text-indigo-500 text-base" />
-                          )}
-                          <span className="text-xs font-bold text-indigo-600">
+                        <div className="space-y-2">
+                          <button type="button" disabled={values.contact_number.length !== 10 || otpSending}
+                            onClick={() => handleSendOtp(values.contact_number)}
+                            className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed ${
+                              values.contact_number.length === 10 && !otpSending
+                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-4 ring-indigo-500/20"
+                                : "border-2 border-dashed border-slate-600 bg-slate-800/50 text-slate-500"
+                            }`}>
+                            {otpSending ? (
+                              <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            ) : (
+                              <IonIcon icon={shieldOutline} className="text-[17px]" />
+                            )}
                             {otpSending ? "Sending OTP..." : "Verify Phone Number"}
-                          </span>
-                        </button>
+                          </button>
+                          {values.contact_number.length === 10 && (
+                            <p className="text-[10px] text-indigo-400/80 text-center font-medium">
+                              Required to continue to the next step
+                            </p>
+                          )}
+                        </div>
                       ) : (
-                        <div className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/30 space-y-3">
+                        <div className="p-4 rounded-2xl border border-indigo-400/30 dark:border-indigo-500/30 bg-indigo-50/30 dark:bg-indigo-950/40 space-y-3">
                           <div className="flex items-center gap-2">
-                            <IonIcon icon={callOutline} className="text-indigo-500 text-base" />
-                            <p className="text-xs font-bold text-indigo-700">Enter OTP sent to +91 {values.contact_number}</p>
+                            <IonIcon icon={callOutline} className="text-indigo-500 dark:text-indigo-400 text-base" />
+                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">Enter OTP sent to +91 {values.contact_number}</p>
                           </div>
                           <div className="flex gap-2">
                             <input type="text" inputMode="numeric" value={otpCode} maxLength={6}
                               onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }}
                               placeholder="6-digit OTP"
-                              className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+                              className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all" />
                             <button type="button" disabled={otpCode.length !== 6 || otpVerifying}
                               onClick={() => handleVerifyOtp(values.contact_number)}
-                              className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-all">
+                              className="px-4 py-2.5 rounded-xl bg-indigo-600 dark:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-all">
                               {otpVerifying ? "..." : "Verify"}
                             </button>
                           </div>
                           {otpError && (
-                            <p className="text-[11px] text-red-500 font-medium flex items-center gap-1">
+                            <p className="text-[11px] text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
                               <IonIcon icon={alertCircleOutline} className="text-xs" /> {otpError}
                             </p>
                           )}
                           <button type="button" disabled={otpCooldown > 0 || otpSending}
                             onClick={() => handleSendOtp(values.contact_number)}
-                            className="text-[11px] font-semibold text-indigo-600 disabled:text-slate-400">
+                            className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 disabled:text-slate-400 dark:disabled:text-slate-600">
                             {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend OTP"}
                           </button>
                         </div>
@@ -2186,15 +2196,31 @@ const ProviderOnboardingPage = () => {
 
                   {/* Continue / Submit */}
                   {currentStep < 5 ? (
-                    <button
-                      type="button"
-                      onClick={() => handleNext(validateForm, setTouched)}
-                      disabled={!canAdvance[currentStep] || isSubmitting}
-                      className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
-                    >
-                      {(["Set Location", "Choose Categories", "Add Products", "Verify Identity"] as const)[currentStep - 1]}
-                      <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
-                    </button>
+                    <div className="flex flex-1 flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleNext(validateForm, setTouched)}
+                        disabled={!canAdvance[currentStep] || isSubmitting}
+                        className="flex w-full items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
+                      >
+                        {currentStep === 1 && !otpVerified ? (
+                          <>
+                            <IonIcon icon={lockClosedOutline} className="text-base shrink-0" />
+                            Set Location
+                          </>
+                        ) : (
+                          <>
+                            {(["Set Location", "Choose Categories", "Add Products", "Verify Identity"] as const)[currentStep - 1]}
+                            <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                          </>
+                        )}
+                      </button>
+                      {currentStep === 1 && !otpVerified && (
+                        <p className="text-[10px] text-center text-slate-400 font-medium">
+                          Verify your phone number above to continue
+                        </p>
+                      )}
+                    </div>
                   ) : isStep5HasDoc ? (
                     <button
                       type="submit"
