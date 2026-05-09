@@ -27,6 +27,7 @@ import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useChatSubscription } from "@/hooks/useChatSubscription";
 import { useHeartbeat } from "@/hooks/useChat";
+import { useQueryClient } from "@tanstack/react-query";
 import { clearPendingChat } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
@@ -62,7 +63,10 @@ export default function Home() {
   const { user } = useAppSelector((state) => state.auth);
   const { requireAuth } = useAuthGate();
   const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
+  const queryClient = useQueryClient();
   const prevUserMode = useRef(userMode);
+  const pendingTabRef = useRef<string | null>(null);
+  const prevActiveChat = useRef<string | null>(null);
 
   // Global chat subscription for unread badge
   useChatSubscription();
@@ -122,13 +126,25 @@ export default function Home() {
     }
   }, [pendingChatOpen, dispatch]);
 
-  // When provider/customer mode CHANGES (not on initial mount), go to home tab
+  // When provider/customer mode CHANGES (not on initial mount), navigate to pending tab or home
   useEffect(() => {
     if (prevUserMode.current !== userMode) {
       prevUserMode.current = userMode;
-      setActiveTab("home");
+      const targetTab = pendingTabRef.current || "home";
+      pendingTabRef.current = null;
+      setActiveTab(targetTab);
+      // Invalidate conversations cache so the new mode's chat list is fresh
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
-  }, [userMode]);
+  }, [userMode, queryClient]);
+
+  // When returning from a conversation view, invalidate conversations for fresh last-message previews
+  useEffect(() => {
+    if (prevActiveChat.current && !activeChat) {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    }
+    prevActiveChat.current = activeChat;
+  }, [activeChat, queryClient]);
 
   // Throttle tab switches to prevent rapid mount/unmount crashes
   const lastTabSwitch = useRef(0);
@@ -245,8 +261,8 @@ export default function Home() {
             exit={{ opacity: 0, y: 16, scale: 0.92 }}
             transition={{ type: "spring", stiffness: 400, damping: 28 }}
             onClick={() => {
+              pendingTabRef.current = "chats";
               setUserMode("provider");
-              handleTabChange("chats");
             }}
             className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
           >

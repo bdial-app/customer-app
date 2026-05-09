@@ -206,12 +206,15 @@ export default function MessagesPage({
     }
   }, []);
 
+  // Track last message id so scroll fires even when page count stays the same
+  const lastMessageId = allMessages.length > 0 ? allMessages[allMessages.length - 1].id : null;
+
   useEffect(() => {
     if (allMessages.length > 0) {
       scrollToBottom();
       initiallyScrolled.current = true;
     }
-  }, [allMessages.length, scrollToBottom]);
+  }, [allMessages.length, lastMessageId, scrollToBottom]);
 
   // Infinite scroll — load older messages on scroll to top
   useEffect(() => {

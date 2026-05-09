@@ -18,7 +18,7 @@ export function useConversations(
     queryKey: ["conversations", filter, search, role],
     queryFn: () => chatApi.getConversations({ filter, search, limit: 50, role }),
     refetchInterval: 30000, // Fallback polling every 30s
-    staleTime: 5000,
+    staleTime: 0,
   });
 }
 
@@ -46,6 +46,7 @@ export function useMessages(conversationId: string | null) {
       lastPage.hasMore ? lastPage.oldestTimestamp ?? undefined : undefined,
     enabled: !!conversationId,
     initialPageParam: undefined as string | undefined,
+    refetchOnMount: "always",
   });
 }
 
