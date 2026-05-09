@@ -26,6 +26,8 @@ import {
 import { resolveDeepLink } from "@/utils/deep-link";
 import NotificationList from "./NotificationList";
 import type { NotificationItem, NotificationType } from "@/services/notification.service";
+import { useAppContext } from "@/app/context/AppContext";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 const TYPE_ICON: Record<NotificationType, { icon: string; color: string }> = {
   chat_message: { icon: chatbubbleOutline, color: "text-blue-500" },
@@ -60,6 +62,10 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showAll, setShowAll] = useState(false);
+  const { userMode } = useAppContext();
+  const otherModeCount = useAppSelector((s) =>
+    userMode === "provider" ? s.notification.customerUnreadCount : s.notification.providerUnreadCount,
+  );
 
   const { data, isLoading } = useNotifications(1, undefined, "all");
   const markRead = useMarkAsRead();
@@ -133,6 +139,16 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
                 </button>
               )}
             </div>
+
+            {/* Cross-context notification hint */}
+            {otherModeCount > 0 && (
+              <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
+                  {otherModeCount} new notification{otherModeCount > 1 ? "s" : ""} in{" "}
+                  <span className="font-bold">{userMode === "provider" ? "Customer" : "Provider"}</span> view
+                </p>
+              </div>
+            )}
 
             {/* List */}
             <div className="max-h-[380px] overflow-y-auto overscroll-contain">

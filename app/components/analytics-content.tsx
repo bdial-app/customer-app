@@ -898,6 +898,7 @@ const AnalyticsContent = () => {
             const tiers = anon.tiers;
             const totalTiers = tiers.hot + tiers.warm + tiers.soft + tiers.cold;
             return (
+              <div className="px-4 mb-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
                 <div className="p-4 pb-3">
                   <div className="flex items-center gap-2 mb-3">
@@ -1022,6 +1023,7 @@ const AnalyticsContent = () => {
                   )}
                 </div>
               </div>
+              </div>
             );
           })()}
 
@@ -1045,14 +1047,14 @@ const AnalyticsContent = () => {
               <div className="px-4 mb-4">
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
                   {/* Header */}
-                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center justify-between">
+                  <div className="bg-gradient-to-r from-amber-700 to-orange-700 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                         <IonIcon icon={megaphoneOutline} className="text-white text-base" />
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-white">Boost Performance</h3>
-                        <p className="text-[9px] text-white/70">
+                        <p className="text-[9px] text-white/90">
                           {activeSponsorships.length} active boost{activeSponsorships.length > 1 ? "s" : ""}
                         </p>
                       </div>

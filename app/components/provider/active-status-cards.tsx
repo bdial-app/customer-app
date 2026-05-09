@@ -207,7 +207,7 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
       <motion.div
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl px-3 py-2 mt-2"
+        className="flex items-center gap-2 bg-gradient-to-r from-amber-700 to-orange-700 rounded-xl px-3 py-2 mt-2"
         onClick={onManage}
       >
         <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
@@ -235,7 +235,7 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-5"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-700 via-orange-700 to-rose-700 p-5"
       >
         {/* Decorative elements */}
         <div className="absolute -left-6 -top-6 w-28 h-28 rounded-full bg-white/5" />
@@ -252,7 +252,7 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
                 <h3 className="text-base font-bold text-white">
                   You&apos;re Boosted!
                 </h3>
-                <p className="text-[10px] text-white/80">
+                <p className="text-[10px] text-white/90">
                   {active.length} active boost{active.length > 1 ? "s" : ""} · {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
                 </p>
               </div>
@@ -283,12 +283,12 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-white/80">₹{s.budgetAmount} budget</span>
-                      <span className="text-[10px] text-white/60">·</span>
-                      <span className="text-[10px] text-white/80">Ends {endDate}</span>
+                      <span className="text-[10px] text-white/90">₹{s.budgetAmount} budget</span>
+                      <span className="text-[10px] text-white/70">·</span>
+                      <span className="text-[10px] text-white/90">Ends {endDate}</span>
                       {slotDaysLeft <= 3 && (
                         <>
-                          <span className="text-[10px] text-white/60">·</span>
+                          <span className="text-[10px] text-white/70">·</span>
                           <span className="text-[10px] text-yellow-200 font-semibold">{slotDaysLeft}d left</span>
                         </>
                       )}
@@ -308,15 +308,15 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
 
           {/* What boosting does */}
           <div className="flex items-center gap-3 flex-wrap mb-4">
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
               <IonIcon icon={eyeOutline} className="text-yellow-200 text-[10px]" />
               <span className="text-[9px] text-white font-medium">5× more views</span>
             </div>
-            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-1">
               <IonIcon icon={pulseOutline} className="text-yellow-200 text-[10px]" />
               <span className="text-[9px] text-white font-medium">Featured placement</span>
             </div>
-            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-1">
+            <div className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-1">
               <IonIcon icon={trendingUpOutline} className="text-yellow-200 text-[10px]" />
               <span className="text-[9px] text-white font-medium">Higher conversions</span>
             </div>
