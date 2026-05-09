@@ -289,7 +289,7 @@ export default function ProviderLeadsTab() {
   const [tier, setTier] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const { data, isLoading } = useLeads(tier, page);
+  const { data, isLoading } = useLeads({ tier, page });
   const unlockMutation = useUnlockLead();
 
   if (selectedLeadId) {

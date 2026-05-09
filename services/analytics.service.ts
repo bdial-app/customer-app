@@ -77,6 +77,29 @@ export interface TopProduct {
   uniqueVisitors: number;
 }
 
+export interface VisitorInsights {
+  period: string;
+  totalVisitors: number;
+  anonymous: {
+    count: number;
+    percentage: number;
+    avgScore: number;
+    avgDurationSec: number;
+    avgProductsViewed: number;
+    tiers: { hot: number; warm: number; soft: number; cold: number };
+  };
+  registered: {
+    count: number;
+    percentage: number;
+    avgScore: number;
+    avgDurationSec: number;
+    avgProductsViewed: number;
+  };
+  topSearchQueries: { query: string; count: number }[];
+  topSources: { source: string; count: number }[];
+  topProducts: { productId: string; name: string; views: number; uniqueVisitors: number }[];
+}
+
 // ─── API Functions ──────────────────────────────────────────────────
 
 export const getAnalyticsSummary = async (
@@ -86,11 +109,22 @@ export const getAnalyticsSummary = async (
   return data;
 };
 
-export const getLeads = async (params: {
+export interface LeadFilters {
   tier?: string;
   page?: number;
   limit?: number;
-}): Promise<LeadsResponse> => {
+  status?: "unlocked" | "locked";
+  source?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  minScore?: number;
+  maxScore?: number;
+  sortBy?: "score" | "lastSeen" | "firstSeen" | "duration";
+  sortOrder?: "ASC" | "DESC";
+  search?: string;
+}
+
+export const getLeads = async (params: LeadFilters): Promise<LeadsResponse> => {
   const { data } = await apiClient.get(ANALYTICS_URLS.LEADS, { params });
   return data;
 };
@@ -116,5 +150,12 @@ export const getPeakHours = async (
   period: "7d" | "30d" | "90d" = "7d",
 ): Promise<number[]> => {
   const { data } = await apiClient.get(ANALYTICS_URLS.PEAK_HOURS, { params: { period } });
+  return data;
+};
+
+export const getVisitorInsights = async (
+  period: "7d" | "30d" | "90d" = "30d",
+): Promise<VisitorInsights> => {
+  const { data } = await apiClient.get(ANALYTICS_URLS.VISITOR_INSIGHTS, { params: { period } });
   return data;
 };

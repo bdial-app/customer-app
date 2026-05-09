@@ -134,6 +134,7 @@ export const ANALYTICS_URLS = {
   UNLOCK_LEAD: (id: string) => `/analytics/leads/${id}/unlock`,
   TOP_PRODUCTS: '/analytics/top-products',
   PEAK_HOURS: '/analytics/peak-hours',
+  VISITOR_INSIGHTS: '/analytics/visitor-insights',
 };
 
 export const NOTIFICATION_URLS = {

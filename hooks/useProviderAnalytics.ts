@@ -6,10 +6,13 @@ import {
   unlockLead,
   getTopProducts,
   getPeakHours,
+  getVisitorInsights,
   AnalyticsSummary,
   LeadsResponse,
   LeadDetail,
   TopProduct,
+  VisitorInsights,
+  LeadFilters,
 } from "@/services/analytics.service";
 import { createLeadUnlockCheckout, type LeadUnlockResponse } from "@/services/payment.service";
 import { payWithRazorpay } from "@/services/razorpay.service";
@@ -27,10 +30,10 @@ export const useAnalyticsSummary = (period: "7d" | "30d" | "90d" = "7d") => {
   });
 };
 
-export const useLeads = (tier?: string, page = 1, limit = 20) => {
+export const useLeads = (filters: LeadFilters = {}) => {
   return useQuery<LeadsResponse>({
-    queryKey: [...ANALYTICS_LEADS_KEY, tier, page, limit],
-    queryFn: () => getLeads({ tier, page, limit }),
+    queryKey: [...ANALYTICS_LEADS_KEY, filters],
+    queryFn: () => getLeads(filters),
     staleTime: 1000 * 60 * 2,
   });
 };
@@ -84,6 +87,16 @@ export const usePeakHours = (period: "7d" | "30d" | "90d" = "7d") => {
   return useQuery<number[]>({
     queryKey: [...ANALYTICS_PEAK_HOURS_KEY, period],
     queryFn: () => getPeakHours(period),
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const ANALYTICS_VISITOR_INSIGHTS_KEY = ["analytics-visitor-insights"];
+
+export const useVisitorInsights = (period: "7d" | "30d" | "90d" = "30d") => {
+  return useQuery<VisitorInsights>({
+    queryKey: [...ANALYTICS_VISITOR_INSIGHTS_KEY, period],
+    queryFn: () => getVisitorInsights(period),
     staleTime: 1000 * 60 * 5,
   });
 };

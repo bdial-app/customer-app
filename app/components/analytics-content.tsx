@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -34,7 +34,10 @@ import {
   cashOutline,
   mailOutline,
   locationOutline,
-  analyticsOutline,
+  funnelOutline,
+  swapVerticalOutline,
+  closeOutline,
+  chevronDownOutline,
 } from "ionicons/icons";
 import {
   AreaChart,
@@ -55,6 +58,7 @@ import {
   useLeads,
   useLeadDetail,
   useUnlockLead,
+  useVisitorInsights,
 } from "@/hooks/useProviderAnalytics";
 import { useLeadUnlockInfo, useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import { LeadUnlockSheet } from "@/app/components/monetization/lead-unlock-sheet";
@@ -330,12 +334,45 @@ const AnalyticsContent = () => {
   const [leadTier, setLeadTier] = useState<string | undefined>(undefined);
   const [leadPage, setLeadPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [leadStatus, setLeadStatus] = useState<"unlocked" | "locked" | undefined>(undefined);
+  const [leadSource, setLeadSource] = useState<string | undefined>(undefined);
+  const [leadDateRange, setLeadDateRange] = useState<string>("all"); // "today" | "7d" | "30d" | "90d" | "all"
+  const [leadSortBy, setLeadSortBy] = useState<"score" | "lastSeen" | "firstSeen" | "duration">("score");
+  const [leadSortOrder, setLeadSortOrder] = useState<"ASC" | "DESC">("DESC");
+  const [leadSearch, setLeadSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const leadFilters = useMemo(() => {
+    const f: Record<string, any> = {
+      tier: leadTier,
+      page: leadPage,
+      limit: 20,
+      status: leadStatus,
+      source: leadSource,
+      sortBy: leadSortBy,
+      sortOrder: leadSortOrder,
+    };
+    if (leadSearch.trim()) f.search = leadSearch.trim();
+    if (leadDateRange !== "all") {
+      const now = new Date();
+      const from = new Date();
+      if (leadDateRange === "today") from.setHours(0, 0, 0, 0);
+      else if (leadDateRange === "7d") from.setDate(now.getDate() - 7);
+      else if (leadDateRange === "30d") from.setDate(now.getDate() - 30);
+      else if (leadDateRange === "90d") from.setDate(now.getDate() - 90);
+      f.dateFrom = from.toISOString();
+    }
+    // Strip undefined values
+    return Object.fromEntries(Object.entries(f).filter(([, v]) => v !== undefined));
+  }, [leadTier, leadPage, leadStatus, leadSource, leadDateRange, leadSortBy, leadSortOrder, leadSearch]);
+
+  const activeFilterCount = [leadStatus, leadSource, leadDateRange !== "all" ? leadDateRange : undefined, leadSearch.trim() || undefined, leadSortBy !== "score" ? leadSortBy : undefined].filter(Boolean).length;
 
   const { data: analytics } = useProviderAnalytics();
   const { data: summary, isLoading: summaryLoading } = useAnalyticsSummary(period);
   const { data: topProducts } = useTopProducts(period);
   const { data: peakHours } = usePeakHours(period);
-  const { data: leadsData, isLoading: leadsLoading } = useLeads(leadTier, leadPage);
+  const { data: leadsData, isLoading: leadsLoading } = useLeads(leadFilters);
   const unlockMutation = useUnlockLead();
   const { data: leadUnlockInfo } = useLeadUnlockInfo();
   const { data: monetizationConfig } = useMonetizationConfig();
@@ -345,6 +382,7 @@ const AnalyticsContent = () => {
     staleTime: 1000 * 60 * 2,
   });
   const { data: sponsorships } = useMySponsorships();
+  const { data: visitorInsights } = useVisitorInsights(period);
   const [unlockSheetLead, setUnlockSheetLead] = useState<{ id: string; tier: string } | null>(null);
 
   const hasActivePlan = currentSub && currentSub.status === "active" && currentSub.plan;
@@ -854,6 +892,139 @@ const AnalyticsContent = () => {
             </div>
           </div>
 
+          {/* ═══ AUDIENCE INSIGHTS ═══ */}
+          {visitorInsights && visitorInsights.totalVisitors > 0 && (() => {
+            const { anonymous: anon, registered: reg, topSearchQueries, topSources } = visitorInsights;
+            const tiers = anon.tiers;
+            const totalTiers = tiers.hot + tiers.warm + tiers.soft + tiers.cold;
+            return (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                <div className="p-4 pb-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 flex items-center justify-center">
+                      <IonIcon icon={peopleOutline} className="text-base text-indigo-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white">Audience Insights</h3>
+                      <p className="text-[10px] text-slate-400">{visitorInsights.totalVisitors.toLocaleString()} total visitors</p>
+                    </div>
+                  </div>
+
+                  {/* Visitor split bar */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Visitor Breakdown</span>
+                    </div>
+                    <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
+                      <div
+                        className="bg-indigo-500 transition-all"
+                        style={{ width: `${reg.percentage}%` }}
+                      />
+                      <div
+                        className="bg-slate-300 dark:bg-slate-500 transition-all"
+                        style={{ width: `${anon.percentage}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">Registered {reg.count} ({reg.percentage}%)</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500" />
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">Anonymous {anon.count} ({anon.percentage}%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Engagement comparison */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { label: "Avg Score", reg: reg.avgScore, anon: anon.avgScore },
+                      { label: "Avg Duration", reg: `${Math.round(reg.avgDurationSec / 60)}m`, anon: `${Math.round(anon.avgDurationSec / 60)}m` },
+                      { label: "Products", reg: reg.avgProductsViewed.toFixed(1), anon: anon.avgProductsViewed.toFixed(1) },
+                    ].map((m) => (
+                      <div key={m.label} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-2.5 text-center">
+                        <p className="text-[8px] font-semibold text-slate-400 uppercase mb-1">{m.label}</p>
+                        <div className="flex items-center justify-center gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{m.reg}</p>
+                            <p className="text-[7px] text-slate-400">Reg</p>
+                          </div>
+                          <div className="w-px h-5 bg-slate-200 dark:bg-slate-600" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{m.anon}</p>
+                            <p className="text-[7px] text-slate-400">Anon</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Anonymous intent tiers */}
+                  {totalTiers > 0 && (
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Anonymous Intent Levels</p>
+                      <div className="flex gap-1.5">
+                        {[
+                          { key: "hot", count: tiers.hot, color: "bg-red-500", label: "Hot" },
+                          { key: "warm", count: tiers.warm, color: "bg-orange-400", label: "Warm" },
+                          { key: "soft", count: tiers.soft, color: "bg-yellow-400", label: "Soft" },
+                          { key: "cold", count: tiers.cold, color: "bg-slate-300 dark:bg-slate-600", label: "Cold" },
+                        ].map((t) => (
+                          <div key={t.key} className="flex-1 text-center">
+                            <div className="h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700 mb-1">
+                              <div className={`h-full rounded-full ${t.color}`} style={{ width: `${totalTiers ? (t.count / totalTiers) * 100 : 0}%` }} />
+                            </div>
+                            <p className="text-[9px] font-bold text-slate-600 dark:text-slate-300">{t.count}</p>
+                            <p className="text-[7px] text-slate-400">{t.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top search queries */}
+                  {topSearchQueries.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Top Searches</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {topSearchQueries.slice(0, 6).map((q) => (
+                          <span key={q.query} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-[10px] text-slate-600 dark:text-slate-300">
+                            <IonIcon icon={searchOutline} className="text-[8px] text-slate-400" />
+                            {q.query}
+                            <span className="text-[8px] text-slate-400 ml-0.5">({q.count})</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top sources */}
+                  {topSources.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Traffic Sources</p>
+                      <div className="space-y-1">
+                        {topSources.slice(0, 4).map((s) => {
+                          const maxCount = topSources[0]?.count || 1;
+                          return (
+                            <div key={s.source} className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-600 dark:text-slate-300 w-16 truncate shrink-0">{s.source}</span>
+                              <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                <div className="h-full rounded-full bg-indigo-400" style={{ width: `${(s.count / maxCount) * 100}%` }} />
+                              </div>
+                              <span className="text-[9px] text-slate-400 w-6 text-right shrink-0">{s.count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ═══ BOOST PERFORMANCE ═══ */}
           {activeSponsorships.length > 0 && (() => {
             const totalImpressions = activeSponsorships.reduce((s, b) => s + (b.impressions ?? 0), 0);
@@ -988,7 +1159,7 @@ const AnalyticsContent = () => {
         <div className="px-4 pt-3 space-y-4">
 
           {/* Hot Leads CTA */}
-          {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && (
+          {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && !showFilters && (
             <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 text-white">
               <div className="flex items-center gap-2 mb-1">
                 <IonIcon icon={flameOutline} className="text-lg" />
@@ -1030,28 +1201,284 @@ const AnalyticsContent = () => {
             </div>
           )}
 
-          {/* Tier filter */}
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {([
-              { key: undefined as string | undefined, label: "All" },
-              { key: "hot", label: "Hot" },
-              { key: "warm", label: "Warm" },
-              { key: "soft", label: "Soft" },
-              { key: "cold", label: "Cold" },
-            ]).map((t) => (
+          {/* ─── Search + Filter Bar ─── */}
+          <div className="space-y-3">
+            {/* Search input + Filter toggle */}
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                <input
+                  type="text"
+                  placeholder="Search leads by name..."
+                  value={leadSearch}
+                  onChange={(e) => { setLeadSearch(e.target.value); setLeadPage(1); }}
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:border-slate-400 dark:focus:border-slate-500 transition-colors"
+                />
+                {leadSearch && (
+                  <button
+                    onClick={() => { setLeadSearch(""); setLeadPage(1); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                  >
+                    <IonIcon icon={closeOutline} className="text-sm text-slate-400" />
+                  </button>
+                )}
+              </div>
               <button
-                key={t.label}
-                onClick={() => { setLeadTier(t.key); setLeadPage(1); }}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  leadTier === t.key
-                    ? "bg-slate-800 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 active:bg-slate-200 dark:active:bg-slate-600"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`relative px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
+                  showFilters || activeFilterCount > 0
+                    ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800"
+                    : "bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
                 }`}
               >
-                {t.label}
+                <IonIcon icon={funnelOutline} className="text-sm" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
-            ))}
+            </div>
+
+            {/* Tier pills row */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              {([
+                { key: undefined as string | undefined, label: "All" },
+                { key: "hot", label: "🔥 Hot" },
+                { key: "warm", label: "🟠 Warm" },
+                { key: "soft", label: "🟡 Soft" },
+                { key: "cold", label: "🔵 Cold" },
+              ]).map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => { setLeadTier(t.key); setLeadPage(1); }}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                    leadTier === t.key
+                      ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 active:bg-slate-200 dark:active:bg-slate-600"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Expandable filter panel */}
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 space-y-4">
+                    {/* Date Range */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={calendarOutline} className="text-[10px] mr-1" />
+                        Date Range
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          { key: "all", label: "All Time" },
+                          { key: "today", label: "Today" },
+                          { key: "7d", label: "7 Days" },
+                          { key: "30d", label: "30 Days" },
+                          { key: "90d", label: "90 Days" },
+                        ]).map((d) => (
+                          <button
+                            key={d.key}
+                            onClick={() => { setLeadDateRange(d.key); setLeadPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                              leadDateRange === d.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={lockOpenOutline} className="text-[10px] mr-1" />
+                        Status
+                      </p>
+                      <div className="flex gap-1.5">
+                        {([
+                          { key: undefined as "unlocked" | "locked" | undefined, label: "All" },
+                          { key: "unlocked" as const, label: "Unlocked" },
+                          { key: "locked" as const, label: "Locked" },
+                        ]).map((s) => (
+                          <button
+                            key={s.label}
+                            onClick={() => { setLeadStatus(s.key); setLeadPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                              leadStatus === s.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Source */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={navigateOutline} className="text-[10px] mr-1" />
+                        Source
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          { key: undefined as string | undefined, label: "All" },
+                          { key: "search", label: "Search" },
+                          { key: "direct", label: "Direct" },
+                          { key: "home_feed", label: "Feed" },
+                          { key: "explore", label: "Explore" },
+                          { key: "saved", label: "Saved" },
+                          { key: "chat", label: "Chat" },
+                          { key: "product_link", label: "Product Link" },
+                        ]).map((s) => (
+                          <button
+                            key={s.label}
+                            onClick={() => { setLeadSource(s.key); setLeadPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                              leadSource === s.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sort */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={swapVerticalOutline} className="text-[10px] mr-1" />
+                        Sort By
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          { key: "score" as const, label: "Score" },
+                          { key: "lastSeen" as const, label: "Last Seen" },
+                          { key: "firstSeen" as const, label: "First Seen" },
+                          { key: "duration" as const, label: "Time Spent" },
+                        ]).map((s) => (
+                          <button
+                            key={s.key}
+                            onClick={() => {
+                              if (leadSortBy === s.key) {
+                                setLeadSortOrder(leadSortOrder === "DESC" ? "ASC" : "DESC");
+                              } else {
+                                setLeadSortBy(s.key);
+                                setLeadSortOrder("DESC");
+                              }
+                              setLeadPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all flex items-center gap-1 ${
+                              leadSortBy === s.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {s.label}
+                            {leadSortBy === s.key && (
+                              <IonIcon
+                                icon={leadSortOrder === "DESC" ? arrowDownOutline : arrowUpOutline}
+                                className="text-[9px]"
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Clear all filters */}
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={() => {
+                          setLeadStatus(undefined);
+                          setLeadSource(undefined);
+                          setLeadDateRange("all");
+                          setLeadSortBy("score");
+                          setLeadSortOrder("DESC");
+                          setLeadSearch("");
+                          setLeadPage(1);
+                        }}
+                        className="w-full py-2 text-center text-[11px] font-semibold text-red-500 dark:text-red-400 active:opacity-70"
+                      >
+                        Clear All Filters
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Active filter chips (when panel is closed) */}
+            {!showFilters && activeFilterCount > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {leadStatus && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    {leadStatus === "unlocked" ? "🔓" : "🔒"} {leadStatus}
+                    <button onClick={() => { setLeadStatus(undefined); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+                {leadSource && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    📍 {leadSource.replace("_", " ")}
+                    <button onClick={() => { setLeadSource(undefined); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+                {leadDateRange !== "all" && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    📅 {leadDateRange}
+                    <button onClick={() => { setLeadDateRange("all"); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+                {leadSortBy !== "score" && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    ↕ {leadSortBy === "lastSeen" ? "Last Seen" : leadSortBy === "firstSeen" ? "First Seen" : "Duration"}
+                    <button onClick={() => { setLeadSortBy("score"); setLeadSortOrder("DESC"); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Results count */}
+          {leadsData && (
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-slate-400">
+                {leadsData.meta.total} lead{leadsData.meta.total !== 1 ? "s" : ""} found
+              </p>
+              {leadsData.meta.totalPages > 1 && (
+                <p className="text-[10px] text-slate-400">
+                  Page {leadsData.meta.page} of {leadsData.meta.totalPages}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Leads list */}
           {leadsLoading ? (
@@ -1062,9 +1489,32 @@ const AnalyticsContent = () => {
             </div>
           ) : !leadsData?.data.length ? (
             <div className="text-center py-12">
-              <IonIcon icon={personOutline} className="text-4xl text-slate-300 mb-3" />
-              <p className="text-sm font-semibold text-slate-400">No leads yet</p>
-              <p className="text-xs text-slate-300 mt-1">Leads appear when customers interact with your profile</p>
+              <IonIcon icon={activeFilterCount > 0 ? funnelOutline : personOutline} className="text-4xl text-slate-300 mb-3" />
+              <p className="text-sm font-semibold text-slate-400">
+                {activeFilterCount > 0 ? "No leads match your filters" : "No leads yet"}
+              </p>
+              <p className="text-xs text-slate-300 mt-1">
+                {activeFilterCount > 0
+                  ? "Try adjusting or clearing your filters"
+                  : "Leads appear when customers interact with your profile"}
+              </p>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={() => {
+                    setLeadTier(undefined);
+                    setLeadStatus(undefined);
+                    setLeadSource(undefined);
+                    setLeadDateRange("all");
+                    setLeadSortBy("score");
+                    setLeadSortOrder("DESC");
+                    setLeadSearch("");
+                    setLeadPage(1);
+                  }}
+                  className="mt-3 px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 active:scale-[0.97]"
+                >
+                  Clear All Filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -1081,12 +1531,10 @@ const AnalyticsContent = () => {
                       <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 relative">
                         {lead.isUnlocked && lead.visitor.avatar ? (
                           <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
-                        ) : lead.isAnonymous ? (
-                          <IonIcon icon={analyticsOutline} className="text-xl text-slate-400" />
                         ) : (
                           <IonIcon icon={personOutline} className="text-xl text-slate-400" />
                         )}
-                        {!lead.isUnlocked && !lead.isAnonymous && (
+                        {!lead.isUnlocked && (
                           <div className="absolute inset-0 rounded-full bg-slate-200/60 dark:bg-slate-600/60 backdrop-blur-[2px] flex items-center justify-center">
                             <IonIcon icon={lockClosedOutline} className="text-sm text-slate-500" />
                           </div>
@@ -1094,11 +1542,7 @@ const AnalyticsContent = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {lead.isAnonymous ? (
-                            <span className="text-sm font-bold text-slate-500 dark:text-slate-400 italic">
-                              Anonymous Visitor
-                            </span>
-                          ) : lead.isUnlocked ? (
+                          {lead.isUnlocked ? (
                             <span className="text-sm font-bold text-slate-900 dark:text-white">
                               {lead.visitor.name}
                             </span>
@@ -1112,15 +1556,10 @@ const AnalyticsContent = () => {
                             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
                             {lead.tier}
                           </span>
-                          {lead.isAnonymous && (
-                            <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase bg-slate-100 dark:bg-slate-700 text-slate-400">
-                              Signal
-                            </span>
-                          )}
                         </div>
 
-                        {/* Contact info for unlocked non-anonymous leads */}
-                        {lead.isUnlocked && !lead.isAnonymous && (lead.visitor.phone || lead.visitor.email) && (
+                        {/* Contact info for unlocked leads */}
+                        {lead.isUnlocked && (lead.visitor.phone || lead.visitor.email) && (
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
                             {lead.visitor.phone && (
                               <a href={`tel:${lead.visitor.phone}`} className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -1167,16 +1606,7 @@ const AnalyticsContent = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3">
-                      {lead.isAnonymous ? (
-                        /* Anonymous leads — show as interest signal, no unlock needed */
-                        <button
-                          onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
-                          className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"
-                        >
-                          <IonIcon icon={analyticsOutline} className="text-sm" />
-                          View Activity
-                        </button>
-                      ) : lead.isUnlocked ? (
+                      {lead.isUnlocked ? (
                         <button
                           onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
                           className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"
