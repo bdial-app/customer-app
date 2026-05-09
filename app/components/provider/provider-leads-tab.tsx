@@ -80,9 +80,16 @@ function LeadCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-sm font-bold ${lead.isUnlocked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>
-              {lead.visitor.name}
-            </span>
+            {lead.isUnlocked ? (
+              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                {lead.visitor.name}
+              </span>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <div className="h-3 w-24 rounded-full bg-slate-600/60 dark:bg-slate-500/50 animate-pulse" />
+                <div className="h-3 w-14 rounded-full bg-slate-600/40 dark:bg-slate-500/30 animate-pulse" />
+              </div>
+            )}
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
               {lead.tier}
