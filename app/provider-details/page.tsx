@@ -505,7 +505,7 @@ export default function ProviderDetailsPage() {
             {/* Provider Name */}
             <div className="absolute bottom-4 left-4 right-20">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-white leading-tight truncate">
+                <h1 className="text-xl font-bold text-white leading-tight truncate min-w-0">
                   {provider.brandName}
                 </h1>
                 {provider.status === "active" && (
@@ -514,16 +514,16 @@ export default function ProviderDetailsPage() {
                     className="w-5 h-5 text-blue-400 shrink-0"
                   />
                 )}
-                {isSponsored && (
-                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm">
-                    ⭐ Premium
-                  </span>
-                )}
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-white/80 text-sm truncate">
                   {categoryLabel}
                 </p>
+                {isSponsored && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-linear-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm shrink-0">
+                    ⭐ Premium
+                  </span>
+                )}
                 {badges.length > 0 &&
                   badges.slice(0, 3).map((b) => (
                     <span
