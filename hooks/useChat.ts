@@ -128,9 +128,61 @@ export function useArchiveConversation() {
 
   return useMutation({
     mutationFn: (conversationId: string) => chatApi.archiveConversation(conversationId),
+    onMutate: async (conversationId: string) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["conversations"] });
+
+      // Optimistically remove the conversation from all cached conversation lists
+      queryClient.setQueriesData<chatApi.ConversationsResponse>(
+        { queryKey: ["conversations"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            conversations: old.conversations.filter((c) => c.id !== conversationId),
+            total: Math.max(0, old.total - 1),
+          };
+        },
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    },
+    onError: () => {
+      // Refetch on error to restore correct state
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+// ─── Block Conversation ───────────────────────
+
+export function useBlockConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (conversationId: string) => chatApi.blockConversation(conversationId),
+    onMutate: async (conversationId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["conversations"] });
+      queryClient.setQueriesData<chatApi.ConversationsResponse>(
+        { queryKey: ["conversations"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            conversations: old.conversations.filter((c) => c.id !== conversationId),
+            total: Math.max(0, old.total - 1),
+          };
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
@@ -161,6 +213,7 @@ export function useChatRealtime(conversationId: string | null) {
       })
       .on("broadcast", { event: "read_receipt" }, () => {
         queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       })
       .subscribe();
 

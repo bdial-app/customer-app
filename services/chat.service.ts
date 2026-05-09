@@ -165,3 +165,8 @@ export async function archiveConversation(conversationId: string): Promise<{ suc
   const res = await apiClient.patch(CHAT_URLS.ARCHIVE(conversationId));
   return res.data;
 }
+
+export async function blockConversation(conversationId: string): Promise<{ success: boolean }> {
+  const res = await apiClient.patch(CHAT_URLS.BLOCK(conversationId));
+  return res.data;
+}

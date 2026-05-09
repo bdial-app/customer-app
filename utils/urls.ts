@@ -118,6 +118,7 @@ export const CHAT_URLS = {
   MESSAGES: (id: string) => `/chat/conversations/${id}/messages`,
   MARK_READ: (id: string) => `/chat/conversations/${id}/read`,
   ARCHIVE: (id: string) => `/chat/conversations/${id}/archive`,
+  BLOCK: (id: string) => `/chat/conversations/${id}/block`,
   UPLOAD_MEDIA: (id: string) => `/chat/conversations/${id}/media`,
   TYPING: (id: string) => `/chat/conversations/${id}/typing`,
   UNREAD_COUNT: '/chat/unread-count',

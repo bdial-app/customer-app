@@ -12,20 +12,12 @@ import {
   storefrontOutline,
 } from "ionicons/icons";
 import { useConversations } from "@/hooks/useChat";
-import { useSendMessage } from "@/hooks/useChat";
 import { useAppSelector } from "@/hooks/useAppStore";
 import type { ConversationListItem } from "@/services/chat.service";
 
 interface ProviderMessagesContentProps {
   onChatClick: (conversationId: string) => void;
 }
-
-const QUICK_REPLIES = [
-  "Thank you for your enquiry!",
-  "Yes, available! Let me share details.",
-  "I'll send you a quote shortly.",
-  "Sorry, fully booked for that date.",
-];
 
 const enquiryBadge: Record<string, { label: string; cls: string }> = {
   product: { label: "Quote", cls: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" },
@@ -158,18 +150,6 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
           >
             {f.label}
           </motion.button>
-        ))}
-      </div>
-
-      {/* Quick reply suggestions */}
-      <div className="px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
-        {QUICK_REPLIES.map((reply, i) => (
-          <button
-            key={i}
-            className="shrink-0 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 text-[10px] font-medium border border-teal-100 dark:border-teal-800 active:bg-teal-100 dark:active:bg-teal-900/50"
-          >
-            {reply}
-          </button>
         ))}
       </div>
 
