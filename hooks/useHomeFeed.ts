@@ -18,7 +18,7 @@ export const useHomeFeed = (params?: {
     staleTime: 5 * 60 * 1000, // 5 minutes — prevents refetch on tab switch
     gcTime: 10 * 60 * 1000, // 10 minutes — keeps data in cache longer
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Don't refetch when component remounts (tab switch)
+    refetchOnMount: "always", // Always refetch on mount to avoid stale/corrupt cache
     placeholderData: (prev: any) => prev, // Show stale data instantly while revalidating
   });
 };

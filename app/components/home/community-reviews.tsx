@@ -53,7 +53,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
   const posRef = useRef(0);
 
   const displayReviews: DisplayReview[] = useMemo(() => {
-    if (!reviews || reviews.length === 0) return [];
+    if (!Array.isArray(reviews) || reviews.length === 0) return [];
     return reviews.map((r) => ({
       id: r.id,
       name: r.name,

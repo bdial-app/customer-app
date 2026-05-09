@@ -21,7 +21,7 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
   const [index, setIndex] = useState(0);
 
   const displayActivities = useMemo(() => {
-    if (!activities || activities.length === 0) return FALLBACK_ACTIVITIES;
+    if (!Array.isArray(activities) || activities.length === 0) return FALLBACK_ACTIVITIES;
     return activities.map((a, i) => ({
       ...a,
       count: inflateIfLow(a.count, `live_activity_${i}`, 5, 15),

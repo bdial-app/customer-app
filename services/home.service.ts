@@ -148,6 +148,9 @@ export const getHomeFeed = async (params?: {
   city?: string;
 }): Promise<HomeFeedResponse> => {
   const { data } = await apiClient.get(HOME_URLS.FEED, { params });
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {} as HomeFeedResponse;
+  }
   return data;
 };
 
@@ -157,7 +160,7 @@ export const getLiveActivity = async (params?: {
   city?: string;
 }): Promise<LiveActivity[]> => {
   const { data } = await apiClient.get(HOME_URLS.LIVE_ACTIVITY, { params });
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const getCategoryProviders = async (params: {

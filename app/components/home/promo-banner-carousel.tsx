@@ -111,7 +111,7 @@ const PromoBannerCarousel = ({
   const liveOffset = useRef(0);
 
   const displayBanners: Banner[] = useMemo(() => {
-    if (!banners || banners.length === 0) return FALLBACK_BANNERS;
+    if (!Array.isArray(banners) || banners.length === 0) return FALLBACK_BANNERS;
     return banners.map((b) => ({
       id: b.id,
       title: b.title,

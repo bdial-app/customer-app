@@ -53,7 +53,7 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
   const router = useRouter();
 
   const trendingItems: TrendingItem[] = useMemo(() => {
-    if (!categories || categories.length === 0) return [];
+    if (!Array.isArray(categories) || categories.length === 0) return [];
     return categories.map((c, i) => ({
       id: c.id,
       label: c.name,
