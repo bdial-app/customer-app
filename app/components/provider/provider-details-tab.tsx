@@ -15,6 +15,7 @@ import {
   cameraOutline,
   imageOutline,
   personCircleOutline,
+  trashOutline,
   toggleOutline,
   navigateOutline,
   searchOutline,
@@ -218,6 +219,26 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
     e.target.value = "";
   };
 
+  const handleRemoveBanner = () => {
+    if (uploadImageMutation.isPending || updateMutation.isPending) return;
+    setBannerPreview(null);
+    setBannerError(false);
+    updateMutation.mutate({
+      id: provider.id,
+      payload: { bannerImageUrl: null },
+    });
+  };
+
+  const handleRemoveProfile = () => {
+    if (uploadImageMutation.isPending || updateMutation.isPending) return;
+    setProfilePreview(null);
+    setProfileError(false);
+    updateMutation.mutate({
+      id: provider.id,
+      payload: { profilePhotoUrl: null },
+    });
+  };
+
   const handleToggleAvailability = () => {
     updateMutation.mutate({
       id: provider.id,
@@ -269,6 +290,15 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   <div className="w-6 h-6 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
+              {!bannerPreview && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemoveBanner(); }}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center z-10"
+                >
+                  <IonIcon icon={trashOutline} className="text-white text-sm" />
+                </button>
+              )}
             </>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -310,6 +340,15 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
                   </div>
+                )}
+                {!profilePreview && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleRemoveProfile(); }}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center z-10 shadow-sm"
+                  >
+                    <IonIcon icon={trashOutline} className="text-white text-[9px]" />
+                  </button>
                 )}
               </>
             ) : (

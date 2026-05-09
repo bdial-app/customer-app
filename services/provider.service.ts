@@ -101,8 +101,8 @@ export interface UpdateProviderPayload {
   openTime?: string;
   closeTime?: string;
   isAvailable?: boolean;
-  profilePhotoUrl?: string;
-  bannerImageUrl?: string;
+  profilePhotoUrl?: string | null;
+  bannerImageUrl?: string | null;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────

@@ -16,8 +16,6 @@ import {
   sparklesOutline,
   checkmarkCircleOutline,
   navigateOutline,
-  shieldCheckmarkOutline,
-  femaleOutline,
   diamondOutline,
   megaphoneOutline,
   pricetagOutline,
@@ -66,13 +64,6 @@ const EMPTY_FILTERS: AllServicesFilters = {
   verifiedOnly: false,
   womenLedOnly: false,
 };
-
-const QUICK_ACTIONS = [
-  { label: "Women-Led", icon: femaleOutline, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100", query: "?womenLed=true" },
-  { label: "Verified", icon: shieldCheckmarkOutline, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", query: "?verified=true" },
-  { label: "Top Rated", icon: star, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", query: "?sortBy=rating" },
-  { label: "Featured", icon: diamondOutline, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", query: "?featured=true" },
-];
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
@@ -535,20 +526,6 @@ const ExploreContent = memo(() => {
           <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">Search</span>
         </div>
-      </div>
-
-      {/* ── 2. Quick Action Pills ── */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pt-3 pb-1">
-        {QUICK_ACTIONS.map((action, i) => (
-          <button
-            key={action.label}
-            onClick={() => router.push(`${ROUTE_PATH.SEARCH}${action.query}`)}
-            className={`shrink-0 flex items-center gap-1.5 ${action.bg} border ${action.border} px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-transform`}
-          >
-            <IonIcon icon={action.icon} className={`text-sm ${action.color}`} />
-            <span className={`text-[11px] font-bold ${action.color} whitespace-nowrap`}>{action.label}</span>
-          </button>
-        ))}
       </div>
 
       {/* ── 3. Sponsored Carousel — revenue: CPC ads ── */}
