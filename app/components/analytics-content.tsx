@@ -30,6 +30,8 @@ import {
   personOutline,
   chevronForwardOutline,
   arrowBack,
+  megaphoneOutline,
+  cashOutline,
 } from "ionicons/icons";
 import {
   AreaChart,
@@ -802,6 +804,135 @@ const AnalyticsContent = () => {
               </div>
             </div>
           </div>
+
+          {/* ═══ BOOST PERFORMANCE ═══ */}
+          {activeSponsorships.length > 0 && (() => {
+            const totalImpressions = activeSponsorships.reduce((s, b) => s + (b.impressions ?? 0), 0);
+            const totalClicks = activeSponsorships.reduce((s, b) => s + (b.clicks ?? 0), 0);
+            const totalSpent = activeSponsorships.reduce((s, b) => s + (b.spentAmount ?? 0), 0);
+            const totalBudget = activeSponsorships.reduce((s, b) => s + (b.budgetAmount ?? 0), 0);
+            const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100) : 0;
+            const cpc = totalClicks > 0 ? totalSpent / totalClicks : 0;
+            const budgetUsedPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0;
+
+            const boostTypeLabels: Record<string, string> = {
+              carousel: "Carousel",
+              inline: "Inline",
+              top_result: "Top Result",
+            };
+
+            return (
+              <div className="px-4 mb-4">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <IonIcon icon={megaphoneOutline} className="text-white text-base" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Boost Performance</h3>
+                        <p className="text-[9px] text-white/70">
+                          {activeSponsorships.length} active boost{activeSponsorships.length > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
+                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-200 animate-pulse" />
+                      <span className="text-[8px] font-bold text-white">LIVE</span>
+                    </div>
+                  </div>
+
+                  {/* Aggregate stats */}
+                  <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-slate-700 border-b border-slate-100 dark:border-slate-700">
+                    {[
+                      { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500" },
+                      { label: "Clicks", value: totalClicks.toLocaleString(), icon: flashOutline, color: "text-amber-500" },
+                      { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-emerald-500" },
+                      { label: "Avg CPC", value: `₹${cpc.toFixed(1)}`, icon: cashOutline, color: "text-violet-500" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="py-3 text-center">
+                        <IonIcon icon={stat.icon} className={`text-sm ${stat.color}`} />
+                        <div className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{stat.value}</div>
+                        <div className="text-[7px] text-slate-400 font-medium">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Budget bar */}
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">Budget Used</span>
+                      <span className="text-[10px] font-bold text-slate-800 dark:text-white">
+                        ₹{totalSpent.toLocaleString()} / ₹{totalBudget.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <motion.div
+                        className={`h-full rounded-full ${
+                          budgetUsedPct > 80
+                            ? "bg-gradient-to-r from-red-400 to-red-500"
+                            : budgetUsedPct > 50
+                              ? "bg-gradient-to-r from-amber-400 to-orange-500"
+                              : "bg-gradient-to-r from-emerald-400 to-teal-500"
+                        }`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.max(budgetUsedPct, 1)}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-1">
+                      {budgetUsedPct.toFixed(0)}% used · ₹{(totalBudget - totalSpent).toLocaleString()} remaining
+                    </div>
+                  </div>
+
+                  {/* Per-boost breakdown */}
+                  <div className="px-4 py-3">
+                    <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-2">Breakdown by Type</div>
+                    <div className="space-y-2">
+                      {activeSponsorships.map((b) => {
+                        const bCtr = b.impressions > 0 ? ((b.clicks / b.impressions) * 100).toFixed(1) : "0.0";
+                        const bBudgetPct = b.budgetAmount > 0 ? Math.min(100, (b.spentAmount / b.budgetAmount) * 100) : 0;
+                        const daysLeft = Math.max(0, Math.ceil((new Date(b.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                        return (
+                          <div key={b.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-2.5">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  b.type === "carousel" ? "bg-blue-500" : b.type === "inline" ? "bg-emerald-500" : "bg-amber-500"
+                                }`} />
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                                  {boostTypeLabels[b.type] ?? b.type}
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-slate-400">{daysLeft}d left</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[9px] text-slate-500 dark:text-slate-400">
+                              <span>{b.impressions.toLocaleString()} imp</span>
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span>{b.clicks} clicks</span>
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span>{bCtr}% CTR</span>
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span>₹{b.spentAmount}/{b.budgetAmount}</span>
+                            </div>
+                            <div className="mt-1.5 h-1 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  b.type === "carousel" ? "bg-blue-500" : b.type === "inline" ? "bg-emerald-500" : "bg-amber-500"
+                                }`}
+                                style={{ width: `${Math.max(bBudgetPct, 1)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </>
       ) : (
         /* ═══ LEADS VIEW ═══ */
