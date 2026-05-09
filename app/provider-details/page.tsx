@@ -1290,6 +1290,214 @@ export default function ProviderDetailsPage() {
           )}
         </div>
 
+<<<<<<< HEAD
+      {/* === REVIEWS === */}
+      {activeTab === "Reviews" && (
+        <div className="px-5 pt-5 pb-28 space-y-4">
+          {/* Rating Summary */}
+          {reviewCount > 0 ? (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+              <div className="flex gap-5">
+                <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100 dark:border-slate-700">
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white leading-none">
+                    {rating.toFixed(1)}
+                  </span>
+                  <StarRow rating={Math.round(rating)} size={13} />
+                  <span className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">
+                    {reviewCount} reviews
+                  </span>
+                </div>
+                <div className="flex-1 flex flex-col gap-1.5 justify-center">
+                  {[5, 4, 3, 2, 1].map((s) => (
+                    <RatingBar
+                      key={s}
+                      starCount={s}
+                      count={ratingDist[s - 1] ?? 0}
+                      total={reviewCount}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 text-center">
+              <p className="text-lg font-bold text-indigo-600 mb-1">
+                New Provider
+              </p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">
+                No ratings yet — be the first to review!
+              </p>
+            </div>
+          )}
+
+          {/* Review Cards */}
+          {reviews.length === 0 ? (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
+                No reviews yet. Be the first to share your experience!
+              </p>
+            </div>
+          ) : (
+            reviews.map((review) => (
+              <div
+                key={review.id}
+                className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
+              >
+                <div className="flex items-start justify-between mb-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 flex-shrink-0">
+                      {initialsOf(review.reviewer?.name)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13px] font-semibold text-gray-900 dark:text-white">
+                          {review.reviewer?.name || "Anonymous"}
+                        </span>
+                        <IonIcon
+                          icon={checkmarkCircle}
+                          className="w-3.5 h-3.5 text-blue-500"
+                        />
+                      </div>
+                      <span className="text-[11px] text-gray-400">
+                        {formatRelative(review.postedAt)}
+                      </span>
+                    </div>
+                  </div>
+                  <StarRow rating={review.starRating} size={12} />
+                </div>
+                {review.reviewText && (
+                  <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
+                    {review.reviewText}
+                  </p>
+                )}
+                {review.photos && review.photos.length > 0 && (
+                  <div className="flex gap-1.5 mb-3">
+                    {review.photos.slice(0, 3).map((p: any) => (
+                      p.imageUrl ? (
+                        <img
+                          key={p.id}
+                          src={p.imageUrl}
+                          alt=""
+                          className="w-14 h-14 rounded-lg object-cover"
+                        />
+                      ) : null
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+
+          {/* Write Review — hidden for own provider, and if already reviewed */}
+          {!isOwnProvider && !hasAlreadyReviewed && (
+            <button onClick={() => requireAuth(() => { setReviewError(""); setReviewSuccess(false); setSheetOpened(true); })} className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors">
+              <IonIcon icon={star} className="w-4 h-4" />
+              Write a Review
+            </button>
+          )}
+          {!isOwnProvider && hasAlreadyReviewed && (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
+              <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                You&apos;ve already reviewed this provider
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === PRODUCTS === */}
+      {activeTab === "Products" && (
+        <div className="px-5 pt-5 pb-28">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
+              {products.length} Products
+            </h3>
+          </div>
+          {products.length === 0 ? (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
+                This provider hasn&apos;t added any products yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {products.map((product) => {
+                const currencySymbol =
+                  product.currency === "INR" ? "₹" : product.currency + " ";
+                return (
+                  <Link
+                    key={product.id}
+                    href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}
+                  >
+                    <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-slate-700">
+                        {product.photoUrl ? (
+                          <img
+                            src={product.photoUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <IonIcon icon={imagesOutline} className="w-8 h-8" />
+                          </div>
+                        )}
+                        {(product.photoUrls?.length ?? 0) > 1 && (
+                          <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                            +{(product.photoUrls?.length ?? 1) - 1}
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
+                          {product.name}
+                        </h4>
+                        <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2 line-clamp-1">
+                          {product.description || ""}
+                        </p>
+                        <span className="text-[15px] font-bold text-amber-600">
+                          {product.price !== null
+                            ? `${currencySymbol}${Number(product.price).toLocaleString()}`
+                            : "Enquire"}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === PHOTOS === */}
+      {activeTab === "Photos" && (
+        <div className="pt-2 pb-28">
+          {galleryImages.length === 0 ? (
+            <div className="bg-white dark:bg-slate-800 mx-5 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center mt-4">
+              <p className="text-sm text-gray-500 dark:text-slate-400">No photos uploaded yet.</p>
+            </div>
+          ) : (
+            <PhotoGallary ref={photoGalleryRef} images={galleryItems} />
+          )}
+        </div>
+      )}
+
+      {/* Floating CTA */}
+      <div
+        className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
+        style={{
+          background:
+            "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
+          display: isLightboxOpen ? "none" : "block",
+        }}
+      >
+        {isOwnProvider ? (
+          /* Owner mode — manage business banner */
+          <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
+              <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
+=======
         {/* Call Sheet */}
         <BottomSheet
           opened={callSheetOpened}
@@ -1299,6 +1507,7 @@ export default function ProviderDetailsPage() {
             <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center">
+>>>>>>> b92c8e766ebc1aba294cd910500a95c733381dd8
                 <IonIcon
                   icon={callOutline}
                   className="text-3xl text-amber-500"

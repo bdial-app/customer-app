@@ -3,9 +3,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 interface NetworkStatus {
   isOnline: boolean;
-  wasOffline: boolean;
-  /** Time (ms) since last disconnect, or null if never disconnected */
-  offlineDuration: number | null;
 }
 
 /**
@@ -17,25 +14,14 @@ export function useNetworkStatus(): NetworkStatus {
   const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
-  const [wasOffline, setWasOffline] = useState(false);
-  const [offlineSince, setOfflineSince] = useState<number | null>(null);
-  const [offlineDuration, setOfflineDuration] = useState<number | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   const handleOnline = useCallback(() => {
     setIsOnline(true);
-    if (offlineSince) {
-      setOfflineDuration(Date.now() - offlineSince);
-      setOfflineSince(null);
-    }
-    setWasOffline(true);
-    // Clear "was offline" flag after 5s
-    setTimeout(() => setWasOffline(false), 5000);
-  }, [offlineSince]);
+  }, []);
 
   const handleOffline = useCallback(() => {
     setIsOnline(false);
-    setOfflineSince(Date.now());
   }, []);
 
   useEffect(() => {
@@ -45,7 +31,6 @@ export function useNetworkStatus(): NetworkStatus {
         // Get initial status
         Network.getStatus().then((status) => {
           setIsOnline(status.connected);
-          if (!status.connected) setOfflineSince(Date.now());
         });
 
         // Listen for changes
@@ -76,5 +61,5 @@ export function useNetworkStatus(): NetworkStatus {
     };
   }, [handleOnline, handleOffline]);
 
-  return { isOnline, wasOffline, offlineDuration };
+  return { isOnline };
 }

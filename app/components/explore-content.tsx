@@ -429,7 +429,7 @@ const ExploreContent = memo(() => {
   const toggleSaved = useToggleSaved();
 
   const savedProviderIds = useMemo(
-    () => new Set(savedIds.filter((s) => s.itemType === "provider").map((s) => s.itemId)),
+    () => new Set((Array.isArray(savedIds) ? savedIds : []).filter((s) => s.itemType === "provider").map((s) => s.itemId)),
     [savedIds],
   );
 
@@ -457,7 +457,7 @@ const ExploreContent = memo(() => {
   const nearbyProviders = useMemo(() => {
     if (!nearbyData) return [];
     return nearbyData.pages.flatMap((page) =>
-      page.data.map((p: any) => ({
+      (Array.isArray(page?.data) ? page.data : []).map((p: any) => ({
         id: p.id,
         name: p.brandName,
         service: p.services || p.description?.split(",")[0] || "Services",
@@ -568,7 +568,7 @@ const ExploreContent = memo(() => {
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Sponsored</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.sponsoredCarousel.map((p, i) => (
+            {(Array.isArray(feed?.sponsoredCarousel) ? feed.sponsoredCarousel : []).map((p, i) => (
               <div
                 key={p.id}
                 data-track-id={p.sponsoredListingId}
@@ -634,7 +634,7 @@ const ExploreContent = memo(() => {
             </span>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.activeOffers.map((p, i) => (
+            {(Array.isArray(feed?.activeOffers) ? feed.activeOffers : []).map((p, i) => (
               <div
                 key={p.offerId}
                 data-track-id={p.offerId}
@@ -705,7 +705,7 @@ const ExploreContent = memo(() => {
         <div className="mt-5">
           <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Trending Now</h2>
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.quickCategories.map((cat, i) => (
+            {(Array.isArray(feed?.quickCategories) ? feed.quickCategories : []).map((cat, i) => (
               <button
                 key={cat.id}
                 onClick={() => router.push(`${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}&categoryIds=${cat.id}`)}
@@ -732,7 +732,7 @@ const ExploreContent = memo(() => {
             </div>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.popularNearby.map((p, i) => (
+            {(Array.isArray(feed?.popularNearby) ? feed.popularNearby : []).map((p, i) => (
               <ExploreCarouselCard
                 key={p.id}
                 provider={p}
@@ -769,7 +769,7 @@ const ExploreContent = memo(() => {
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.topRated.map((p, i) => (
+            {(Array.isArray(feed?.topRated) ? feed.topRated : []).map((p, i) => (
               <ExploreCarouselCard
                 key={p.id}
                 provider={p}
@@ -807,7 +807,7 @@ const ExploreContent = memo(() => {
             </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed.categorySpotlight.providers.map((p, i) => (
+            {(Array.isArray(feed.categorySpotlight?.providers) ? feed.categorySpotlight.providers : []).map((p, i) => (
               <ExploreCarouselCard
                 key={p.id}
                 provider={p}
@@ -832,7 +832,7 @@ const ExploreContent = memo(() => {
             </span>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.newArrivals.map((p, i) => (
+            {(Array.isArray(feed?.newArrivals) ? feed.newArrivals : []).map((p, i) => (
               <ExploreCarouselCard
                 key={p.id}
                 provider={p}

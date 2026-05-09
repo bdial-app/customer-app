@@ -81,36 +81,36 @@ const UserHome = memo(() => {
 
   // Memoize mapped providers to avoid re-creating on every render
   const nearbyProviders = useMemo(
-    () => (feed?.nearbyProviders || []).map(mapProvider),
+    () => (Array.isArray(feed?.nearbyProviders) ? feed.nearbyProviders : []).map(mapProvider),
     [feed?.nearbyProviders],
   );
   const featuredCategory = feed?.featuredCategory;
   const featuredProviders = useMemo(
-    () => (featuredCategory?.providers || []).map(mapProvider),
+    () => (Array.isArray(featuredCategory?.providers) ? featuredCategory.providers : []).map(mapProvider),
     [featuredCategory?.providers],
   );
   const topRatedProviders = useMemo(
-    () => (feed?.topRatedProviders || []).map(mapProvider),
+    () => (Array.isArray(feed?.topRatedProviders) ? feed.topRatedProviders : []).map(mapProvider),
     [feed?.topRatedProviders],
   );
   const cityData = feed?.cityProviders;
   const cityProviders = useMemo(
-    () => (cityData?.providers || []).map(mapProvider),
+    () => (Array.isArray(cityData?.providers) ? cityData.providers : []).map(mapProvider),
     [cityData?.providers],
   );
   const newArrivals = useMemo(
-    () => (feed?.newArrivals || []).map(mapProvider),
+    () => (Array.isArray(feed?.newArrivals) ? feed.newArrivals : []).map(mapProvider),
     [feed?.newArrivals],
   );
-  const dealsAroundYou = feed?.dealsAroundYou || [];
-  const sponsoredProviders = feed?.sponsoredProviders || [];
+  const dealsAroundYou = Array.isArray(feed?.dealsAroundYou) ? feed.dealsAroundYou : [];
+  const sponsoredProviders = Array.isArray(feed?.sponsoredProviders) ? feed.sponsoredProviders : [];
   const stats = feed?.platformStats;
   const forYouProviders = useMemo(
-    () => (feed?.forYouProviders || []).map(mapProvider),
+    () => (Array.isArray(feed?.forYouProviders) ? feed.forYouProviders : []).map(mapProvider),
     [feed?.forYouProviders],
   );
   const womenLedProviders = useMemo(
-    () => (feed?.womenLedProviders || []).map(mapProvider),
+    () => (Array.isArray(feed?.womenLedProviders) ? feed.womenLedProviders : []).map(mapProvider),
     [feed?.womenLedProviders],
   );
   const personalizedCategories = feed?.personalizedCategories || null;

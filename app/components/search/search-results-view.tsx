@@ -291,7 +291,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="grid grid-cols-2 gap-3">
-              {results.providers.data.map((p: any, i: number) => (
+              {(Array.isArray(results.providers?.data) ? results.providers.data : []).map((p: any, i: number) => (
                 <ProviderResultCard key={p.id} provider={p} index={i} />
               ))}
             </div>
@@ -303,7 +303,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="grid grid-cols-2 gap-3">
-              {results.products.data.map((p: any, i: number) => (
+              {(Array.isArray(results.products?.data) ? results.products.data : []).map((p: any, i: number) => (
                 <ProductResultCard key={p.id} product={p} index={i} />
               ))}
             </div>
@@ -315,7 +315,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="space-y-2">
-              {results.categories.data.map((c: any, i: number) => (
+              {(Array.isArray(results.categories?.data) ? results.categories.data : []).map((c: any, i: number) => (
                 <CategoryResultCard key={c.id} category={c} index={i} onTap={onCategoryTap} />
               ))}
             </div>
