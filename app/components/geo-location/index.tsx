@@ -554,10 +554,10 @@ const GeoLocation = () => {
                       <div className="mx-4 space-y-3">
                         {[1, 2, 3].map((i) => (
                           <div key={i} className="flex items-center gap-3 animate-pulse">
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 shrink-0" />
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 shrink-0" />
                             <div className="flex-1 space-y-1.5">
-                              <div className="h-3.5 bg-slate-100 rounded-full w-3/4" />
-                              <div className="h-2.5 bg-slate-50 rounded-full w-1/2" />
+                              <div className="h-3.5 bg-slate-100 dark:bg-slate-700 rounded-full w-3/4" />
+                              <div className="h-2.5 bg-slate-50 dark:bg-slate-800 rounded-full w-1/2" />
                             </div>
                           </div>
                         ))}
@@ -582,12 +582,12 @@ const GeoLocation = () => {
                             onClick={() => handleSelectLocation(loc)}
                             className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                               <IonIcon icon={locationOutline} className="text-sm text-amber-500" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-medium text-slate-800 line-clamp-1">{loc.mainText}</p>
-                              <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{loc.secondaryText}</p>
+                              <p className="text-[13px] font-medium text-slate-800 dark:text-white line-clamp-1">{loc.mainText}</p>
+                              <p className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">{loc.secondaryText}</p>
                             </div>
                           </motion.button>
                         ))}
@@ -596,7 +596,7 @@ const GeoLocation = () => {
 
                     {searchQuery.length >= 3 && !isSearchLoading && searchResults && searchResults.length === 0 && (
                       <div className="flex flex-col items-center py-12">
-                        <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                        <div className="w-14 h-14 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-3">
                           <IonIcon icon={searchOutline} className="text-xl text-slate-300" />
                         </div>
                         <p className="text-sm font-medium text-slate-500">No results found</p>

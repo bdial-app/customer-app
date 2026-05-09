@@ -313,6 +313,7 @@ const ProviderProductsTab = ({
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
               className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl max-h-[90vh] overflow-y-auto"
+              style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)" }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -503,7 +504,7 @@ const ProviderProductsTab = ({
                     </div>
 
                     {/* Submit */}
-                    <div className="pt-2 pb-4">
+                    <div className="pt-2 pb-8">
                       <button
                         type="submit"
                         disabled={!isValid || (!dirty && photoFiles.length === 0 && !editing) || isSaving}
