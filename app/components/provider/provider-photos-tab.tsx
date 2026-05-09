@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -10,6 +10,7 @@ import {
 } from "ionicons/icons";
 import { ProviderDetailsPhoto } from "@/services/provider.service";
 import { useUploadPhotos, useDeletePhoto } from "@/hooks/usePhotos";
+import { AppDialog } from "../app-dialog";
 
 interface ProviderPhotosTabProps {
   photos: ProviderDetailsPhoto[];
@@ -20,6 +21,7 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadPhotos();
   const deleteMutation = useDeletePhoto();
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -92,7 +94,7 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
                 {/* Delete overlay */}
                 <motion.button
                   whileTap={{ scale: 0.8 }}
-                  onClick={() => handleDelete(photo.id)}
+                  onClick={() => setDeleteTarget(photo.id)}
                   disabled={deleteMutation.isPending}
                   className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
                 >
@@ -146,6 +148,24 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
       />
 
       <div className="h-20" />
+
+      {/* Delete photo confirmation */}
+      <AppDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        icon={trashOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title="Delete Photo?"
+        description="This photo will be permanently removed."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          if (deleteTarget) handleDelete(deleteTarget);
+          setDeleteTarget(null);
+        }}
+        confirmColor="red"
+      />
     </div>
   );
 };

@@ -107,14 +107,43 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
 
   return (
     <div className="px-4 py-4 space-y-4">
-      {/* Header */}
-      <div>
-        <h2 className="text-base font-bold text-slate-800 dark:text-white">
-          Business Categories
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Choose up to {MAX_CATEGORIES} categories that best describe your business
-        </p>
+      {/* Header with save action */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-base font-bold text-slate-800 dark:text-white">
+            Business Categories
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Choose up to {MAX_CATEGORIES} categories that best describe your business
+          </p>
+        </div>
+        <AnimatePresence>
+          {hasChanges && (
+            <motion.button
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.15, 1], opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => mutation.mutate()}
+              disabled={mutation.isPending}
+              className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-teal-500 text-white shadow-lg shadow-teal-500/30 disabled:opacity-60 animate-pulse"
+            >
+              {mutation.isPending ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <IonIcon icon={checkmarkOutline} className="text-base" />
+                  <span className="text-xs font-bold">Save</span>
+                </>
+              )}
+            </motion.button>
+          )}
+        </AnimatePresence>
+        {mutation.isSuccess && !hasChanges && (
+          <div className="shrink-0 w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <IonIcon icon={checkmarkCircle} className="text-lg text-emerald-500" />
+          </div>
+        )}
       </div>
 
       {/* Selected chips */}
@@ -180,8 +209,8 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
         />
       </div>
 
-      {/* Category list */}
-      <div className="max-h-[400px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      {/* Category list — fills remaining space */}
+      <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         {grouped.map(([letter, cats]) => (
           <div key={letter}>
             <div className="sticky top-0 bg-slate-50 dark:bg-slate-700/50 px-3 py-1">
@@ -250,54 +279,7 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
         )}
       </div>
 
-      {/* Save button */}
-      <AnimatePresence>
-        {hasChanges && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="sticky bottom-20 z-30"
-          >
-            <button
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending}
-              className="w-full py-3 bg-teal-600 text-white font-semibold rounded-xl shadow-lg active:scale-[0.98] transition-transform disabled:opacity-60"
-            >
-              {mutation.isPending ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Saving...
-                </span>
-              ) : mutation.isSuccess ? (
-                <span className="flex items-center justify-center gap-2">
-                  <IonIcon icon={checkmarkCircle} className="text-lg" />
-                  Saved!
-                </span>
-              ) : (
-                "Save Categories"
-              )}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Success toast */}
-      <AnimatePresence>
-        {mutation.isSuccess && !hasChanges && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/50 rounded-xl px-4 py-3 flex items-center gap-2"
-          >
-            <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-lg" />
-            <span className="text-sm text-emerald-700 dark:text-emerald-300">
-              Categories updated successfully
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="h-20" />
     </div>
   );
 };

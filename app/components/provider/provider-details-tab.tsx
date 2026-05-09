@@ -29,6 +29,7 @@ import { FormikInput } from "../formik-input";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
 import { useUploadProfileImage } from "@/hooks/usePhotos";
+import { AppDialog } from "../app-dialog";
 import TimePicker from "../time-picker";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
@@ -91,6 +92,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const [profileError, setProfileError] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<"banner" | "profile" | null>(null);
 
   // Map / location state for edit mode
   const { isLoaded } = useGoogleMapsLoader();
@@ -293,7 +295,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
               {!bannerPreview && (
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); handleRemoveBanner(); }}
+                  onClick={(e) => { e.stopPropagation(); setConfirmRemove("banner"); }}
                   className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center z-10"
                 >
                   <IonIcon icon={trashOutline} className="text-white text-sm" />
@@ -344,10 +346,10 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                 {!profilePreview && (
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); handleRemoveProfile(); }}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center z-10 shadow-sm"
+                    onClick={(e) => { e.stopPropagation(); setConfirmRemove("profile"); }}
+                    className="absolute top-0 right-0 w-5 h-5 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center z-10"
                   >
-                    <IonIcon icon={trashOutline} className="text-white text-[9px]" />
+                    <IonIcon icon={closeOutline} className="text-white text-[11px]" />
                   </button>
                 )}
               </>
@@ -686,6 +688,25 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
             )}
         </div>
       </BottomSheet>
+
+      {/* Remove image confirmation */}
+      <AppDialog
+        open={confirmRemove !== null}
+        onClose={() => setConfirmRemove(null)}
+        icon={trashOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title={confirmRemove === "banner" ? "Remove Banner?" : "Remove Logo?"}
+        description={confirmRemove === "banner" ? "The banner image will be removed." : "The profile logo will be removed."}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          if (confirmRemove === "banner") handleRemoveBanner();
+          else if (confirmRemove === "profile") handleRemoveProfile();
+          setConfirmRemove(null);
+        }}
+        confirmColor="red"
+      />
     </div>
   );
 };

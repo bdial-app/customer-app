@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -298,6 +299,7 @@ const ProviderProductsTab = ({
       <div className="h-20" />
 
       {/* Add/Edit Modal */}
+      {createPortal(
       <AnimatePresence>
         {sheetOpen && (
           <motion.div
@@ -533,7 +535,9 @@ const ProviderProductsTab = ({
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
 
       {/* Delete Confirmation */}
       <AppDialog
