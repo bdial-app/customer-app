@@ -34,7 +34,8 @@ const cardItem = {
 };
 
 const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: PersonalizedCategory[] | null }) => {
-  const { data: categories = [], isLoading } = useTopLevelCategories();
+  const { data: rawCategories = [], isLoading } = useTopLevelCategories();
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
   const router = useRouter();
 
   if (isLoading) {

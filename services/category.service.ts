@@ -26,7 +26,7 @@ export interface PaginatedCategories {
 
 export const getTopLevelCategories = async (): Promise<Category[]> => {
   const { data } = await apiClient.get(CATEGORY_URLS.TOP_LEVEL);
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const getAllCategories = async (
