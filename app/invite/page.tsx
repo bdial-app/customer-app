@@ -82,6 +82,7 @@ function InviteFriendsContent() {
         </div>
       </div>
 
+      <div className="flex-1 overflow-y-auto overscroll-contain">
       <div className="px-5 pt-8 pb-20 space-y-6">
         {/* Hero Section */}
         <div className="text-center space-y-4">
@@ -206,6 +207,7 @@ function InviteFriendsContent() {
             </div>
           </button>
         </div>
+      </div>
       </div>
     </Page>
   );

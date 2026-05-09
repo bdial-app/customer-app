@@ -29,12 +29,14 @@ import {
   useUploadMedia,
   usePresence,
   useArchiveConversation,
+  useBlockConversation,
 } from "@/hooks/useChat";
 import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 import ReportSheet from "./report-sheet";
+import type { ReportEntityType } from "@/services/report.service";
 
 interface MessagesPageProps {
   onBack: () => void;
@@ -104,6 +106,8 @@ export default function MessagesPage({
   const [showMenu, setShowMenu] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -118,6 +122,7 @@ export default function MessagesPage({
   const markReadMutation = useMarkAsRead(conversationId || null);
   const uploadMutation = useUploadMedia(conversationId || null);
   const archiveMutation = useArchiveConversation();
+  const blockMutation = useBlockConversation();
   const { startTyping, stopTyping } = useTypingIndicator(conversationId || null);
 
   // Realtime subscription
@@ -146,6 +151,20 @@ export default function MessagesPage({
     if (!messagesData?.pages) return [];
     return messagesData.pages.flatMap((page) => page.messages);
   }, [messagesData]);
+
+  // Compute report entity info — report the provider if other is a provider,
+  // otherwise report the most recent message from the other user
+  const reportEntity = useMemo((): { type: ReportEntityType; id: string } | null => {
+    if (otherProviderId) {
+      return { type: "provider", id: otherProviderId };
+    }
+    // Find the last message from the other user
+    const otherMessages = allMessages.filter((m) => m.senderId !== user?.id);
+    if (otherMessages.length > 0) {
+      return { type: "message", id: otherMessages[otherMessages.length - 1].id };
+    }
+    return null;
+  }, [otherProviderId, allMessages, user?.id]);
 
   // Display name from conversation detail or fallback
   const displayName = convDetail?.otherParticipant?.name || chatName;
@@ -408,17 +427,18 @@ export default function MessagesPage({
                     >
                       {[
                         { icon: trashOutline, label: "Delete Chat", color: "text-red-500", action: () => {
-                          if (conversationId) {
-                            archiveMutation.mutate(conversationId, { onSuccess: onBack });
-                          }
+                          setShowMenu(false);
+                          setShowDeleteConfirm(true);
                         }},
                         { icon: alertCircleOutline, label: "Report", color: "text-amber-600", action: () => {
                           setShowMenu(false);
-                          setReportSheetOpen(true);
+                          if (reportEntity) {
+                            setReportSheetOpen(true);
+                          }
                         }},
                         { icon: banOutline, label: "Block User", color: "text-red-500", action: () => {
                           setShowMenu(false);
-                          alert("User blocked. You won't receive messages from them.");
+                          setShowBlockConfirm(true);
                         }},
                         { icon: volumeMuteOutline, label: "Mute Notifications", color: "text-slate-600", action: () => {
                           setShowMenu(false);
@@ -444,29 +464,6 @@ export default function MessagesPage({
           </div>
         </div>
       </div>
-
-      {/* Enquiry context card */}
-      {convDetail?.type === "enquiry" && convDetail.contextTitle && (
-        <div className="shrink-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-slate-100 dark:border-slate-700 px-4 py-2">
-          <div className="flex items-center gap-2.5">
-            {convDetail.contextImageUrl && (
-              <img
-                src={convDetail.contextImageUrl}
-                alt={convDetail.contextTitle}
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wider">
-                {convDetail.contextType === "product" ? "Product Enquiry" : "Service Enquiry"}
-              </p>
-              <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300 truncate">
-                {convDetail.contextTitle}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Messages area */}
       <div
@@ -724,14 +721,106 @@ export default function MessagesPage({
       </div>
 
       {/* Report Sheet */}
-      {conversationId && (
+      {reportEntity && (
         <ReportSheet
-          entityType="message"
-          entityId={conversationId}
+          entityType={reportEntity.type}
+          entityId={reportEntity.id}
           isOpen={reportSheetOpen}
           onClose={() => setReportSheetOpen(false)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-[100]"
+              onClick={() => setShowDeleteConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[101] bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-sm mx-auto"
+            >
+              <h3 className="text-[16px] font-bold text-slate-800 dark:text-white mb-1">Delete Chat</h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-5">
+                This chat will be removed from your list. If {displayName} sends you a new message, it will appear again.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 active:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    if (conversationId) {
+                      archiveMutation.mutate(conversationId, { onSuccess: onBack });
+                    }
+                  }}
+                  disabled={archiveMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-red-500 text-white active:bg-red-600"
+                >
+                  {archiveMutation.isPending ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Block Confirmation Dialog */}
+      <AnimatePresence>
+        {showBlockConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-[100]"
+              onClick={() => setShowBlockConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[101] bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-sm mx-auto"
+            >
+              <h3 className="text-[16px] font-bold text-slate-800 dark:text-white mb-1">Block {displayName}?</h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-5">
+                You won&apos;t receive messages from this user anymore. The chat will be removed from your list.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowBlockConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 active:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBlockConfirm(false);
+                    if (conversationId) {
+                      blockMutation.mutate(conversationId, { onSuccess: onBack });
+                    }
+                  }}
+                  disabled={blockMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-red-500 text-white active:bg-red-600"
+                >
+                  {blockMutation.isPending ? "Blocking..." : "Block"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

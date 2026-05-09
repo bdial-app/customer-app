@@ -34,6 +34,7 @@ export const useMyProvider = () => {
     queryFn: getMyProviderStatus,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,
+    placeholderData: (prev) => prev, // Keep stale data visible during refetch
   });
 };
 

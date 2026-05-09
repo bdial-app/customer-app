@@ -73,7 +73,7 @@ export const AppToast = () => {
           dragElastic={0.18}
           onDragEnd={handleDragEnd}
           style={{ y, opacity }}
-          className="fixed top-0 inset-x-0 z-[9999] flex justify-center px-4 pt-[calc(var(--sat,0px)+10px)]"
+          className="fixed top-0 inset-x-0 z-[10001] flex justify-center px-4 pt-[calc(var(--sat,0px)+10px)]"
         >
           <div
             className="w-full max-w-[420px] bg-white dark:bg-slate-800 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-slate-700 overflow-hidden cursor-grab active:cursor-grabbing"

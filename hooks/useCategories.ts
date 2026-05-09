@@ -11,7 +11,7 @@ export const useTopLevelCategories = () => {
     staleTime: 10 * 60 * 1000, // 10 minutes — categories rarely change
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: "always",
     placeholderData: (prev: any) => prev, // Show cached data instantly
   });
 };

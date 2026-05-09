@@ -1,15 +1,22 @@
 "use client";
-import { useRef } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
   addOutline,
   trashOutline,
   imagesOutline,
   cloudUploadOutline,
+  alertCircleOutline,
 } from "ionicons/icons";
 import { ProviderDetailsPhoto } from "@/services/provider.service";
 import { useUploadPhotos, useDeletePhoto } from "@/hooks/usePhotos";
+import { AppDialog } from "../app-dialog";
+
+const MAX_PHOTOS = 10;
+const MAX_PER_UPLOAD = 3;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 interface ProviderPhotosTabProps {
   photos: ProviderDetailsPhoto[];
@@ -20,34 +27,77 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadPhotos();
   const deleteMutation = useDeletePhoto();
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const remaining = MAX_PHOTOS - photos.length;
+  const isBusy = uploadMutation.isPending || deleteMutation.isPending;
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length || !providerId) return;
-    uploadMutation.mutate({ providerId, files: Array.from(files) });
+    const selected = e.target.files;
+    if (!selected?.length || !providerId) return;
+    setUploadError(null);
+
+    const files = Array.from(selected);
+
+    // Validate count
+    if (files.length > MAX_PER_UPLOAD) {
+      setUploadError(`You can upload at most ${MAX_PER_UPLOAD} photos at a time.`);
+      e.target.value = "";
+      return;
+    }
+    if (files.length > remaining) {
+      setUploadError(`You can only add ${remaining} more photo${remaining === 1 ? "" : "s"} (${photos.length}/${MAX_PHOTOS} used).`);
+      e.target.value = "";
+      return;
+    }
+
+    // Validate each file
+    for (const file of files) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setUploadError(`"${file.name}" is not a supported format. Use JPEG, PNG, or WebP.`);
+        e.target.value = "";
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(`"${file.name}" exceeds 5 MB. Please choose a smaller image.`);
+        e.target.value = "";
+        return;
+      }
+    }
+
+    uploadMutation.mutate(
+      { providerId, files },
+      {
+        onError: () => {
+          setUploadError("Upload failed. Please try again.");
+        },
+      },
+    );
     e.target.value = "";
   };
 
   const handleDelete = (photoId: string) => {
-    deleteMutation.mutate(photoId);
+    deleteMutation.mutate(photoId, {
+      onError: () => {
+        setUploadError("Failed to delete photo. Please try again.");
+      },
+    });
   };
-
-  const maxPhotos = 10;
-  const remaining = maxPhotos - photos.length;
 
   return (
     <div className="animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-          Photos ({photos.length}/{maxPhotos})
+          Photos ({photos.length}/{MAX_PHOTOS})
         </h3>
         {photos.length > 0 && providerId && remaining > 0 && (
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => fileRef.current?.click()}
-            disabled={uploadMutation.isPending}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100"
+            disabled={isBusy}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100 disabled:opacity-50"
           >
             <IonIcon icon={addOutline} className="text-teal-600 text-sm" />
             <span className="text-xs font-semibold text-teal-600">Add</span>
@@ -55,11 +105,37 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
         )}
       </div>
 
+      {/* Error message */}
+      <AnimatePresence>
+        {uploadError && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mx-4 mb-3 px-4 py-3 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-start gap-2.5"
+          >
+            <IonIcon icon={alertCircleOutline} className="text-red-500 text-sm mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <span className="text-xs text-red-700 dark:text-red-300 font-medium">{uploadError}</span>
+            </div>
+            <button onClick={() => setUploadError(null)} className="text-red-400 text-xs font-bold shrink-0">✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Upload progress */}
       {uploadMutation.isPending && (
         <div className="mx-4 mb-3 px-4 py-3 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
           <span className="text-sm text-teal-700 dark:text-teal-300 font-medium">Uploading photos...</span>
+        </div>
+      )}
+
+      {/* Limit info */}
+      {remaining === 0 && (
+        <div className="mx-4 mb-3 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center gap-2">
+          <IonIcon icon={alertCircleOutline} className="text-amber-500 text-sm shrink-0" />
+          <span className="text-[11px] text-amber-700 dark:text-amber-300">Maximum {MAX_PHOTOS} photos reached. Delete some to add new ones.</span>
         </div>
       )}
 
@@ -92,9 +168,9 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
                 {/* Delete overlay */}
                 <motion.button
                   whileTap={{ scale: 0.8 }}
-                  onClick={() => handleDelete(photo.id)}
-                  disabled={deleteMutation.isPending}
-                  className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
+                  onClick={() => setDeleteTarget(photo.id)}
+                  disabled={isBusy}
+                  className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center disabled:opacity-40"
                 >
                   <IonIcon icon={trashOutline} className="text-white text-sm" />
                 </motion.button>
@@ -121,8 +197,8 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => fileRef.current?.click()}
-              disabled={uploadMutation.isPending}
-              className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5"
+              disabled={isBusy}
+              className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               <IonIcon icon={cloudUploadOutline} className="text-lg" />
               Upload Photos
@@ -133,6 +209,13 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
             </p>
           )}
         </div>
+      )}
+
+      {/* Upload constraints hint */}
+      {photos.length > 0 && remaining > 0 && (
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center mt-2 px-4">
+          Max {MAX_PER_UPLOAD} photos per upload · JPEG, PNG, WebP · Under 5 MB each
+        </p>
       )}
 
       {/* Hidden file input */}
@@ -146,6 +229,24 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
       />
 
       <div className="h-20" />
+
+      {/* Delete photo confirmation */}
+      <AppDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        icon={trashOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title="Delete Photo?"
+        description="This photo will be permanently removed."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          if (deleteTarget) handleDelete(deleteTarget);
+          setDeleteTarget(null);
+        }}
+        confirmColor="red"
+      />
     </div>
   );
 };

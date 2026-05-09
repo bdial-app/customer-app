@@ -946,12 +946,10 @@ const ProfileContent = memo(() => {
             </div>
           )}
 
-          {/* ── Provider Management Section (when provider mode is active) ── */}
-          {(providerStatus === "approved" ||
-            providerStatus === "pending" ||
-            providerStatus === "in_review" ||
-            providerStatus === "disabled" ||
-            providerStatus === "suspended") && (
+          {/* ── Provider Management Section (only in provider view) ── */}
+          {userMode === "provider" &&
+           (providerStatus === "approved" ||
+            providerStatus === "disabled") && (
             <MenuSection title="Provider Management">
               {providerStatus === "disabled" ? (
                 <MenuRow

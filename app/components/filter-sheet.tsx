@@ -79,7 +79,7 @@ const FilterSheet = ({
 }: FilterSheetProps) => {
   const { data: categoryResponse, isLoading } = useAllCategories(1, 100);
   const allCategories =
-    categoryResponse?.data.filter((c) => c.parentId === null) ?? [];
+    categoryResponse?.data?.filter((c) => c.parentId === null) ?? [];
 
   const [activeTab, setActiveTab] = useState<FilterTab>("rating");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());

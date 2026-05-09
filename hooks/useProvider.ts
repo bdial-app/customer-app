@@ -39,8 +39,8 @@ export const useProviderDetails = (id: string) => {
     queryKey: ["provider-details", id],
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 1000 * 60 * 2,
+    placeholderData: (prev) => prev, // Keep stale data visible during refetch
   });
 };
 

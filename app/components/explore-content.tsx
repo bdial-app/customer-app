@@ -16,6 +16,8 @@ import {
   sparklesOutline,
   checkmarkCircleOutline,
   navigateOutline,
+  shieldCheckmarkOutline,
+  femaleOutline,
   diamondOutline,
   megaphoneOutline,
   pricetagOutline,
@@ -36,6 +38,7 @@ import { useAppSelector } from "@/hooks/useAppStore";
 import { useToggleSaved, useSavedItemIds } from "@/hooks/useSavedItems";
 import { useExploreFeed, useTrackAd } from "@/hooks/useExplore";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import type {
   ExploreProvider,
   SponsoredProvider,
@@ -64,6 +67,13 @@ const EMPTY_FILTERS: AllServicesFilters = {
   verifiedOnly: false,
   womenLedOnly: false,
 };
+
+const QUICK_ACTIONS = [
+  { label: "Women-Led", icon: femaleOutline, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100", query: "?womenLed=true" },
+  { label: "Verified", icon: shieldCheckmarkOutline, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", query: "?verified=true" },
+  { label: "Top Rated", icon: star, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", query: "?sortBy=rating" },
+  { label: "Featured", icon: diamondOutline, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", query: "?featured=true" },
+];
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
@@ -398,10 +408,10 @@ const ExploreContent = memo(() => {
     city: user?.city ?? undefined,
   };
 
-  const { data: feed, isLoading: feedLoading } = useExploreFeed(feedParams);
+  const { data: feed, isLoading: feedLoading, isError: feedError } = useExploreFeed(feedParams);
   const trackAd = useTrackAd();
 
-  const { data: nearbyData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: nearbyLoading, isFetching: nearbyFetching } =
+  const { data: nearbyData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: nearbyLoading, isFetching: nearbyFetching, isError: nearbyError } =
     useNearbyProviders({
       lat: user?.latitude || 18.5204,
       lng: user?.longitude || 73.8567,
@@ -513,6 +523,25 @@ const ExploreContent = memo(() => {
     [router],
   );
 
+  const { isOnline } = useNetworkStatus();
+
+  // Show offline state when no data is available and we're offline
+  if (!isOnline && !feed && !nearbyData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 px-6">
+        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728M5.636 18.364a9 9 0 010-12.728M8.464 15.536a5 5 0 010-7.072M15.536 8.464a5 5 0 010 7.072M12 12h.01" />
+          </svg>
+        </div>
+        <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">You&apos;re offline</h3>
+        <p className="text-sm text-slate-400 dark:text-slate-500 text-center max-w-[260px]">
+          Connect to the internet to explore services and providers near you.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col pb-20">
 
@@ -526,6 +555,20 @@ const ExploreContent = memo(() => {
           <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">Search</span>
         </div>
+      </div>
+
+      {/* ── 2. Quick Action Pills ── */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pt-3 pb-1">
+        {QUICK_ACTIONS.map((action, i) => (
+          <button
+            key={action.label}
+            onClick={() => router.push(`${ROUTE_PATH.SEARCH}${action.query}`)}
+            className={`shrink-0 flex items-center gap-1.5 ${action.bg} border ${action.border} px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-transform`}
+          >
+            <IonIcon icon={action.icon} className={`text-sm ${action.color}`} />
+            <span className={`text-[11px] font-bold ${action.color} whitespace-nowrap`}>{action.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* ── 3. Sponsored Carousel — revenue: CPC ads ── */}
