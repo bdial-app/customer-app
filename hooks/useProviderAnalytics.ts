@@ -12,6 +12,7 @@ import {
   TopProduct,
 } from "@/services/analytics.service";
 import { createLeadUnlockCheckout, type LeadUnlockResponse } from "@/services/payment.service";
+import { payWithRazorpay } from "@/services/razorpay.service";
 
 export const ANALYTICS_SUMMARY_KEY = ["analytics-summary"];
 export const ANALYTICS_LEADS_KEY = ["analytics-leads"];
@@ -45,13 +46,27 @@ export const useLeadDetail = (leadId: string) => {
 export const useUnlockLead = () => {
   const qc = useQueryClient();
   return useMutation<LeadUnlockResponse, Error, { leadId: string; voucherCode?: string }>({
-    mutationFn: ({ leadId, voucherCode }) => createLeadUnlockCheckout(leadId, voucherCode),
+    mutationFn: async ({ leadId, voucherCode }) => {
+      const data = await createLeadUnlockCheckout(leadId, voucherCode);
+      if (!data.unlocked && data.method === "payment_required" && data.orderId && data.keyId) {
+        // Open Razorpay checkout modal
+        await payWithRazorpay({
+          orderId: data.orderId,
+          amount: data.amount!,
+          currency: data.currency!,
+          paymentId: data.paymentId!,
+          keyId: data.keyId,
+          description: data.description!,
+          prefill: data.prefill || {},
+        });
+        return { ...data, unlocked: true };
+      }
+      return data;
+    },
     onSuccess: (data) => {
       if (data.unlocked) {
         qc.invalidateQueries({ queryKey: ANALYTICS_LEADS_KEY });
         qc.invalidateQueries({ queryKey: ["lead-unlock-info"] });
-      } else if (data.method === "payment_required" && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
       }
     },
   });

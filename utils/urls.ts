@@ -163,10 +163,11 @@ export const PAYMENT_URLS = {
   SUBSCRIPTION_CURRENT: '/payments/subscriptions/current',
   SUBSCRIPTION_CANCEL: '/payments/subscriptions/cancel',
   SUBSCRIPTION_RESUME: '/payments/subscriptions/resume',
-  SUBSCRIPTION_PORTAL: '/payments/subscriptions/portal',
   VALIDATE_VOUCHER: '/payments/vouchers/validate',
   HISTORY: '/payments/history',
-  CONFIRM: '/payments/confirm',
+  VERIFY_RAZORPAY: '/payments/verify/razorpay',
+  VERIFY_RAZORPAY_SUBSCRIPTION: '/payments/verify/razorpay-subscription',
+  VERIFY_APPLE: '/payments/verify/apple',
   MONETIZATION_CONFIG: '/config/monetization',
 };
 

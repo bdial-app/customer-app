@@ -214,7 +214,7 @@ export function PricingModal({
             {/* Footer */}
             <div className="p-4 pt-2 border-t border-slate-100 dark:border-slate-700">
               <p className="text-[10px] text-center text-slate-400">
-                Cancel anytime • 7-day money-back guarantee • Secure payment via Stripe
+                Cancel anytime • 7-day money-back guarantee • Secure payment via Razorpay
               </p>
             </div>
           </motion.div>
