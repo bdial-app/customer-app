@@ -33,6 +33,9 @@ import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 import FeatureGate from "./components/feature-gate";
+import LocationGateScreen from "./components/location-gate-screen";
+import ComingSoonScreen from "./components/coming-soon-screen";
+import { useCheckServiceability } from "@/hooks/useServiceableCities";
 
 /** Sticky header used inside individual TabPanels */
 function TabHeader({ title }: { title: string }) {
@@ -74,6 +77,29 @@ export default function Home() {
   useHeartbeat();
   // Poll notification unread count
   useUnreadCount();
+
+  // City gating state
+  const selectedCity = useAppSelector((state) => state.location.selectedCity);
+  const guestCoords = useAppSelector((state) => state.location.guestCoords);
+  const userLat = (user as any)?.latitude;
+  const userLng = (user as any)?.longitude;
+  const effectiveLat = userLat || guestCoords?.lat;
+  const effectiveLng = userLng || guestCoords?.lng;
+  const hasLocation = !!(selectedCity || effectiveLat);
+  const [showLocationGate, setShowLocationGate] = useState(false);
+
+  const { data: serviceability } = useCheckServiceability(
+    selectedCity,
+    effectiveLat,
+    effectiveLng,
+  );
+
+  // Show location gate for customers with no location on first render
+  useEffect(() => {
+    if (userMode === "customer" && !hasLocation) {
+      setShowLocationGate(true);
+    }
+  }, [userMode, hasLocation]);
 
   // Handle deep-link query params (e.g. /?tab=chats&conversationId=xxx from notifications)
   useEffect(() => {
@@ -185,6 +211,29 @@ export default function Home() {
         return "Tijarah";
     }
   };
+
+  // City gate screens — only for customer mode
+  if (userMode === "customer" && showLocationGate) {
+    return (
+      <LocationGateScreen
+        onLocationSet={() => setShowLocationGate(false)}
+      />
+    );
+  }
+
+  if (
+    userMode === "customer" &&
+    hasLocation &&
+    serviceability &&
+    !serviceability.serviceable
+  ) {
+    return (
+      <ComingSoonScreen
+        city={selectedCity || "your area"}
+        onChangeLocation={() => setShowLocationGate(true)}
+      />
+    );
+  }
 
   if (activeTab === "chats" && activeChat) {
     return (

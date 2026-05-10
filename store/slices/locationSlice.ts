@@ -9,6 +9,7 @@ interface GuestCoords {
 interface LocationState {
   recentLocations: SearchGeocodeResult[];
   guestCoords: GuestCoords | null;
+  selectedCity: string | null;
 }
 
 const getInitialRecentLocations = (): SearchGeocodeResult[] => {
@@ -35,9 +36,21 @@ const getInitialGuestCoords = (): GuestCoords | null => {
   return null;
 };
 
+const getInitialSelectedCity = (): string | null => {
+  if (typeof window !== "undefined") {
+    try {
+      return localStorage.getItem("selectedCity") || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 const initialState: LocationState = {
   recentLocations: getInitialRecentLocations(),
   guestCoords: getInitialGuestCoords(),
+  selectedCity: getInitialSelectedCity(),
 };
 
 const locationSlice = createSlice({
@@ -75,8 +88,18 @@ const locationSlice = createSlice({
         }
       }
     },
+    setSelectedCity(state, action: PayloadAction<string | null>) {
+      state.selectedCity = action.payload;
+      if (typeof window !== "undefined") {
+        if (action.payload) {
+          localStorage.setItem("selectedCity", action.payload);
+        } else {
+          localStorage.removeItem("selectedCity");
+        }
+      }
+    },
   },
 });
 
-export const { addRecentLocation, clearRecentLocations, setGuestCoords } = locationSlice.actions;
+export const { addRecentLocation, clearRecentLocations, setGuestCoords, setSelectedCity } = locationSlice.actions;
 export default locationSlice.reducer;

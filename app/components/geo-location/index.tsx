@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { useReverseGeocode, useSearchGeocode } from "@/hooks/useGeocode";
 import { useUpdateUser } from "@/hooks/useUser";
 import { setProfile } from "@/store/slices/authSlice";
-import { addRecentLocation, setGuestCoords } from "@/store/slices/locationSlice";
+import { addRecentLocation, setGuestCoords, setSelectedCity } from "@/store/slices/locationSlice";
 import {
   SearchGeocodeResult,
   reverseGeocode as reverseGeocodeApi,
@@ -109,6 +109,12 @@ const GeoLocation = () => {
       dispatch(setGuestCoords({ lat, lng }));
     }
     dispatch(addRecentLocation(loc));
+    // Resolve city for serviceability gating
+    reverseGeocodeApi({ lat, lng }).then((geo) => {
+      dispatch(setSelectedCity(geo.city || null));
+    }).catch(() => {
+      dispatch(setSelectedCity(null));
+    });
     setOpen(false);
   }, [user, dispatch, updateUserMutation]);
 
@@ -130,6 +136,12 @@ const GeoLocation = () => {
         lng: longitude,
       }),
     );
+    // Resolve city for serviceability gating
+    reverseGeocodeApi({ lat: latitude, lng: longitude }).then((geo) => {
+      dispatch(setSelectedCity(geo.city || null));
+    }).catch(() => {
+      dispatch(setSelectedCity(null));
+    });
     setOpen(false);
   }, [user, dispatch, updateUserMutation]);
 
@@ -161,6 +173,12 @@ const GeoLocation = () => {
           }),
         );
       }
+      // Resolve city for serviceability gating
+      reverseGeocodeApi({ lat: latitude, lng: longitude }).then((geo) => {
+        dispatch(setSelectedCity(geo.city || null));
+      }).catch(() => {
+        dispatch(setSelectedCity(null));
+      });
       setOpen(false);
     } catch {
       // silently ignore – user denied or timed out
@@ -278,7 +296,7 @@ const GeoLocation = () => {
     } else {
       dispatch(setGuestCoords({ lat, lng }));
     }
-    // Try to create a recent entry
+    // Try to create a recent entry and resolve city
     try {
       const geo = await reverseGeocodeApi({ lat, lng });
       dispatch(addRecentLocation({
@@ -289,6 +307,7 @@ const GeoLocation = () => {
         lat,
         lng,
       }));
+      dispatch(setSelectedCity(geo.city || null));
     } catch {
       dispatch(addRecentLocation({
         placeId: `${lat},${lng}`,
@@ -298,6 +317,7 @@ const GeoLocation = () => {
         lat,
         lng,
       }));
+      dispatch(setSelectedCity(null));
     }
     setShowMap(false);
     setOpen(false);
