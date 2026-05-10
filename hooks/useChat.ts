@@ -6,6 +6,7 @@ import * as chatApi from "@/services/chat.service";
 import type { ChatMessage, ConversationDetail } from "@/services/chat.service";
 import { useAppDispatch, useAppSelector } from "./useAppStore";
 import { setTyping, setActiveConversation } from "@/store/slices/chatSlice";
+import { isNetworkError } from "@/utils/axios";
 
 // ─── Conversation List ────────────────────────
 
@@ -86,6 +87,10 @@ export function useMarkAsRead(conversationId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    },
+    onError: (error) => {
+      // Silently swallow network errors — will reconcile on reconnect
+      if (isNetworkError(error)) return;
     },
   });
 }

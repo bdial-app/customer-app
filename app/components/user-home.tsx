@@ -21,6 +21,8 @@ import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
 import { useHomeFeed } from "@/hooks/useHomeFeed";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "./offline-fallback";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "./pull-to-refresh";
@@ -57,12 +59,18 @@ const UserHome = memo(() => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
+  const { isOnline } = useNetworkStatus();
 
   const { data: feed, isLoading } = useHomeFeed({
     lat: user?.latitude ?? undefined,
     lng: user?.longitude ?? undefined,
     city: user?.city ?? undefined,
   });
+
+  // Offline + no cached feed → show fallback
+  if (!isOnline && !feed) {
+    return <OfflineFallback message="Connect to the internet to browse services near you." />;
+  }
 
   // Only show splash on a true cold load — if feed is already cached (e.g. back-navigation),
   // skip it entirely so the user isn't shown a loading screen on return visits.

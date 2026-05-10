@@ -51,6 +51,8 @@ import {
   Cell,
 } from "recharts";
 import { useProviderAnalytics, useMySponsorships } from "@/hooks/useMyProvider";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "./offline-fallback";
 import {
   useAnalyticsSummary,
   useTopProducts,
@@ -329,6 +331,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
 
 // ─── Main Component ───────────────────────────────────────────────────
 const AnalyticsContent = () => {
+  const { isOnline } = useNetworkStatus();
   const [period, setPeriod] = useState<Period>("7d");
   const [view, setView] = useState<View>("overview");
   const [leadTier, setLeadTier] = useState<string | undefined>(undefined);
@@ -427,6 +430,11 @@ const AnalyticsContent = () => {
         kpi(summary.saves, "Saves", bookmarkOutline, "text-pink-600", "bg-pink-500"),
       ]
     : [];
+
+  // Offline + no cached analytics data → show fallback
+  if (!isOnline && !summary) {
+    return <OfflineFallback message="Connect to the internet to view your analytics." />;
+  }
 
   // Lead detail drill-in
   if (view === "lead-detail" && selectedLeadId) {

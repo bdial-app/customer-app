@@ -1,5 +1,22 @@
 import axios from "axios";
 import { getTokenSync, removeItem, setTokenCache } from "@/utils/storage";
+import { getIsOnline } from "@/hooks/useNetworkStatus";
+
+/** Typed error thrown when a request is attempted while the device is offline. */
+export class OfflineError extends Error {
+  readonly isOffline = true;
+  constructor() { super("No internet connection"); this.name = "OfflineError"; }
+}
+
+/** Type-guard to check if an error is an OfflineError or a network failure. */
+export function isNetworkError(error: unknown): boolean {
+  if (error instanceof OfflineError) return true;
+  if (!axios.isAxiosError(error)) return false;
+  // No response at all (network failure, DNS, timeout, etc.)
+  if (!error.response) return true;
+  const code = error.code;
+  return code === "ERR_NETWORK" || code === "ECONNABORTED" || code === "ERR_CANCELED";
+}
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
@@ -87,6 +104,11 @@ async function silentRefresh(): Promise<void> {
 
 // Request interceptor — attach token if present, check expiry proactively
 apiClient.interceptors.request.use((config) => {
+  // Reject immediately when offline — prevents hanging requests and timeouts
+  if (!getIsOnline()) {
+    return Promise.reject(new OfflineError());
+  }
+
   const token = getTokenSync();
   if (token) {
     // Proactively clear expired tokens rather than sending them

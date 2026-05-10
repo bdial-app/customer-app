@@ -34,6 +34,8 @@ import ProviderHeader from "./provider-header";
 import ProviderQuickStats from "./provider-quick-stats";
 import { ActivePlanBanner, ActiveBoostBanner } from "./active-status-cards";
 import { useMyProvider, useMySponsorships } from "@/hooks/useMyProvider";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "../offline-fallback";
 import { useProviderDetails } from "@/hooks/useProvider";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
@@ -959,6 +961,7 @@ const ProviderDashboard = ({
   onNavigateToListings,
 }: ProviderDashboardProps) => {
   const router = useRouter();
+  const { isOnline } = useNetworkStatus();
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
 
   const provider = providerData?.provider ?? null;
@@ -1000,6 +1003,10 @@ const ProviderDashboard = ({
   };
 
   const handleVerify = () => router.push("/provider-onboarding/verify");
+
+  if (!isOnline && !providerData) {
+    return <OfflineFallback message="Connect to the internet to manage your business." />;
+  }
 
   if (isLoading) {
     return (

@@ -15,6 +15,21 @@ let _showBackOnline = false;
 let _backOnlineTimer: ReturnType<typeof setTimeout> | null = null;
 let _initialized = false;
 const _listeners = new Set<() => void>();
+const _reconnectCallbacks = new Set<() => void>();
+
+/** Synchronous check — safe to call from non-hook code (axios, mutations). */
+export function getIsOnline(): boolean {
+  return _isOnline;
+}
+
+/**
+ * Register a callback that fires once each time the app transitions
+ * from offline → online. Returns an unsubscribe function.
+ */
+export function onReconnect(cb: () => void): () => void {
+  _reconnectCallbacks.add(cb);
+  return () => { _reconnectCallbacks.delete(cb); };
+}
 
 function _notify() {
   _listeners.forEach((l) => l());
@@ -35,6 +50,8 @@ function _setOnline(online: boolean) {
       _backOnlineTimer = null;
       _notify();
     }, 3000);
+    // Fire reconnect callbacks (async so listeners aren't blocking state update)
+    setTimeout(() => _reconnectCallbacks.forEach((cb) => { try { cb(); } catch {} }), 0);
   }
 
   if (!online) {

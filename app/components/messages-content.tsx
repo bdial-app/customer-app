@@ -4,6 +4,8 @@ import { IonIcon } from "@ionic/react";
 import { searchOutline, checkmarkDone, checkmark, imageOutline, chatbubblesOutline } from "ionicons/icons";
 import { useState, memo } from "react";
 import { useConversations } from "@/hooks/useChat";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "./offline-fallback";
 import type { ConversationListItem } from "@/services/chat.service";
 import { useAppSelector } from "@/hooks/useAppStore";
 
@@ -70,6 +72,7 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const { user } = useAppSelector((state) => state.auth);
+  const { isOnline } = useNetworkStatus();
 
   const { data, isLoading } = useConversations(
     filter === "unread" ? "unread" : "all",
@@ -79,6 +82,11 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
 
   const conversations = data?.conversations || [];
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
+
+  // Offline + no cached conversations → show fallback
+  if (!isOnline && !data) {
+    return <OfflineFallback message="Connect to the internet to see your messages." />;
+  }
 
   return (
     <div className="flex flex-col pb-20">
