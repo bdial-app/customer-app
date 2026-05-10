@@ -1341,7 +1341,7 @@ export default function ProviderDetailsPage() {
           opened={callSheetOpened}
           onClose={() => setCallSheetOpened(false)}
         >
-          <div className="relative px-5 pb-8">
+          <div className="relative px-5 pt-4 pb-8">
             {/* Gradient covering full sheet including the handle bar above */}
             <div className="absolute -top-16 inset-x-0 bottom-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pointer-events-none" />
             <div className="absolute -top-16 inset-x-0 bottom-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />

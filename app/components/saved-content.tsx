@@ -12,6 +12,7 @@ import {
   locationOutline,
   callOutline,
   searchOutline,
+  closeCircle,
   checkmarkCircleOutline,
   gridOutline,
   listOutline,
@@ -74,7 +75,8 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
     });
   }, [savedItems, filter, search]);
 
-  const handleUnsave = (item: SavedItemData) => {
+  const handleUnsave = (e: React.MouseEvent, item: SavedItemData) => {
+    e.stopPropagation();
     toggleSaved.mutate({ itemId: item.itemId, itemType: item.itemType });
   };
 
@@ -101,51 +103,10 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
 
   return (
     <div className="pb-20">
-      {/* ── Summary Strip ── */}
-      <div className="mx-4 mt-3 mb-4">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-700 rounded-2xl p-4 relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10" />
-          <div className="absolute left-1/3 -bottom-10 w-24 h-24 rounded-full bg-white/5" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                <IonIcon icon={bookmark} className="text-white text-base" />
-              </div>
-              <div>
-                <div className="text-white font-bold text-sm">
-                  Your Collection
-                </div>
-                <div className="text-white/50 text-[10px]">
-                  Providers & products you&apos;ve saved
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="flex-1 bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center">
-                <div className="text-white font-bold text-lg">{counts.all}</div>
-                <div className="text-white/60 text-[10px]">Total Saved</div>
-              </div>
-              <div className="flex-1 bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center">
-                <div className="text-white font-bold text-lg">
-                  {counts.providers}
-                </div>
-                <div className="text-white/60 text-[10px]">Providers</div>
-              </div>
-              <div className="flex-1 bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center">
-                <div className="text-white font-bold text-lg">
-                  {counts.products}
-                </div>
-                <div className="text-white/60 text-[10px]">Products</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── Search + View Toggle ── */}
-      <div className="px-4 mb-3 flex items-center gap-2">
+      <div className="px-4 mt-3 mb-3 flex items-center gap-2">
         <div className="flex-1 flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2">
-          <IonIcon icon={searchOutline} className="text-sm text-slate-400" />
+          <IonIcon icon={searchOutline} className="text-sm text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Search saved items..."
@@ -153,6 +114,11 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none"
           />
+          {search.length > 0 && (
+            <button onClick={() => setSearch("")} className="shrink-0 active:opacity-60">
+              <IonIcon icon={closeCircle} className="text-base text-slate-400" />
+            </button>
+          )}
         </div>
         <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5">
           <button
@@ -252,7 +218,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
         </div>
       ) : (
         /* ── Saved Items ── */
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence>
           {items.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -279,7 +245,6 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
               {items.map((item: SavedItemData, i: number) => (
                 <motion.div
                   key={item.id}
-                  layout
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
@@ -346,7 +311,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
                         </h3>
                         <motion.button
                           whileTap={{ scale: 0.8 }}
-                          onClick={() => handleUnsave(item)}
+                          onClick={(e) => handleUnsave(e, item)}
                           className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center"
                         >
                           <IonIcon
@@ -438,7 +403,6 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
               {items.map((item: SavedItemData, i: number) => (
                 <motion.div
                   key={item.id}
-                  layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{
@@ -479,10 +443,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
                     )}
                     <motion.button
                       whileTap={{ scale: 0.8 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUnsave(item);
-                      }}
+                      onClick={(e) => handleUnsave(e, item)}
                       className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center"
                     >
                       <IonIcon
