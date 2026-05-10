@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useSendOtp, useRegistrationSendOtp, useVerifyOtp, useCreateAccountMutation } from "./useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
+import { getCurrentPosition } from "@/utils/geolocation";
 
 export type CreateAccountStep = "mobile" | "otp" | "details";
 
@@ -34,7 +35,6 @@ export const useCreateAccount = (initialMobile?: string) => {
 
   const requestLocation = useCallback(async () => {
     try {
-      const { getCurrentPosition } = await import("@/utils/geolocation");
       const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
       setLocation({ lat: pos.latitude, lng: pos.longitude });
       notify({
