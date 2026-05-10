@@ -67,11 +67,6 @@ const UserHome = memo(() => {
     city: user?.city ?? undefined,
   });
 
-  // Offline + no cached feed → show fallback
-  if (!isOnline && !feed) {
-    return <OfflineFallback message="Connect to the internet to browse services near you." />;
-  }
-
   // Only show splash on a true cold load — if feed is already cached (e.g. back-navigation),
   // skip it entirely so the user isn't shown a loading screen on return visits.
   const [showSplash, setShowSplash] = useState(!feed);
@@ -81,6 +76,11 @@ const UserHome = memo(() => {
       return () => clearTimeout(timer);
     }
   }, [isLoading, feed]);
+
+  // Offline + no cached feed → show fallback
+  if (!isOnline && !feed) {
+    return <OfflineFallback message="Connect to the internet to browse services near you." />;
+  }
 
   // Pull-to-refresh handler — invalidates home feed queries
   const handleRefresh = useCallback(async () => {

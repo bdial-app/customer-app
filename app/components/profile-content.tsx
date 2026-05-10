@@ -111,7 +111,7 @@ const validationSchema = Yup.object().shape({
     .required("Required"),
 });
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
 // ─── Reusable Menu Row ──────────────────────────────────────────────
 const MenuRow = ({
@@ -1590,7 +1590,7 @@ const ProfileContent = memo(() => {
               support@tijarah.app
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              WhatsApp: +91 XXXXXXXXXX
+              WhatsApp: +91 8904440498
             </p>
           </div>
         </div>

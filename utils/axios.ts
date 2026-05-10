@@ -86,10 +86,9 @@ async function silentRefresh(): Promise<void> {
   if (isRefreshing) return;
   isRefreshing = true;
   try {
-    const { data } = await axios.post(
-      `${apiClient.defaults.baseURL}/api/auth/refresh`,
+    const { data } = await apiClient.post(
+      "/auth/refresh",
       {},
-      { headers: { Authorization: `Bearer ${getTokenSync()}` } },
     );
     if (data?.accessToken) {
       setTokenCache(data.accessToken);
