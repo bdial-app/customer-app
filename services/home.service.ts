@@ -41,6 +41,9 @@ export interface TrendingCategory {
   icon: string | null;
   providerCount: number;
   recentBookings: number;
+  weeklyBookings: number;
+  growthRate: number;
+  trendDirection: 'up' | 'down' | 'stable';
 }
 
 export interface CommunityReview {
