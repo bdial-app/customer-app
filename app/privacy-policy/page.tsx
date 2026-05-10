@@ -9,9 +9,9 @@ export default function PrivacyPolicyPage() {
   const { goBack } = useBackNavigation();
 
   return (
-    <Page className="bg-white dark:bg-slate-900!">
+    <Page className="bg-white dark:bg-slate-900! flex flex-col">
       <div
-        className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
+        className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 shrink-0"
         style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="flex items-center justify-between px-4 py-3">
@@ -29,6 +29,7 @@ export default function PrivacyPolicyPage() {
         </div>
       </div>
 
+      <div className="flex-1 overflow-y-auto overscroll-contain">
       <div className="px-5 py-5 space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed pb-20">
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
           <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
@@ -174,6 +175,7 @@ export default function PrivacyPolicyPage() {
         <p className="text-xs text-slate-400 pt-2 text-center">
           © 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May 2026
         </p>
+      </div>
       </div>
     </Page>
   );
