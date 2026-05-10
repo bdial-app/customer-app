@@ -123,10 +123,30 @@ export interface WomenLedHubParams {
   minRating?: number;
   lat?: number;
   lng?: number;
+  search?: string;
+}
+
+export interface WomenLedProvider {
+  id: string;
+  name: string;
+  image: string | null;
+  description: string | null;
+  city: string;
+  area: string;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  services: string | null;
+  verified: boolean;
+  isFeatured: boolean;
+  isAvailable: boolean;
+  isWomenLed: boolean;
+  isSponsored: boolean;
+  distance: number | null;
 }
 
 export interface WomenLedHubResponse {
-  providers: any[];
+  providers: WomenLedProvider[];
   stats: { total: number; categoriesCovered: number; avgRating: number };
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
