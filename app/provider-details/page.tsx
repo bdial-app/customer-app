@@ -165,7 +165,7 @@ function InfoChip({
         <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold">
           {label}
         </p>
-        <p className="text-[13px] font-semibold text-gray-800 dark:text-white truncate">
+        <p className="text-[13px] font-semibold text-gray-800 dark:text-white wrap-break-word">
           {value}
         </p>
       </div>
@@ -412,7 +412,7 @@ export default function ProviderDetailsPage() {
           >
             <div className="flex items-center gap-3 px-4 h-14">
               <button
-                onClick={() => goBack("/")}
+                onClick={() => goBack("/search")}
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
               >
                 <IonIcon
@@ -448,6 +448,17 @@ export default function ProviderDetailsPage() {
                     className="w-5 h-5 text-slate-600 dark:text-slate-300"
                   />
                 </button>
+                {!isOwnProvider && (
+                  <button
+                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                    className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                  >
+                    <IonIcon
+                      icon={flagOutline}
+                      className="w-5 h-5 text-slate-600 dark:text-slate-300"
+                    />
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -522,7 +533,7 @@ export default function ProviderDetailsPage() {
               }}
             >
               <button
-                onClick={() => goBack("/")}
+                onClick={() => goBack("/search")}
                 className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
               >
                 <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
@@ -575,7 +586,7 @@ export default function ProviderDetailsPage() {
             {/* Provider Name */}
             <div className="absolute bottom-4 left-4 right-20">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-white leading-tight truncate min-w-0">
+                <h1 className="text-xl font-bold text-white leading-tight wrap-break-word min-w-0">
                   {provider.brandName}
                 </h1>
                 {provider.status === "active" && (
@@ -1065,6 +1076,30 @@ export default function ProviderDetailsPage() {
               </div>
             )}
 
+            {/* Write Review — before the list */}
+            {!isOwnProvider && !hasAlreadyReviewed && (
+              <button
+                onClick={() =>
+                  requireAuth(() => {
+                    setReviewError("");
+                    setReviewSuccess(false);
+                    setSheetOpened(true);
+                  })
+                }
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white dark:bg-slate-800 border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 dark:active:bg-amber-900/20 transition-colors"
+              >
+                <IonIcon icon={star} className="w-4 h-4" />
+                Write a Review
+              </button>
+            )}
+            {!isOwnProvider && hasAlreadyReviewed && (
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-3 border border-green-100 dark:border-green-800/40 text-center">
+                <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                  You&apos;ve reviewed this provider
+                </p>
+              </div>
+            )}
+
             {/* Review Cards */}
             {reviews.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
@@ -1098,7 +1133,17 @@ export default function ProviderDetailsPage() {
                         </span>
                       </div>
                     </div>
-                    <StarRow rating={review.starRating} size={12} />
+                    <div className="flex items-center gap-2">
+                      <StarRow rating={review.starRating} size={12} />
+                      {user && user.id !== review.reviewerId && (
+                        <button
+                          onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                          className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
+                        >
+                          <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {review.reviewText && (
                     <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
@@ -1125,26 +1170,10 @@ export default function ProviderDetailsPage() {
               ))
             )}
 
-            {/* Write Review — hidden for own provider, and if already reviewed */}
-            {!isOwnProvider && !hasAlreadyReviewed && (
-              <button
-                onClick={() =>
-                  requireAuth(() => {
-                    setReviewError("");
-                    setReviewSuccess(false);
-                    setSheetOpened(true);
-                  })
-                }
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors"
-              >
-                <IonIcon icon={star} className="w-4 h-4" />
-                Write a Review
-              </button>
-            )}
             {!isOwnProvider && hasAlreadyReviewed && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
                 <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  You&apos;ve already reviewed this provider
+                  You&apos;ve reviewed this provider
                 </p>
               </div>
             )}
@@ -1498,13 +1527,9 @@ export default function ProviderDetailsPage() {
                     },
                     {
                       onSuccess: () => {
-                        setReviewSuccess(true);
                         setReviewComment("");
                         setReviewRating(5);
-                        setTimeout(() => {
-                          setSheetOpened(false);
-                          setReviewSuccess(false);
-                        }, 1500);
+                        setSheetOpened(false);
                       },
                       onError: (err: any) => {
                         const msg =
