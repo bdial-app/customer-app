@@ -33,8 +33,6 @@ import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 import FeatureGate from "./components/feature-gate";
-import LocationGateScreen from "./components/location-gate-screen";
-import ComingSoonScreen from "./components/coming-soon-screen";
 import { useCheckServiceability } from "@/hooks/useServiceableCities";
 
 /** Sticky header used inside individual TabPanels */
@@ -86,20 +84,14 @@ export default function Home() {
   const effectiveLat = userLat || guestCoords?.lat;
   const effectiveLng = userLng || guestCoords?.lng;
   const hasSelectedCity = !!selectedCity;
-  const [showLocationGate, setShowLocationGate] = useState(false);
 
-  const { data: serviceability, isLoading: isServiceabilityLoading, isError: isServiceabilityError } = useCheckServiceability(
+  const { data: serviceability } = useCheckServiceability(
     selectedCity,
     effectiveLat,
     effectiveLng,
   );
 
-  // Show location gate for customers who haven't selected a city yet
-  useEffect(() => {
-    if (userMode === "customer" && !hasSelectedCity) {
-      setShowLocationGate(true);
-    }
-  }, [userMode, hasSelectedCity]);
+  const isServiceable = !hasSelectedCity || (serviceability?.serviceable ?? true);
 
   // Handle deep-link query params (e.g. /?tab=chats&conversationId=xxx from notifications)
   useEffect(() => {
@@ -212,40 +204,6 @@ export default function Home() {
     }
   };
 
-  // City gate screens — only for customer mode
-  if (userMode === "customer" && showLocationGate) {
-    return (
-      <LocationGateScreen
-        onLocationSet={() => setShowLocationGate(false)}
-      />
-    );
-  }
-
-  // Block while serviceability check is in-flight
-  if (userMode === "customer" && hasSelectedCity && isServiceabilityLoading) {
-    return (
-      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-b from-[#0f3460] via-[#1a1a2e] to-[#16213e]">
-        <img src="/icons/512.png" alt="Tijarah" className="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-black/30" />
-        <div className="w-8 h-8 border-3 border-white/20 border-t-amber-400 rounded-full animate-spin" />
-        <p className="mt-4 text-white/40 text-sm">Checking availability...</p>
-      </div>
-    );
-  }
-
-  // Non-serviceable city OR serviceability check failed (fail-closed)
-  if (
-    userMode === "customer" &&
-    hasSelectedCity &&
-    (isServiceabilityError || (serviceability && !serviceability.serviceable))
-  ) {
-    return (
-      <ComingSoonScreen
-        city={selectedCity || "your area"}
-        onChangeLocation={() => setShowLocationGate(true)}
-      />
-    );
-  }
-
   if (activeTab === "chats" && activeChat) {
     return (
       <MessagesPage
@@ -263,7 +221,7 @@ export default function Home() {
       <TabPanel id="home" activeTab={activeTab}>
         {userMode === "customer" && <GeoLocation />}
         {userMode === "customer" ? (
-          <UserHome />
+          <UserHome isServiceable={isServiceable} selectedCity={selectedCity} />
         ) : (
           <ProviderDashboard onNavigateToListings={handleNavigateToListings} />
         )}

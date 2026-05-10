@@ -28,6 +28,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "./pull-to-refresh";
 import { inflateIfLow } from "@/utils/inflate-stats";
 import HomeSplashScreen from "./home/home-splash-screen";
+import CityExpansionBanner from "./city-expansion-banner";
 
 // Lazy load below-fold sections — they are not visible on initial viewport
 const CommunityReviews = lazy(() => import("./home/community-reviews"));
@@ -54,7 +55,7 @@ const mapProvider = (p: any) => ({
   distance: p.distance,
 });
 
-const UserHome = memo(() => {
+const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?: boolean; selectedCity?: string | null }) => {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
@@ -191,6 +192,11 @@ const UserHome = memo(() => {
 
             {/* Personalized Greeting */}
             <GreetingCard />
+
+            {/* Non-serviceable city banner */}
+            {!isServiceable && selectedCity && (
+              <CityExpansionBanner city={selectedCity} />
+            )}
 
             {/* Live Activity Pulse — social proof */}
             <LiveActivityPulse
