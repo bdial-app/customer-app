@@ -145,7 +145,9 @@ const MenuRow = ({
     </div>
     <div className="flex-1 min-w-0">
       <span
-        className={`text-sm font-medium ${danger ? "text-red-500" : "text-slate-800 dark:text-white"}`}
+        className={`text-sm font-medium ${
+          danger ? "text-red-500" : "text-slate-800 dark:text-white"
+        }`}
       >
         {label}
       </span>
@@ -194,7 +196,9 @@ const SlidePage = ({
   children: React.ReactNode;
 }) => {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence>
@@ -229,7 +233,7 @@ const SlidePage = ({
         </motion.div>
       )}
     </AnimatePresence>,
-    document.body
+    document.body,
   );
 };
 
@@ -413,7 +417,9 @@ const ProfileContent = memo(() => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `my-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `my-data-export-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -585,10 +591,14 @@ const ProfileContent = memo(() => {
                     e.stopPropagation();
                     toggleTheme();
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
+                    isDark ? "bg-amber-500" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`}
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                      isDark ? "translate-x-[22px]" : "translate-x-0.5"
+                    }`}
                   />
                 </div>
               }
@@ -676,7 +686,9 @@ const ProfileContent = memo(() => {
                   {profile.name || "User"}
                 </h2>
                 <p className="text-xs text-slate-500 truncate">
-                  {profile.mobileNumber ? `+91 ${profile.mobileNumber}` : "No phone"}
+                  {profile.mobileNumber
+                    ? `+91 ${profile.mobileNumber}`
+                    : "No phone"}
                 </p>
                 {profile.city && (
                   <p className="text-[11px] text-slate-400 mt-0.5">
@@ -901,40 +913,40 @@ const ProfileContent = memo(() => {
 
           {/* ── Provider Management Section (only in provider view) ── */}
           {userMode === "provider" &&
-           (providerStatus === "approved" ||
-            providerStatus === "disabled") && (
-            <MenuSection title="Provider Management">
-              {providerStatus === "disabled" ? (
-                <MenuRow
-                  icon={eyeOutline}
-                  iconColor="text-teal-500"
-                  iconBg="bg-teal-50"
-                  label="Re-enable Provider"
-                  sublabel="Make your profile visible again"
-                  onClick={handleEnableProvider}
-                  trailing={
-                    isDisablingProvider ? (
-                      <Preloader className="w-5 h-5" />
-                    ) : (
-                      <IonIcon
-                        icon={chevronForward}
-                        className="text-slate-300 text-sm"
-                      />
-                    )
-                  }
-                />
-              ) : (
-                <MenuRow
-                  icon={eyeOffOutline}
-                  iconColor="text-amber-500"
-                  iconBg="bg-amber-50"
-                  label="Disable Provider"
-                  sublabel="Hide your profile from listings"
-                  onClick={() => setDisableProviderSheetOpen(true)}
-                />
-              )}
-            </MenuSection>
-          )}
+            (providerStatus === "approved" ||
+              providerStatus === "disabled") && (
+              <MenuSection title="Provider Management">
+                {providerStatus === "disabled" ? (
+                  <MenuRow
+                    icon={eyeOutline}
+                    iconColor="text-teal-500"
+                    iconBg="bg-teal-50"
+                    label="Re-enable Provider"
+                    sublabel="Make your profile visible again"
+                    onClick={handleEnableProvider}
+                    trailing={
+                      isDisablingProvider ? (
+                        <Preloader className="w-5 h-5" />
+                      ) : (
+                        <IonIcon
+                          icon={chevronForward}
+                          className="text-slate-300 text-sm"
+                        />
+                      )
+                    }
+                  />
+                ) : (
+                  <MenuRow
+                    icon={eyeOffOutline}
+                    iconColor="text-amber-500"
+                    iconBg="bg-amber-50"
+                    label="Disable Provider"
+                    sublabel="Hide your profile from listings"
+                    onClick={() => setDisableProviderSheetOpen(true)}
+                  />
+                )}
+              </MenuSection>
+            )}
 
           {/* ── Account Section ──────────────────────────────────── */}
           <MenuSection title="Account">
@@ -954,13 +966,13 @@ const ProfileContent = memo(() => {
               sublabel="Home, office, and more"
               onClick={() => router.push("/add-location")}
             />
-            <MenuRow
+            {/* <MenuRow
               icon={heartOutline}
               iconColor="text-pink-500"
               iconBg="bg-pink-50"
               label="Saved Providers"
               sublabel="Your favourites"
-            />
+            /> */}
           </MenuSection>
 
           {/* ── Preferences Section ──────────────────────────────── */}
@@ -985,10 +997,14 @@ const ProfileContent = memo(() => {
                     e.stopPropagation();
                     toggleTheme();
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
+                    isDark ? "bg-amber-500" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`}
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                      isDark ? "translate-x-[22px]" : "translate-x-0.5"
+                    }`}
                   />
                 </div>
               }
