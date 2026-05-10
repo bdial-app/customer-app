@@ -34,10 +34,10 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 function getErrorMessage(error: any): string {
+  const msg = error?.response?.data?.message;
+  if (typeof msg === "string" && msg.trim()) return msg;
   const status = error?.response?.status?.toString();
   if (status && ERROR_MESSAGES[status]) return ERROR_MESSAGES[status];
-  const msg = error?.response?.data?.message;
-  if (typeof msg === "string") return msg;
   return "Something went wrong. Please try again.";
 }
 
@@ -125,7 +125,7 @@ export default function ReportSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[100]"
+            className="fixed inset-0 bg-black/40 z-100"
             onClick={handleClose}
           />
 
@@ -135,10 +135,10 @@ export default function ReportSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 inset-x-0 z-[101] bg-white dark:bg-slate-900 rounded-t-2xl max-h-[85vh] flex flex-col safe-area-bottom"
+            className="fixed bottom-0 inset-x-0 z-101 bg-white dark:bg-slate-900 rounded-t-2xl max-h-[85vh] flex flex-col safe-area-bottom"
           >
             {/* Handle + Header */}
-            <div className="flex-shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -209,7 +209,7 @@ export default function ReportSheet({
             </div>
 
             {/* Submit */}
-            <div className="flex-shrink-0 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="shrink-0 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={handleSubmit}
                 disabled={!selectedReason || isSubmitting}

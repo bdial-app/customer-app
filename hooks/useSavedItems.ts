@@ -53,8 +53,37 @@ export const useToggleSaved = () => {
       itemId: string;
       itemType: "provider" | "product";
     }) => toggleSavedItem(itemId, itemType),
-    onSuccess: (_data, variables) => {
-      // Invalidate all saved-related queries
+
+    onMutate: async ({ itemId, itemType }) => {
+      // Cancel in-flight refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["saved-items"] });
+      await queryClient.cancelQueries({ queryKey: ["saved-item-ids"] });
+
+      const previousItems = queryClient.getQueryData<SavedItemData[]>(["saved-items"]);
+      const previousIds = queryClient.getQueryData<SavedItemId[]>(["saved-item-ids"]);
+
+      // Optimistically remove from saved-items list
+      queryClient.setQueryData<SavedItemData[]>(["saved-items"], (old = []) =>
+        old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)),
+      );
+
+      // Optimistically remove from saved-item-ids list
+      queryClient.setQueryData<SavedItemId[]>(["saved-item-ids"], (old = []) =>
+        old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)),
+      );
+
+      return { previousItems, previousIds };
+    },
+
+    onError: (_err, _variables, context) => {
+      // Rollback on failure
+      if (context?.previousItems !== undefined)
+        queryClient.setQueryData(["saved-items"], context.previousItems);
+      if (context?.previousIds !== undefined)
+        queryClient.setQueryData(["saved-item-ids"], context.previousIds);
+    },
+
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ["saved-items"] });
       queryClient.invalidateQueries({ queryKey: ["saved-item-ids"] });
       queryClient.invalidateQueries({

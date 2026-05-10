@@ -629,7 +629,7 @@ const ProfileContent = memo(() => {
               iconColor="text-orange-500"
               iconBg="bg-orange-50"
               label="Report a Bug"
-              onClick={() => setActivePage("reportBug")}
+              onClick={() => requireAuth()}
             />
           </MenuSection>
 

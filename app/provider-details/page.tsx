@@ -165,7 +165,7 @@ function InfoChip({
         <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold">
           {label}
         </p>
-        <p className="text-[13px] font-semibold text-gray-800 dark:text-white truncate">
+        <p className="text-[13px] font-semibold text-gray-800 dark:text-white wrap-break-word">
           {value}
         </p>
       </div>
@@ -412,7 +412,7 @@ export default function ProviderDetailsPage() {
           >
             <div className="flex items-center gap-3 px-4 h-14">
               <button
-                onClick={() => goBack("/")}
+                onClick={() => goBack("/search")}
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
               >
                 <IonIcon
@@ -448,6 +448,17 @@ export default function ProviderDetailsPage() {
                     className="w-5 h-5 text-slate-600 dark:text-slate-300"
                   />
                 </button>
+                {!isOwnProvider && (
+                  <button
+                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                    className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                  >
+                    <IonIcon
+                      icon={flagOutline}
+                      className="w-5 h-5 text-slate-600 dark:text-slate-300"
+                    />
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -522,7 +533,7 @@ export default function ProviderDetailsPage() {
               }}
             >
               <button
-                onClick={() => goBack("/")}
+                onClick={() => goBack("/search")}
                 className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
               >
                 <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
@@ -575,7 +586,7 @@ export default function ProviderDetailsPage() {
             {/* Provider Name */}
             <div className="absolute bottom-4 left-4 right-20">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-white leading-tight truncate min-w-0">
+                <h1 className="text-xl font-bold text-white leading-tight wrap-break-word min-w-0">
                   {provider.brandName}
                 </h1>
                 {provider.status === "active" && (
@@ -1065,6 +1076,30 @@ export default function ProviderDetailsPage() {
               </div>
             )}
 
+            {/* Write Review — before the list */}
+            {!isOwnProvider && !hasAlreadyReviewed && (
+              <button
+                onClick={() =>
+                  requireAuth(() => {
+                    setReviewError("");
+                    setReviewSuccess(false);
+                    setSheetOpened(true);
+                  })
+                }
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white dark:bg-slate-800 border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 dark:active:bg-amber-900/20 transition-colors"
+              >
+                <IonIcon icon={star} className="w-4 h-4" />
+                Write a Review
+              </button>
+            )}
+            {!isOwnProvider && hasAlreadyReviewed && (
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-3 border border-green-100 dark:border-green-800/40 text-center">
+                <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                  You&apos;ve reviewed this provider
+                </p>
+              </div>
+            )}
+
             {/* Review Cards */}
             {reviews.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
@@ -1098,7 +1133,17 @@ export default function ProviderDetailsPage() {
                         </span>
                       </div>
                     </div>
-                    <StarRow rating={review.starRating} size={12} />
+                    <div className="flex items-center gap-2">
+                      <StarRow rating={review.starRating} size={12} />
+                      {user && user.id !== review.reviewerId && (
+                        <button
+                          onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                          className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
+                        >
+                          <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {review.reviewText && (
                     <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
@@ -1125,26 +1170,10 @@ export default function ProviderDetailsPage() {
               ))
             )}
 
-            {/* Write Review — hidden for own provider, and if already reviewed */}
-            {!isOwnProvider && !hasAlreadyReviewed && (
-              <button
-                onClick={() =>
-                  requireAuth(() => {
-                    setReviewError("");
-                    setReviewSuccess(false);
-                    setSheetOpened(true);
-                  })
-                }
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-dashed border-amber-300 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 transition-colors"
-              >
-                <IonIcon icon={star} className="w-4 h-4" />
-                Write a Review
-              </button>
-            )}
             {!isOwnProvider && hasAlreadyReviewed && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
                 <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  You&apos;ve already reviewed this provider
+                  You&apos;ve reviewed this provider
                 </p>
               </div>
             )}
@@ -1320,44 +1349,18 @@ export default function ProviderDetailsPage() {
                 {isCreatingChat ? "Opening..." : "Message"}
               </button>
 
-              {/* Call button — blurred + gated for guests */}
-              {user ? (
-                <button
-                  onClick={() => setCallSheetOpened(true)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition-transform ${
-                    isSponsored
-                      ? "bg-gradient-to-r from-amber-500 to-amber-400 shadow-amber-200"
-                      : "bg-amber-500 shadow-amber-200"
-                  }`}
-                >
-                  <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
-                  Call Now
-                </button>
-              ) : (
-                <button
-                  onClick={() => requireAuth()}
-                  className="flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold overflow-hidden"
-                >
-                  {/* Blurred background */}
-                  <div className="absolute inset-0 bg-amber-500 blur-[2px] opacity-40 rounded-2xl" />
-                  {/* Frosted glass overlay */}
-                  <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5">
-                    <IonIcon
-                      icon={lockClosedOutline}
-                      className="text-white text-base"
-                    />
-                    <span className="text-white text-[10px] font-bold">
-                      Sign in to call
-                    </span>
-                  </div>
-                  {/* Hidden content behind (creates correct height) */}
-                  <IonIcon
-                    icon={callOutline}
-                    className="w-[18px] h-[18px] opacity-0"
-                  />
-                  <span className="opacity-0">Call Now</span>
-                </button>
-              )}
+              {/* Call button — always visible, sheet handles auth for guests */}
+              <button
+                onClick={() => setCallSheetOpened(true)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition-transform ${
+                  isSponsored
+                    ? "bg-gradient-to-r from-amber-500 to-amber-400 shadow-amber-200"
+                    : "bg-amber-500 shadow-amber-200"
+                }`}
+              >
+                <IonIcon icon={callOutline} className="w-[18px] h-[18px]" />
+                Call Now
+              </button>
             </div>
           )}
         </div>
@@ -1367,98 +1370,90 @@ export default function ProviderDetailsPage() {
           opened={callSheetOpened}
           onClose={() => setCallSheetOpened(false)}
         >
-          <div className="px-5 pt-5 pb-8">
-            <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center">
-                <IonIcon
-                  icon={callOutline}
-                  className="text-3xl text-amber-500"
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">
-                  Call
-                </p>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {provider?.brandName}
-                </h3>
-              </div>
+          <div className="relative px-5 pt-4 pb-8">
+            {/* Gradient covering full sheet including the handle bar above */}
+            <div className="absolute -top-16 inset-x-0 bottom-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pointer-events-none" />
+            <div className="absolute -top-16 inset-x-0 bottom-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
-              {user ? (
-                /* Logged-in: show the real number as a tappable link */
-                <a
-                  href={`tel:${provider?.contactNumber}`}
-                  onClick={() => trackCall()}
-                  className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl"
-                >
-                  <IonIcon
-                    icon={callOutline}
-                    className="text-base text-gray-500"
-                  />
-                  <span className="text-base font-semibold text-gray-800 tracking-wide">
-                    {provider?.contactNumber || "Not available"}
-                  </span>
-                </a>
-              ) : (
-                /* Guest: blurred number + sign-in prompt */
-                <div className="w-full relative">
-                  {/* Blurred placeholder number */}
-                  <div
-                    className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl select-none pointer-events-none"
-                    aria-hidden
+            <div className="relative">
+
+              <div className="flex flex-col items-center gap-4">
+                {/* Icon */}
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <IonIcon icon={callOutline} className="text-3xl text-white" />
+                </div>
+
+                <div className="text-center">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-400/80 mb-1">
+                    Call
+                  </p>
+                  <h3 className="text-xl font-bold text-white">
+                    {provider?.brandName}
+                  </h3>
+                </div>
+
+                {user ? (
+                  /* Logged-in: real number */
+                  <a
+                    href={`tel:${provider?.contactNumber}`}
+                    onClick={() => trackCall()}
+                    className="w-full flex items-center justify-center gap-3 py-3.5 bg-white/[0.07] border border-white/10 rounded-2xl active:bg-white/10 transition-colors"
                   >
-                    <IonIcon
-                      icon={callOutline}
-                      className="text-base text-gray-400"
-                    />
-                    <span className="text-base font-semibold text-gray-400 tracking-[0.2em] blur-[6px]">
-                      +91 98765 43210
+                    <IonIcon icon={callOutline} className="text-base text-amber-400" />
+                    <span className="text-base font-semibold text-white tracking-wide">
+                      {provider?.contactNumber || "Not available"}
                     </span>
-                  </div>
-                  {/* Overlay */}
-                  <div className="absolute inset-0 rounded-2xl bg-white/70 backdrop-blur-[2px] flex items-center justify-center">
-                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg">
-                      <IonIcon icon={lockClosedOutline} className="text-sm" />
-                      <span className="text-[12px] font-bold">
-                        Sign in to see number
+                  </a>
+                ) : (
+                  /* Guest: blurred number + sign-in prompt */
+                  <div className="w-full relative">
+                    <div
+                      className="w-full flex items-center justify-center gap-3 py-3.5 bg-white/[0.07] border border-white/10 rounded-2xl select-none pointer-events-none"
+                      aria-hidden
+                    >
+                      <IonIcon icon={callOutline} className="text-base text-amber-400/50" />
+                      <span className="text-base font-semibold text-white/40 tracking-[0.2em] blur-[6px]">
+                        +91 98765 43210
                       </span>
-                      <IonIcon
-                        icon={logInOutline}
-                        className="text-sm text-amber-400"
-                      />
+                    </div>
+                    <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
+                      <div className="flex items-center gap-2 bg-white/10 border border-white/15 text-white px-4 py-2 rounded-full">
+                        <IonIcon icon={lockClosedOutline} className="text-sm text-amber-400" />
+                        <span className="text-[12px] font-bold">Sign in to see number</span>
+                        <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setCallSheetOpened(false)}
-                className="flex-1 py-3 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-2xl text-sm font-semibold active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
-              >
-                Cancel
-              </button>
-              {user ? (
-                <a
-                  href={`tel:${provider?.contactNumber}`}
-                  className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold text-center shadow-sm shadow-amber-200 active:scale-[0.98] transition-all"
-                >
-                  Call Now
-                </a>
-              ) : (
+              <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => {
-                    setCallSheetOpened(false);
-                    requireAuth();
-                  }}
-                  className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm shadow-amber-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  onClick={() => setCallSheetOpened(false)}
+                  className="flex-1 py-3 bg-white/[0.07] border border-white/10 text-white/70 rounded-2xl text-sm font-semibold active:bg-white/10 transition-colors"
                 >
-                  <IonIcon icon={logInOutline} className="text-base" />
-                  Sign in to Call
+                  Cancel
                 </button>
-              )}
+                {user ? (
+                  <a
+                    href={`tel:${provider?.contactNumber}`}
+                    className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-white rounded-2xl text-sm font-semibold text-center shadow-lg shadow-amber-500/30 active:scale-[0.98] transition-all"
+                  >
+                    Call Now
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setCallSheetOpened(false);
+                      requireAuth();
+                    }}
+                    className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-white rounded-2xl text-sm font-semibold shadow-lg shadow-amber-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <IonIcon icon={logInOutline} className="text-base" />
+                    Sign in to Call
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </BottomSheet>
@@ -1532,13 +1527,9 @@ export default function ProviderDetailsPage() {
                     },
                     {
                       onSuccess: () => {
-                        setReviewSuccess(true);
                         setReviewComment("");
                         setReviewRating(5);
-                        setTimeout(() => {
-                          setSheetOpened(false);
-                          setReviewSuccess(false);
-                        }, 1500);
+                        setSheetOpened(false);
                       },
                       onError: (err: any) => {
                         const msg =
