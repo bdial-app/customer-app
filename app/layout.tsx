@@ -33,8 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
       telephone: false,
     },
     icons: {
-      icon: "/icons/196.png",
-      apple: "/icons/196.png",
+      icon: "/favicon.png",
+      apple: "/favicon.png",
     },
     metadataBase: new URL("https://www.tijarah.com"),
   };
@@ -70,8 +70,8 @@ export default async function RootLayout({
         />
         <meta name="apple-mobile-web-app-title" content="Tijarah" />
         <meta name="msapplication-TileColor" content="#F59E0B" />
-        <link rel="icon" href="/icons/196.png" />
-        <link rel="apple-touch-icon" href="/icons/196.png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
