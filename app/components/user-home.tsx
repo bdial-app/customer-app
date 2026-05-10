@@ -59,13 +59,19 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
+  const guestCoords = useAppSelector((state) => state.location.guestCoords);
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
 
+  // Use selected city (from geo-location picker) first, then fall back to user profile city
+  const effectiveCity = selectedCity ?? user?.city ?? undefined;
+  const effectiveLat = user?.latitude ?? guestCoords?.lat ?? undefined;
+  const effectiveLng = user?.longitude ?? guestCoords?.lng ?? undefined;
+
   const { data: feed, isLoading } = useHomeFeed({
-    lat: user?.latitude ?? undefined,
-    lng: user?.longitude ?? undefined,
-    city: user?.city ?? undefined,
+    lat: effectiveLat,
+    lng: effectiveLng,
+    city: effectiveCity,
   });
 
   // Only show splash on a true cold load — if feed is already cached (e.g. back-navigation),
