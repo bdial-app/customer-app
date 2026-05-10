@@ -85,7 +85,7 @@ export default function Home() {
   const userLng = (user as any)?.longitude;
   const effectiveLat = userLat || guestCoords?.lat;
   const effectiveLng = userLng || guestCoords?.lng;
-  const hasLocation = !!(selectedCity || effectiveLat);
+  const hasSelectedCity = !!selectedCity;
   const [showLocationGate, setShowLocationGate] = useState(false);
 
   const { data: serviceability } = useCheckServiceability(
@@ -94,12 +94,12 @@ export default function Home() {
     effectiveLng,
   );
 
-  // Show location gate for customers with no location on first render
+  // Show location gate for customers who haven't selected a city yet
   useEffect(() => {
-    if (userMode === "customer" && !hasLocation) {
+    if (userMode === "customer" && !hasSelectedCity) {
       setShowLocationGate(true);
     }
-  }, [userMode, hasLocation]);
+  }, [userMode, hasSelectedCity]);
 
   // Handle deep-link query params (e.g. /?tab=chats&conversationId=xxx from notifications)
   useEffect(() => {
@@ -223,7 +223,7 @@ export default function Home() {
 
   if (
     userMode === "customer" &&
-    hasLocation &&
+    hasSelectedCity &&
     serviceability &&
     !serviceability.serviceable
   ) {

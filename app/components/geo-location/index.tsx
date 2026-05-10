@@ -102,6 +102,8 @@ const GeoLocation = () => {
     const lat = Number(loc.lat);
     const lng = Number(loc.lng);
     setSearchQuery("");
+    // Clear city immediately so serviceability re-evaluates with new coords
+    dispatch(setSelectedCity(null));
     if (user) {
       dispatch(setProfile({ ...user, latitude: lat, longitude: lng }));
       updateUserMutation.mutate({ latitude: lat, longitude: lng });
@@ -109,17 +111,17 @@ const GeoLocation = () => {
       dispatch(setGuestCoords({ lat, lng }));
     }
     dispatch(addRecentLocation(loc));
-    // Resolve city for serviceability gating
+    // Resolve city name asynchronously
     reverseGeocodeApi({ lat, lng }).then((geo) => {
       dispatch(setSelectedCity(geo.city || null));
-    }).catch(() => {
-      dispatch(setSelectedCity(null));
-    });
+    }).catch(() => {});
     setOpen(false);
   }, [user, dispatch, updateUserMutation]);
 
   const handleSelectSavedLocation = useCallback((loc: SavedLocation) => {
     const { latitude, longitude, label, fullAddress, placeId } = loc;
+    // Clear city immediately so serviceability re-evaluates with new coords
+    dispatch(setSelectedCity(null));
     if (user) {
       dispatch(setProfile({ ...user, latitude, longitude }));
       updateUserMutation.mutate({ latitude, longitude });
@@ -136,12 +138,10 @@ const GeoLocation = () => {
         lng: longitude,
       }),
     );
-    // Resolve city for serviceability gating
+    // Resolve city name asynchronously
     reverseGeocodeApi({ lat: latitude, lng: longitude }).then((geo) => {
       dispatch(setSelectedCity(geo.city || null));
-    }).catch(() => {
-      dispatch(setSelectedCity(null));
-    });
+    }).catch(() => {});
     setOpen(false);
   }, [user, dispatch, updateUserMutation]);
 
@@ -155,6 +155,8 @@ const GeoLocation = () => {
   const handleUseCurrentLocation = async () => {
     try {
       const { latitude, longitude } = await getCurrentPosition({ timeout: 10000 });
+      // Clear city immediately so serviceability re-evaluates with new coords
+      dispatch(setSelectedCity(null));
       if (user) {
         dispatch(setProfile({ ...user, latitude, longitude }));
         updateUserMutation.mutate({ latitude, longitude });
@@ -173,12 +175,10 @@ const GeoLocation = () => {
           }),
         );
       }
-      // Resolve city for serviceability gating
+      // Resolve city name asynchronously
       reverseGeocodeApi({ lat: latitude, lng: longitude }).then((geo) => {
         dispatch(setSelectedCity(geo.city || null));
-      }).catch(() => {
-        dispatch(setSelectedCity(null));
-      });
+      }).catch(() => {});
       setOpen(false);
     } catch {
       // silently ignore – user denied or timed out
@@ -290,6 +290,8 @@ const GeoLocation = () => {
 
   const handleConfirmMapLocation = useCallback(async () => {
     const { lat, lng } = mapMarker;
+    // Clear city immediately so serviceability re-evaluates with new coords
+    dispatch(setSelectedCity(null));
     if (user) {
       dispatch(setProfile({ ...user, latitude: lat, longitude: lng }));
       updateUserMutation.mutate({ latitude: lat, longitude: lng });
