@@ -5,8 +5,7 @@ import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
   locationSharp,
-  closeOutline,
-  notificationsOutline,
+  rocketOutline,
   checkmarkCircle,
   logoWhatsapp,
 } from "ionicons/icons";
@@ -17,12 +16,10 @@ interface CityExpansionBannerProps {
 }
 
 export default function CityExpansionBanner({ city }: CityExpansionBannerProps) {
-  const [dismissed, setDismissed] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
   const requestCityMutation = useRequestCity();
 
-  const handleNotifyMe = async () => {
+  const handleRequest = async () => {
     try {
       await requestCityMutation.mutateAsync({ city });
       setHasRequested(true);
@@ -34,106 +31,82 @@ export default function CityExpansionBanner({ city }: CityExpansionBannerProps) 
   const handleShare = () => {
     const text = encodeURIComponent(
       `Hey! I just discovered Tijarah — a platform to find trusted local services. ` +
-      `They're launching in ${city} soon! Check it out 👇\nhttps://tijarahconnect.com`
+      `They're launching in ${city} soon! Help us bring it here 👇\nhttps://tijarahconnect.com`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
-  if (dismissed) return null;
-
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="mx-4 mt-2 mb-1"
-      >
-        <div className="relative rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 overflow-hidden">
-          {/* Main banner row */}
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left"
-          >
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-              <IonIcon icon={locationSharp} className="text-base text-amber-600 dark:text-amber-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-amber-800 dark:text-amber-300 leading-tight">
-                We&apos;re not in {city} yet
-              </p>
-              <p className="text-[11px] text-amber-600/70 dark:text-amber-400/60 mt-0.5">
-                Tap to get notified when we launch
-              </p>
-            </div>
-            <motion.div
-              animate={{ rotate: expanded ? 180 : 0 }}
-              className="text-amber-400/60"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </motion.div>
-          </button>
-
-          {/* Dismiss */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setDismissed(true); }}
-            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-amber-400/50 hover:text-amber-600 dark:hover:text-amber-300 transition-colors"
-          >
-            <IonIcon icon={closeOutline} className="text-sm" />
-          </button>
-
-          {/* Expanded content */}
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="px-4 pb-4 flex gap-2">
-                  {/* Notify Me */}
-                  <button
-                    onClick={handleNotifyMe}
-                    disabled={hasRequested || requestCityMutation.isPending}
-                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-[13px] font-medium transition-all active:scale-[0.97] ${
-                      hasRequested
-                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                        : "bg-amber-500 text-white shadow-sm"
-                    }`}
-                  >
-                    {requestCityMutation.isPending ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : hasRequested ? (
-                      <>
-                        <IonIcon icon={checkmarkCircle} className="text-base" />
-                        <span>We&apos;ll notify you!</span>
-                      </>
-                    ) : (
-                      <>
-                        <IonIcon icon={notificationsOutline} className="text-base" />
-                        <span>Notify Me</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Share */}
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-green-500 text-white text-[13px] font-medium shadow-sm active:scale-[0.97]"
-                  >
-                    <IonIcon icon={logoWhatsapp} className="text-base" />
-                    <span>Share</span>
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-4 mt-3 mb-2"
+    >
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-amber-500 via-amber-500 to-orange-500 dark:from-amber-600 dark:via-amber-600 dark:to-orange-600 shadow-lg shadow-amber-500/20">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-[0.07] pointer-events-none">
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full border-[20px] border-white" />
+          <div className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full border-[14px] border-white" />
         </div>
-      </motion.div>
-    </AnimatePresence>
+
+        <div className="relative z-10 px-5 py-5">
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <IonIcon icon={locationSharp} className="text-2xl text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-[17px] font-bold text-white leading-tight">
+                Tijarah isn&apos;t in {city} yet
+              </h3>
+              <p className="text-[13px] text-white/70 mt-1 leading-snug">
+                We&apos;re expanding fast! Request Tijarah in your city and we&apos;ll prioritize launching there.
+              </p>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-2.5">
+            <AnimatePresence mode="wait">
+              {hasRequested ? (
+                <motion.div
+                  key="requested"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-white/20 backdrop-blur-sm"
+                >
+                  <IonIcon icon={checkmarkCircle} className="text-xl text-white" />
+                  <span className="text-[14px] font-semibold text-white">Request Sent!</span>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="request"
+                  onClick={handleRequest}
+                  disabled={requestCityMutation.isPending}
+                  className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-white text-amber-600 font-bold text-[14px] shadow-sm active:scale-[0.97] transition-transform"
+                >
+                  {requestCityMutation.isPending ? (
+                    <div className="w-5 h-5 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <IonIcon icon={rocketOutline} className="text-lg" />
+                      <span>Request Tijarah in {city}</span>
+                    </>
+                  )}
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            <button
+              onClick={handleShare}
+              className="flex items-center justify-center gap-1.5 h-12 px-4 rounded-xl bg-white/20 backdrop-blur-sm text-white text-[13px] font-semibold active:scale-[0.97] transition-transform"
+            >
+              <IonIcon icon={logoWhatsapp} className="text-lg" />
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }

@@ -31,6 +31,10 @@ export const checkServiceability = async (params: {
   return data;
 };
 
-export const requestCity = async (city: string, deviceId?: string): Promise<void> => {
-  await apiClient.post(CONFIG_URLS.CITY_REQUESTS, { city, deviceId });
+export const requestCity = async (
+  city: string,
+  deviceId?: string,
+  extra?: { platform?: string; deviceType?: string; osVersion?: string; appVersion?: string; lat?: number; lng?: number },
+): Promise<void> => {
+  await apiClient.post(CONFIG_URLS.CITY_REQUESTS, { city, deviceId, ...extra });
 };
