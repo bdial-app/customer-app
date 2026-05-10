@@ -2,6 +2,7 @@
 import { IonIcon } from "@ionic/react";
 import { notificationsOutline } from "ionicons/icons";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppContext } from "@/app/context/AppContext";
 
 interface NotificationBellProps {
   onClick?: () => void;
@@ -9,7 +10,10 @@ interface NotificationBellProps {
 }
 
 export default function NotificationBell({ onClick, className = "" }: NotificationBellProps) {
-  const unreadCount = useAppSelector((s) => s.notification.unreadCount);
+  const { userMode } = useAppContext();
+  const unreadCount = useAppSelector((s) =>
+    userMode === "provider" ? s.notification.providerUnreadCount : s.notification.customerUnreadCount,
+  );
 
   return (
     <button

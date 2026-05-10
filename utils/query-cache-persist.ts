@@ -17,7 +17,7 @@ interface CacheEntry {
  * Uses @capacitor/preferences on native, localStorage on web.
  * Only persists specific queries to keep storage small and fast.
  */
-const PERSIST_QUERIES = [HOME_FEED_QUERY_KEY, "top-level-categories"];
+const PERSIST_QUERIES = [HOME_FEED_QUERY_KEY, "top-level-categories", "conversations"];
 
 export function persistQueryCache(queryClient: QueryClient) {
   const cache: Record<string, unknown> = {};

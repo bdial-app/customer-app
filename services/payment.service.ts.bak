@@ -15,15 +15,12 @@ export interface SubscriptionPlan {
   monthlyLeadUnlocks: number;
   sponsorshipTypes: string[] | null;
   sortOrder: number;
-  appleProductIdMonthly: string | null;
-  appleProductIdYearly: string | null;
 }
 
 export interface SubscriptionInfo {
   id: string;
   providerId: string;
   planId: string;
-  paymentGateway: 'razorpay' | 'apple';
   status: 'active' | 'past_due' | 'canceled' | 'trialing' | 'paused';
   billingInterval: 'monthly' | 'yearly';
   currentPeriodStart: string;
@@ -38,52 +35,25 @@ export interface PaymentRecord {
   amount: number;
   currency: string;
   status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'refunded';
-  type: 'sponsorship' | 'lead_unlock' | 'badge' | 'subscription' | 'deal_unlock' | 'deal_creation';
-  paymentGateway: 'razorpay' | 'apple';
+  type: 'sponsorship' | 'lead_unlock' | 'badge' | 'subscription' | 'deal_unlock';
   discountAmount: number;
   createdAt: string;
 }
 
-/** Razorpay order response from backend (one-time payments) */
-export interface RazorpayOrderResponse {
-  orderId: string;
-  amount: number;
-  currency: string;
-  paymentId: string;
-  keyId: string;
-  description: string;
-  prefill: { name?: string; email?: string; contact?: string };
-}
-
-/** Razorpay subscription response from backend */
-export interface RazorpaySubscriptionResponse {
-  subscriptionId: string;
-  keyId: string;
-  amount: number | null;
-  planName: string;
-  billingInterval: 'monthly' | 'yearly';
-  prefill: { name?: string; email?: string; contact?: string };
-  metadata: {
-    planId: string;
-    providerId: string;
-    billingInterval: 'monthly' | 'yearly';
-  };
+export interface CheckoutResponse {
+  checkoutUrl: string;
+  paymentId?: string;
+  sessionId?: string;
 }
 
 export interface LeadUnlockResponse {
   unlocked: boolean;
   method?: 'subscription_credit' | 'payment_required' | 'free_quota' | 'free';
   remainingCredits?: number;
-  // Razorpay order fields (when payment_required)
-  orderId?: string;
-  amount?: number;
-  currency?: string;
+  checkoutUrl?: string;
   paymentId?: string;
-  keyId?: string;
-  description?: string;
   price?: number;
   tier?: string;
-  prefill?: { name?: string; email?: string; contact?: string };
 }
 
 export interface VoucherValidation {
@@ -110,7 +80,7 @@ export interface CreateSponsorshipCheckoutPayload {
 
 export const createSponsorshipCheckout = async (
   payload: CreateSponsorshipCheckoutPayload,
-): Promise<RazorpayOrderResponse> => {
+): Promise<CheckoutResponse> => {
   const { data } = await apiClient.post(PAYMENT_URLS.SPONSORSHIP_CHECKOUT, payload);
   return data;
 };
@@ -139,7 +109,7 @@ export const createSubscriptionCheckout = async (
   planId: string,
   billingInterval: 'monthly' | 'yearly',
   voucherCode?: string,
-): Promise<RazorpaySubscriptionResponse> => {
+): Promise<CheckoutResponse> => {
   const { data } = await apiClient.post(PAYMENT_URLS.SUBSCRIPTION_CHECKOUT, {
     planId,
     billingInterval,
@@ -163,35 +133,8 @@ export const resumeSubscription = async (): Promise<{ resumed: boolean }> => {
   return data;
 };
 
-// ─── Payment Verification ───────────────────────────────────────────
-
-export const verifyRazorpayPayment = async (body: {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}): Promise<{ status: string; paymentId: string }> => {
-  const { data } = await apiClient.post(PAYMENT_URLS.VERIFY_RAZORPAY, body);
-  return data;
-};
-
-export const verifyRazorpaySubscription = async (body: {
-  razorpay_subscription_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-  planId: string;
-  providerId: string;
-  billingInterval: 'monthly' | 'yearly';
-}): Promise<{ status: string; subscriptionId: string }> => {
-  const { data } = await apiClient.post(PAYMENT_URLS.VERIFY_RAZORPAY_SUBSCRIPTION, body);
-  return data;
-};
-
-export const verifyAppleReceipt = async (body: {
-  transactionId: string;
-  originalTransactionId: string;
-  productId: string;
-}): Promise<{ status: string; subscriptionId: string }> => {
-  const { data } = await apiClient.post(PAYMENT_URLS.VERIFY_APPLE, body);
+export const getCustomerPortalUrl = async (): Promise<{ url: string }> => {
+  const { data } = await apiClient.get(PAYMENT_URLS.SUBSCRIPTION_PORTAL);
   return data;
 };
 
@@ -218,6 +161,17 @@ export const getPaymentHistory = async (
 ): Promise<{ payments: PaymentRecord[]; total: number; page: number; limit: number }> => {
   const { data } = await apiClient.get(PAYMENT_URLS.HISTORY, {
     params: { page, limit },
+  });
+  return data;
+};
+
+// ─── Payment Confirmation ───────────────────────────────────────────
+
+export const confirmPayment = async (
+  sessionId: string,
+): Promise<{ status: string; paymentId: string }> => {
+  const { data } = await apiClient.get('/payments/confirm', {
+    params: { session_id: sessionId },
   });
   return data;
 };
@@ -257,17 +211,11 @@ export interface DealCreationInfo {
 export interface DealCreationCheckoutResponse {
   requiresPayment: boolean;
   method: 'free' | 'subscription_unlimited' | 'subscription_credit' | 'free_quota' | 'payment_required';
-  // Razorpay order fields (when payment_required)
-  orderId?: string;
-  amount?: number;
-  currency?: string;
+  checkoutUrl?: string;
   paymentId?: string;
-  keyId?: string;
-  description?: string;
   price?: number;
   discounted?: boolean;
   freeRemaining?: number;
-  prefill?: { name?: string; email?: string; contact?: string };
 }
 
 export const getDealCreationInfo = async (): Promise<DealCreationInfo> => {

@@ -12,6 +12,8 @@ import {
   storefrontOutline,
 } from "ionicons/icons";
 import { useConversations } from "@/hooks/useChat";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "../offline-fallback";
 import { useAppSelector } from "@/hooks/useAppStore";
 import type { ConversationListItem } from "@/services/chat.service";
 
@@ -82,6 +84,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread" | "quotes">("all");
   const { user } = useAppSelector((state) => state.auth);
+  const { isOnline } = useNetworkStatus();
 
   const apiFilter = filter === "quotes" ? "enquiries" : filter === "unread" ? "unread" : "all";
   const { data, isLoading } = useConversations(apiFilter as any, search || undefined, "provider");
@@ -89,6 +92,11 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
   const conversations = data?.conversations || [];
   const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);
   const quoteCount = conversations.filter((c) => c.type === "enquiry").length;
+
+  // Offline + no cached conversations → show fallback
+  if (!isOnline && !data) {
+    return <OfflineFallback message="Connect to the internet to see customer messages." />;
+  }
 
   return (
     <div className="flex flex-col">

@@ -5,6 +5,7 @@ import { supabase } from "@/utils/supabase";
 import { useAppDispatch, useAppSelector } from "./useAppStore";
 import { setUnreadCount, incrementUnread } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "./useChat";
+import { onReconnect } from "./useNetworkStatus";
 
 /**
  * Global subscription hook — mounted once at app level.
@@ -38,32 +39,50 @@ export function useChatSubscription() {
   useEffect(() => {
     if (!user?.id || !supabase) return;
 
-    const channel = supabase.channel(`user:${user.id}:conversations`);
+    let channel = supabase.channel(`user:${user.id}:conversations`);
     channelRef.current = channel;
 
-    channel
-      .on("broadcast", { event: "conversation_update" }, (payload) => {
-        const conversationId: string | undefined = payload?.payload?.conversationId;
-        const role: "customer" | "provider" | undefined =
-          payload?.payload?.role ?? undefined;
+    function attachHandlers(ch: typeof channel) {
+      ch
+        .on("broadcast", { event: "conversation_update" }, (payload) => {
+          const conversationId: string | undefined = payload?.payload?.conversationId;
+          const role: "customer" | "provider" | undefined =
+            payload?.payload?.role ?? undefined;
 
-        // Don't increment unread if the user is currently viewing this conversation
-        // (markAsRead will fire from the messages page and correct the count)
-        if (conversationId && conversationId === activeConversationRef.current) {
-          // Still refresh the list to show latest message preview
+          // Don't increment unread if the user is currently viewing this conversation
+          if (conversationId && conversationId === activeConversationRef.current) {
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+            queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+            return;
+          }
+
+          dispatch(incrementUnread(role));
           queryClient.invalidateQueries({ queryKey: ["conversations"] });
           queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
-          return;
-        }
+        })
+        .subscribe();
+    }
 
-        dispatch(incrementUnread(role));
-        // Refresh conversation list
+    attachHandlers(channel);
+
+    // Re-subscribe after network reconnection (Supabase WS may have dropped)
+    const unsubReconnect = onReconnect(() => {
+      try {
+        if (channelRef.current && supabase) supabase.removeChannel(channelRef.current);
+      } catch {}
+      setTimeout(() => {
+        if (!supabase) return;
+        channel = supabase.channel(`user:${user.id}:conversations`);
+        channelRef.current = channel;
+        attachHandlers(channel);
+        // Refresh data that may have arrived while disconnected
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
         queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
-      })
-      .subscribe();
+      }, 1000);
+    });
 
     return () => {
+      unsubReconnect();
       if (channelRef.current && supabase) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

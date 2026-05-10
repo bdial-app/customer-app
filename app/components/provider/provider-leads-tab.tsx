@@ -14,6 +14,9 @@ import {
   cubeOutline,
   chevronForward,
   arrowBack,
+  callOutline,
+  mailOutline,
+  locationOutline,
 } from "ionicons/icons";
 import { useLeads, useLeadDetail, useUnlockLead } from "@/hooks/useProviderAnalytics";
 import type { LeadItem } from "@/services/analytics.service";
@@ -185,6 +188,48 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
         </div>
       </div>
 
+      {/* Contact info — shown for unlocked non-anonymous leads */}
+      {detail.isUnlocked && !detail.isAnonymous && (detail.visitor.phone || detail.visitor.email || detail.visitor.city) && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4">
+          <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2.5">Contact Information</h4>
+          <div className="space-y-2">
+            {detail.visitor.phone && (
+              <a href={`tel:${detail.visitor.phone}`} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-800/50 flex items-center justify-center">
+                  <IonIcon icon={callOutline} className="text-emerald-600 dark:text-emerald-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.phone}</p>
+                  <p className="text-[9px] text-slate-400">Tap to call</p>
+                </div>
+              </a>
+            )}
+            {detail.visitor.email && (
+              <a href={`mailto:${detail.visitor.email}`} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">
+                  <IonIcon icon={mailOutline} className="text-blue-600 dark:text-blue-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.email}</p>
+                  <p className="text-[9px] text-slate-400">Tap to email</p>
+                </div>
+              </a>
+            )}
+            {detail.visitor.city && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-800/50 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-violet-600 dark:text-violet-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.city}</p>
+                  <p className="text-[9px] text-slate-400">Location</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
@@ -244,7 +289,7 @@ export default function ProviderLeadsTab() {
   const [tier, setTier] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const { data, isLoading } = useLeads(tier, page);
+  const { data, isLoading } = useLeads({ tier, page });
   const unlockMutation = useUnlockLead();
 
   if (selectedLeadId) {

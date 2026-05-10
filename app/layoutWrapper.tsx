@@ -2,7 +2,7 @@
 import { App } from "konsta/react";
 import { AppProvider } from "./context/AppContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, onlineManager, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Provider as ReduxProvider } from "react-redux";
@@ -13,7 +13,7 @@ import { AppToast } from "./components/app-toast";
 import { hydrateAuth, clearUser, setProfile } from "@/store/slices/authSlice";
 import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
-import { onAccountPaused, onInappropriateContent } from "@/utils/axios";
+import { onAccountPaused, onInappropriateContent, isNetworkError } from "@/utils/axios";
 import { AuthGateProvider } from "./context/AuthGateContext";
 import AuthGateSheet from "./components/auth-gate-sheet";
 import { resumeMyAccount } from "@/services/user.service";
@@ -35,6 +35,7 @@ import PermissionReminderBanner from "./components/permission-reminder-banner";
 import { initSentry } from "@/utils/sentry";
 import { hydrateStorageCache } from "@/utils/storage";
 import { useStatusBar } from "@/hooks/useStatusBar";
+import { onReconnect } from "@/hooks/useNetworkStatus";
 
 // Initialize Sentry as early as possible
 initSentry();
@@ -60,6 +61,24 @@ function LanguageSyncBridge() {
 function PostHogIdentifyBridge() {
   usePostHogIdentify();
   useStatusBar();
+  return null;
+}
+
+/** Refetch all active queries and reconnect chat when the device comes back online. */
+function ReconnectRefresher() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const unsub = onReconnect(() => {
+      // Small delay to let DNS / sockets stabilise
+      setTimeout(() => {
+        queryClient.refetchQueries({ type: "active" });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      }, 500);
+    });
+    return unsub;
+  }, [queryClient]);
   return null;
 }
 
@@ -240,7 +259,16 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             gcTime: 5 * 60 * 1000, // 5 minutes default garbage collection
             refetchOnWindowFocus: false,
             refetchOnMount: false, // Prevent refetch on component remount (tab switch)
-            retry: 1,
+            refetchOnReconnect: true, // Auto-refetch stale queries when connectivity returns
+            networkMode: "offlineFirst", // Serve cache when offline instead of erroring
+            retry: (failureCount, error) => {
+              // Don't retry network errors (pointless when offline)
+              if (isNetworkError(error)) return false;
+              return failureCount < 1; // 1 retry for server errors
+            },
+          },
+          mutations: {
+            networkMode: "offlineFirst",
           },
         },
       }),
@@ -282,6 +310,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <LanguageSyncBridge />
               <PushNotificationBridge />
               <DeepLinkBridge />
+              <ReconnectRefresher />
               <PwaHistoryGuard />
               {isNativePlatform() && <PermissionPrompt />}
               <NotificationProvider>

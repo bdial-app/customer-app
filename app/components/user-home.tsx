@@ -21,6 +21,8 @@ import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
 import { useHomeFeed } from "@/hooks/useHomeFeed";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "./offline-fallback";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "./pull-to-refresh";
@@ -57,6 +59,7 @@ const UserHome = memo(() => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
+  const { isOnline } = useNetworkStatus();
 
   const { data: feed, isLoading } = useHomeFeed({
     lat: user?.latitude ?? undefined,
@@ -73,6 +76,11 @@ const UserHome = memo(() => {
       return () => clearTimeout(timer);
     }
   }, [isLoading, feed]);
+
+  // Offline + no cached feed → show fallback
+  if (!isOnline && !feed) {
+    return <OfflineFallback message="Connect to the internet to browse services near you." />;
+  }
 
   // Pull-to-refresh handler — invalidates home feed queries
   const handleRefresh = useCallback(async () => {

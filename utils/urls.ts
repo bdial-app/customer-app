@@ -134,6 +134,7 @@ export const ANALYTICS_URLS = {
   UNLOCK_LEAD: (id: string) => `/analytics/leads/${id}/unlock`,
   TOP_PRODUCTS: '/analytics/top-products',
   PEAK_HOURS: '/analytics/peak-hours',
+  VISITOR_INSIGHTS: '/analytics/visitor-insights',
 };
 
 export const NOTIFICATION_URLS = {
@@ -163,10 +164,11 @@ export const PAYMENT_URLS = {
   SUBSCRIPTION_CURRENT: '/payments/subscriptions/current',
   SUBSCRIPTION_CANCEL: '/payments/subscriptions/cancel',
   SUBSCRIPTION_RESUME: '/payments/subscriptions/resume',
-  SUBSCRIPTION_PORTAL: '/payments/subscriptions/portal',
   VALIDATE_VOUCHER: '/payments/vouchers/validate',
   HISTORY: '/payments/history',
-  CONFIRM: '/payments/confirm',
+  VERIFY_RAZORPAY: '/payments/verify/razorpay',
+  VERIFY_RAZORPAY_SUBSCRIPTION: '/payments/verify/razorpay-subscription',
+  VERIFY_APPLE: '/payments/verify/apple',
   MONETIZATION_CONFIG: '/config/monetization',
 };
 

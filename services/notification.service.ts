@@ -26,6 +26,7 @@ export interface NotificationItem {
   readAt: string | null;
   sentAt: string | null;
   source: "system" | "admin";
+  targetMode: "customer" | "provider" | null;
   batchId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -63,17 +64,21 @@ export async function getNotifications(
   page = 1,
   limit = 20,
   type?: string,
-  status?: "all" | "read" | "unread"
+  status?: "all" | "read" | "unread",
+  targetMode?: "customer" | "provider",
 ): Promise<PaginatedResponse<NotificationItem>> {
   const params: Record<string, any> = { page, limit };
   if (type) params.type = type;
   if (status && status !== "all") params.status = status;
+  if (targetMode) params.targetMode = targetMode;
   const { data } = await apiClient.get(NOTIFICATION_URLS.LIST, { params });
   return data;
 }
 
-export async function getUnreadCount(): Promise<{ count: number }> {
-  const { data } = await apiClient.get(NOTIFICATION_URLS.UNREAD_COUNT);
+export async function getUnreadCount(targetMode?: "customer" | "provider"): Promise<{ count: number }> {
+  const params: Record<string, any> = {};
+  if (targetMode) params.targetMode = targetMode;
+  const { data } = await apiClient.get(NOTIFICATION_URLS.UNREAD_COUNT, { params });
   return data;
 }
 
@@ -81,8 +86,10 @@ export async function markAsRead(notificationId: string): Promise<void> {
   await apiClient.patch(NOTIFICATION_URLS.MARK_READ(notificationId));
 }
 
-export async function markAllAsRead(): Promise<{ updated: number }> {
-  const { data } = await apiClient.patch(NOTIFICATION_URLS.MARK_ALL_READ);
+export async function markAllAsRead(targetMode?: "customer" | "provider"): Promise<{ updated: number }> {
+  const params: Record<string, any> = {};
+  if (targetMode) params.targetMode = targetMode;
+  const { data } = await apiClient.patch(NOTIFICATION_URLS.MARK_ALL_READ, null, { params });
   return data;
 }
 

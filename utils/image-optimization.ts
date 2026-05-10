@@ -4,9 +4,12 @@
  * Falls back to original URL for non-Supabase images.
  */
 
-const SUPABASE_STORAGE_HOST = new URL(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-).hostname;
+let SUPABASE_STORAGE_HOST = "";
+try {
+  SUPABASE_STORAGE_HOST = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co").hostname;
+} catch {
+  // Fallback if URL parsing fails
+}
 
 interface ImageTransformOptions {
   width?: number;

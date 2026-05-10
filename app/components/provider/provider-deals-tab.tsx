@@ -30,6 +30,7 @@ import { useDealCreationInfo, useMonetizationConfig } from "@/hooks/useMonetizat
 import { DealPaymentSheet } from "@/app/components/monetization/deal-payment-sheet";
 import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
 import { createDealCreationCheckout } from "@/services/payment.service";
+import { payWithRazorpay } from "@/services/razorpay.service";
 
 const offerSchema = Yup.object({
   title: Yup.string().required("Title is required").max(150),
@@ -101,8 +102,19 @@ const ProviderDealsTab = () => {
     setDealCheckoutLoading(true);
     try {
       const result = await createDealCreationCheckout(voucherCode);
-      if (result.requiresPayment && result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
+      if (result.requiresPayment && result.orderId && result.keyId) {
+        await payWithRazorpay({
+          orderId: result.orderId,
+          amount: result.amount!,
+          currency: result.currency!,
+          paymentId: result.paymentId!,
+          keyId: result.keyId,
+          description: result.description!,
+          prefill: result.prefill || {},
+        });
+        setPaymentPrompt(false);
+        setEditing(null);
+        setSheetOpen(true);
       } else {
         // Free creation allowed — close sheet and open create form
         setPaymentPrompt(false);

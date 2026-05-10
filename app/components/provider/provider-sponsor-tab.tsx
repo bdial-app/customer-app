@@ -21,6 +21,7 @@ import {
   chevronDownOutline,
   chevronUpOutline,
 } from "ionicons/icons";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useSponsorshipPlans,
   useMySponsorships,
@@ -28,6 +29,7 @@ import {
   useUpdateSponsorship,
 } from "@/hooks/useMyProvider";
 import { createSponsorshipCheckout, validateVoucher } from "@/services/payment.service";
+import { payWithRazorpay } from "@/services/razorpay.service";
 import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
 
 const typeLabels: Record<string, string> = {
@@ -49,6 +51,7 @@ const typeColors: Record<string, string> = {
 };
 
 const ProviderSponsorTab = () => {
+  const queryClient = useQueryClient();
   const { data: plans, isLoading: plansLoading } = useSponsorshipPlans();
   const { data: sponsorships, isLoading: sponsorshipsLoading } = useMySponsorships();
   const createMutation = useCreateSponsorship();
@@ -58,7 +61,7 @@ const ProviderSponsorTab = () => {
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherResult, setVoucherResult] = useState<{ valid: boolean; discount?: number; finalAmount?: number; message: string } | null>(null);
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > new Date()) ?? [];
   const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= new Date()) ?? [];
@@ -85,13 +88,13 @@ const ProviderSponsorTab = () => {
 
   const handleCreateSponsorship = async () => {
     if (!selectedPlan) return;
-    setIsRedirecting(true);
+    setIsProcessing(true);
     try {
       const now = new Date();
       const end = new Date(now);
       end.setDate(end.getDate() + selectedPlan.duration);
 
-      const result = await createSponsorshipCheckout({
+      const orderResponse = await createSponsorshipCheckout({
         type: selectedPlan.type,
         budgetAmount: selectedPlan.price,
         startsAt: now.toISOString(),
@@ -99,12 +102,13 @@ const ProviderSponsorTab = () => {
         voucherCode: voucherResult?.valid ? voucherCode : undefined,
       });
 
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-      }
+      await payWithRazorpay(orderResponse);
+      setShowConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['sponsorships'] });
     } catch (error) {
       console.error('Checkout failed:', error);
-      setIsRedirecting(false);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -175,9 +179,9 @@ const ProviderSponsorTab = () => {
             <IonIcon icon={walletOutline} className="text-emerald-600 text-lg" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-emerald-700">Secure Payment via Stripe</p>
+            <p className="text-xs font-semibold text-emerald-700">Secure Payment via Razorpay</p>
             <p className="text-[11px] text-emerald-600 mt-0.5">
-              Pay securely with UPI, cards, or netbanking. Your payment is processed by Stripe.
+              Pay securely with UPI, cards, or netbanking. Your payment is processed by Razorpay.
             </p>
           </div>
         </div>
@@ -277,7 +281,7 @@ const ProviderSponsorTab = () => {
               <div className="flex items-start gap-2 mb-6 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
                 <IonIcon icon={shieldCheckmarkOutline} className="text-emerald-500 text-lg flex-shrink-0 mt-0.5" />
                 <p className="text-[11px] text-emerald-700">
-                  You&apos;ll be redirected to Stripe&apos;s secure payment page to complete your purchase.
+                  You&apos;ll complete payment through Razorpay&apos;s secure checkout.
                 </p>
               </div>
 
@@ -290,14 +294,14 @@ const ProviderSponsorTab = () => {
                 </button>
                 <button
                   onClick={handleCreateSponsorship}
-                  disabled={isRedirecting}
+                  disabled={isProcessing}
                   className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  {isRedirecting ? (
+                  {isProcessing ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      Pay with Stripe <IonIcon icon={arrowForwardOutline} className="text-base" />
+                      Pay Now <IonIcon icon={arrowForwardOutline} className="text-base" />
                     </>
                   )}
                 </button>

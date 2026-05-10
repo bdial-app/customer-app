@@ -24,14 +24,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getSubscriptionPlans,
   getCurrentSubscription,
-  createSubscriptionCheckout,
   cancelSubscription,
   resumeSubscription,
-  getCustomerPortalUrl,
   validateVoucher,
   type SubscriptionPlan,
-  type SubscriptionInfo,
 } from "@/services/payment.service";
+import { usePayment } from "@/hooks/usePayment";
 
 const planIcons: Record<string, string> = {
   free: starOutline,
@@ -49,13 +47,13 @@ const planColors: Record<string, string> = {
 
 const ProviderSubscriptionTab = () => {
   const queryClient = useQueryClient();
+  const { subscribe, restorePurchases, isAppleIAP, loading: paymentLoading, error: paymentError, clearError } = usePayment();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showConfirm, setShowConfirm] = useState(false);
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherResult, setVoucherResult] = useState<any>(null);
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
   const { data: plans, isLoading: plansLoading } = useQuery({
@@ -102,28 +100,17 @@ const ProviderSubscriptionTab = () => {
 
   const handleCheckout = async () => {
     if (!selectedPlan) return;
-    setIsRedirecting(true);
+    clearError();
     try {
-      const result = await createSubscriptionCheckout(
+      await subscribe(
         selectedPlan.id,
         billingInterval,
         voucherResult?.valid ? voucherCode : undefined,
       );
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-      }
+      setShowConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ["current-subscription"] });
     } catch (error) {
       console.error("Checkout failed:", error);
-      setIsRedirecting(false);
-    }
-  };
-
-  const handleManageBilling = async () => {
-    try {
-      const { url } = await getCustomerPortalUrl();
-      window.location.href = url;
-    } catch (error) {
-      console.error("Failed to open billing portal:", error);
     }
   };
 
@@ -198,13 +185,15 @@ const ProviderSubscriptionTab = () => {
           </div>
 
           <div className="flex gap-2">
-            <button
-              onClick={handleManageBilling}
-              className="flex-1 py-2.5 bg-white/10 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
-            >
-              <IonIcon icon={cardOutline} className="text-sm" />
-              Manage Billing
-            </button>
+            {isAppleIAP && (
+              <button
+                onClick={() => restorePurchases()}
+                className="flex-1 py-2.5 bg-white/10 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
+              >
+                <IonIcon icon={refreshOutline} className="text-sm" />
+                Restore Purchases
+              </button>
+            )}
             {!currentSub.cancelAtPeriodEnd && (
               <button
                 onClick={() => cancelMutation.mutate()}
@@ -425,6 +414,12 @@ const ProviderSubscriptionTab = () => {
                 )}
               </div>
 
+              {paymentError && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">{paymentError}</p>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowConfirm(false)}
@@ -434,10 +429,10 @@ const ProviderSubscriptionTab = () => {
                 </button>
                 <button
                   onClick={handleCheckout}
-                  disabled={isRedirecting}
+                  disabled={paymentLoading}
                   className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  {isRedirecting ? (
+                  {paymentLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>

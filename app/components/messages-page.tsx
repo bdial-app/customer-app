@@ -19,6 +19,7 @@ import {
   volumeMuteOutline,
 } from "ionicons/icons";
 import { checkContent } from "@/utils/content-sanitizer";
+import { isNetworkError } from "@/utils/axios";
 import {
   useMessages,
   useSendMessage,
@@ -206,12 +207,15 @@ export default function MessagesPage({
     }
   }, []);
 
+  // Track last message id so scroll fires even when page count stays the same
+  const lastMessageId = allMessages.length > 0 ? allMessages[allMessages.length - 1].id : null;
+
   useEffect(() => {
     if (allMessages.length > 0) {
       scrollToBottom();
       initiallyScrolled.current = true;
     }
-  }, [allMessages.length, scrollToBottom]);
+  }, [allMessages.length, lastMessageId, scrollToBottom]);
 
   // Infinite scroll — load older messages on scroll to top
   useEffect(() => {
@@ -262,8 +266,11 @@ export default function MessagesPage({
           messageType: "image",
           metadata: { url, storageKey },
         });
-      } catch {
-        // Upload failed — could show toast
+      } catch (err) {
+        if (isNetworkError(err)) {
+          setSendError("You're offline. Try again when connected.");
+          return; // keep text and attachment
+        }
       }
       setAttachedFile(null);
       setAttachedPreview(null);
@@ -272,6 +279,11 @@ export default function MessagesPage({
         { content: text, messageType: "text" },
         {
           onError: (err: any) => {
+            if (isNetworkError(err)) {
+              setSendError("You're offline. Try again when connected.");
+              setMessageText(text); // restore text
+              return;
+            }
             const msg = err?.response?.data?.message || err?.message || "Failed to send";
             setSendError(Array.isArray(msg) ? msg.join(", ") : msg);
           },
