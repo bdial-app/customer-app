@@ -31,6 +31,8 @@ import {
   flagOutline,
   lockClosedOutline,
   logInOutline,
+  bookmark,
+  bookmarkOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -413,7 +415,10 @@ export default function ProviderDetailsPage() {
                 onClick={() => goBack("/")}
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
               >
-                <IonIcon icon={arrowBack} className="w-5 h-5 text-slate-800 dark:text-white" />
+                <IonIcon
+                  icon={arrowBack}
+                  className="w-5 h-5 text-slate-800 dark:text-white"
+                />
               </button>
               <p className="flex-1 text-[15px] font-bold text-slate-900 dark:text-white truncate">
                 {provider.brandName}
@@ -425,8 +430,12 @@ export default function ProviderDetailsPage() {
                     className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
                   >
                     <IonIcon
-                      icon={liked ? heart : heartOutline}
-                      className={`w-5 h-5 ${liked ? "text-red-500" : "text-slate-600 dark:text-slate-300"}`}
+                      icon={liked ? bookmark : bookmarkOutline}
+                      className={`w-5 h-5 ${
+                        liked
+                          ? "text-white"
+                          : "text-slate-600 dark:text-slate-300"
+                      }`}
                     />
                   </button>
                 )}
@@ -434,7 +443,10 @@ export default function ProviderDetailsPage() {
                   onClick={handleShare}
                   className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
                 >
-                  <IonIcon icon={shareSocial} className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                  <IonIcon
+                    icon={shareSocial}
+                    className="w-5 h-5 text-slate-600 dark:text-slate-300"
+                  />
                 </button>
               </div>
             </div>
@@ -442,7 +454,11 @@ export default function ProviderDetailsPage() {
         )}
       </AnimatePresence>
 
-      <div ref={scrollContainerRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-auto overscroll-contain"
+      >
         {/* Hero */}
         <div
           className="relative"
@@ -518,9 +534,9 @@ export default function ProviderDetailsPage() {
                     className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
                   >
                     <IonIcon
-                      icon={liked ? heart : heartOutline}
+                      icon={liked ? bookmark : bookmarkOutline}
                       className={`w-5 h-5 ${
-                        liked ? "text-red-400" : "text-white"
+                        liked ? "text-yellow-500" : "text-white"
                       }`}
                     />
                   </button>
@@ -645,7 +661,6 @@ export default function ProviderDetailsPage() {
               </span>
             </div>
           </div>
-
         </div>
 
         {/* Tab Bar — direct child of scroll container so sticky works across full scroll height */}
