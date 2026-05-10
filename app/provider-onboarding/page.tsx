@@ -866,10 +866,10 @@ const ProductFormCard = ({
 
         {/* Price */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Price (₹)</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Price (₹) <span className="normal-case font-normal text-slate-400">— optional</span></label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
-            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="0.00"
+            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="Leave blank if not applicable"
               className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
           </div>
         </div>
@@ -1439,7 +1439,12 @@ const ProviderOnboardingPage = () => {
   const { goBack } = useBackNavigation();
   const user = useAppSelector((state) => state.auth.user);
 
+  const stepScrollRef = useRef<HTMLDivElement>(null);
   const [currentStep, setCurrentStep] = useState<StepId>(1);
+
+  useEffect(() => {
+    stepScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentStep]);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(
     new Set(),
   );
@@ -1795,7 +1800,7 @@ const ProviderOnboardingPage = () => {
                 isSubmitting={isSubmitting}
               />
 
-              <div className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
+              <div ref={stepScrollRef} className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
                 {/* ======================================================= */}
                 {/* STEP 1 — Business Information                           */}
                 {/* ======================================================= */}

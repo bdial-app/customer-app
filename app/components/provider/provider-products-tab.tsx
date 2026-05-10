@@ -33,10 +33,37 @@ interface ProviderProductsTabProps {
 
 const productSchema = Yup.object({
   name: Yup.string().required("Product name is required").max(150),
-  price: Yup.string().required("Price is required"),
+  price: Yup.string().nullable(),
   description: Yup.string().max(2000).nullable(),
   currency: Yup.string().oneOf(["INR", "USD"]).default("INR"),
 });
+
+async function compressImage(file: File, maxDim = 1200, quality = 0.82): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const { naturalWidth: w, naturalHeight: h } = img;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        quality,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
 
 const ProviderProductsTab = ({
   products,
@@ -90,31 +117,23 @@ const ProviderProductsTab = ({
 
   const [photoError, setPhotoError] = useState<string | null>(null);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (files.length === 0) return;
     setPhotoError(null);
 
-    // Validate 5MB limit
-    const oversized = files.find((f) => f.size > 5 * 1024 * 1024);
-    if (oversized) {
-      setPhotoError(`"${oversized.name}" exceeds 5 MB. Please choose a smaller image.`);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-
-    // Cap at 5 total
     const slotsLeft = 5 - photoPreviews.length;
     if (slotsLeft <= 0) {
       setPhotoError("Maximum 5 photos allowed.");
-      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     const toAdd = files.slice(0, slotsLeft);
 
-    setPhotoFiles((prev) => [...prev, ...toAdd]);
-    setPhotoPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Compress every image client-side before previewing/uploading
+    const compressed = await Promise.all(toAdd.map((f) => compressImage(f)));
+    setPhotoFiles((prev) => [...prev, ...compressed]);
+    setPhotoPreviews((prev) => [...prev, ...compressed.map((f) => URL.createObjectURL(f))]);
   };
 
   const removePhoto = (index: number) => {
@@ -399,21 +418,21 @@ const ProviderProductsTab = ({
                     {/* Photo Upload Section */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                        Photos <span className="text-slate-400 dark:text-slate-500 font-normal">({photoPreviews.length}/5, max 5 MB each)</span>
+                        Photos <span className="text-slate-400 dark:text-slate-500 font-normal">({photoPreviews.length}/5)</span>
                       </label>
                       <div className="flex gap-2 flex-wrap">
                         {photoPreviews.map((url, i) => (
-                          <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200">
-                            <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                          <div key={i} className="relative w-20 h-20">
+                            <img src={url} alt="" className="w-full h-full object-cover rounded-xl border border-slate-200" loading="lazy" decoding="async" />
                             <button
                               type="button"
                               onClick={() => removePhoto(i)}
-                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm"
+                              className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform"
                             >
-                              <IonIcon icon={closeOutline} className="text-white text-[10px]" />
+                              <IonIcon icon={closeOutline} className="text-white text-xs" />
                             </button>
                             {i === 0 && (
-                              <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] text-center py-0.5 font-bold">
+                              <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] text-center py-0.5 font-bold rounded-b-xl">
                                 Cover
                               </span>
                             )}
@@ -462,14 +481,14 @@ const ProviderProductsTab = ({
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Price ({values.currency === "INR" ? "₹" : "$"})
+                        <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">— optional</span>
                       </label>
                       <Field
                         name="price"
                         type="number"
-                        placeholder="e.g. 2500"
+                        placeholder="Leave blank if price varies or not applicable"
                         className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
                       />
-                      <ErrorMessage name="price" component="p" className="text-[10px] text-red-500 mt-1" />
                     </div>
 
                     {/* Description */}
@@ -488,20 +507,26 @@ const ProviderProductsTab = ({
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Currency</label>
                       <div className="flex gap-2">
-                        {(["INR", "USD"] as const).map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => setFieldValue("currency", c)}
-                            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                              values.currency === c
-                                ? "bg-teal-500 text-white border-teal-500"
-                                : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600"
-                            }`}
-                          >
-                            {c === "INR" ? "₹ INR" : "$ USD"}
-                          </button>
-                        ))}
+                        {(["INR", "USD"] as const).map((c) => {
+                          const hasPrice = values.price != null && String(values.price).trim() !== "";
+                          return (
+                            <button
+                              key={c}
+                              type="button"
+                              disabled={!hasPrice}
+                              onClick={() => setFieldValue("currency", c)}
+                              className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                                !hasPrice
+                                  ? "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                                  : values.currency === c
+                                    ? "bg-teal-500 text-white border-teal-500"
+                                    : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600"
+                              }`}
+                            >
+                              {c === "INR" ? "₹ INR" : "$ USD"}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
