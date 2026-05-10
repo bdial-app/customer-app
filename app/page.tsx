@@ -216,7 +216,7 @@ export default function Home() {
 
       <LazyTabPanel id="saved" activeTab={activeTab}>
         <TabHeader title="Saved" />
-        <SavedContent />
+        <SavedContent isActive={activeTab === "saved"} />
       </LazyTabPanel>
 
       <LazyTabPanel id="listings" activeTab={activeTab}>

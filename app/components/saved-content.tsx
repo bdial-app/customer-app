@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
@@ -38,13 +38,24 @@ function formatSavedAt(date: string): string {
 }
 
 // ─── Main Component ─────────────────────────────────────────────
-const SavedContent = memo(() => {
+interface SavedContentProps {
+  isActive?: boolean;
+}
+
+const SavedContent = memo(({ isActive }: SavedContentProps) => {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-  const { data: savedItems = [], isLoading } = useSavedItems();
+  const { data: savedItems = [], isLoading, refetch } = useSavedItems();
+
+  // Refetch every time the user enters the Saved tab
+  useEffect(() => {
+    if (isActive) {
+      refetch();
+    }
+  }, [isActive, refetch]);
   const toggleSaved = useToggleSaved();
 
   const items = useMemo(() => {
