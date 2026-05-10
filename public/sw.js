@@ -1,30 +1,25 @@
-const CACHE_NAME = "tijarah-v2";
-const RUNTIME_CACHE = "tijarah-runtime-cache-v2";
-const IMAGE_CACHE = "tijarah-image-cache-v2";
+// BUILD_ID is replaced at build time with a unique hash per deployment.
+// This ensures every deploy produces a new SW file, triggering browser update detection.
+const BUILD_ID = "__BUILD_ID__";
+const CACHE_NAME = "tijarah-" + BUILD_ID;
+const RUNTIME_CACHE = "tijarah-runtime-" + BUILD_ID;
+const IMAGE_CACHE = "tijarah-images"; // images persist across deploys
 const IMAGE_CACHE_MAX = 300;
-const ASSETS_TO_CACHE = ["/", "/manifest.json"];
 
-// Install event - cache essential files
+// Install event - skip waiting immediately to activate new SW
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing service worker...");
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((error) => {
-        console.log("[SW] Cache install error (non-fatal):", error);
-        return Promise.resolve();
-      });
-    }),
-  );
+  console.log("[SW] Installing service worker, build:", BUILD_ID);
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - purge ALL old caches (except images) so users get fresh assets
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating service worker...");
+  console.log("[SW] Activating service worker, build:", BUILD_ID);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
+          // Keep current caches and the shared image cache
           if (
             cacheName !== CACHE_NAME &&
             cacheName !== RUNTIME_CACHE &&
@@ -38,7 +33,6 @@ self.addEventListener("activate", (event) => {
     }),
   );
   self.clients.claim();
-  console.log("[SW] Service worker activated");
 });
 
 // Fetch event - network first, fallback to cache
@@ -85,103 +79,50 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // External requests - network first with cache fallback
+  // External requests - network only (don't cache third-party content)
   if (url.origin !== location.origin) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.status === 200 && response.type !== "error") {
-            const cachePromise = caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, response.clone());
-            });
-            // Don't wait for cache to complete
-            cachePromise.catch(() => {});
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Return offline page if available
-            return caches.match("/");
-          });
-        }),
-    );
     return;
   }
 
-  // API calls - network first
+  // API calls - network only (real-time data should never be stale)
   if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  // Navigation requests (HTML pages) — always network-first
+  // This ensures users always get the latest HTML on every page load
+  if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.status === 200) {
-            caches
-              .open(RUNTIME_CACHE)
-              .then((cache) => {
-                cache.put(request, response.clone());
-              })
-              .catch(() => {});
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
           }
           return response;
         })
         .catch(() => {
-          return caches
-            .match(request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
-              }
-              // Return a network error response
-              return new Response("Network error", {
-                status: 503,
-                statusText: "Service Unavailable",
-              });
-            })
-            .catch(() => {
-              return new Response("Cache error", {
-                status: 500,
-                statusText: "Internal Server Error",
-              });
-            });
+          return caches.match(request).then((cached) => cached || caches.match("/"));
         }),
     );
     return;
   }
 
-  // Assets - cache first with network fallback
+  // Same-origin assets (JS, CSS, images) — network-first with cache fallback
+  // Next.js hashed assets could be cache-first, but network-first is safer
+  // and guarantees fresh content after every deploy
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request)
-        .then((response) => {
-          if (
-            response.status === 200 &&
-            response.type !== "error" &&
-            response.type !== "opaque"
-          ) {
-            const responseToCache = response.clone();
-            caches
-              .open(RUNTIME_CACHE)
-              .then((cache) => {
-                cache.put(request, responseToCache);
-              })
-              .catch(() => {});
-          }
-          return response;
-        })
-        .catch(() => {
-          // Return cached version or offline page
-          return caches.match(request).then((cachedResponse) => {
-            return cachedResponse || caches.match("/");
-          });
-        });
-    }),
+    fetch(request)
+      .then((response) => {
+        if (response.status === 200) {
+          const clone = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone)).catch(() => {});
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request).then((cached) => cached || Promise.reject("no-match"));
+      }),
   );
 });
 

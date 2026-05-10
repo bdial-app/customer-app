@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 export function useServiceWorker() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const refreshingRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -15,14 +16,21 @@ export function useServiceWorker() {
       try {
         registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
+          // Always check the server for a new SW on every page load
+          updateViaCache: "none",
         });
 
-        // Check for updates periodically
+        // Check for updates every 60 seconds
         intervalRef.current = setInterval(() => {
           registration?.update();
         }, 60000);
 
-        // Listen for updates
+        // If there's already a waiting worker (e.g. installed while user was on the page), activate it
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        }
+
+        // Listen for new SW installations
         registration.addEventListener("updatefound", () => {
           const newWorker = registration?.installing;
           if (newWorker) {
@@ -31,14 +39,13 @@ export function useServiceWorker() {
                 newWorker.state === "installed" &&
                 navigator.serviceWorker.controller
               ) {
-                // New version available — could dispatch a custom event for UI
-                window.dispatchEvent(new CustomEvent("sw-update-available"));
+                // New SW installed and old one exists — tell it to take over immediately
+                newWorker.postMessage({ type: "SKIP_WAITING" });
               }
             });
           }
         });
       } catch (error) {
-        // Silently fail in production — SW is enhancement, not critical
         if (process.env.NODE_ENV === "development") {
           console.error("[SW] Registration failed:", error);
         }
@@ -47,8 +54,11 @@ export function useServiceWorker() {
 
     register();
 
+    // When the new SW activates and takes control, reload for fresh assets
     const handleControllerChange = () => {
-      // Controller changed — page will use new SW on next navigation
+      if (refreshingRef.current) return;
+      refreshingRef.current = true;
+      window.location.reload();
     };
     navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
 
