@@ -1,4 +1,5 @@
 import { isNativePlatform } from "./platform";
+import { Geolocation } from "@capacitor/geolocation";
 
 export interface GeoPosition {
   latitude: number;
@@ -19,8 +20,6 @@ export async function getCurrentPosition(
   options?: GeoOptions,
 ): Promise<GeoPosition> {
   if (isNativePlatform()) {
-    const { Geolocation } = await import("@capacitor/geolocation");
-
     // Request permission first on native (no-op if already granted)
     const permStatus = await Geolocation.requestPermissions();
     if (

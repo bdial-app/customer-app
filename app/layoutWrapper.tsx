@@ -37,7 +37,6 @@ import { hydrateStorageCache } from "@/utils/storage";
 import { useStatusBar } from "@/hooks/useStatusBar";
 import { onReconnect } from "@/hooks/useNetworkStatus";
 import { useAppSelector } from "@/hooks/useAppStore";
-import LocationGateScreen from "./components/location-gate-screen";
 
 // Initialize Sentry as early as possible
 initSentry();
@@ -251,25 +250,6 @@ function AccountPausedHandler() {
   );
 }
 
-function LocationGate({ children }: { children: React.ReactNode }) {
-  const user = useAppSelector((state) => state.auth.user) as any;
-  const guestCoords = useAppSelector((state) => state.location.guestCoords);
-  const selectedCity = useAppSelector((state) => state.location.selectedCity);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const hasLocation =
-    guestCoords !== null ||
-    selectedCity !== null ||
-    Boolean(user?.latitude && user?.longitude);
-
-  if (!mounted || hasLocation) return <>{children}</>;
-
-  return <LocationGateScreen onLocationSet={() => {}} />;
-}
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   const [queryClient] = useState(
@@ -346,7 +326,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <InappropriateContentHandler />
                   <AccountPausedHandler />
                   <AuthGateSheet />
-                  <LocationGate>{children}</LocationGate>
+                  {children}
                   </MaintenanceGate>
                 </App>
               </NotificationProvider>
