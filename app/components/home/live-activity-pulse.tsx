@@ -29,7 +29,7 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
       ...a,
       count: a.format === 'rating'
         ? (a.count > 0 ? a.count : 4.5)
-        : inflateIfLow(a.count, `live_activity_${i}`, 5, 15),
+        : inflateIfLow(a.count, `live_activity_${i}`, 15, 40),
     }));
   }, [activities]);
 
