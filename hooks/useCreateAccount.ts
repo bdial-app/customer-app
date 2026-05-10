@@ -62,11 +62,6 @@ export const useCreateAccount = (initialMobile?: string) => {
     [],
   );
 
-  useEffect(() => {
-    if (currentStep === "details" && !location) {
-      requestLocation();
-    }
-  }, [currentStep, location, requestLocation]);
 
   const sendOtpMutation = useSendOtp();
   const registrationSendOtpMutation = useRegistrationSendOtp();
