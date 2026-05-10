@@ -26,7 +26,10 @@ import {
   useOfferLimits,
 } from "@/hooks/useMyProvider";
 import { ProviderOfferFull } from "@/services/provider.service";
-import { useDealCreationInfo, useMonetizationConfig } from "@/hooks/useMonetizationConfig";
+import {
+  useDealCreationInfo,
+  useMonetizationConfig,
+} from "@/hooks/useMonetizationConfig";
 import { DealPaymentSheet } from "@/app/components/monetization/deal-payment-sheet";
 import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
 import { createDealCreationCheckout } from "@/services/payment.service";
@@ -85,12 +88,24 @@ const ProviderDealsTab = () => {
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  const monetizationEnabled = monetizationConfig?.flags.dealsMonetizationEnabled ?? false;
-  const canCreateDeal = !monetizationEnabled || !limits?.requiresPayment || (dealInfo && (dealInfo.isProSubscriber || dealInfo.freeRemaining > 0));
-  const canCreateActive = limits ? limits.activeDeals < limits.maxActiveDeals : true;
+  const monetizationEnabled =
+    monetizationConfig?.flags.dealsMonetizationEnabled ?? false;
+  const canCreateDeal =
+    !monetizationEnabled ||
+    !limits?.requiresPayment ||
+    (dealInfo && (dealInfo.isProSubscriber || dealInfo.freeRemaining > 0));
+  const canCreateActive = limits
+    ? limits.activeDeals < limits.maxActiveDeals
+    : true;
 
   const handleAdd = () => {
-    if (monetizationEnabled && limits?.requiresPayment && dealInfo && dealInfo.freeRemaining <= 0 && !dealInfo.isProSubscriber) {
+    if (
+      monetizationEnabled &&
+      limits?.requiresPayment &&
+      dealInfo &&
+      dealInfo.freeRemaining <= 0 &&
+      !dealInfo.isProSubscriber
+    ) {
       setPaymentPrompt(true);
       return;
     }
@@ -167,21 +182,37 @@ const ProviderDealsTab = () => {
     <div className="min-h-[60vh]">
       {/* Limits Banner */}
       {limits && (
-        <div className="px-4 mb-3">
-          <div className={`rounded-2xl p-3.5 border ${
-            (limits.requiresPayment && monetizationEnabled) || (!canCreateActive)
-              ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700"
-              : "bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600"
-          }`}>
+        <div className="px-4 mt-3 mb-3">
+          <div
+            className={`rounded-2xl p-3.5 border ${
+              (limits.requiresPayment && monetizationEnabled) ||
+              !canCreateActive
+                ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700"
+                : "bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600"
+            }`}
+          >
             <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                (limits.requiresPayment && monetizationEnabled) || (!canCreateActive)
-                  ? "bg-amber-100 dark:bg-amber-900/50"
-                  : "bg-white dark:bg-slate-800"
-              }`}>
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                  (limits.requiresPayment && monetizationEnabled) ||
+                  !canCreateActive
+                    ? "bg-amber-100 dark:bg-amber-900/50"
+                    : "bg-white dark:bg-slate-800"
+                }`}
+              >
                 <IonIcon
-                  icon={(limits.requiresPayment && monetizationEnabled) || (!canCreateActive) ? lockClosedOutline : pricetagOutline}
-                  className={`text-base ${(limits.requiresPayment && monetizationEnabled) || (!canCreateActive) ? "text-amber-600" : "text-slate-500"}`}
+                  icon={
+                    (limits.requiresPayment && monetizationEnabled) ||
+                    !canCreateActive
+                      ? lockClosedOutline
+                      : pricetagOutline
+                  }
+                  className={`text-base ${
+                    (limits.requiresPayment && monetizationEnabled) ||
+                    !canCreateActive
+                      ? "text-amber-600"
+                      : "text-slate-500"
+                  }`}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -190,19 +221,25 @@ const ProviderDealsTab = () => {
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       {limits.totalDeals}/{limits.maxTotalDeals}
                     </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">total</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      total
+                    </span>
                   </div>
                   <div className="w-px h-3 bg-slate-200" />
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       {limits.activeDeals}/{limits.maxActiveDeals}
                     </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">active</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      active
+                    </span>
                   </div>
                   {dealInfo && !monetizationEnabled && (
                     <>
                       <div className="w-px h-3 bg-slate-200" />
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Free tier</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        Free tier
+                      </span>
                     </>
                   )}
                 </div>
@@ -211,17 +248,31 @@ const ProviderDealsTab = () => {
                   <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
-                        limits.totalDeals >= limits.maxTotalDeals ? "bg-amber-500" : "bg-teal-500"
+                        limits.totalDeals >= limits.maxTotalDeals
+                          ? "bg-amber-500"
+                          : "bg-teal-500"
                       }`}
-                      style={{ width: `${Math.min(100, (limits.totalDeals / limits.maxTotalDeals) * 100)}%` }}
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          (limits.totalDeals / limits.maxTotalDeals) * 100,
+                        )}%`,
+                      }}
                     />
                   </div>
                   <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
-                        limits.activeDeals >= limits.maxActiveDeals ? "bg-red-400" : "bg-emerald-500"
+                        limits.activeDeals >= limits.maxActiveDeals
+                          ? "bg-red-400"
+                          : "bg-emerald-500"
                       }`}
-                      style={{ width: `${Math.min(100, (limits.activeDeals / limits.maxActiveDeals) * 100)}%` }}
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          (limits.activeDeals / limits.maxActiveDeals) * 100,
+                        )}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -234,26 +285,44 @@ const ProviderDealsTab = () => {
                 className="mt-3 w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
               >
                 <IonIcon icon={diamondOutline} className="text-sm" />
-                {dealInfo?.freeRemaining === 0 ? `Create Deal ₹${monetizationConfig?.dealPricing.price ?? 149}` : "Upgrade to Add More Deals"}
+                {dealInfo?.freeRemaining === 0
+                  ? `Create Deal ₹${
+                      monetizationConfig?.dealPricing.price ?? 149
+                    }`
+                  : "Upgrade to Add More Deals"}
               </button>
             )}
             {/* Monetization disabled but total limit reached */}
-            {!monetizationEnabled && limits.totalDeals >= limits.maxTotalDeals && (
-              <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-amber-100/60 dark:bg-amber-900/30 rounded-xl">
-                <IonIcon icon={alertCircleOutline} className="text-amber-600 dark:text-amber-400 text-sm mt-0.5 shrink-0" />
-                <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
-                  You&apos;ve reached the maximum of <span className="font-bold">{limits.maxTotalDeals} total deals</span>. 
-                  Delete an expired or inactive deal to free up a slot.
-                </p>
-              </div>
-            )}
+            {!monetizationEnabled &&
+              limits.totalDeals >= limits.maxTotalDeals && (
+                <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-amber-100/60 dark:bg-amber-900/30 rounded-xl">
+                  <IonIcon
+                    icon={alertCircleOutline}
+                    className="text-amber-600 dark:text-amber-400 text-sm mt-0.5 shrink-0"
+                  />
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                    You&apos;ve reached the maximum of{" "}
+                    <span className="font-bold">
+                      {limits.maxTotalDeals} total deals
+                    </span>
+                    . Delete an expired or inactive deal to free up a slot.
+                  </p>
+                </div>
+              )}
             {/* Active limit reached (regardless of monetization) */}
             {!canCreateActive && limits.totalDeals < limits.maxTotalDeals && (
               <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                <IonIcon icon={alertCircleOutline} className="text-red-500 dark:text-red-400 text-sm mt-0.5 shrink-0" />
+                <IonIcon
+                  icon={alertCircleOutline}
+                  className="text-red-500 dark:text-red-400 text-sm mt-0.5 shrink-0"
+                />
                 <p className="text-[11px] text-red-600 dark:text-red-300 leading-relaxed">
-                  All <span className="font-bold">{limits.maxActiveDeals} active deal slots</span> are in use. 
-                  Deactivate or delete an active deal, or wait for one to expire.
+                  All{" "}
+                  <span className="font-bold">
+                    {limits.maxActiveDeals} active deal slots
+                  </span>{" "}
+                  are in use. Deactivate or delete an active deal, or wait for
+                  one to expire.
                 </p>
               </div>
             )}
@@ -265,7 +334,10 @@ const ProviderDealsTab = () => {
         <div className="px-4">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-100 dark:border-slate-700 text-center">
             <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <IonIcon icon={pricetagOutline} className="text-3xl text-amber-400" />
+              <IonIcon
+                icon={pricetagOutline}
+                className="text-3xl text-amber-400"
+              />
             </div>
             <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
               No deals yet
@@ -296,7 +368,12 @@ const ProviderDealsTab = () => {
               </div>
               <div className="space-y-2">
                 {activeOffers.map((offer, i) => (
-                  <OfferCard key={offer.id} offer={offer} index={i} onEdit={handleEdit} />
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    index={i}
+                    onEdit={handleEdit}
+                  />
                 ))}
               </div>
             </div>
@@ -313,7 +390,12 @@ const ProviderDealsTab = () => {
               </div>
               <div className="space-y-2">
                 {upcomingOffers.map((offer, i) => (
-                  <OfferCard key={offer.id} offer={offer} index={i} onEdit={handleEdit} />
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    index={i}
+                    onEdit={handleEdit}
+                  />
                 ))}
               </div>
             </div>
@@ -330,7 +412,12 @@ const ProviderDealsTab = () => {
               </div>
               <div className="space-y-2 opacity-60">
                 {expiredOffers.map((offer, i) => (
-                  <OfferCard key={offer.id} offer={offer} index={i} onEdit={handleEdit} />
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    index={i}
+                    onEdit={handleEdit}
+                  />
                 ))}
               </div>
             </div>
@@ -339,207 +426,276 @@ const ProviderDealsTab = () => {
       )}
 
       {/* FAB — rendered via portal for true fixed positioning */}
-      {offers.length > 0 && typeof document !== "undefined" && createPortal(
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={handleAdd}
-          className="fixed bottom-24 right-5 z-[60] w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/30"
-        >
-          <IonIcon icon={addOutline} className="text-2xl" />
-        </motion.button>,
-        document.body,
-      )}
+      {offers.length > 0 &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleAdd}
+            className="fixed bottom-24 right-5 z-[60] w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/30"
+          >
+            <IonIcon icon={addOutline} className="text-2xl" />
+          </motion.button>,
+          document.body,
+        )}
 
       {/* Full-screen Form Modal */}
-      {typeof document !== "undefined" && createPortal(
-      <AnimatePresence>
-        {sheetOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9990] flex items-end justify-center"
-            onClick={() => !isSaving && setSheetOpen(false)}
-          >
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
-                <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                  {editing ? "Edit Deal" : "New Deal"}
-                </h3>
-                <button
-                  onClick={() => !isSaving && setSheetOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
-                >
-                  <IonIcon icon={closeOutline} className="text-lg text-slate-500 dark:text-slate-400" />
-                </button>
-              </div>
-
-              <Formik
-                initialValues={{
-                  title: editing?.title ?? "",
-                  description: editing?.description ?? "",
-                  discountType: editing?.discountType ?? ("percentage" as "percentage" | "flat"),
-                  discountValue: editing?.discountValue?.toString() ?? "",
-                  minOrderAmount: editing?.minOrderAmount?.toString() ?? "",
-                  maxDiscount: editing?.maxDiscount?.toString() ?? "",
-                  startsAt: editing
-                    ? new Date(editing.startsAt).toISOString().slice(0, 10)
-                    : new Date().toISOString().slice(0, 10),
-                  endsAt: editing
-                    ? new Date(editing.endsAt).toISOString().slice(0, 10)
-                    : "",
-                  usageLimit: editing?.usageLimit?.toString() ?? "",
-                }}
-                validationSchema={offerSchema}
-                onSubmit={async (values) => {
-                  const payload = {
-                    title: values.title,
-                    description: values.description || undefined,
-                    discountType: values.discountType,
-                    discountValue: parseFloat(values.discountValue),
-                    minOrderAmount: values.minOrderAmount
-                      ? parseFloat(values.minOrderAmount)
-                      : undefined,
-                    maxDiscount: values.maxDiscount
-                      ? parseFloat(values.maxDiscount)
-                      : undefined,
-                    startsAt: new Date(values.startsAt).toISOString(),
-                    endsAt: new Date(values.endsAt).toISOString(),
-                    usageLimit: values.usageLimit
-                      ? parseInt(values.usageLimit, 10)
-                      : undefined,
-                  };
-
-                  if (editing) {
-                    await updateMutation.mutateAsync({
-                      offerId: editing.id,
-                      payload,
-                    });
-                  } else {
-                    await createMutation.mutateAsync(payload);
-                  }
-                  setSheetOpen(false);
-                  setEditing(null);
-                }}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {sheetOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9990] flex items-end justify-center"
+                onClick={() => !isSaving && setSheetOpen(false)}
               >
-                {({ values, setFieldValue }) => (
-                  <Form className="p-5 space-y-5">
-                    {/* Active deals limit warning */}
-                    {!editing && !canCreateActive && (
-                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
-                        <IonIcon icon={alertCircleOutline} className="text-red-500 text-base mt-0.5 shrink-0" />
-                        <div>
-                          <p className="text-xs font-semibold text-red-700">Active limit reached</p>
-                          <p className="text-[10px] text-red-500 mt-0.5">
-                            You already have 3 active deals. Your new deal will be created but
-                            it will only go live when another deal expires or is deactivated.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                  className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl max-h-[90vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
+                    <h3 className="text-base font-bold text-slate-800 dark:text-white">
+                      {editing ? "Edit Deal" : "New Deal"}
+                    </h3>
+                    <button
+                      onClick={() => !isSaving && setSheetOpen(false)}
+                      className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
+                    >
+                      <IonIcon
+                        icon={closeOutline}
+                        className="text-lg text-slate-500 dark:text-slate-400"
+                      />
+                    </button>
+                  </div>
 
-                    {/* Title */}
-                    <DealFormField name="title" label="Deal Title" placeholder="e.g. 20% off all services" />
+                  <Formik
+                    initialValues={{
+                      title: editing?.title ?? "",
+                      description: editing?.description ?? "",
+                      discountType:
+                        editing?.discountType ??
+                        ("percentage" as "percentage" | "flat"),
+                      discountValue: editing?.discountValue?.toString() ?? "",
+                      minOrderAmount: editing?.minOrderAmount?.toString() ?? "",
+                      maxDiscount: editing?.maxDiscount?.toString() ?? "",
+                      startsAt: editing
+                        ? new Date(editing.startsAt).toISOString().slice(0, 10)
+                        : new Date().toISOString().slice(0, 10),
+                      endsAt: editing
+                        ? new Date(editing.endsAt).toISOString().slice(0, 10)
+                        : "",
+                      usageLimit: editing?.usageLimit?.toString() ?? "",
+                    }}
+                    validationSchema={offerSchema}
+                    onSubmit={async (values) => {
+                      const payload = {
+                        title: values.title,
+                        description: values.description || undefined,
+                        discountType: values.discountType,
+                        discountValue: parseFloat(values.discountValue),
+                        minOrderAmount: values.minOrderAmount
+                          ? parseFloat(values.minOrderAmount)
+                          : undefined,
+                        maxDiscount: values.maxDiscount
+                          ? parseFloat(values.maxDiscount)
+                          : undefined,
+                        startsAt: new Date(values.startsAt).toISOString(),
+                        endsAt: new Date(values.endsAt).toISOString(),
+                        usageLimit: values.usageLimit
+                          ? parseInt(values.usageLimit, 10)
+                          : undefined,
+                      };
 
-                    {/* Description */}
-                    <DealFormField name="description" label="Description" placeholder="Optional details about this deal" />
-
-                    {/* Discount Type Toggle */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Discount Type</label>
-                      <div className="flex bg-slate-100 dark:bg-slate-700 rounded-xl p-1 gap-1">
-                        {(["percentage", "flat"] as const).map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => setFieldValue("discountType", type)}
-                            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                              values.discountType === type
-                                ? "bg-white dark:bg-slate-600 text-teal-700 dark:text-teal-300 shadow-sm"
-                                : "text-slate-500 dark:text-slate-400"
-                            }`}
-                          >
-                            {type === "percentage" ? "Percentage (%)" : "Flat Amount (₹)"}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Discount Value */}
-                    <DealFormField
-                      name="discountValue"
-                      label={values.discountType === "percentage" ? "Discount Percentage" : "Discount Amount (₹)"}
-                      placeholder={values.discountType === "percentage" ? "e.g. 20" : "e.g. 100"}
-                      type="number"
-                    />
-
-                    {/* Min Order + Max Discount Row */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <DealFormField name="minOrderAmount" label="Min Order (₹)" placeholder="Optional" type="number" />
-                      {values.discountType === "percentage" ? (
-                        <DealFormField name="maxDiscount" label="Max Discount (₹)" placeholder="Optional cap" type="number" />
-                      ) : (
-                        <div />
-                      )}
-                    </div>
-
-                    {/* Dates Row */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <DealFormField name="startsAt" label="Start Date" type="date" />
-                      <DealFormField name="endsAt" label="End Date" type="date" />
-                    </div>
-
-                    {/* Usage Limit */}
-                    <DealFormField name="usageLimit" label="Usage Limit" placeholder="Unlimited if blank" type="number" />
-
-                    {/* Actions */}
-                    <div className="space-y-2 pt-2 pb-4">
-                      <button
-                        type="submit"
-                        disabled={isSaving}
-                        className="w-full py-3.5 bg-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {isSaving ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          editing ? "Update Deal" : "Create Deal"
+                      if (editing) {
+                        await updateMutation.mutateAsync({
+                          offerId: editing.id,
+                          payload,
+                        });
+                      } else {
+                        await createMutation.mutateAsync(payload);
+                      }
+                      setSheetOpen(false);
+                      setEditing(null);
+                    }}
+                  >
+                    {({ values, setFieldValue }) => (
+                      <Form className="p-5 space-y-5">
+                        {/* Active deals limit warning */}
+                        {!editing && !canCreateActive && (
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
+                            <IonIcon
+                              icon={alertCircleOutline}
+                              className="text-red-500 text-base mt-0.5 shrink-0"
+                            />
+                            <div>
+                              <p className="text-xs font-semibold text-red-700">
+                                Active limit reached
+                              </p>
+                              <p className="text-[10px] text-red-500 mt-0.5">
+                                You already have 3 active deals. Your new deal
+                                will be created but it will only go live when
+                                another deal expires or is deactivated.
+                              </p>
+                            </div>
+                          </div>
                         )}
-                      </button>
 
-                      {editing && (
-                        <button
-                          type="button"
-                          onClick={() => setDeleteOpen(true)}
-                          className="w-full py-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
-                        >
-                          <IonIcon icon={trashOutline} className="text-sm" />
-                          Delete Deal
-                        </button>
-                      )}
+                        {/* Title */}
+                        <DealFormField
+                          name="title"
+                          label="Deal Title"
+                          placeholder="e.g. 20% off all services"
+                        />
 
-                      {(createMutation.isError || updateMutation.isError) && (
-                        <p className="text-xs text-red-500 text-center mt-1">
-                          {((createMutation.error || updateMutation.error) as any)?.response?.data?.message ||
-                            "Something went wrong. Please try again."}
-                        </p>
-                      )}
-                    </div>
-                  </Form>
-                )}
-              </Formik>
-            </motion.div>
-          </motion.div>
+                        {/* Description */}
+                        <DealFormField
+                          name="description"
+                          label="Description"
+                          placeholder="Optional details about this deal"
+                        />
+
+                        {/* Discount Type Toggle */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                            Discount Type
+                          </label>
+                          <div className="flex bg-slate-100 dark:bg-slate-700 rounded-xl p-1 gap-1">
+                            {(["percentage", "flat"] as const).map((type) => (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() =>
+                                  setFieldValue("discountType", type)
+                                }
+                                className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                                  values.discountType === type
+                                    ? "bg-white dark:bg-slate-600 text-teal-700 dark:text-teal-300 shadow-sm"
+                                    : "text-slate-500 dark:text-slate-400"
+                                }`}
+                              >
+                                {type === "percentage"
+                                  ? "Percentage (%)"
+                                  : "Flat Amount (₹)"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Discount Value */}
+                        <DealFormField
+                          name="discountValue"
+                          label={
+                            values.discountType === "percentage"
+                              ? "Discount Percentage"
+                              : "Discount Amount (₹)"
+                          }
+                          placeholder={
+                            values.discountType === "percentage"
+                              ? "e.g. 20"
+                              : "e.g. 100"
+                          }
+                          type="number"
+                        />
+
+                        {/* Min Order + Max Discount Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <DealFormField
+                            name="minOrderAmount"
+                            label="Min Order (₹)"
+                            placeholder="Optional"
+                            type="number"
+                          />
+                          {values.discountType === "percentage" ? (
+                            <DealFormField
+                              name="maxDiscount"
+                              label="Max Discount (₹)"
+                              placeholder="Optional cap"
+                              type="number"
+                            />
+                          ) : (
+                            <div />
+                          )}
+                        </div>
+
+                        {/* Dates Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <DealFormField
+                            name="startsAt"
+                            label="Start Date"
+                            type="date"
+                          />
+                          <DealFormField
+                            name="endsAt"
+                            label="End Date"
+                            type="date"
+                          />
+                        </div>
+
+                        {/* Usage Limit */}
+                        <DealFormField
+                          name="usageLimit"
+                          label="Usage Limit"
+                          placeholder="Unlimited if blank"
+                          type="number"
+                        />
+
+                        {/* Actions */}
+                        <div className="space-y-2 pt-2 pb-4">
+                          <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="w-full py-3.5 bg-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {isSaving ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : editing ? (
+                              "Update Deal"
+                            ) : (
+                              "Create Deal"
+                            )}
+                          </button>
+
+                          {editing && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteOpen(true)}
+                              className="w-full py-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
+                            >
+                              <IonIcon
+                                icon={trashOutline}
+                                className="text-sm"
+                              />
+                              Delete Deal
+                            </button>
+                          )}
+
+                          {(createMutation.isError ||
+                            updateMutation.isError) && (
+                            <p className="text-xs text-red-500 text-center mt-1">
+                              {(
+                                (createMutation.error ||
+                                  updateMutation.error) as any
+                              )?.response?.data?.message ||
+                                "Something went wrong. Please try again."}
+                            </p>
+                          )}
+                        </div>
+                      </Form>
+                    )}
+                  </Formik>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
-      , document.body)}
 
       {/* Delete Confirmation Dialog */}
       <AppDialog
@@ -566,7 +722,11 @@ const ProviderDealsTab = () => {
             ? monetizationConfig.dealPricing.discountedPrice
             : monetizationConfig.dealPricing.price;
         })()}
-        originalPrice={dealInfo?.isGrowthSubscriber ? monetizationConfig?.dealPricing.price : undefined}
+        originalPrice={
+          dealInfo?.isGrowthSubscriber
+            ? monetizationConfig?.dealPricing.price
+            : undefined
+        }
         freeRemaining={dealInfo?.freeRemaining ?? 3}
         freeTotal={monetizationConfig?.freeQuotas.dealsLifetime ?? 3}
         isProSubscriber={dealInfo?.isProSubscriber ?? false}
@@ -618,12 +778,16 @@ const OfferCard = ({
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              active ? "bg-amber-50 dark:bg-amber-900/30" : "bg-slate-50 dark:bg-slate-700"
+              active
+                ? "bg-amber-50 dark:bg-amber-900/30"
+                : "bg-slate-50 dark:bg-slate-700"
             }`}
           >
             <IonIcon
               icon={active ? flashOutline : pricetagOutline}
-              className={`text-lg ${active ? "text-amber-500" : "text-slate-400"}`}
+              className={`text-lg ${
+                active ? "text-amber-500" : "text-slate-400"
+              }`}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -685,7 +849,10 @@ const DealFormField = ({
   type?: string;
 }) => (
   <div>
-    <label htmlFor={name} className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+    <label
+      htmlFor={name}
+      className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+    >
       {label}
     </label>
     <Field
@@ -695,6 +862,10 @@ const DealFormField = ({
       placeholder={placeholder}
       className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
     />
-    <ErrorMessage name={name} component="p" className="text-[10px] text-red-500 mt-1" />
+    <ErrorMessage
+      name={name}
+      component="p"
+      className="text-[10px] text-red-500 mt-1"
+    />
   </div>
 );
