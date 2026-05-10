@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
-  locationSharp,
-  rocketOutline,
+  locationOutline,
+  handRightOutline,
   checkmarkCircle,
   logoWhatsapp,
+  sparklesOutline,
 } from "ionicons/icons";
 import { useRequestCity } from "@/hooks/useServiceableCities";
 
@@ -30,40 +31,47 @@ export default function CityExpansionBanner({ city }: CityExpansionBannerProps) 
 
   const handleShare = () => {
     const text = encodeURIComponent(
-      `Hey! I just discovered Tijarah — a platform to find trusted local services. ` +
-      `They're launching in ${city} soon! Help us bring it here 👇\nhttps://tijarahconnect.com`
+      `I want Tijarah in ${city}! It's a platform to discover and book trusted local services. ` +
+      `Help bring it to our city 👇\nhttps://tijarahconnect.com`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="mx-4 mt-3 mb-2"
     >
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-amber-500 via-amber-500 to-orange-500 dark:from-amber-600 dark:via-amber-600 dark:to-orange-600 shadow-lg shadow-amber-500/20">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-[0.07] pointer-events-none">
-          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full border-[20px] border-white" />
-          <div className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full border-[14px] border-white" />
+      <div className="relative rounded-2xl overflow-hidden shadow-lg">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 dark:from-slate-900 dark:via-slate-950 dark:to-black" />
+
+        {/* Decorative elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-amber-500/[0.08] blur-2xl" />
+          <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-blue-500/[0.06] blur-2xl" />
+          <div className="absolute top-3 right-4 opacity-[0.04]">
+            <IonIcon icon={locationOutline} className="text-[80px] text-white" />
+          </div>
         </div>
 
-        <div className="relative z-10 px-5 py-5">
-          {/* Header */}
-          <div className="flex items-start gap-3 mb-4">
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <IonIcon icon={locationSharp} className="text-2xl text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-[17px] font-bold text-white leading-tight">
-                Tijarah isn&apos;t in {city} yet
-              </h3>
-              <p className="text-[13px] text-white/70 mt-1 leading-snug">
-                We&apos;re expanding fast! Request Tijarah in your city and we&apos;ll prioritize launching there.
-              </p>
-            </div>
+        <div className="relative z-10 px-5 pt-5 pb-4">
+          {/* Status pill */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wide">Expanding Soon</span>
           </div>
+
+          {/* Main content */}
+          <h3 className="text-[18px] font-bold text-white leading-snug mb-1.5">
+            We&apos;re not available in {city} — yet.
+          </h3>
+          <p className="text-[13px] text-white/50 leading-relaxed mb-5 max-w-[320px]">
+            Tijarah helps you discover, compare, and book trusted local services.
+            The more people request it, the sooner we launch in your area.
+          </p>
 
           {/* Action buttons */}
           <div className="flex gap-2.5">
@@ -73,24 +81,28 @@ export default function CityExpansionBanner({ city }: CityExpansionBannerProps) 
                   key="requested"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-white/20 backdrop-blur-sm"
+                  className="flex-1 flex items-center justify-center gap-2.5 h-[50px] rounded-xl bg-emerald-500/15 border border-emerald-500/20"
                 >
-                  <IonIcon icon={checkmarkCircle} className="text-xl text-white" />
-                  <span className="text-[14px] font-semibold text-white">Request Sent!</span>
+                  <IonIcon icon={checkmarkCircle} className="text-xl text-emerald-400" />
+                  <div>
+                    <p className="text-[13px] font-semibold text-emerald-400 leading-tight">You&apos;re on the list!</p>
+                    <p className="text-[10px] text-emerald-400/60">We&apos;ll let you know when we launch</p>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.button
                   key="request"
                   onClick={handleRequest}
                   disabled={requestCityMutation.isPending}
-                  className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-white text-amber-600 font-bold text-[14px] shadow-sm active:scale-[0.97] transition-transform"
+                  whileTap={{ scale: 0.97 }}
+                  className="flex-1 flex items-center justify-center gap-2 h-[50px] rounded-xl bg-amber-500 text-white font-bold text-[14px] shadow-md shadow-amber-500/25 transition-colors"
                 >
                   {requestCityMutation.isPending ? (
-                    <div className="w-5 h-5 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      <IonIcon icon={rocketOutline} className="text-lg" />
-                      <span>Request Tijarah in {city}</span>
+                      <IonIcon icon={handRightOutline} className="text-lg" />
+                      <span>Bring Tijarah to {city}</span>
                     </>
                   )}
                 </motion.button>
@@ -99,11 +111,17 @@ export default function CityExpansionBanner({ city }: CityExpansionBannerProps) 
 
             <button
               onClick={handleShare}
-              className="flex items-center justify-center gap-1.5 h-12 px-4 rounded-xl bg-white/20 backdrop-blur-sm text-white text-[13px] font-semibold active:scale-[0.97] transition-transform"
+              className="flex items-center justify-center gap-1.5 h-[50px] px-4 rounded-xl bg-white/[0.08] border border-white/[0.08] text-white text-[13px] font-semibold active:scale-[0.97] transition-transform"
             >
-              <IonIcon icon={logoWhatsapp} className="text-lg" />
+              <IonIcon icon={logoWhatsapp} className="text-lg text-green-400" />
               <span>Share</span>
             </button>
+          </div>
+
+          {/* Social proof hint */}
+          <div className="flex items-center gap-1.5 mt-3 justify-center">
+            <IonIcon icon={sparklesOutline} className="text-xs text-white/25" />
+            <p className="text-[10px] text-white/25">Join others requesting Tijarah in your city</p>
           </div>
         </div>
       </div>
