@@ -18,7 +18,7 @@ import {
 const SearchFilterChips = () => {
   const dispatch = useAppDispatch();
   const { filters } = useAppSelector((s) => s.search);
-  const { data: catResponse, isLoading: catsLoading } = useAllCategories(1, 200);
+  const { data: catResponse, isLoading: catsLoading } = useAllCategories(1, 100);
 
   const getCatName = (id: string): string | null => {
     if (catsLoading) return "…";
