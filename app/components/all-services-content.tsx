@@ -113,12 +113,21 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   }, [viewMode]);
 
   const user = useAppSelector((state) => state.auth.user as any);
+  const guestCoords = useAppSelector((state) => state.location.guestCoords);
+  const selectedCity = useAppSelector((state) => state.location.selectedCity);
+
+  // Effective location: user profile coords > guest coords from location picker
+  const effectiveLat = user?.latitude ?? guestCoords?.lat;
+  const effectiveLng = user?.longitude ?? guestCoords?.lng;
 
   const { data: addressData } = useReverseGeocode(
-    user?.latitude && user?.longitude
-      ? { lat: user.latitude, lng: user.longitude }
+    !selectedCity && effectiveLat && effectiveLng
+      ? { lat: effectiveLat, lng: effectiveLng }
       : null,
   );
+
+  // Effective city: selected city > reverse-geocoded city > user profile city
+  const effectiveCity = selectedCity ?? addressData?.city ?? user?.city;
 
   const {
     data,
@@ -128,10 +137,10 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     isLoading: isProvidersLoading,
     isFetching,
   } = useNearbyProviders({
-    lat: user?.latitude || 18.5204,
-    lng: user?.longitude || 73.8567,
+    lat: effectiveLat || 0,
+    lng: effectiveLng || 0,
     search: debouncedSearch,
-    city: addressData?.city,
+    city: effectiveCity,
     categoryIds: Array.from(filters.categoryIds),
     limit: 12,
     radius: filters.maxDistance || 15,

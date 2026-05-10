@@ -43,6 +43,13 @@ const PAGE_LIMIT = 12;
 export default function WomenLedPageContent() {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const guestCoords = useAppSelector((state) => state.location.guestCoords);
+  const selectedCity = useAppSelector((state) => state.location.selectedCity);
+
+  // Effective location: user profile > guest coords; selected city > user profile city
+  const effectiveLat = user?.latitude ?? guestCoords?.lat;
+  const effectiveLng = user?.longitude ?? guestCoords?.lng;
+  const effectiveCity = selectedCity ?? user?.city ?? undefined;
 
   const [sortBy, setSortBy] = useState<SortOption>("rating");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -65,12 +72,12 @@ export default function WomenLedPageContent() {
       limit: PAGE_LIMIT,
       sortBy,
       categoryIds: selectedCategory || undefined,
-      lat: user?.latitude ?? undefined,
-      lng: user?.longitude ?? undefined,
-      city: user?.city ?? undefined,
+      lat: effectiveLat ?? undefined,
+      lng: effectiveLng ?? undefined,
+      city: effectiveCity,
       search: debouncedSearch || undefined,
     }),
-    [sortBy, selectedCategory, user, debouncedSearch],
+    [sortBy, selectedCategory, effectiveLat, effectiveLng, effectiveCity, debouncedSearch],
   );
 
   const {
@@ -80,7 +87,7 @@ export default function WomenLedPageContent() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: ["women-led-hub", sortBy, selectedCategory, debouncedSearch, user?.city, user?.latitude, user?.longitude],
+    queryKey: ["women-led-hub", sortBy, selectedCategory, debouncedSearch, effectiveCity, effectiveLat, effectiveLng],
     queryFn: ({ pageParam = 1 }) => getWomenLedHub(buildParams(pageParam)),
     getNextPageParam: (lastPage) => {
       if (!lastPage?.meta) return undefined;
