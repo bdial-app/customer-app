@@ -88,7 +88,7 @@ export default function Home() {
   const hasSelectedCity = !!selectedCity;
   const [showLocationGate, setShowLocationGate] = useState(false);
 
-  const { data: serviceability } = useCheckServiceability(
+  const { data: serviceability, isLoading: isServiceabilityLoading, isError: isServiceabilityError } = useCheckServiceability(
     selectedCity,
     effectiveLat,
     effectiveLng,
@@ -221,11 +221,22 @@ export default function Home() {
     );
   }
 
+  // Block while serviceability check is in-flight
+  if (userMode === "customer" && hasSelectedCity && isServiceabilityLoading) {
+    return (
+      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-b from-[#0f3460] via-[#1a1a2e] to-[#16213e]">
+        <img src="/icons/512.png" alt="Tijarah" className="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-black/30" />
+        <div className="w-8 h-8 border-3 border-white/20 border-t-amber-400 rounded-full animate-spin" />
+        <p className="mt-4 text-white/40 text-sm">Checking availability...</p>
+      </div>
+    );
+  }
+
+  // Non-serviceable city OR serviceability check failed (fail-closed)
   if (
     userMode === "customer" &&
     hasSelectedCity &&
-    serviceability &&
-    !serviceability.serviceable
+    (isServiceabilityError || (serviceability && !serviceability.serviceable))
   ) {
     return (
       <ComingSoonScreen

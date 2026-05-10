@@ -28,7 +28,8 @@ export const useCheckServiceability = (
         lng,
       }),
     enabled: !!(city || (lat && lng)),
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 };
 
