@@ -69,21 +69,21 @@ function InviteFriendsContent() {
 
   return (
     <Page className="bg-gray-50 dark:!bg-slate-900">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800" style={{ paddingTop: "var(--sat,0px)" }}>
-        <div className="flex items-center gap-3 px-4 py-3">
-          <button
-            onClick={() => goBack("/")}
-            className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:bg-gray-200 dark:active:bg-slate-700 transition-colors"
-          >
-            <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </button>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Invite Friends</h1>
+      <div className="h-full overflow-y-auto overscroll-contain">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800" style={{ paddingTop: "var(--sat,0px)" }}>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <button
+              onClick={() => goBack("/")}
+              className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:bg-gray-200 dark:active:bg-slate-700 transition-colors"
+            >
+              <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Invite Friends</h1>
+          </div>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain">
-      <div className="px-5 pt-8 pb-20 space-y-6">
+        <div className="px-5 pt-8 pb-20 space-y-6">
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-200">
@@ -208,7 +208,7 @@ function InviteFriendsContent() {
           </button>
         </div>
       </div>
-      </div>
+      </div> {/* end h-full scroll container */}
     </Page>
   );
 }

@@ -19,16 +19,17 @@ import {
 const SearchFilterChips = () => {
   const dispatch = useAppDispatch();
   const { filters } = useAppSelector((s) => s.search);
-  const { data: catResponse } = useAllCategories(1, 100);
+  const { data: catResponse, isLoading: catsLoading } = useAllCategories(1, 200);
 
-  const getCatName = (id: string) => {
+  const getCatName = (id: string): string => {
+    if (catsLoading) return "…";
     for (const cat of catResponse?.data ?? []) {
       if (cat.id === id) return cat.name;
       for (const child of cat.children ?? []) {
         if (child.id === id) return child.name;
       }
     }
-    return id.slice(0, 8);
+    return "Category";
   };
 
   const chips: { key: string; label: string; onRemove: () => void }[] = [];
