@@ -126,8 +126,6 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
           ? "-bottom-2"
           : isIOSPlatform
           ? "-bottom-8"
-          : isAndroid
-          ? "-bottom-3"
           : "bottom-0"
       }`}
     >
