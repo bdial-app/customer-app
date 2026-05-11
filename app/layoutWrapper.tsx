@@ -33,7 +33,7 @@ import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import { initSentry } from "@/utils/sentry";
-import { hydrateStorageCache } from "@/utils/storage";
+import { hydrateStorageCache, removeItemSync } from "@/utils/storage";
 import { useStatusBar } from "@/hooks/useStatusBar";
 import { onReconnect } from "@/hooks/useNetworkStatus";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -253,8 +253,8 @@ function AccountPausedHandler() {
   }, []);
 
   const handleDismiss = useCallback(() => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    removeItemSync("user");
+    removeItemSync("token");
     store.dispatch(clearUser());
     setShowDialog(false);
     setResumeError(null);

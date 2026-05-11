@@ -29,6 +29,7 @@ import { useNearbyProviders } from "@/hooks/useProvider";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { getItemSync, setItemSync } from "@/utils/storage";
 
 type SortOption = "relevance" | "rating" | "distance" | "reviews";
 
@@ -83,7 +84,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("allServicesView") as "grid" | "list") || "grid";
+      return (getItemSync("allServicesView") as "grid" | "list") || "grid";
     }
     return "grid";
   });
@@ -108,7 +109,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   // Persist view mode
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("allServicesView", viewMode);
+      setItemSync("allServicesView", viewMode);
     }
   }, [viewMode]);
 

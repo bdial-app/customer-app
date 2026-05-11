@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import { NextIntlClientProvider } from "next-intl";
 import { type Locale, defaultLocale, isRTL, locales } from "@/i18n/config";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { getItemSync, setItemSync } from "@/utils/storage";
 
 interface LanguageContextValue {
   locale: Locale;
@@ -20,7 +21,7 @@ export const useLanguage = () => useContext(LanguageContext);
 
 function getStoredLocale(): Locale {
   if (typeof window === "undefined") return defaultLocale;
-  const stored = localStorage.getItem("preferredLanguage");
+  const stored = getItemSync("preferredLanguage");
   if (stored && locales.includes(stored as Locale)) return stored as Locale;
   return defaultLocale;
 }
@@ -46,7 +47,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const setLocale = useCallback(
     (newLocale: Locale) => {
       setLocaleState(newLocale);
-      localStorage.setItem("preferredLanguage", newLocale);
+      setItemSync("preferredLanguage", newLocale);
       loadMessages(newLocale);
 
       // Update document direction and lang

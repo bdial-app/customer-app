@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { isNativePlatform } from "@/utils/platform";
+import { getItemSync, setItemSync } from "@/utils/storage";
 
 export type PermissionState = "granted" | "denied" | "prompt" | "unknown";
 
@@ -39,7 +40,7 @@ interface PersistedState {
 
 function loadPersistedState(): PersistedState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = getItemSync(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
   return { lastPromptAt: null, dismissCount: 0, initialFlowDone: false };
@@ -47,7 +48,7 @@ function loadPersistedState(): PersistedState {
 
 function savePersistedState(state: PersistedState) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    setItemSync(STORAGE_KEY, JSON.stringify(state));
   } catch {}
 }
 

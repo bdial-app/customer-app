@@ -14,6 +14,8 @@ import {
 import { useRequestCity } from "@/hooks/useServiceableCities";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { setSelectedCity } from "@/store/slices/locationSlice";
+import { APP_BASE_URL, openWhatsApp, getAppDownloadLink } from "@/utils/sharing";
+import { isNativePlatform } from "@/utils/platform";
 
 interface ComingSoonScreenProps {
   city: string;
@@ -36,11 +38,11 @@ export default function ComingSoonScreen({ city, onChangeLocation }: ComingSoonS
   };
 
   const handleShareWhatsApp = () => {
-    const text = encodeURIComponent(
+    const link = isNativePlatform() ? getAppDownloadLink() : APP_BASE_URL;
+    openWhatsApp(
       `Hey! I just discovered Tijarah — a platform to find trusted local services. ` +
-      `They're launching in ${city} soon! Check it out 👇\nhttps://tijarahconnect.com`
+      `They're launching in ${city} soon! Check it out 👇\n${link}`
     );
-    window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   const handleChangeLocation = () => {

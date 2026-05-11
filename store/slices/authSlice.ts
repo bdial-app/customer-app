@@ -3,10 +3,8 @@ import { AuthResponse } from "@/services/auth.service";
 import {
   getTokenSync,
   getUserSync,
-  setItem,
-  removeItem,
-  setTokenCache,
-  setUserCache,
+  setItemSync,
+  removeItemSync,
 } from "@/utils/storage";
 
 interface AuthState {
@@ -40,39 +38,24 @@ const authSlice = createSlice({
     setUser(state, action: PayloadAction<AuthResponse>) {
       state.user = action.payload.user;
       state.token = action.payload.token ?? action.payload.accessToken ?? null;
-      // Persist to platform storage (async, fire-and-forget)
-      const token = state.token;
-      const user = state.user;
-      if (token) {
-        setTokenCache(token);
-        setItem("token", token);
-      }
-      if (user) {
-        const userJson = JSON.stringify(user);
-        setUserCache(userJson);
-        setItem("user", userJson);
-      }
+      if (state.token) setItemSync("token", state.token);
+      if (state.user) setItemSync("user", JSON.stringify(state.user));
     },
     // Sets only the user profile — usually after PATCH /users/me
     setProfile(state, action: PayloadAction<AuthResponse["user"]>) {
       state.user = action.payload;
-      const userJson = JSON.stringify(state.user);
-      setUserCache(userJson);
-      setItem("user", userJson);
+      setItemSync("user", JSON.stringify(state.user));
     },
     // Sets only the token
     setToken(state, action: PayloadAction<string>) {
       state.token = action.payload;
-      setTokenCache(state.token);
-      setItem("token", state.token);
+      setItemSync("token", state.token);
     },
     clearUser(state) {
       state.user = null;
       state.token = null;
-      setTokenCache(null);
-      setUserCache(null);
-      removeItem("token");
-      removeItem("user");
+      removeItemSync("token");
+      removeItemSync("user");
     },
     hydrateAuth(state) {
       const stored = hydrateFromStorage();

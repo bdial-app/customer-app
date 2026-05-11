@@ -8,6 +8,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Zoom } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
+import { shareContent } from "@/utils/sharing";
 import "swiper/css/zoom";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -141,7 +142,7 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
             <button
               type="button"
               aria-label="Share"
-              onClick={async () => { try { await navigator.share({ url: IMAGES[activeIdx]?.src }); } catch {} }}
+              onClick={async () => { try { await shareContent({ title: IMAGES[activeIdx]?.label || 'Photo', text: '', url: IMAGES[activeIdx]?.src || '' }); } catch {} }}
               className="flex items-center justify-center w-10 h-10 rounded-xl text-[#0a84ff] active:bg-white/10 transition-colors"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

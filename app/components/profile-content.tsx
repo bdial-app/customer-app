@@ -86,6 +86,7 @@ import {
 } from "@/services/bug-report.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { removeItemSync } from "@/utils/storage";
 
 interface UserProfile {
   mobileNumber: string;
@@ -342,8 +343,8 @@ const ProfileContent = memo(() => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    removeItemSync("user");
+    removeItemSync("token");
     dispatch(clearUser());
     resetProviderState();
     setLogoutActionSheetOpen(false);
@@ -359,8 +360,8 @@ const ProfileContent = memo(() => {
     setIsDeleting(true);
     try {
       await deleteMyAccount();
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      removeItemSync("user");
+      removeItemSync("token");
       dispatch(clearUser());
       resetProviderState();
       setDeleteSheetOpen(false);
@@ -385,8 +386,8 @@ const ProfileContent = memo(() => {
     setIsPausing(true);
     try {
       await pauseMyAccount();
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      removeItemSync("user");
+      removeItemSync("token");
       dispatch(clearUser());
       resetProviderState();
       setPauseSheetOpen(false);

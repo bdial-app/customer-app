@@ -11,6 +11,7 @@ import { useNotification } from "@/app/context/NotificationContext";
 import { useAuthGateContext } from "@/app/context/AuthGateContext";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
+import { setItemSync, removeItemSync } from "@/utils/storage";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
@@ -46,10 +47,15 @@ const schemas: Record<Step, Yup.ObjectSchema<any>> = {
     otp: Yup.string().matches(/^\d{6}$/, "Enter 6 digit OTP").required("Required"),
   }),
   details: Yup.object({
-    name: Yup.string().min(3, "At least 3 characters").max(100, "Under 100 characters").required("Full name is required"),
+    name: Yup.string()
+      .trim()
+      .min(3, "At least 3 characters")
+      .max(100, "Under 100 characters")
+      .matches(/[a-zA-Z]/, "Name must contain at least one letter")
+      .required("Full name is required"),
     gender: Yup.string().oneOf(["male", "female", "other"]).required("Gender is required"),
-    city: Yup.string(),
-    area: Yup.string(),
+    city: Yup.string().max(100, "Under 100 characters"),
+    area: Yup.string().max(100, "Under 100 characters"),
     pincode: Yup.string().test("pincode", "Must be 6 digits", (v) => !v || /^\d{6}$/.test(v)),
   }),
 };
@@ -208,7 +214,7 @@ function AuthGateSheetContent() {
   useEffect(() => {
     return () => {
       if (pendingTokenRef.current) {
-        localStorage.removeItem("token");
+        removeItemSync("token");
         pendingTokenRef.current = null;
       }
     };
@@ -350,7 +356,7 @@ function AuthGateSheetContent() {
           if (res.user?.name) {
             // User already has a complete profile → log them in immediately
             if (jwt) {
-              localStorage.setItem("token", jwt);
+              setItemSync("token", jwt);
               dispatch(setToken(jwt));
             }
             dispatch(setProfile(res.user));
@@ -360,7 +366,7 @@ function AuthGateSheetContent() {
             // This prevents the app from considering them "logged in".
             if (jwt) {
               pendingTokenRef.current = jwt;
-              localStorage.setItem("token", jwt); // needed for the PATCH call
+              setItemSync("token", jwt); // cache + localStorage + Preferences
             }
             setStep("details");
           }
@@ -369,7 +375,7 @@ function AuthGateSheetContent() {
         }
       } else if (step === "details") {
         const payload: Record<string, any> = {
-          name: values.name,
+          name: values.name.trim(),
           gender: values.gender,
         };
         // Location fields are optional — include only if provided
@@ -380,9 +386,9 @@ function AuthGateSheetContent() {
           payload.latitude = geoLocation.lat;
           payload.longitude = geoLocation.lng;
         }
-        // Ensure the pending token is in localStorage for the PATCH call
+        // Ensure the pending token is available for the PATCH call
         if (pendingTokenRef.current) {
-          localStorage.setItem("token", pendingTokenRef.current);
+          setItemSync("token", pendingTokenRef.current);
         }
         await createAccountMutation.mutateAsync(payload as any);
         // createAccountMutation.onSuccess dispatches setProfile(user) — user now has a name.
@@ -438,7 +444,7 @@ function AuthGateSheetContent() {
         const jwt = (res as any).accessToken ?? (res as any).token;
         if (res.user?.name) {
           if (jwt) {
-            localStorage.setItem("token", jwt);
+            setItemSync("token", jwt);
             dispatch(setToken(jwt));
           }
           dispatch(setProfile(res.user));
@@ -447,7 +453,7 @@ function AuthGateSheetContent() {
           // Google SSO user without profile → hold token, show details
           if (jwt) {
             pendingTokenRef.current = jwt;
-            localStorage.setItem("token", jwt);
+            setItemSync("token", jwt);
           }
           setStep("details");
         }

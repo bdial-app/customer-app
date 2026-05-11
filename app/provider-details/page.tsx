@@ -38,6 +38,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
+import { shareProvider } from "@/utils/sharing";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
@@ -314,20 +315,13 @@ export default function ProviderDetailsPage() {
   const handleShare = async () => {
     if (!provider) return;
     trackShare();
-    const shareData = {
-      title: provider.brandName,
-      text: `Check out ${provider.brandName} – ${categoryLabel}\n⭐ ${
-        stats?.rating ?? 0
-      }\n${provider.description || ""}`,
-      url: window.location.href,
-    };
-    try {
-      if (navigator.share) await navigator.share(shareData);
-      else
-        await navigator.clipboard.writeText(
-          `${shareData.title}\n${shareData.text}\n${shareData.url}`,
-        );
-    } catch {}
+    await shareProvider({
+      id: provider.id,
+      brandName: provider.brandName,
+      description: provider.description,
+      categoryLabel,
+      rating: stats?.rating ?? 0,
+    });
   };
 
   // -- Loading --

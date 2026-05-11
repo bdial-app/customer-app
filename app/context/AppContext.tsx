@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from "react";
 import { updateUser } from "@/services/user.service";
+import { getItemSync, setItemSync, removeItemSync } from "@/utils/storage";
 
 export type ProviderStatus =
   | "not_applied"
@@ -19,7 +20,7 @@ const PROVIDER_STATUS_KEY = "tijarah_provider_status";
 function readStoredMode(): UserMode {
   if (typeof window === "undefined") return "customer";
   try {
-    const v = localStorage.getItem(USER_MODE_KEY);
+    const v = getItemSync(USER_MODE_KEY);
     return v === "provider" ? "provider" : "customer";
   } catch {
     return "customer";
@@ -29,7 +30,7 @@ function readStoredMode(): UserMode {
 function readStoredProviderStatus(): ProviderStatus {
   if (typeof window === "undefined") return "not_applied";
   try {
-    const v = localStorage.getItem(PROVIDER_STATUS_KEY);
+    const v = getItemSync(PROVIDER_STATUS_KEY);
     if (v && ["not_applied", "pending", "in_review", "approved", "rejected", "disabled", "deleted", "suspended"].includes(v)) {
       return v as ProviderStatus;
     }
@@ -67,7 +68,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const setProviderStatus = useCallback((status: ProviderStatus) => {
     _setProviderStatus(status);
-    try { localStorage.setItem(PROVIDER_STATUS_KEY, status); } catch {}
+    try { setItemSync(PROVIDER_STATUS_KEY, status); } catch {}
   }, []);
 
   // Hydrate from localStorage on mount (avoids SSR mismatch)
@@ -79,7 +80,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const setUserMode = useCallback((mode: UserMode) => {
     _setUserMode(mode);
-    try { localStorage.setItem(USER_MODE_KEY, mode); } catch {}
+    try { setItemSync(USER_MODE_KEY, mode); } catch {}
     updateUser({ preferredMode: mode }).catch(() => {});
   }, []);
 
@@ -90,7 +91,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review" || providerStatus === "suspended") {
       _setUserMode((prev) => {
         const next = prev === "customer" ? "provider" : "customer";
-        try { localStorage.setItem(USER_MODE_KEY, next); } catch {}
+        try { setItemSync(USER_MODE_KEY, next); } catch {}
         updateUser({ preferredMode: next }).catch(() => {});
         return next;
       });
@@ -101,7 +102,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setProviderStatus("not_applied");
     _setUserMode("customer");
     setProviderInfo(null);
-    try { localStorage.removeItem(USER_MODE_KEY); localStorage.removeItem(PROVIDER_STATUS_KEY); } catch {}
+    try { removeItemSync(USER_MODE_KEY); removeItemSync(PROVIDER_STATUS_KEY); } catch {}
   }, [setProviderStatus]);
 
   return (

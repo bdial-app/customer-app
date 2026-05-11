@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import apiClient from "@/utils/axios";
 import { useNativePlatform } from "./useNativePlatform";
+import { getItemSync, setItemSync } from "@/utils/storage";
 
 interface AppVersionInfo {
   latestVersion: string;
@@ -30,7 +31,7 @@ export function useAppUpdate() {
       setUpdateInfo(data);
 
       // Check if user already dismissed this version
-      const dismissed = localStorage.getItem(DISMISS_KEY);
+      const dismissed = getItemSync(DISMISS_KEY);
       if (dismissed === data.latestVersion && !data.forceUpdate) {
         setIsDismissed(true);
       } else {
@@ -54,7 +55,7 @@ export function useAppUpdate() {
 
   const dismiss = useCallback(() => {
     if (updateInfo) {
-      localStorage.setItem(DISMISS_KEY, updateInfo.latestVersion);
+      setItemSync(DISMISS_KEY, updateInfo.latestVersion);
     }
     setIsDismissed(true);
   }, [updateInfo]);

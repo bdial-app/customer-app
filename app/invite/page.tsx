@@ -13,15 +13,19 @@ import {
   checkmarkCircle,
 } from "ionicons/icons";
 import { useState } from "react";
-import { shareInvite, buildInviteLink } from "@/utils/sharing";
+import { shareInvite, buildInviteLink, openWhatsApp, getAppDownloadLink } from "@/utils/sharing";
 import { trackInvite } from "@/services/invite.service";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import PrivateRoute from "@/app/components/private-route";
+import { isNativePlatform } from "@/utils/platform";
 
 function InviteFriendsContent() {
   const router = useRouter();
   const { goBack } = useBackNavigation();
   const [copied, setCopied] = useState(false);
+
+  // On native, share store link; on web, share website link
+  const getShareableLink = () => isNativePlatform() ? getAppDownloadLink() : buildInviteLink();
 
   const handleShare = async (method: string) => {
     const result = await shareInvite();
@@ -39,7 +43,7 @@ function InviteFriendsContent() {
   };
 
   const handleCopyLink = async () => {
-    const link = buildInviteLink();
+    const link = getShareableLink();
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
@@ -55,11 +59,10 @@ function InviteFriendsContent() {
   };
 
   const handleWhatsApp = async () => {
-    const link = buildInviteLink();
-    const text = encodeURIComponent(
-      `Hey! Check out Tijarah Connect — discover amazing local businesses near you! ${link}`,
+    const link = getShareableLink();
+    openWhatsApp(
+      `Hey! Check out Tijarah Connect — discover amazing local businesses near you!\n\nDownload the app: ${link}`,
     );
-    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
     try {
       await trackInvite("whatsapp");
     } catch {

@@ -39,6 +39,7 @@ import OfflineFallback from "../offline-fallback";
 import { useProviderDetails } from "@/hooks/useProvider";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
+import { shareProvider } from "@/utils/sharing";
 import {
   ProviderDetailsPhoto,
   ProviderDetailsProduct,
@@ -319,11 +320,11 @@ const GrowthTips = ({
       desc: "Get 20% more reach with WhatsApp sharing",
       priority: "low" as const,
       action: () => {
-        if (navigator.share) {
-          navigator.share({
-            title: provider?.brandName || "My Business",
-            text: "Check out my business!",
-            url: window.location.origin,
+        if (provider) {
+          shareProvider({
+            id: provider.id,
+            brandName: provider.brandName || "My Business",
+            description: provider.description,
           });
         }
       },

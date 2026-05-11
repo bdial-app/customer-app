@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { getItemSync, setItemSync, removeItemSync } from "@/utils/storage";
 import type { SearchEntityType, SearchSortBy } from "@/services/search.service";
 
 interface SearchFilters {
@@ -30,7 +31,7 @@ const initialState: SearchState = {
   },
   recentSearchesLocal:
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("recentSearches") || "[]")
+      ? JSON.parse(getItemSync("recentSearches") || "[]")
       : [],
 };
 
@@ -70,7 +71,7 @@ const searchSlice = createSlice({
         ...state.recentSearchesLocal.filter((s) => s !== q),
       ].slice(0, MAX_LOCAL_RECENT);
       if (typeof window !== "undefined") {
-        localStorage.setItem(
+        setItemSync(
           "recentSearches",
           JSON.stringify(state.recentSearchesLocal)
         );
@@ -81,7 +82,7 @@ const searchSlice = createSlice({
         (s) => s !== action.payload
       );
       if (typeof window !== "undefined") {
-        localStorage.setItem(
+        setItemSync(
           "recentSearches",
           JSON.stringify(state.recentSearchesLocal)
         );
@@ -90,7 +91,7 @@ const searchSlice = createSlice({
     clearRecentSearchesLocal(state) {
       state.recentSearchesLocal = [];
       if (typeof window !== "undefined") {
-        localStorage.removeItem("recentSearches");
+        removeItemSync("recentSearches");
       }
     },
   },

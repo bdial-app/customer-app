@@ -13,6 +13,7 @@ import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
 import NotificationBell from "../notification-center/NotificationBell";
 import NotificationDropdown from "../notification-center/NotificationDropdown";
+import { shareProvider } from "@/utils/sharing";
 
 interface ProviderHeaderProps {
   provider: ProviderData | null;
@@ -72,13 +73,11 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: provider.brandName || "My Business",
-                    text: `Check out ${provider.brandName || "my business"} on Tijarah Connect!`,
-                    url: typeof window !== "undefined" ? `${window.location.origin}/provider-details/${provider.id}` : "",
-                  }).catch(() => {});
-                }
+                shareProvider({
+                  id: provider.id,
+                  brandName: provider.brandName || "My Business",
+                  description: provider.description,
+                });
               }}
               className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
             >

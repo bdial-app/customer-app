@@ -11,6 +11,8 @@ import {
   sparklesOutline,
 } from "ionicons/icons";
 import { useRequestCity } from "@/hooks/useServiceableCities";
+import { APP_BASE_URL, openWhatsApp, getAppDownloadLink } from "@/utils/sharing";
+import { isNativePlatform } from "@/utils/platform";
 
 interface CityExpansionBannerProps {
   city: string;
@@ -30,11 +32,11 @@ export default function CityExpansionBanner({ city }: CityExpansionBannerProps) 
   };
 
   const handleShare = () => {
-    const text = encodeURIComponent(
+    const link = isNativePlatform() ? getAppDownloadLink() : APP_BASE_URL;
+    openWhatsApp(
       `I want Tijarah in ${city}! It's a platform to discover and book trusted local services. ` +
-      `Help bring it to our city 👇\nhttps://tijarahconnect.com`
+      `Help bring it to our city 👇\n${link}`
     );
-    window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   return (
