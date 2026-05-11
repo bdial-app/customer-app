@@ -463,7 +463,11 @@ const CategorySelector = ({
   };
 
   const hasValidIcon = (cat: Category) =>
-    cat.icon && cat.icon.trim() !== "" && !brokenIcons.has(cat.id);
+    cat.icon && cat.icon.trim() !== "" && !brokenIcons.has(cat.id) &&
+    (cat.icon.startsWith('http') || cat.icon.startsWith('/'));
+
+  const isEmojiIcon = (cat: Category) =>
+    cat.icon && cat.icon.trim() !== "" && !hasValidIcon(cat);
 
   const filtered = search.trim()
     ? categories.filter((c) =>
@@ -556,6 +560,8 @@ const CategorySelector = ({
                 {hasValidIcon(cat) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={cat.icon!} alt="" className="w-4 h-4 rounded-full object-cover" onError={() => handleImgError(cat.id)} />
+                ) : isEmojiIcon(cat) ? (
+                  <span className="text-sm leading-none">{cat.icon}</span>
                 ) : (
                   <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center`}>
                     <span className="text-[8px] font-bold text-white">{cat.name.charAt(0)}</span>
@@ -633,6 +639,8 @@ const CategorySelector = ({
                         selected ? "ring-indigo-300" : "ring-slate-100"
                       }`}
                     />
+                  ) : isEmojiIcon(cat) ? (
+                    <span className="text-2xl leading-none">{cat.icon}</span>
                   ) : (
                     <div
                       className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center shadow-sm ${
@@ -1274,7 +1282,7 @@ const UnderReviewBanner = ({
   const config = {
     pending: {
       icon: timeOutline,
-      iconBg: "bg-amber-50 border-amber-200",
+      iconBg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800",
       iconColor: "text-amber-500",
       title: "Application Submitted",
       subtitle:
@@ -1287,7 +1295,7 @@ const UnderReviewBanner = ({
     },
     in_review: {
       icon: shieldCheckmarkOutline,
-      iconBg: "bg-blue-50 border-blue-200",
+      iconBg: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
       iconColor: "text-blue-500",
       title: "Under Active Review",
       subtitle:
@@ -1300,15 +1308,15 @@ const UnderReviewBanner = ({
     },
     approved: {
       icon: sparklesOutline,
-      iconBg: "bg-green-50 border-green-200",
+      iconBg: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800",
       iconColor: "text-green-500",
-      title: "You're Approved!",
+      title: "Registration Complete!",
       subtitle:
-        "Your provider account is active. Continue as a provider to manage your business, add products, and start receiving orders.",
+        "Your provider account has been created successfully. You can now switch to Provider Mode to set up your business, add products, and start connecting with customers.",
       steps: [
         { label: "Application submitted", done: true },
-        { label: "Identity verified", done: true },
-        { label: "Account activated", done: true },
+        { label: "Account created", done: true },
+        { label: "Ready to get started", done: true },
       ],
     },
   }[status];

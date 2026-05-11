@@ -6,8 +6,11 @@ import { inflateIfLow } from "@/utils/inflate-stats";
 
 const FALLBACK_ACTIVITIES = [
   { count: 0, text: "providers available in your area" },
-  { count: 0, text: "services completed near you today" },
-  { count: 0, text: "new requests in the last hour" },
+  { count: 0, text: "services completed this week" },
+  { count: 0, text: "businesses with active deals" },
+  { count: 0, text: "new reviews this week" },
+  { count: 4.5, text: "average rating", format: "rating" as const },
+  { count: 0, text: "service categories available" },
 ];
 
 interface LiveActivityPulseProps {
@@ -24,7 +27,9 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
     if (!Array.isArray(activities) || activities.length === 0) return FALLBACK_ACTIVITIES;
     return activities.map((a, i) => ({
       ...a,
-      count: inflateIfLow(a.count, `live_activity_${i}`, 5, 15),
+      count: a.format === 'rating'
+        ? (a.count > 0 ? a.count : 4.5)
+        : inflateIfLow(a.count, `live_activity_${i}`, 15, 40),
     }));
   }, [activities]);
 
@@ -33,9 +38,15 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
   }, [displayActivities.length]);
 
   useEffect(() => {
-    const timer = setInterval(next, 4500);
+    const timer = setInterval(next, 4000);
     return () => clearInterval(timer);
   }, [next]);
+
+  const current = displayActivities[index];
+  const isRating = current?.format === 'rating';
+  const displayCount = isRating
+    ? Number(current.count).toFixed(1)
+    : current?.count;
 
   return (
     <motion.div
@@ -63,15 +74,31 @@ const LiveActivityPulse = ({ lat, lng, city }: LiveActivityPulseProps) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25 }}
-              className="text-[12px] text-emerald-800 font-medium absolute whitespace-nowrap"
+              className="text-[12px] text-emerald-800 dark:text-emerald-200 font-medium absolute whitespace-nowrap"
             >
-              <span className="font-bold">{displayActivities[index].count}</span>{" "}
-              {displayActivities[index].text}
+              <span className="font-bold">{displayCount}</span>
+              {isRating && <span className="text-yellow-500"> &#9733; </span>}
+              {!isRating && " "}
+              {current?.text}
             </motion.p>
           </AnimatePresence>
         </div>
 
-        <span className="text-[10px] text-emerald-600 font-semibold shrink-0">
+        {/* Progress dots */}
+        <div className="flex gap-0.5 shrink-0">
+          {displayActivities.map((_, i) => (
+            <div
+              key={i}
+              className={`w-1 h-1 rounded-full transition-colors duration-300 ${
+                i === index
+                  ? "bg-emerald-500"
+                  : "bg-emerald-300/50 dark:bg-emerald-700/50"
+              }`}
+            />
+          ))}
+        </div>
+
+        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">
           LIVE
         </span>
       </div>

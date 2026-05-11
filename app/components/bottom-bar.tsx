@@ -111,12 +111,16 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
   );
 
   const isProvider = userMode === "provider";
-  const { isIOS, isAndroid } = useNativePlatform();
+  const { platform, isIOS, isAndroid } = useNativePlatform();
+
+  // iOS PWA (home screen) also needs the same bottom offset as Capacitor
+  // to account for env(safe-area-inset-bottom) on the home indicator
+  const isIOSPlatform = isIOS || platform === "ios";
 
   return (
     <div
       className={`fixed left-0 right-0 z-30 ${
-        isIOS ? "bottom-[-32px]" : isAndroid ? "-bottom-3" : "-bottom-2"
+        isIOSPlatform ? "bottom-[-32px]" : isAndroid ? "-bottom-3" : "-bottom-2"
       }`}
     >
       {/* Provider mode indicator */}

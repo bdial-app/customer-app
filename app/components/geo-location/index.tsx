@@ -38,7 +38,8 @@ import {
   mapOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { getCurrentPosition } from "@/utils/geolocation";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, LOCATION_UNAVAILABLE, openAppSettings } from "@/utils/geolocation";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 const DEFAULT_MAP_CENTER = { lat: 18.5204, lng: 73.8567 };
@@ -55,11 +56,15 @@ const GeoLocation = () => {
   const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [mapSearchResults, setMapSearchResults] = useState<SearchGeocodeResult[]>([]);
   const [isMapSearching, setIsMapSearching] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const mapSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapSearchInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const dragControls = useDragControls();
+  const keyboardOffset = useKeyboardOffset();
 
   const { isLoaded: isMapLoaded } = useGoogleMapsLoader();
 
@@ -153,8 +158,11 @@ const GeoLocation = () => {
   };
 
   const handleUseCurrentLocation = async () => {
+    setLocationDenied(false);
+    setLocationError(null);
+    setIsLocating(true);
     try {
-      const { latitude, longitude } = await getCurrentPosition({ timeout: 10000 });
+      const { latitude, longitude } = await getCurrentPosition({ timeout: 15000 });
       // Clear city immediately so serviceability re-evaluates with new coords
       dispatch(setSelectedCity(null));
       if (user) {
@@ -180,8 +188,20 @@ const GeoLocation = () => {
         dispatch(setSelectedCity(geo.city || null));
       }).catch(() => {});
       setOpen(false);
-    } catch {
-      // silently ignore – user denied or timed out
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === LOCATION_PERMISSION_DENIED) {
+        setLocationDenied(true);
+        setLocationError("Location permission denied. Please allow location access in app settings.");
+      } else if (code === LOCATION_SERVICES_DISABLED) {
+        setLocationError("GPS/Location services are turned off. Please enable them in your device settings.");
+      } else if (code === LOCATION_TIMEOUT) {
+        setLocationError("Could not get your location. Please try again in an open area with better GPS signal.");
+      } else {
+        setLocationError(err?.message || "Unable to get your location. Please try again.");
+      }
+    } finally {
+      setIsLocating(false);
     }
   };
 
@@ -405,8 +425,13 @@ const GeoLocation = () => {
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.4 }}
               onDragEnd={handleDragEnd}
-              className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+              className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl flex flex-col shadow-2xl"
+              style={{
+                bottom: keyboardOffset,
+                maxHeight: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "92dvh",
+                paddingBottom: keyboardOffset > 0 ? 8 : "env(safe-area-inset-bottom)",
+                transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
+              }}
             >
               {/* Drag handle */}
               <div
@@ -438,7 +463,7 @@ const GeoLocation = () => {
                     placeholder="Search for area, street name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent text-base text-slate-800 placeholder:text-slate-400 outline-none"
+                    className="flex-1 bg-transparent text-base text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   />
                   {searchQuery && (
                     <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchQuery("")}>
@@ -457,17 +482,41 @@ const GeoLocation = () => {
                     <motion.button
                       whileTap={{ scale: 0.98 }}
                       onClick={handleUseCurrentLocation}
-                      className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-3.5 text-left"
+                      disabled={isLocating}
+                      className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-3.5 text-left disabled:opacity-60"
                     >
                       <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                        <IonIcon icon={navigateCircleOutline} className="text-xl text-amber-600" />
+                        {isLocating ? (
+                          <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <IonIcon icon={navigateCircleOutline} className="text-xl text-amber-600" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-bold text-amber-800">Use Current Location</p>
+                        <p className="text-[13px] font-bold text-amber-800">
+                          {isLocating ? "Getting Location..." : "Use Current Location"}
+                        </p>
                         <p className="text-[11px] text-amber-600/70 mt-0.5">Using GPS</p>
                       </div>
-                      <IonIcon icon={chevronDown} className="text-sm text-amber-400 -rotate-90" />
+                      {!isLocating && <IonIcon icon={chevronDown} className="text-sm text-amber-400 -rotate-90" />}
                     </motion.button>
+
+                    {/* Location error banner */}
+                    {locationError && (
+                      <div className="mx-4 mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl p-3">
+                        <p className="text-[12px] text-red-600 dark:text-red-400 font-medium text-center leading-snug">
+                          {locationError}
+                        </p>
+                        {locationDenied && (
+                          <button
+                            onClick={() => openAppSettings()}
+                            className="mt-2 w-full text-[12px] font-semibold text-amber-600 dark:text-amber-400 underline underline-offset-2 text-center active:opacity-60"
+                          >
+                            Open Settings
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {/* Pick on Map CTA */}
                     <motion.button

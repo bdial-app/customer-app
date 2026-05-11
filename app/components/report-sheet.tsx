@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
@@ -53,6 +54,7 @@ export default function ReportSheet({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notify } = useNotification();
+  const keyboardOffset = useKeyboardOffset();
 
   const reasons = REASONS_BY_TYPE[entityType] || [];
 
@@ -135,7 +137,13 @@ export default function ReportSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 inset-x-0 z-101 bg-white dark:bg-slate-900 rounded-t-2xl max-h-[85vh] flex flex-col safe-area-bottom"
+            className="fixed inset-x-0 z-101 bg-white dark:bg-slate-900 rounded-t-2xl flex flex-col safe-area-bottom"
+            style={{
+              bottom: keyboardOffset,
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "85vh",
+              paddingBottom: keyboardOffset > 0 ? 8 : undefined,
+              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
+            }}
           >
             {/* Handle + Header */}
             <div className="shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">

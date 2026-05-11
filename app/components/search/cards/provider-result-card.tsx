@@ -66,11 +66,10 @@ const ProviderResultCard = ({ provider, index }: Props) => {
             </div>
           )}
 
-          {/* Women-led badge */}
+          {/* Women-led icon */}
           {provider.isWomenLed && (
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm text-purple-600 dark:text-purple-400">
-              <IonIcon icon={ribbonOutline} className="w-3 h-3" />
-              Women-Led
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-purple-600 dark:text-purple-400 p-1 rounded-lg flex items-center justify-center shadow-sm" title="Women-Led Business">
+              <IonIcon icon={ribbonOutline} className="w-3.5 h-3.5" />
             </div>
           )}
         </div>

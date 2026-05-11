@@ -177,12 +177,14 @@ const SearchZeroState = ({ onRecentTap, onTrendingTap, onCategoryTap }: Props) =
                         alt=""
                         className="w-full h-full object-cover"
                       />
-                    ) : cat.icon ? (
+                    ) : cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
                       <img
                         src={cat.icon}
                         alt=""
                         className="w-7 h-7 object-contain"
                       />
+                    ) : cat.icon ? (
+                      <span className="text-2xl leading-none">{cat.icon}</span>
                     ) : (
                       <span className="text-xl">📂</span>
                     )}

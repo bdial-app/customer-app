@@ -106,7 +106,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
                     priority={i < 5}
                     className="object-cover"
                   />
-                ) : cat.icon ? (
+                ) : cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
                   <Image
                     src={cat.icon}
                     alt={cat.name}
@@ -115,6 +115,8 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
                     priority={i < 5}
                     className="object-cover"
                   />
+                ) : cat.icon ? (
+                  <span className="text-3xl leading-none">{cat.icon}</span>
                 ) : (
                   <div className={`w-full h-full bg-gradient-to-br ${color.gradient} flex items-center justify-center`}>
                     <span className="text-xl font-bold text-white/80">{cat.name?.[0] || "?"}</span>

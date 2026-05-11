@@ -13,7 +13,7 @@ import { setGuestCoords, setSelectedCity, addRecentLocation } from "@/store/slic
 import { setProfile } from "@/store/slices/authSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useSearchGeocode } from "@/hooks/useGeocode";
-import { getCurrentPosition } from "@/utils/geolocation";
+import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, openAppSettings } from "@/utils/geolocation";
 import { reverseGeocode as reverseGeocodeApi, SearchGeocodeResult } from "@/services/geocode.service";
 import { useAppSelector } from "@/hooks/useAppStore";
 
@@ -28,6 +28,8 @@ export default function LocationGateScreen({ onLocationSet }: LocationGateScreen
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: searchResults, isLoading: isSearchLoading } = useSearchGeocode(searchQuery);
@@ -71,11 +73,23 @@ export default function LocationGateScreen({ onLocationSet }: LocationGateScreen
 
   const handleUseCurrentLocation = async () => {
     setIsLocating(true);
+    setLocationDenied(false);
+    setLocationError(null);
     try {
-      const { latitude, longitude } = await getCurrentPosition({ timeout: 10000 });
+      const { latitude, longitude } = await getCurrentPosition({ timeout: 15000 });
       await applyLocation(latitude, longitude);
-    } catch {
-      // Silently ignore — user denied or timed out
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === LOCATION_PERMISSION_DENIED) {
+        setLocationDenied(true);
+        setLocationError("Location permission denied. Please allow location access in app settings.");
+      } else if (code === LOCATION_SERVICES_DISABLED) {
+        setLocationError("GPS/Location services are turned off. Please enable them in your device settings.");
+      } else if (code === LOCATION_TIMEOUT) {
+        setLocationError("Could not get your location. Please try again in an open area.");
+      } else {
+        setLocationError(err?.message || "Unable to get your location. Please try again.");
+      }
     } finally {
       setIsLocating(false);
     }
@@ -142,6 +156,27 @@ export default function LocationGateScreen({ onLocationSet }: LocationGateScreen
           )}
           {isLocating ? "Detecting location..." : "Use Current Location"}
         </motion.button>
+
+        {/* Location error banner */}
+        {locationError && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-sm mt-3 bg-red-500/10 border border-red-400/20 rounded-xl p-3.5"
+          >
+            <p className="text-[13px] text-red-300 font-medium text-center leading-snug">
+              {locationError}
+            </p>
+            {locationDenied && (
+              <button
+                onClick={() => openAppSettings()}
+                className="mt-2 w-full text-[13px] font-semibold text-amber-400 underline underline-offset-2 text-center active:opacity-60"
+              >
+                Open Settings
+              </button>
+            )}
+          </motion.div>
+        )}
 
         {/* Divider */}
         <motion.div

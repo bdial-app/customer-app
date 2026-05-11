@@ -78,6 +78,7 @@ export interface CityProviders {
 export interface LiveActivity {
   count: number;
   text: string;
+  format?: 'rating';
 }
 
 export interface HomeProviderWithOffer {

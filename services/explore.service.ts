@@ -78,6 +78,15 @@ export interface ExplorePlatformStats {
   totalBookings: number;
 }
 
+export interface ExploreCommunityReview {
+  id: string;
+  name: string;
+  providerName: string;
+  text: string;
+  rating: number;
+  timeAgo: string;
+}
+
 export interface ExploreFeedResponse {
   sponsoredCarousel: SponsoredProvider[];
   activeOffers: ProviderWithOffer[];
@@ -87,6 +96,8 @@ export interface ExploreFeedResponse {
   topRated: ExploreProvider[];
   categorySpotlight: CategorySpotlight | null;
   newArrivals: ExploreProvider[];
+  communityReviews: ExploreCommunityReview[];
+  womenLedProviders: ExploreProvider[];
   platformStats: ExplorePlatformStats;
 }
 

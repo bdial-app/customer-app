@@ -118,6 +118,40 @@ function PwaHistoryGuard() {
   return null;
 }
 
+/**
+ * Handles Android hardware back button on Capacitor native.
+ * If there's browser history, navigates back. At root, minimizes the app
+ * instead of closing it (matches native Android app behavior).
+ */
+function NativeBackButtonHandler() {
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+
+    let cleanup: (() => void) | null = null;
+
+    (async () => {
+      try {
+        const { App } = await import("@capacitor/app");
+        const listener = await App.addListener("backButton", ({ canGoBack }) => {
+          if (canGoBack) {
+            window.history.back();
+          } else {
+            // At root — minimize instead of closing
+            App.minimizeApp();
+          }
+        });
+        cleanup = () => listener.remove();
+      } catch {
+        // @capacitor/app not available
+      }
+    })();
+
+    return () => { cleanup?.(); };
+  }, []);
+
+  return null;
+}
+
 function DeepLinkBridge() {
   useDeepLinks();
   return null;
@@ -314,6 +348,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <DeepLinkBridge />
               <ReconnectRefresher />
               <PwaHistoryGuard />
+              <NativeBackButtonHandler />
               {isNativePlatform() && <PermissionPrompt />}
               <NotificationProvider>
                 <App theme="ios">

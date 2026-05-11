@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.tijarah.app',
@@ -26,8 +27,7 @@ const config: CapacitorConfig = {
       backgroundColor: '#1a1799',
     },
     Keyboard: {
-      resize: 'body',
-      resizeOnFullScreen: true,
+      resize: KeyboardResize.None,
     },
   },
 };

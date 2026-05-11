@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -45,8 +45,9 @@ const SearchPageContent = () => {
   const lat = user?.latitude;
   const lng = user?.longitude;
 
-  // Hydrate Redux filters from URL params (for deep-links from explore, shared URLs, etc.)
-  useEffect(() => {
+  // Hydrate Redux filters from URL params BEFORE first render paints
+  const [filtersReady, setFiltersReady] = useState(false);
+  useLayoutEffect(() => {
     const catIds = searchParams.get("categoryIds");
     const sortBy = searchParams.get("sortBy");
     const minRating = searchParams.get("minRating");
@@ -60,13 +61,16 @@ const SearchPageContent = () => {
     if (maxDistance) dispatch(setMaxDistance(parseFloat(maxDistance)));
     if (verified === "true") dispatch(setVerifiedOnly(true));
     if (womenLed === "true") dispatch(setWomenLedOnly(true));
+    setFiltersReady(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const phase: SearchPhase = committedQuery
-    ? "results"
-    : debouncedQuery.length >= 1
-      ? "typing"
-      : "zero";
+  const phase: SearchPhase = !filtersReady
+    ? "zero"
+    : committedQuery
+      ? "results"
+      : debouncedQuery.length >= 1
+        ? "typing"
+        : "zero";
 
   const { data: suggestions = [], isFetching: isSuggestionsFetching } =
     useSearchSuggestions(

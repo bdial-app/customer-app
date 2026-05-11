@@ -43,12 +43,14 @@ const CategoryResultCard = ({ category, index, onTap }: Props) => {
             alt=""
             className="w-full h-full object-cover"
           />
-        ) : category.icon ? (
+        ) : category.icon && (category.icon.startsWith('http') || category.icon.startsWith('/')) ? (
           <img
             src={category.icon}
             alt=""
             className="w-6 h-6 object-contain"
           />
+        ) : category.icon ? (
+          <span className="text-2xl leading-none">{category.icon}</span>
         ) : (
           <span className="text-lg">📂</span>
         )}

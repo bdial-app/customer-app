@@ -162,6 +162,12 @@ const DealCard = ({
         <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-0.5 line-clamp-1">
           {deal.offerTitle}
         </p>
+        {/* Services / Category */}
+        {deal.services && (
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">
+            {deal.services}
+          </p>
+        )}
         {/* Multiple offers indicator */}
         {(deal.providerDealCount ?? 1) > 1 && (
           <p className="text-[9px] text-blue-500 dark:text-blue-400 font-medium mt-0.5">
@@ -263,6 +269,18 @@ const DealsPageContent = () => {
     [data]
   );
   const total = data?.pages[0]?.total ?? 0;
+
+  // Compute deal stats for summary bar
+  const dealStats = useMemo(() => {
+    if (deals.length === 0) return null;
+    const maxDiscount = Math.max(...deals.map((d) => d.discountValue));
+    const endingSoonCount = deals.filter((d) => {
+      const diff = new Date(d.offerEndsAt).getTime() - Date.now();
+      return diff > 0 && diff <= 7 * 24 * 60 * 60 * 1000;
+    }).length;
+    const verifiedCount = deals.filter((d) => d.verified).length;
+    return { maxDiscount, endingSoonCount, verifiedCount };
+  }, [deals]);
 
   // Active filter count for badge
   const activeFilterCount = useMemo(() => {
@@ -689,9 +707,40 @@ const DealsPageContent = () => {
         </div>
       )}
 
+      {/* Deals Stats Summary */}
+      {!isLoading && deals.length > 0 && dealStats && (
+        <div className="mx-4 mt-3 mb-2 bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 rounded-xl p-3 flex items-center justify-around border border-rose-100 dark:border-rose-900/30">
+          <div className="text-center">
+            <p className="text-[14px] font-bold text-rose-600 dark:text-rose-400">{total}</p>
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">Active Deals</p>
+          </div>
+          <div className="w-px h-7 bg-rose-200 dark:bg-rose-800/50" />
+          <div className="text-center">
+            <p className="text-[14px] font-bold text-rose-600 dark:text-rose-400">
+              {dealStats.maxDiscount}%
+            </p>
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">Best Discount</p>
+          </div>
+          {dealStats.endingSoonCount > 0 && (
+            <>
+              <div className="w-px h-7 bg-rose-200 dark:bg-rose-800/50" />
+              <div className="text-center">
+                <p className="text-[14px] font-bold text-orange-500">{dealStats.endingSoonCount}</p>
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">Ending Soon</p>
+              </div>
+            </>
+          )}
+          <div className="w-px h-7 bg-rose-200 dark:bg-rose-800/50" />
+          <div className="text-center">
+            <p className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400">{dealStats.verifiedCount}</p>
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">Verified</p>
+          </div>
+        </div>
+      )}
+
       {/* Results Count */}
       {!isLoading && deals.length > 0 && (
-        <div className="px-4 pt-3 pb-1">
+        <div className="px-4 pt-1 pb-1">
           <p className="text-[11px] font-medium text-slate-400">
             Showing {deals.length} of {total} deal{total !== 1 ? "s" : ""}
           </p>

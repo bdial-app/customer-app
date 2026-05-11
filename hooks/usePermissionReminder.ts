@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { isNativePlatform, getNativePlatform } from "@/utils/platform";
+import { isNativePlatform } from "@/utils/platform";
 import { shouldRePromptPermissions } from "./useAppPermissions";
+import { openAppSettings } from "@/utils/geolocation";
 
 interface PermissionReminderState {
   /** Whether a reminder banner should be shown */
@@ -90,22 +91,7 @@ export function usePermissionReminder(): PermissionReminderState {
   }, []);
 
   const openSettings = useCallback(async () => {
-    try {
-      const platform = getNativePlatform();
-      if (platform === "ios") {
-        // Opens the app's settings page on iOS
-        const { App } = await import("@capacitor/app");
-        // @ts-expect-error - openUrl exists on native
-        await App.openUrl({ url: "app-settings:" });
-      } else if (platform === "android") {
-        const { App } = await import("@capacitor/app");
-        const info = await App.getInfo();
-        // @ts-expect-error - openUrl exists on native
-        await App.openUrl({ url: `package:${info.id}` });
-      }
-    } catch {
-      // Fallback: just dismiss
-    }
+    await openAppSettings();
     setShowReminder(false);
   }, []);
 
