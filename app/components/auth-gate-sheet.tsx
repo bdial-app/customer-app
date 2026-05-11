@@ -24,6 +24,7 @@ import {
 import { CITY_NAMES } from "@/app/data/locations";
 import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/geocode.service";
 import type { SearchGeocodeResult } from "@/services/geocode.service";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 // ─── Constants ──────────────────────────────────────────────────
 // TODO: Re-enable when native Google + Apple SSO are implemented
@@ -794,23 +795,7 @@ function AuthGateSheetContent() {
 export default function AuthGateSheet() {
   const { isAuthGateOpen, closeAuthGate } = useAuthGateContext();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      // Keyboard height = difference between layout viewport and visual viewport
-      const offset = window.innerHeight - vv.height - vv.offsetTop;
-      setKeyboardOffset(Math.max(0, offset));
-    };
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, []);
+  const keyboardOffset = useKeyboardOffset();
 
   return (
     <AnimatePresence>

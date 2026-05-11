@@ -1,4 +1,4 @@
-import { isNativePlatform } from "./platform";
+import { isNativePlatform, getNativePlatform } from "./platform";
 import { Geolocation } from "@capacitor/geolocation";
 
 export interface GeoPosition {
@@ -11,6 +11,9 @@ export interface GeoOptions {
   timeout?: number;
   maximumAge?: number;
 }
+
+/** Error code to distinguish "denied" from other failures */
+export const LOCATION_PERMISSION_DENIED = "LOCATION_PERMISSION_DENIED";
 
 /**
  * Get current position using Capacitor Geolocation on native,
@@ -26,7 +29,9 @@ export async function getCurrentPosition(
       permStatus.location !== "granted" &&
       permStatus.coarseLocation !== "granted"
     ) {
-      throw new Error("Location permission denied");
+      const err = new Error("Location permission denied");
+      (err as any).code = LOCATION_PERMISSION_DENIED;
+      throw err;
     }
 
     const pos = await Geolocation.getCurrentPosition({
@@ -56,6 +61,12 @@ export async function getCurrentPosition(
         });
       },
       (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          const err = new Error("Location permission denied");
+          (err as any).code = LOCATION_PERMISSION_DENIED;
+          reject(err);
+          return;
+        }
         reject(error);
       },
       {
@@ -65,4 +76,28 @@ export async function getCurrentPosition(
       },
     );
   });
+}
+
+/**
+ * Open the device's app settings page so the user can enable location permission.
+ */
+export async function openAppSettings(): Promise<void> {
+  if (!isNativePlatform()) return;
+
+  try {
+    const platform = getNativePlatform();
+    const { App } = await import("@capacitor/app");
+
+    if (platform === "android") {
+      const info = await App.getInfo();
+      // Opens the app's settings page on Android
+      await (App as any).openUrl({
+        url: `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${info.id};end`,
+      });
+    } else if (platform === "ios") {
+      await (App as any).openUrl({ url: "app-settings:" });
+    }
+  } catch {
+    // Fallback — nothing we can do
+  }
 }

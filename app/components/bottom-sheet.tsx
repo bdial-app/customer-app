@@ -2,6 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 interface BottomSheetProps {
   opened: boolean;
@@ -26,6 +27,7 @@ export const BottomSheet = ({
   headerRight,
 }: BottomSheetProps) => {
   const [mounted, setMounted] = useState(false);
+  const keyboardOffset = useKeyboardOffset();
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -50,8 +52,13 @@ export const BottomSheet = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className={`fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl overflow-hidden flex flex-col ${className}`}
-            style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
+            className={`fixed inset-x-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl overflow-hidden flex flex-col ${className}`}
+            style={{
+              bottom: keyboardOffset,
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
+              paddingBottom: keyboardOffset > 0 ? 8 : "max(env(safe-area-inset-bottom), 0px)",
+              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
+            }}
           >
             {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-1">

@@ -38,7 +38,7 @@ import {
   mapOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { getCurrentPosition } from "@/utils/geolocation";
+import { getCurrentPosition, LOCATION_PERMISSION_DENIED, openAppSettings } from "@/utils/geolocation";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 const DEFAULT_MAP_CENTER = { lat: 18.5204, lng: 73.8567 };
@@ -55,6 +55,7 @@ const GeoLocation = () => {
   const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [mapSearchResults, setMapSearchResults] = useState<SearchGeocodeResult[]>([]);
   const [isMapSearching, setIsMapSearching] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
   const mapSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapSearchInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -153,6 +154,7 @@ const GeoLocation = () => {
   };
 
   const handleUseCurrentLocation = async () => {
+    setLocationDenied(false);
     try {
       const { latitude, longitude } = await getCurrentPosition({ timeout: 10000 });
       // Clear city immediately so serviceability re-evaluates with new coords
@@ -180,8 +182,10 @@ const GeoLocation = () => {
         dispatch(setSelectedCity(geo.city || null));
       }).catch(() => {});
       setOpen(false);
-    } catch {
-      // silently ignore – user denied or timed out
+    } catch (err: any) {
+      if (err?.code === LOCATION_PERMISSION_DENIED) {
+        setLocationDenied(true);
+      }
     }
   };
 
@@ -468,6 +472,21 @@ const GeoLocation = () => {
                       </div>
                       <IonIcon icon={chevronDown} className="text-sm text-amber-400 -rotate-90" />
                     </motion.button>
+
+                    {/* Location permission denied banner */}
+                    {locationDenied && (
+                      <div className="mx-4 mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl p-3">
+                        <p className="text-[12px] text-red-600 dark:text-red-400 font-medium text-center leading-snug">
+                          Location permission is denied. Please enable it in your device settings.
+                        </p>
+                        <button
+                          onClick={() => openAppSettings()}
+                          className="mt-2 w-full text-[12px] font-semibold text-amber-600 dark:text-amber-400 underline underline-offset-2 text-center active:opacity-60"
+                        >
+                          Open Settings
+                        </button>
+                      </div>
+                    )}
 
                     {/* Pick on Map CTA */}
                     <motion.button
