@@ -44,7 +44,6 @@ import {
   arrowBack,
   pauseCircleOutline,
   downloadOutline,
-  folderOpenOutline,
   eyeOffOutline,
   eyeOutline,
   powerOutline,
@@ -605,7 +604,7 @@ const ProfileContent = memo(() => {
               }
               onClick={toggleTheme}
             />
-            <LanguageMenuButton onClick={() => setActivePage("language")} />
+            {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
           {/* Support */}
@@ -1011,7 +1010,7 @@ const ProfileContent = memo(() => {
               }
               onClick={toggleTheme}
             />
-            <LanguageMenuButton onClick={() => setActivePage("language")} />
+            {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
           {/* ── Support Section ──────────────────────────────────── */}
@@ -1084,14 +1083,6 @@ const ProfileContent = memo(() => {
                   />
                 )
               }
-            />
-            <MenuRow
-              icon={folderOpenOutline}
-              iconColor="text-teal-500"
-              iconBg="bg-teal-50"
-              label="Manage Saved Data"
-              sublabel="Locations, favourites, history"
-              onClick={() => router.push("/add-location")}
             />
           </MenuSection>
 

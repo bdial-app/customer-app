@@ -13,6 +13,8 @@ import {
   closeCircle,
   navigateOutline,
   warningOutline,
+  addOutline,
+  trashOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -24,22 +26,19 @@ import {
   reverseGeocode,
   ReverseGeocodeResponse,
 } from "@/services/geocode.service";
-import { useCreateSavedLocation } from "@/hooks/useSavedLocation";
+import {
+  useSavedLocations,
+  useCreateSavedLocation,
+  useDeleteSavedLocation,
+} from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
 import PrivateRoute from "@/app/components/private-route";
 import { getCurrentPosition } from "@/utils/geolocation";
+import { AppDialog } from "@/app/components/app-dialog";
+import { SavedLocation } from "@/services/saved-location.service";
 
-
-
-const containerStyle = {
-  width: "100%",
-  height: "100%",
-};
-
-const defaultCenter = {
-  lat: 18.5204,
-  lng: 73.8567,
-};
+const containerStyle = { width: "100%", height: "100%" };
+const defaultCenter = { lat: 18.5204, lng: 73.8567 };
 
 const locationTypes = [
   { key: "Home", icon: homeOutline, label: "Home", value: "home" },
@@ -47,10 +46,158 @@ const locationTypes = [
   { key: "Other", icon: locationOutline, label: "Other", value: "other" },
 ];
 
-const AddLocationContent = () => {
-  const router = useRouter();
-  const { goBack } = useBackNavigation();
+const typeIconMap: Record<string, string> = {
+  home: homeOutline,
+  work: briefcaseOutline,
+  other: locationOutline,
+};
 
+// ─── Saved Addresses List ────────────────────────────────────────────
+const SavedAddressList = ({ onAdd }: { onAdd: () => void }) => {
+  const { goBack } = useBackNavigation();
+  const { data: locations, isLoading } = useSavedLocations();
+  const deleteMutation = useDeleteSavedLocation();
+  const [pendingDelete, setPendingDelete] = useState<SavedLocation | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) return;
+    deleteMutation.mutate(pendingDelete.id, {
+      onSettled: () => setPendingDelete(null),
+    });
+  };
+
+  return (
+    <Page className="bg-white dark:bg-neutral-950">
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div
+          className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-800"
+          style={{ paddingTop: "var(--sat,0px)" }}
+        >
+          <div className="flex items-center gap-3 px-4 pt-3 pb-3">
+            <button
+              onClick={() => goBack("/")}
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95 transition-all"
+            >
+              <IonIcon
+                icon={arrowBack}
+                className="text-xl text-neutral-800 dark:text-neutral-200"
+              />
+            </button>
+            <h1 className="text-lg font-semibold text-neutral-900 dark:text-white flex-1">
+              Saved Addresses
+            </h1>
+            <button
+              onClick={onAdd}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-amber-400/10 active:scale-95 transition-all"
+            >
+              <IonIcon icon={addOutline} className="text-xl text-amber-500" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : !locations || locations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+                <IonIcon
+                  icon={locationOutline}
+                  className="text-2xl text-neutral-300"
+                />
+              </div>
+              <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
+                No saved addresses
+              </p>
+              <p className="text-sm text-neutral-400 mt-1 mb-6">
+                Add your home, office, or other locations
+              </p>
+              <button
+                onClick={onAdd}
+                className="px-6 py-3 bg-amber-400 text-neutral-900 font-semibold text-sm rounded-xl active:bg-amber-500 transition-colors"
+              >
+                Add Address
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {locations.map((loc) => (
+                <motion.div
+                  key={loc.id}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl px-4 py-4"
+                >
+                  <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center shrink-0">
+                    <IonIcon
+                      icon={typeIconMap[loc.title] ?? locationOutline}
+                      className="text-lg text-amber-500"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 capitalize">
+                      {loc.title}
+                    </p>
+                    <p className="text-xs text-neutral-400 truncate mt-0.5">
+                      {loc.fullAddress}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setPendingDelete(loc)}
+                    className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95 transition-all shrink-0"
+                  >
+                    <IonIcon
+                      icon={trashOutline}
+                      className="text-lg text-red-400"
+                    />
+                  </button>
+                </motion.div>
+              ))}
+
+              <button
+                onClick={onAdd}
+                className="w-full mt-2 h-12 rounded-xl border-2 border-dashed border-neutral-200 dark:border-neutral-700 text-sm font-medium text-neutral-400 hover:border-amber-400 hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+              >
+                <IonIcon icon={addOutline} className="text-base" />
+                Add Another Address
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AppDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        icon={trashOutline}
+        iconColor="text-red-500"
+        iconBg="bg-red-50"
+        title="Remove Address?"
+        description={`Remove "${pendingDelete?.title}" (${pendingDelete?.fullAddress})?`}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        confirmColor="red"
+        isLoading={deleteMutation.isPending}
+        loadingLabel="Removing..."
+      />
+    </Page>
+  );
+};
+
+// ─── Add Address Flow ────────────────────────────────────────────────
+const AddAddressView = ({ onBack }: { onBack: () => void }) => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedType, setSelectedType] = useState("Home");
@@ -91,18 +238,15 @@ const AddLocationContent = () => {
     setMarker(newPos);
     setIsFocused(false);
     setSearchQuery("");
-
     if (mapRef.current) {
       mapRef.current.panTo(newPos);
       mapRef.current.setZoom(16);
     }
-
     await getAddress(lat, lng);
   };
 
   const handleSaveAddress = async () => {
     if (!fullLocation) return;
-
     const titleMap: Record<string, string> = {
       Home: "home",
       Office: "work",
@@ -118,11 +262,8 @@ const AddLocationContent = () => {
       fullAddress: fullLocation.fullAddress,
       placeId: fullLocation.placeId,
     };
-
     createSavedLocationMutation.mutate(payload, {
-      onSuccess: () => {
-        router.push("/");
-      },
+      onSuccess: () => onBack(),
     });
   };
 
@@ -140,7 +281,6 @@ const AddLocationContent = () => {
 
   const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
-    // If geolocation resolved before map loaded, pan to the updated marker now
     setMarker((current) => {
       if (
         current.lat !== defaultCenter.lat ||
@@ -153,18 +293,12 @@ const AddLocationContent = () => {
     });
   }, []);
 
-  const handleBack = () => {
-    if (isFocused) {
-      setIsFocused(false);
-      setSearchQuery("");
-    } else {
-      goBack("/");
-    }
-  };
-
   const handleLocateMe = useCallback(async () => {
     try {
-      const { latitude, longitude } = await getCurrentPosition({ timeout: 10000, maximumAge: 60000 });
+      const { latitude, longitude } = await getCurrentPosition({
+        timeout: 10000,
+        maximumAge: 60000,
+      });
       const newPos = { lat: latitude, lng: longitude };
       setMarker(newPos);
       getAddress(latitude, longitude);
@@ -182,11 +316,23 @@ const AddLocationContent = () => {
     searchInputRef.current?.focus();
   };
 
+  const handleBack = () => {
+    if (isFocused) {
+      setIsFocused(false);
+      setSearchQuery("");
+    } else {
+      onBack();
+    }
+  };
+
   return (
     <Page className="bg-white dark:bg-neutral-950">
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-800" style={{ paddingTop: "var(--sat,0px)" }}>
+        <div
+          className="sticky top-0 z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-800"
+          style={{ paddingTop: "var(--sat,0px)" }}
+        >
           <div className="flex items-center gap-3 px-4 pt-3 pb-2">
             <button
               onClick={handleBack}
@@ -234,7 +380,6 @@ const AddLocationContent = () => {
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {isFocused ? (
-              /* Search Results */
               <motion.div
                 key="search"
                 initial={{ opacity: 0 }}
@@ -243,7 +388,6 @@ const AddLocationContent = () => {
                 transition={{ duration: 0.15 }}
                 className="pb-8"
               >
-                {/* Use Current Location Button */}
                 <button
                   onClick={() => {
                     handleLocateMe();
@@ -271,7 +415,7 @@ const AddLocationContent = () => {
                     <p className="px-5 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
                       Search Results
                     </p>
-                    {searchResults.map((loc, index) => (
+                    {searchResults.map((loc) => (
                       <button
                         key={loc.placeId}
                         onClick={() => handleSelectLocation(loc)}
@@ -325,7 +469,6 @@ const AddLocationContent = () => {
                 ) : null}
               </motion.div>
             ) : (
-              /* Map + Details View */
               <motion.div
                 key="map"
                 initial={{ opacity: 0 }}
@@ -360,8 +503,6 @@ const AddLocationContent = () => {
                       options={{
                         disableDefaultUI: true,
                         zoomControl: false,
-                        // "greedy" lets the map scroll on single-finger drag on mobile
-                        // without showing the "use two fingers" overlay
                         gestureHandling: "greedy",
                       }}
                     >
@@ -374,7 +515,6 @@ const AddLocationContent = () => {
                     </div>
                   )}
 
-                  {/* Locate Me */}
                   <button
                     onClick={handleLocateMe}
                     className="absolute bottom-3 right-3 w-11 h-11 bg-white dark:bg-neutral-800 rounded-full shadow-lg shadow-black/10 flex items-center justify-center active:scale-95 transition-transform z-10"
@@ -388,7 +528,6 @@ const AddLocationContent = () => {
 
                 {/* Location Details Card */}
                 <div className="px-4 pt-5 pb-6">
-                  {/* Selected Address */}
                   <div className="bg-neutral-50 dark:bg-neutral-900 rounded-2xl p-4 border border-neutral-100 dark:border-neutral-800">
                     {isReverseLoading ? (
                       <div className="flex items-center gap-3">
@@ -480,7 +619,9 @@ const AddLocationContent = () => {
                   {/* Save Button */}
                   <button
                     onClick={handleSaveAddress}
-                    disabled={!address || createSavedLocationMutation.isPending}
+                    disabled={
+                      !address || createSavedLocationMutation.isPending
+                    }
                     className={`w-full mt-8 h-12 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
                       !address || createSavedLocationMutation.isPending
                         ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed"
@@ -506,10 +647,43 @@ const AddLocationContent = () => {
   );
 };
 
+// ─── Page Controller ─────────────────────────────────────────────────
+const AddLocationContent = () => {
+  const [view, setView] = useState<"list" | "add">("list");
+
+  return (
+    <AnimatePresence mode="wait">
+      {view === "list" ? (
+        <motion.div
+          key="list"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          className="h-full"
+        >
+          <SavedAddressList onAdd={() => setView("add")} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="add"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.2 }}
+          className="h-full"
+        >
+          <AddAddressView onBack={() => setView("list")} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 export default function AddLocationPage() {
   return (
     <PrivateRoute
-      title="Add Location"
+      title="Saved Addresses"
       description="Sign in to save and manage your favourite locations."
     >
       <AddLocationContent />
