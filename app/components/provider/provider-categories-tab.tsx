@@ -235,13 +235,15 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
                   }`}
                 >
                   {/* Icon */}
-                  {cat.icon && !brokenIcons.has(cat.id) ? (
+                  {cat.icon && !brokenIcons.has(cat.id) && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
                     <img
                       src={cat.icon}
                       alt={cat.name}
                       className="w-8 h-8 rounded-full object-cover"
                       onError={() => setBrokenIcons((s) => new Set(s).add(cat.id))}
                     />
+                  ) : cat.icon && !brokenIcons.has(cat.id) ? (
+                    <span className="text-xl leading-none">{cat.icon}</span>
                   ) : (
                     <div
                       className={`w-8 h-8 rounded-full bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center`}

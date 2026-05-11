@@ -463,7 +463,11 @@ const CategorySelector = ({
   };
 
   const hasValidIcon = (cat: Category) =>
-    cat.icon && cat.icon.trim() !== "" && !brokenIcons.has(cat.id);
+    cat.icon && cat.icon.trim() !== "" && !brokenIcons.has(cat.id) &&
+    (cat.icon.startsWith('http') || cat.icon.startsWith('/'));
+
+  const isEmojiIcon = (cat: Category) =>
+    cat.icon && cat.icon.trim() !== "" && !hasValidIcon(cat);
 
   const filtered = search.trim()
     ? categories.filter((c) =>
@@ -556,6 +560,8 @@ const CategorySelector = ({
                 {hasValidIcon(cat) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={cat.icon!} alt="" className="w-4 h-4 rounded-full object-cover" onError={() => handleImgError(cat.id)} />
+                ) : isEmojiIcon(cat) ? (
+                  <span className="text-sm leading-none">{cat.icon}</span>
                 ) : (
                   <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center`}>
                     <span className="text-[8px] font-bold text-white">{cat.name.charAt(0)}</span>
@@ -633,6 +639,8 @@ const CategorySelector = ({
                         selected ? "ring-indigo-300" : "ring-slate-100"
                       }`}
                     />
+                  ) : isEmojiIcon(cat) ? (
+                    <span className="text-2xl leading-none">{cat.icon}</span>
                   ) : (
                     <div
                       className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center shadow-sm ${
