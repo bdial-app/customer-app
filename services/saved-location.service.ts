@@ -27,3 +27,7 @@ export const getSavedLocations = async (): Promise<SavedLocation[]> => {
   const { data } = await apiClient.get(SAVED_LOCATION_URLS.LIST);
   return data;
 };
+
+export const deleteSavedLocation = async (id: string): Promise<void> => {
+  await apiClient.delete(SAVED_LOCATION_URLS.DELETE(id));
+};

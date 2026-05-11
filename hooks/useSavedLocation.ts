@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSavedLocation,
+  deleteSavedLocation,
   getSavedLocations,
   CreateSavedLocationPayload,
 } from "@/services/saved-location.service";
@@ -19,6 +20,16 @@ export const useCreateSavedLocation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateSavedLocationPayload) => createSavedLocation(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
+    },
+  });
+};
+
+export const useDeleteSavedLocation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSavedLocation(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
     },

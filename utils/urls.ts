@@ -33,6 +33,7 @@ export const GEOCODE_URLS = {
 export const SAVED_LOCATION_URLS = {
   LIST: "/saved-locations",
   CREATE: "/saved-locations",
+  DELETE: (id: string) => `/saved-locations/${id}`,
 };
 
 export const PROVIDER_URLS = {
