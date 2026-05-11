@@ -1282,7 +1282,7 @@ const UnderReviewBanner = ({
   const config = {
     pending: {
       icon: timeOutline,
-      iconBg: "bg-amber-50 border-amber-200",
+      iconBg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800",
       iconColor: "text-amber-500",
       title: "Application Submitted",
       subtitle:
@@ -1295,7 +1295,7 @@ const UnderReviewBanner = ({
     },
     in_review: {
       icon: shieldCheckmarkOutline,
-      iconBg: "bg-blue-50 border-blue-200",
+      iconBg: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
       iconColor: "text-blue-500",
       title: "Under Active Review",
       subtitle:
@@ -1308,15 +1308,15 @@ const UnderReviewBanner = ({
     },
     approved: {
       icon: sparklesOutline,
-      iconBg: "bg-green-50 border-green-200",
+      iconBg: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800",
       iconColor: "text-green-500",
-      title: "You're Approved!",
+      title: "Registration Complete!",
       subtitle:
-        "Your provider account is active. Continue as a provider to manage your business, add products, and start receiving orders.",
+        "Your provider account has been created successfully. You can now switch to Provider Mode to set up your business, add products, and start connecting with customers.",
       steps: [
         { label: "Application submitted", done: true },
-        { label: "Identity verified", done: true },
-        { label: "Account activated", done: true },
+        { label: "Account created", done: true },
+        { label: "Ready to get started", done: true },
       ],
     },
   }[status];

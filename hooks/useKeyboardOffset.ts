@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { isNativePlatform } from "@/utils/platform";
+import { isNativePlatform, getNativePlatform } from "@/utils/platform";
 
 /**
  * Returns the current software keyboard height in pixels.
  * - On Capacitor native: uses @capacitor/keyboard events (reliable on Android + iOS)
  * - On web/PWA: uses visualViewport API as fallback
+ *
+ * On Android with Keyboard.resize = 'none', the reported keyboardHeight
+ * may include the system navigation bar. We subtract the bottom safe area
+ * to avoid a gap between the keyboard and the sheet.
  */
 export function useKeyboardOffset(): number {
   const [offset, setOffset] = useState(0);
@@ -17,12 +21,35 @@ export function useKeyboardOffset(): number {
       let showCleanup: { remove: () => void } | null = null;
       let hideCleanup: { remove: () => void } | null = null;
       let cancelled = false;
+      const platform = getNativePlatform();
 
       import("@capacitor/keyboard").then(({ Keyboard }) => {
         if (cancelled) return;
 
         Keyboard.addListener("keyboardWillShow", (info) => {
-          setOffset(info.keyboardHeight);
+          let height = info.keyboardHeight;
+          // On Android, subtract the bottom safe area (navigation bar) to avoid
+          // a gap between keyboard and sheet — the safe area is already handled
+          // by the CSS env(safe-area-inset-bottom) on the sheets.
+          if (platform === "android") {
+            const safeBottom = parseInt(
+              getComputedStyle(document.documentElement)
+                .getPropertyValue("--sab") || "0",
+              10,
+            );
+            // Also try the CSS env value via a measurement element
+            if (!safeBottom) {
+              const el = document.createElement("div");
+              el.style.cssText = "position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden";
+              document.body.appendChild(el);
+              const measured = el.offsetHeight;
+              document.body.removeChild(el);
+              if (measured > 0) height = Math.max(0, height - measured);
+            } else {
+              height = Math.max(0, height - safeBottom);
+            }
+          }
+          setOffset(height);
         }).then((l) => { showCleanup = l; });
 
         Keyboard.addListener("keyboardWillHide", () => {

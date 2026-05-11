@@ -86,7 +86,7 @@ function InviteFriendsContent() {
         <div className="px-5 pt-8 pb-20 space-y-6">
         {/* Hero Section */}
         <div className="text-center space-y-4">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-200">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-200 dark:shadow-amber-900/30">
             <IonIcon icon={peopleOutline} className="w-10 h-10 text-white" />
           </div>
           <div>
@@ -150,14 +150,14 @@ function InviteFriendsContent() {
             onClick={handleWhatsApp}
             className="w-full flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform"
           >
-            <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center flex-shrink-0">
-              <IonIcon icon={logoWhatsapp} className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 rounded-2xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+              <IonIcon icon={logoWhatsapp} className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Share via WhatsApp
               </p>
-              <p className="text-[12px] text-gray-500">
+              <p className="text-[12px] text-gray-500 dark:text-slate-400">
                 Send to friends or groups
               </p>
             </div>
@@ -168,17 +168,17 @@ function InviteFriendsContent() {
             onClick={() => handleShare("native_share")}
             className="w-full flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform"
           >
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
               <IonIcon
                 icon={shareSocialOutline}
-                className="w-6 h-6 text-blue-600"
+                className="w-6 h-6 text-blue-600 dark:text-blue-400"
               />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 Share via Other Apps
               </p>
-              <p className="text-[12px] text-gray-500">
+              <p className="text-[12px] text-gray-500 dark:text-slate-400">
                 SMS, Email, Telegram & more
               </p>
             </div>
@@ -189,17 +189,17 @@ function InviteFriendsContent() {
             onClick={handleCopyLink}
             className="w-full flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
               <IonIcon
                 icon={copied ? checkmarkCircle : copyOutline}
-                className={`w-6 h-6 ${copied ? "text-green-600" : "text-amber-600"}`}
+                className={`w-6 h-6 ${copied ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}
               />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {copied ? "Link Copied!" : "Copy Invite Link"}
               </p>
-              <p className="text-[12px] text-gray-500">
+              <p className="text-[12px] text-gray-500 dark:text-slate-400">
                 {copied
                   ? "Paste it anywhere to share"
                   : "Copy link to share manually"}
