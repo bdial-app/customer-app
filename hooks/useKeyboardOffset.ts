@@ -1,83 +1,100 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { isNativePlatform, getNativePlatform } from "@/utils/platform";
+import { isNativePlatform } from "@/utils/platform";
 
 /**
- * Returns the current software keyboard height in pixels.
- * - On Capacitor native: uses @capacitor/keyboard events (reliable on Android + iOS)
- * - On web/PWA: uses visualViewport API as fallback
+ * Returns the current software-keyboard height in CSS pixels.
  *
- * On Android with Keyboard.resize = 'none', the reported keyboardHeight
- * may include the system navigation bar. We subtract the bottom safe area
- * to avoid a gap between the keyboard and the sheet.
+ * Strategy (native Capacitor with KeyboardResize.None):
+ *  1. `keyboardWillShow` — immediate response from the plugin.
+ *  2. `keyboardDidShow`  — refine the value with a visualViewport
+ *     measurement that is in CSS coordinates (fixes Android gap where
+ *     the plugin height includes the system navigation bar).
+ *  3. visualViewport `resize`/`scroll` — fallback for iOS if the
+ *     Capacitor keyboard events never fire.
+ *
+ * On web / PWA the hook relies on the visualViewport API exclusively.
  */
 export function useKeyboardOffset(): number {
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {
-    // ── Native Capacitor: use Keyboard plugin (most reliable) ──
-    if (isNativePlatform()) {
-      let showCleanup: { remove: () => void } | null = null;
-      let hideCleanup: { remove: () => void } | null = null;
-      let cancelled = false;
-      const platform = getNativePlatform();
+    const cleanups: (() => void)[] = [];
+    let cancelled = false;
+    let pluginActive = false; // true while the plugin says keyboard is open
 
-      import("@capacitor/keyboard").then(({ Keyboard }) => {
-        if (cancelled) return;
-
-        Keyboard.addListener("keyboardWillShow", (info) => {
-          let height = info.keyboardHeight;
-          // On Android, subtract the bottom safe area (navigation bar) to avoid
-          // a gap between keyboard and sheet — the safe area is already handled
-          // by the CSS env(safe-area-inset-bottom) on the sheets.
-          if (platform === "android") {
-            const safeBottom = parseInt(
-              getComputedStyle(document.documentElement)
-                .getPropertyValue("--sab") || "0",
-              10,
-            );
-            // Also try the CSS env value via a measurement element
-            if (!safeBottom) {
-              const el = document.createElement("div");
-              el.style.cssText = "position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden";
-              document.body.appendChild(el);
-              const measured = el.offsetHeight;
-              document.body.removeChild(el);
-              if (measured > 0) height = Math.max(0, height - measured);
-            } else {
-              height = Math.max(0, height - safeBottom);
-            }
-          }
-          setOffset(height);
-        }).then((l) => { showCleanup = l; });
-
-        Keyboard.addListener("keyboardWillHide", () => {
-          setOffset(0);
-        }).then((l) => { hideCleanup = l; });
-      }).catch(() => {});
-
-      return () => {
-        cancelled = true;
-        showCleanup?.remove();
-        hideCleanup?.remove();
-      };
-    }
-
-    // ── Web / PWA fallback: visualViewport API ──
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const update = () => {
-      const kb = window.innerHeight - vv.height - vv.offsetTop;
-      setOffset(Math.max(0, kb));
+    /** CSS-coordinate keyboard height derived from the visual viewport. */
+    const measureFromViewport = (): number => {
+      const vv = window.visualViewport;
+      if (!vv) return 0;
+      return Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
     };
 
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
+    if (isNativePlatform()) {
+      // ── Source 1: Capacitor Keyboard plugin ─────────────────────────
+      import("@capacitor/keyboard")
+        .then(({ Keyboard }) => {
+          if (cancelled) return;
+
+          // Fast initial response (may over-shoot on Android)
+          Keyboard.addListener("keyboardWillShow", (info) => {
+            pluginActive = true;
+            setOffset(info.keyboardHeight);
+          }).then((l) => cleanups.push(() => l.remove()));
+
+          // Once the keyboard is fully visible the visual-viewport has
+          // settled — prefer its measurement (CSS-accurate).
+          Keyboard.addListener("keyboardDidShow", (info) => {
+            pluginActive = true;
+            const vvH = measureFromViewport();
+            setOffset(vvH > 50 ? vvH : info.keyboardHeight);
+          }).then((l) => cleanups.push(() => l.remove()));
+
+          Keyboard.addListener("keyboardWillHide", () => {
+            pluginActive = false;
+            setOffset(0);
+          }).then((l) => cleanups.push(() => l.remove()));
+
+          Keyboard.addListener("keyboardDidHide", () => {
+            pluginActive = false;
+            setOffset(0);
+          }).then((l) => cleanups.push(() => l.remove()));
+        })
+        .catch(() => {});
+
+      // ── Source 2: visualViewport fallback ────────────────────────────
+      // Covers iOS edge-cases where Capacitor events may not fire.
+      const vv = window.visualViewport;
+      if (vv) {
+        const vvFallback = () => {
+          if (pluginActive) return; // plugin is already handling it
+          setOffset(measureFromViewport());
+        };
+        vv.addEventListener("resize", vvFallback);
+        vv.addEventListener("scroll", vvFallback);
+        cleanups.push(() => {
+          vv.removeEventListener("resize", vvFallback);
+          vv.removeEventListener("scroll", vvFallback);
+        });
+      }
+    } else {
+      // ── Web / PWA: visualViewport only ──────────────────────────────
+      const vv = window.visualViewport;
+      if (!vv) return;
+
+      const update = () => setOffset(measureFromViewport());
+      vv.addEventListener("resize", update);
+      vv.addEventListener("scroll", update);
+      cleanups.push(() => {
+        vv.removeEventListener("resize", update);
+        vv.removeEventListener("scroll", update);
+      });
+    }
+
     return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
+      cancelled = true;
+      cleanups.forEach((fn) => fn());
     };
   }, []);
 
