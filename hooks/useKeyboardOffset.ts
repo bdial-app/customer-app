@@ -37,18 +37,24 @@ export function useKeyboardOffset(): number {
         .then(({ Keyboard }) => {
           if (cancelled) return;
 
-          // Fast initial response (may over-shoot on Android)
+          // Fast initial response — may overshoot on Android because
+          // keyboardHeight includes the system navigation bar height.
           Keyboard.addListener("keyboardWillShow", (info) => {
             pluginActive = true;
             setOffset(info.keyboardHeight);
           }).then((l) => cleanups.push(() => l.remove()));
 
-          // Once the keyboard is fully visible the visual-viewport has
-          // settled — prefer its measurement (CSS-accurate).
-          Keyboard.addListener("keyboardDidShow", (info) => {
+          // On Android, visualViewport hasn't settled yet when this event
+          // fires. Defer one animation frame so the viewport is accurate
+          // before we measure. The vv "resize" listener below will also
+          // fire and converge to the same value.
+          Keyboard.addListener("keyboardDidShow", () => {
             pluginActive = true;
-            const vvH = measureFromViewport();
-            setOffset(vvH > 50 ? vvH : info.keyboardHeight);
+            requestAnimationFrame(() => {
+              if (cancelled) return;
+              const vvH = measureFromViewport();
+              if (vvH > 50) setOffset(vvH);
+            });
           }).then((l) => cleanups.push(() => l.remove()));
 
           Keyboard.addListener("keyboardWillHide", () => {
@@ -63,19 +69,28 @@ export function useKeyboardOffset(): number {
         })
         .catch(() => {});
 
-      // ── Source 2: visualViewport fallback ────────────────────────────
-      // Covers iOS edge-cases where Capacitor events may not fire.
+      // ── Source 2: visualViewport — always authoritative ──────────────
+      // Always let the visual viewport override the plugin's rough
+      // estimate. On Android the plugin overshoots (includes the nav bar);
+      // the vv resize event fires with the correct CSS value once the
+      // keyboard animation finishes. On iOS the two sources agree, so
+      // removing the `pluginActive` guard has no effect there.
       const vv = window.visualViewport;
       if (vv) {
-        const vvFallback = () => {
-          if (pluginActive) return; // plugin is already handling it
-          setOffset(measureFromViewport());
+        const vvUpdate = () => {
+          const measured = measureFromViewport();
+          if (measured > 50) {
+            setOffset(measured);
+          } else if (!pluginActive) {
+            // Only reset to 0 when the plugin confirms keyboard is hidden.
+            setOffset(0);
+          }
         };
-        vv.addEventListener("resize", vvFallback);
-        vv.addEventListener("scroll", vvFallback);
+        vv.addEventListener("resize", vvUpdate);
+        vv.addEventListener("scroll", vvUpdate);
         cleanups.push(() => {
-          vv.removeEventListener("resize", vvFallback);
-          vv.removeEventListener("scroll", vvFallback);
+          vv.removeEventListener("resize", vvUpdate);
+          vv.removeEventListener("scroll", vvUpdate);
         });
       }
     } else {
