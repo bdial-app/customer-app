@@ -962,11 +962,11 @@ const ProviderDashboard = ({
 }: ProviderDashboardProps) => {
   const router = useRouter();
   const { isOnline } = useNetworkStatus();
-  const { data: providerData, isLoading: providerLoading } = useMyProvider();
+  const { data: providerData, isLoading: providerLoading, isError: providerError, refetch: refetchProvider } = useMyProvider();
 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
-  const { data: details, isLoading: detailsLoading } =
+  const { data: details, isLoading: detailsLoading, isError: detailsError, refetch: refetchDetails } =
     useProviderDetails(providerId);
   const { data: currentSub } = useQuery({
     queryKey: ["current-subscription"],
@@ -1006,6 +1006,32 @@ const ProviderDashboard = ({
 
   if (!isOnline && !providerData) {
     return <OfflineFallback message="Connect to the internet to manage your business." />;
+  }
+
+  // Error state — show retry instead of blank/eternal loading
+  if ((providerError || detailsError) && !providerData) {
+    return (
+      <div className="pb-24">
+        <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 px-5 pt-3 pb-5"
+          style={{ paddingTop: "max(var(--sat,0px), 12px)" }}
+        >
+          <h1 className="text-lg font-bold text-white">Dashboard</h1>
+        </div>
+        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center mb-4">
+            <IonIcon icon={alertCircleOutline} className="text-3xl text-red-500" />
+          </div>
+          <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">Unable to load dashboard</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Something went wrong. Please try again.</p>
+          <button
+            onClick={() => { refetchProvider(); refetchDetails(); }}
+            className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (isLoading) {

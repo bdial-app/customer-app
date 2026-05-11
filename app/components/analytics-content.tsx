@@ -372,7 +372,7 @@ const AnalyticsContent = () => {
   const activeFilterCount = [leadStatus, leadSource, leadDateRange !== "all" ? leadDateRange : undefined, leadSearch.trim() || undefined, leadSortBy !== "score" ? leadSortBy : undefined].filter(Boolean).length;
 
   const { data: analytics } = useProviderAnalytics();
-  const { data: summary, isLoading: summaryLoading } = useAnalyticsSummary(period);
+  const { data: summary, isLoading: summaryLoading, isError: summaryError, refetch: refetchSummary } = useAnalyticsSummary(period);
   const { data: topProducts } = useTopProducts(period);
   const { data: peakHours } = usePeakHours(period);
   const { data: leadsData, isLoading: leadsLoading } = useLeads(leadFilters);
@@ -434,6 +434,35 @@ const AnalyticsContent = () => {
   // Offline + no cached analytics data → show fallback
   if (!isOnline && !summary) {
     return <OfflineFallback message="Connect to the internet to view your analytics." />;
+  }
+
+  // Error state — show retry UI instead of eternal loading skeletons
+  if (summaryError && !summary) {
+    return (
+      <div className="pb-24">
+        <div
+          className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
+        >
+          <div className="px-4 py-3">
+            <h1 className="text-lg font-bold text-white">Analytics</h1>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center mb-4">
+            <IonIcon icon={pulseOutline} className="text-3xl text-red-500" />
+          </div>
+          <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">Unable to load analytics</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Something went wrong. Please try again.</p>
+          <button
+            onClick={() => refetchSummary()}
+            className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Lead detail drill-in
