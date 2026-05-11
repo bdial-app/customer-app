@@ -603,7 +603,7 @@ const ProfileContent = memo(() => {
               }
               onClick={toggleTheme}
             />
-            <LanguageMenuButton onClick={() => setActivePage("language")} />
+            {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
           {/* Support */}
@@ -1009,7 +1009,7 @@ const ProfileContent = memo(() => {
               }
               onClick={toggleTheme}
             />
-            <LanguageMenuButton onClick={() => setActivePage("language")} />
+            {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
           {/* ── Support Section ──────────────────────────────────── */}
