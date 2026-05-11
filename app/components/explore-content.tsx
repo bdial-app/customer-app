@@ -16,6 +16,7 @@ import {
   checkmarkCircleOutline,
   navigateOutline,
   diamondOutline,
+  femaleOutline,
   megaphoneOutline,
   pricetagOutline,
   arrowForwardOutline,
@@ -28,6 +29,7 @@ import { useAppSelector } from "@/hooks/useAppStore";
 import { useToggleSaved, useSavedItemIds } from "@/hooks/useSavedItems";
 import { useExploreFeed, useTrackAd } from "@/hooks/useExplore";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import CommunityReviews from "@/app/components/home/community-reviews";
 import type {
   ExploreProvider,
   SponsoredProvider,
@@ -559,6 +561,12 @@ const ExploreContent = memo(() => {
               <IonIcon icon={locationOutline} className="text-sm text-blue-500" />
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Popular Nearby</h2>
             </div>
+            <button
+              onClick={() => router.push(`${ROUTE_PATH.SEARCH}?sortBy=distance`)}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
             {(Array.isArray(feed?.popularNearby) ? feed.popularNearby : []).map((p, i) => (
@@ -593,9 +601,17 @@ const ExploreContent = memo(() => {
       {/* ── 9. Top Rated ── */}
       {(feed?.topRated?.length ?? 0) > 0 && (
         <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
-          <div className="flex items-center gap-2 px-4 mb-2.5">
-            <IonIcon icon={star} className="text-sm text-amber-500" />
-            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
+          <div className="flex items-center justify-between px-4 mb-2.5">
+            <div className="flex items-center gap-2">
+              <IonIcon icon={star} className="text-sm text-amber-500" />
+              <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
+            </div>
+            <button
+              onClick={() => router.push(`${ROUTE_PATH.SEARCH}?sortBy=rating`)}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-amber-600 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
             {(Array.isArray(feed?.topRated) ? feed.topRated : []).map((p, i) => (
@@ -611,6 +627,19 @@ const ExploreContent = memo(() => {
           </div>
         </div>
       )}
+
+      {/* ── 9b. Community Reviews — social proof ── */}
+      <CommunityReviews
+        reviews={feed?.communityReviews?.map((r) => ({
+          id: r.id,
+          name: r.name,
+          providerName: r.providerName,
+          text: r.text,
+          rating: r.rating,
+          timeAgo: r.timeAgo,
+        }))}
+        isLoading={feedLoading}
+      />
 
       {/* ── 10. Category Spotlight ── */}
       {feed?.categorySpotlight && (
@@ -670,6 +699,36 @@ const ExploreContent = memo(() => {
                 onToggleSave={handleToggle}
                 onClick={() => goToProvider(p.id)}
                 isNew
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── 11b. Women-Led Spotlight ── */}
+      {(feed?.womenLedProviders?.length ?? 0) > 0 && (
+        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
+          <div className="flex items-center justify-between px-4 mb-2.5">
+            <div className="flex items-center gap-2">
+              <IonIcon icon={femaleOutline} className="text-sm text-purple-500" />
+              <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Women-Led Businesses</h2>
+            </div>
+            <button
+              onClick={() => router.push(`${ROUTE_PATH.SEARCH}?womenLed=true`)}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-purple-600 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
+            {(Array.isArray(feed?.womenLedProviders) ? feed.womenLedProviders : []).map((p, i) => (
+              <ExploreCarouselCard
+                key={p.id}
+                provider={p}
+                index={i}
+                isSaved={savedProviderIds.has(p.id)}
+                onToggleSave={handleToggle}
+                onClick={() => goToProvider(p.id)}
               />
             ))}
           </div>
