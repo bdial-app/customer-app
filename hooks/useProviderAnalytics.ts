@@ -27,6 +27,7 @@ export const useAnalyticsSummary = (period: "7d" | "30d" | "90d" = "7d") => {
     queryKey: [...ANALYTICS_SUMMARY_KEY, period],
     queryFn: () => getAnalyticsSummary(period),
     staleTime: 1000 * 60 * 2,
+    retry: 2,
   });
 };
 
@@ -35,6 +36,7 @@ export const useLeads = (filters: LeadFilters = {}) => {
     queryKey: [...ANALYTICS_LEADS_KEY, filters],
     queryFn: () => getLeads(filters),
     staleTime: 1000 * 60 * 2,
+    retry: 2,
   });
 };
 

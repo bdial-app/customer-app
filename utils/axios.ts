@@ -82,8 +82,26 @@ function shouldRefreshToken(token: string): boolean {
 
 // ─── Silent token refresh ───────────────────────────────────────────
 let isRefreshing = false;
-async function silentRefresh(): Promise<void> {
-  if (isRefreshing) return;
+let refreshSubscribers: Array<(token: string | null) => void> = [];
+
+/** Notify all queued requests after a refresh attempt */
+function onRefreshed(token: string | null) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+/** Subscribe to the refresh result — resolves when the refresh completes */
+function subscribeTokenRefresh(): Promise<string | null> {
+  return new Promise((resolve) => {
+    refreshSubscribers.push(resolve);
+  });
+}
+
+async function silentRefresh(): Promise<string | null> {
+  if (isRefreshing) {
+    // Already refreshing — wait for it
+    return subscribeTokenRefresh();
+  }
   isRefreshing = true;
   try {
     const { data } = await apiClient.post(
@@ -93,9 +111,14 @@ async function silentRefresh(): Promise<void> {
     if (data?.accessToken) {
       setTokenCache(data.accessToken);
       await import("@/utils/storage").then((m) => m.setItem("token", data.accessToken));
+      onRefreshed(data.accessToken);
+      return data.accessToken;
     }
+    onRefreshed(null);
+    return null;
   } catch {
-    // Refresh failed — token may already be expired, let normal 401 flow handle
+    onRefreshed(null);
+    return null;
   } finally {
     isRefreshing = false;
   }
@@ -135,9 +158,19 @@ let isHandling401 = false;
 // Response interceptor — unwrap data / handle global errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
     const status = error?.response?.status;
+    const originalConfig = error?.config;
+
+    // ── Retry on 5xx (transient server errors) ────────────────────
+    // Retry once for server errors (e.g. connection pool exhaustion returning 500)
+    if (status && status >= 500 && originalConfig && !originalConfig._retry5xx) {
+      originalConfig._retry5xx = true;
+      // Brief delay before retry
+      await new Promise((r) => setTimeout(r, 500));
+      return apiClient(originalConfig);
+    }
 
     // Detect paused account response
     if (
@@ -146,21 +179,38 @@ apiClient.interceptors.response.use(
     ) {
       pausedListeners.forEach((fn) => fn());
     }
-    // 401 or generic 403 (not paused) — trigger auth gate
-    // Only fire for authenticated requests (where a token was present).
-    else if (status === 401 || (status === 403 && error?.response?.data?.code !== "ACCOUNT_PAUSED")) {
-      const hadToken = !!error?.config?.headers?.Authorization;
-      // Clear stale token on 401
-      if (status === 401 && typeof window !== "undefined") {
+    // 401 — attempt silent refresh before giving up
+    else if (status === 401 && originalConfig && !originalConfig._retry401) {
+      originalConfig._retry401 = true;
+      const hadToken = !!originalConfig.headers?.Authorization;
+
+      if (hadToken) {
+        // Try to refresh the token first
+        const newToken = await silentRefresh();
+        if (newToken) {
+          // Retry the original request with the new token
+          originalConfig.headers.Authorization = `Bearer ${newToken}`;
+          return apiClient(originalConfig);
+        }
+      }
+
+      // Refresh failed or no token — clear and open auth gate
+      if (typeof window !== "undefined") {
         setTokenCache(null);
         removeItem("token");
       }
-      // Only trigger auth gate if the request had a token (stale session)
-      // Deduplicate: only trigger once per batch of concurrent 401s
       if (hadToken && !isHandling401) {
         isHandling401 = true;
         unauthorizedListeners.forEach((fn) => fn());
-        // Reset after a short delay to allow re-triggering if needed later
+        setTimeout(() => { isHandling401 = false; }, 2000);
+      }
+    }
+    // Generic 403 (not paused) — open auth gate
+    else if (status === 403 && error?.response?.data?.code !== "ACCOUNT_PAUSED") {
+      const hadToken = !!originalConfig?.headers?.Authorization;
+      if (hadToken && !isHandling401) {
+        isHandling401 = true;
+        unauthorizedListeners.forEach((fn) => fn());
         setTimeout(() => { isHandling401 = false; }, 2000);
       }
     }
