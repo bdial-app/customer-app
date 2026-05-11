@@ -34,18 +34,20 @@ import TimePicker from "../time-picker";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import { reverseGeocode, searchGeocode } from "@/services/geocode.service";
+import { checkContent } from "@/utils/content-sanitizer";
+import { useNotification } from "@/app/context/NotificationContext";
 
 interface ProviderDetailsTabProps {
   provider: ProviderData;
 }
 
 const detailsSchema = Yup.object({
-  brandName: Yup.string().required("Brand name is required"),
-  description: Yup.string().nullable(),
-  contactNumber: Yup.string().required("Phone number is required"),
-  address: Yup.string().nullable(),
-  city: Yup.string().required("City is required"),
-  area: Yup.string().nullable(),
+  brandName: Yup.string().trim().max(150, "Must be under 150 characters").required("Brand name is required"),
+  description: Yup.string().max(2000, "Must be under 2000 characters").nullable(),
+  contactNumber: Yup.string().max(15, "Must be under 15 characters").required("Phone number is required"),
+  address: Yup.string().max(300, "Must be under 300 characters").nullable(),
+  city: Yup.string().max(100, "Must be under 100 characters").required("City is required"),
+  area: Yup.string().max(100, "Must be under 100 characters").nullable(),
   pincode: Yup.string().matches(/^\d{6}$/, "Must be 6 digits").nullable(),
   openTime: Yup.string().nullable(),
   closeTime: Yup.string().nullable(),
@@ -168,18 +170,27 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
     }
   }, [handleMapSelect]);
 
+  const { notify } = useNotification();
+
   const handleSave = async (values: any) => {
+    // Content sanitization
+    const brandCheck = checkContent(values.brandName || "");
+    const descCheck = checkContent(values.description || "");
+    if (brandCheck.flagged || descCheck.flagged) {
+      notify({ title: "Inappropriate language", subtitle: "Please remove inappropriate language from your brand name or description.", variant: "error" });
+      return;
+    }
     try {
       await updateMutation.mutateAsync({
         id: provider.id,
         payload: {
-          brandName: values.brandName,
-          description: values.description || undefined,
-          contactNumber: values.contactNumber,
-          address: values.address || undefined,
-          city: values.city,
-          area: values.area || undefined,
-          pincode: values.pincode || undefined,
+          brandName: values.brandName?.trim(),
+          description: values.description?.trim() || undefined,
+          contactNumber: values.contactNumber?.trim(),
+          address: values.address?.trim() || undefined,
+          city: values.city?.trim(),
+          area: values.area?.trim() || undefined,
+          pincode: values.pincode?.trim() || undefined,
           openTime: values.openTime || undefined,
           closeTime: values.closeTime || undefined,
           ...(mapCoords ? { latitude: String(mapCoords.lat), longitude: String(mapCoords.lng) } : {}),

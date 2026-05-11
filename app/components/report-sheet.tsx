@@ -207,6 +207,7 @@ export default function ReportSheet({
                     }
                     placeholder="Please describe the issue (max 500 characters)"
                     rows={3}
+                    maxLength={500}
                     className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] text-slate-700 dark:text-white bg-transparent dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 resize-none"
                   />
                   <p className="text-[11px] text-slate-400 text-right mt-1">

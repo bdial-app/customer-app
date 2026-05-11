@@ -40,14 +40,16 @@ const validationSchemas = {
   }),
   details: Yup.object({
     name: Yup.string()
+      .trim()
       .min(3, "Must be at least 3 characters")
       .max(100, "Must be under 100 characters")
+      .matches(/[a-zA-Z]/, "Must contain at least one letter")
       .required("Full name is required"),
     gender: Yup.string()
       .oneOf(["male", "female", "other"])
       .required("Gender is required"),
-    city: Yup.string().required("City is required"),
-    area: Yup.string(),
+    city: Yup.string().max(100, "Must be under 100 characters").required("City is required"),
+    area: Yup.string().max(100, "Must be under 100 characters"),
     pincode: Yup.string()
       .matches(/^\d{6}$/, "Must be 6 digits")
       .required("Pincode is required"),

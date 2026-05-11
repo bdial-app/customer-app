@@ -12,6 +12,7 @@ import { useAuthGateContext } from "@/app/context/AuthGateContext";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { setItemSync, removeItemSync } from "@/utils/storage";
+import { checkContent } from "@/utils/content-sanitizer";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
@@ -374,13 +375,20 @@ function AuthGateSheetContent() {
           setIsVerifying(false);
         }
       } else if (step === "details") {
+        const trimmedName = values.name.trim();
+        // Content sanitization check
+        const nameCheck = checkContent(trimmedName);
+        if (nameCheck.flagged) {
+          notify({ title: "Invalid name", subtitle: "Your name contains inappropriate language. Please revise.", variant: "error" });
+          return;
+        }
         const payload: Record<string, any> = {
-          name: values.name.trim(),
+          name: trimmedName,
           gender: values.gender,
         };
         // Location fields are optional — include only if provided
-        if (values.city) payload.city = values.city;
-        if (values.area) payload.area = values.area;
+        if (values.city) payload.city = values.city?.trim();
+        if (values.area) payload.area = values.area?.trim();
         if (values.pincode) payload.pincode = values.pincode;
         if (geoLocation) {
           payload.latitude = geoLocation.lat;

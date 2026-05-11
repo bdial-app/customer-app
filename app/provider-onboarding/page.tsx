@@ -57,6 +57,7 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
 import FeatureGate from "@/app/components/feature-gate";
+import { checkContent } from "@/utils/content-sanitizer";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -85,8 +86,8 @@ type StepId = 1 | 2 | 3 | 4 | 5;
 // Validation schemas per step
 // ---------------------------------------------------------------------------
 const step1Schema = Yup.object({
-  brand_name: Yup.string().trim().required("Brand name is required"),
-  description: Yup.string().trim().required("Description is required"),
+  brand_name: Yup.string().trim().max(150, "Must be under 150 characters").required("Brand name is required"),
+  description: Yup.string().trim().max(2000, "Must be under 2000 characters").required("Description is required"),
   contact_number: Yup.string()
     .matches(/^\d{10}$/, "Enter a valid 10-digit mobile number")
     .required("Contact number is required"),
@@ -95,9 +96,9 @@ const step1Schema = Yup.object({
 });
 
 const step2Schema = Yup.object({
-  address: Yup.string().trim().required("Address is required"),
-  city: Yup.string().trim().required("City is required"),
-  area: Yup.string().trim().required("Area is required"),
+  address: Yup.string().trim().max(300, "Must be under 300 characters").required("Address is required"),
+  city: Yup.string().trim().max(100, "Must be under 100 characters").required("City is required"),
+  area: Yup.string().trim().max(100, "Must be under 100 characters").required("Area is required"),
   pincode: Yup.string()
     .matches(/^\d{6}$/, "Pincode must be 6 digits")
     .required("Pincode is required"),
@@ -1645,6 +1646,15 @@ const ProviderOnboardingPage = () => {
       setSubmitError("You must be logged in to become a provider.");
       return;
     }
+
+    // Content sanitization check
+    const nameCheck = checkContent(values.brand_name);
+    const descCheck = checkContent(values.description);
+    if (nameCheck.flagged || descCheck.flagged) {
+      setSubmitError("Your brand name or description contains inappropriate language. Please revise.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 

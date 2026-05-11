@@ -34,10 +34,12 @@ import { DealPaymentSheet } from "@/app/components/monetization/deal-payment-she
 import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
 import { createDealCreationCheckout } from "@/services/payment.service";
 import { payWithRazorpay } from "@/services/razorpay.service";
+import { checkContent } from "@/utils/content-sanitizer";
+import { useNotification } from "@/app/context/NotificationContext";
 
 const offerSchema = Yup.object({
-  title: Yup.string().required("Title is required").max(150),
-  description: Yup.string().max(500).nullable(),
+  title: Yup.string().trim().required("Title is required").max(150),
+  description: Yup.string().trim().max(500).nullable(),
   discountType: Yup.string().oneOf(["percentage", "flat"]).required(),
   discountValue: Yup.string().required("Discount value is required"),
   minOrderAmount: Yup.string().nullable(),
@@ -495,9 +497,15 @@ const ProviderDealsTab = () => {
                     }}
                     validationSchema={offerSchema}
                     onSubmit={async (values) => {
+                      // Content sanitization
+                      const titleCheck = checkContent(values.title);
+                      const descCheck = checkContent(values.description || "");
+                      if (titleCheck.flagged || descCheck.flagged) {
+                        return;
+                      }
                       const payload = {
-                        title: values.title,
-                        description: values.description || undefined,
+                        title: values.title.trim(),
+                        description: values.description?.trim() || undefined,
                         discountType: values.discountType,
                         discountValue: parseFloat(values.discountValue),
                         minOrderAmount: values.minOrderAmount

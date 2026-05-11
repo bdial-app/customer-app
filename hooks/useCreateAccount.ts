@@ -178,10 +178,10 @@ export const useCreateAccount = (initialMobile?: string) => {
 
     try {
       await createAccountMutation.mutateAsync({
-        name: values.name,
+        name: values.name?.trim(),
         gender: values.gender,
-        city: values.city,
-        area: values.area,
+        city: values.city?.trim(),
+        area: values.area?.trim(),
         pincode: values.pincode,
         latitude: location.lat,
         longitude: location.lng,

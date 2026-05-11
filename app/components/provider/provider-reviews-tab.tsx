@@ -13,6 +13,8 @@ import { List, ListInput } from "konsta/react";
 import { BottomSheet } from "../bottom-sheet";
 import { ProviderDetailsReview } from "@/services/provider.service";
 import { useReplyToReview } from "@/hooks/useMyProvider";
+import { checkContent } from "@/utils/content-sanitizer";
+import { useNotification } from "@/app/context/NotificationContext";
 
 interface ProviderReviewsTabProps {
   reviews: ProviderDetailsReview[];
@@ -23,6 +25,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
   const [selectedReview, setSelectedReview] = useState<ProviderDetailsReview | null>(null);
   const [replyText, setReplyText] = useState("");
   const replyMutation = useReplyToReview();
+  const { notify } = useNotification();
 
   const handleOpenReply = (review: ProviderDetailsReview) => {
     setSelectedReview(review);
@@ -32,6 +35,11 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
 
   const handleSubmitReply = () => {
     if (selectedReview && replyText.trim()) {
+      const contentCheck = checkContent(replyText.trim());
+      if (contentCheck.flagged) {
+        notify({ title: "Inappropriate language", subtitle: "Please remove inappropriate language from your reply.", variant: "error" });
+        return;
+      }
       replyMutation.mutate(
         { reviewId: selectedReview.id, replyText: replyText.trim() },
         { onSuccess: () => setReplySheet(false) },
@@ -208,7 +216,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               type="textarea"
               placeholder="Thank the customer for their feedback..."
               value={replyText}
-              onChange={(e: any) => setReplyText(e.target.value)}
+              onChange={(e: any) => setReplyText(e.target.value.slice(0, 2000))}
               inputClassName="!h-32 resize-none"
             />
           </List>

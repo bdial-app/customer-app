@@ -18,6 +18,7 @@ import {
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { ProviderDetailsProduct } from "@/services/provider.service";
+import { checkContent } from "@/utils/content-sanitizer";
 import { AppDialog } from "../app-dialog";
 import {
   useCreateProduct,
@@ -370,6 +371,13 @@ const ProviderProductsTab = ({
                 validationSchema={productSchema}
                 enableReinitialize
                 onSubmit={async (values) => {
+                  // Content sanitization
+                  const nameCheck = checkContent(values.name);
+                  const descCheck = checkContent(values.description || "");
+                  if (nameCheck.flagged || descCheck.flagged) {
+                    return;
+                  }
+
                   // Collect server URLs that the user kept
                   const keptServerUrls = photoPreviews.filter((u) => !u.startsWith("blob:"));
 
@@ -392,8 +400,8 @@ const ProviderProductsTab = ({
                   const photoUrls = [...keptServerUrls, ...newUrls];
 
                   const payload = {
-                    name: values.name,
-                    description: values.description || undefined,
+                    name: values.name.trim(),
+                    description: values.description?.trim() || undefined,
                     price: values.price ? parseFloat(values.price) : undefined,
                     currency: values.currency || "INR",
                     photoUrl: photoUrls[0] || undefined,

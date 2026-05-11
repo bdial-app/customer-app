@@ -34,18 +34,18 @@ import { FormikInput } from "./formik-input";
 import { AppDialog } from "./app-dialog";
 
 const overviewSchema = Yup.object({
-  name: Yup.string().required("Required"),
-  service: Yup.string().required("Required"),
-  description: Yup.string().required("Required"),
-  phone: Yup.string().required("Required"),
-  address: Yup.string().required("Required"),
-  experience: Yup.string().required("Required"),
+  name: Yup.string().trim().max(150, "Must be under 150 characters").required("Required"),
+  service: Yup.string().trim().max(100, "Must be under 100 characters").required("Required"),
+  description: Yup.string().trim().max(2000, "Must be under 2000 characters").required("Required"),
+  phone: Yup.string().trim().max(15, "Must be under 15 characters").required("Required"),
+  address: Yup.string().trim().max(300, "Must be under 300 characters").required("Required"),
+  experience: Yup.string().trim().max(50, "Must be under 50 characters").required("Required"),
 });
 
 const productSchema = Yup.object({
-  name: Yup.string().required("Required"),
+  name: Yup.string().trim().max(150, "Must be under 150 characters").required("Required"),
   price: Yup.string().required("Required"),
-  description: Yup.string(),
+  description: Yup.string().trim().max(2000, "Must be under 2000 characters"),
 });
 
 interface ProviderDetails {
@@ -240,7 +240,15 @@ const ProviderHome = () => {
                 initialValues={details}
                 validationSchema={overviewSchema}
                 onSubmit={(values) => {
-                  setDetails(values);
+                  setDetails({
+                    ...values,
+                    name: values.name.trim(),
+                    service: values.service.trim(),
+                    description: values.description.trim(),
+                    phone: values.phone.trim(),
+                    address: values.address.trim(),
+                    experience: values.experience.trim(),
+                  });
                   setIsEditing(false);
                 }}
               >
@@ -617,16 +625,21 @@ const ProviderHome = () => {
                   validationSchema={productSchema}
                   enableReinitialize
                   onSubmit={(values) => {
+                    const trimmedValues = {
+                      ...values,
+                      name: values.name.trim(),
+                      description: values.description?.trim() || "",
+                    };
                     if (editingProduct) {
                       setProducts((prev) =>
                         prev.map((p) =>
-                          p.id === editingProduct.id ? (values as Product) : p,
+                          p.id === editingProduct.id ? (trimmedValues as Product) : p,
                         ),
                       );
                     } else {
                       setProducts((prev) => [
                         ...prev,
-                        { ...(values as Product), id: Date.now().toString() },
+                        { ...(trimmedValues as Product), id: Date.now().toString() },
                       ]);
                     }
                     setProductSheetOpen(false);

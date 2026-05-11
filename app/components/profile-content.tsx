@@ -2,13 +2,7 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import {
-  List,
-  ListItem,
-  ListInput,
   Toggle,
-  BlockTitle,
-  Block,
-  Button,
 } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -55,9 +49,6 @@ import { useTheme } from "../context/ThemeContext";
 import { LanguageSelector, LanguageMenuButton } from "./language-selector";
 import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
-import { Formik, Form } from "formik";
-import * as Yup from "yup";
-import { FormikInput } from "./formik-input";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import {
   setProfile as setReduxProfile,
@@ -86,30 +77,6 @@ import {
 import NotificationSettings from "./notification-center/NotificationSettings";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { removeItemSync } from "@/utils/storage";
-
-interface UserProfile {
-  mobileNumber: string;
-  name: string;
-  gender: "male" | "female" | "other";
-  role: "customer" | "provider";
-  city: string;
-  area: string;
-  pincode: string;
-}
-
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .min(3, "Must be at least 3 characters")
-    .required("Required"),
-  gender: Yup.string()
-    .oneOf(["male", "female", "other"], "Invalid Gender")
-    .required("Required"),
-  city: Yup.string().required("Required"),
-  area: Yup.string(),
-  pincode: Yup.string()
-    .matches(/^\d{6}$/, "Must be 6 digits")
-    .required("Required"),
-});
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
@@ -269,7 +236,6 @@ const ProfileContent = memo(() => {
     | "about"
     | "terms"
     | "help"
-    | "editProfile"
     | "language"
     | "notificationSettings"
     | "contactUs"
@@ -278,6 +244,10 @@ const ProfileContent = memo(() => {
   >(null);
 
   const [profile, setProfile] = useState<any>(user || {});
+
+  // Inline name editing
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(profile.name || "");
 
   // Sync state if user changes externally
   if (user && user.id !== profile.id) {
@@ -311,23 +281,46 @@ const ProfileContent = memo(() => {
 
   const dispatch = useDispatch();
 
-  const handleSave = async (values: any) => {
-    try {
-      await updateUserMutation.mutateAsync({
-        name: values.name,
-        gender: values.gender,
-        city: values.city,
-        area: values.area,
-        pincode: values.pincode,
-      });
-      dispatch(setReduxProfile({ ...user, ...values }));
-      setProfile({ ...user, ...values });
+  const handleSaveName = async () => {
+    const trimmed = editedName.trim();
+    if (!trimmed || trimmed.length < 3) {
       notify({
-        title: "Profile Updated",
-        subtitle: "Your information was successfully updated.",
+        title: "Invalid Name",
+        subtitle: "Name must be at least 3 characters.",
+        variant: "error",
+      });
+      return;
+    }
+    if (trimmed.length > 100) {
+      notify({
+        title: "Invalid Name",
+        subtitle: "Name must be under 100 characters.",
+        variant: "error",
+      });
+      return;
+    }
+    if (!/[a-zA-Z]/.test(trimmed)) {
+      notify({
+        title: "Invalid Name",
+        subtitle: "Name must contain at least one letter.",
+        variant: "error",
+      });
+      return;
+    }
+    if (trimmed === profile.name) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      await updateUserMutation.mutateAsync({ name: trimmed });
+      dispatch(setReduxProfile({ ...user, name: trimmed }));
+      setProfile({ ...user, name: trimmed });
+      notify({
+        title: "Name Updated",
+        subtitle: "Your name was successfully updated.",
         variant: "success",
       });
-      setActivePage(null);
+      setIsEditingName(false);
     } catch (err: any) {
       notify({
         title: "Update Failed",
@@ -544,14 +537,6 @@ const ProfileContent = memo(() => {
           {/* Account Section — all gated */}
           <MenuSection title="Account">
             <MenuRow
-              icon={personOutline}
-              iconColor="text-blue-500"
-              iconBg="bg-blue-50"
-              label="Edit Profile"
-              sublabel="Name, gender, location"
-              onClick={guestAction}
-            />
-            <MenuRow
               icon={locationOutline}
               iconColor="text-green-500"
               iconBg="bg-green-50"
@@ -682,9 +667,53 @@ const ProfileContent = memo(() => {
                 <span className="text-lg font-bold text-white">{initials}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
-                  {profile.name || "User"}
-                </h2>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      autoFocus
+                      maxLength={50}
+                      className="text-base font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1 outline-none focus:border-amber-400 w-full"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveName();
+                        if (e.key === "Escape") {
+                          setEditedName(profile.name || "");
+                          setIsEditingName(false);
+                        }
+                      }}
+                    />
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleSaveName}
+                      disabled={updateUserMutation.isPending}
+                      className="w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center shrink-0"
+                    >
+                      <IonIcon
+                        icon={saveOutline}
+                        className="text-green-600 text-base"
+                      />
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => {
+                        setEditedName(profile.name || "");
+                        setIsEditingName(false);
+                      }}
+                      className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0"
+                    >
+                      <IonIcon
+                        icon={closeOutline}
+                        className="text-slate-500 text-base"
+                      />
+                    </motion.button>
+                  </div>
+                ) : (
+                  <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
+                    {profile.name || "User"}
+                  </h2>
+                )}
                 <p className="text-xs text-slate-500 truncate">
                   {profile.mobileNumber
                     ? `+91 ${profile.mobileNumber}`
@@ -697,16 +726,21 @@ const ProfileContent = memo(() => {
                   </p>
                 )}
               </div>
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setActivePage("editProfile")}
-                className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"
-              >
-                <IonIcon
-                  icon={createOutline}
-                  className="text-amber-600 text-lg"
-                />
-              </motion.button>
+              {!isEditingName && (
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    setEditedName(profile.name || "");
+                    setIsEditingName(true);
+                  }}
+                  className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"
+                >
+                  <IonIcon
+                    icon={createOutline}
+                    className="text-amber-600 text-lg"
+                  />
+                </motion.button>
+              )}
             </div>
           </motion.div>
 
@@ -951,14 +985,6 @@ const ProfileContent = memo(() => {
           {/* ── Account Section ──────────────────────────────────── */}
           <MenuSection title="Account">
             <MenuRow
-              icon={personOutline}
-              iconColor="text-blue-500"
-              iconBg="bg-blue-50"
-              label="Edit Profile"
-              sublabel="Name, gender, location"
-              onClick={() => setActivePage("editProfile")}
-            />
-            <MenuRow
               icon={locationOutline}
               iconColor="text-green-500"
               iconBg="bg-green-50"
@@ -1158,88 +1184,6 @@ const ProfileContent = memo(() => {
         open={activePage === "notificationSettings"}
         onClose={() => setActivePage(null)}
       />
-
-      {/* Edit Profile Page */}
-      <SlidePage
-        open={activePage === "editProfile"}
-        onClose={() => setActivePage(null)}
-        title="Edit Profile"
-      >
-        <Formik
-          enableReinitialize={true}
-          initialValues={{
-            name: profile.name || "",
-            gender: profile.gender || "male",
-            city: profile.city || "",
-            area: profile.area || "",
-            pincode: profile.pincode || "",
-          }}
-          validationSchema={validationSchema}
-          onSubmit={handleSave}
-        >
-          {({ isValid, dirty }) => (
-            <Form className="contents">
-              <List strongIos insetIos>
-                <FormikInput
-                  name="name"
-                  label="Name"
-                  type="text"
-                  placeholder="Your name"
-                  media={<IonIcon icon={personOutline} />}
-                />
-                <FormikInput
-                  name="gender"
-                  label="Gender"
-                  type="select"
-                  media={<IonIcon icon={maleOutline} />}
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </FormikInput>
-                <FormikInput
-                  name="city"
-                  label="City"
-                  type="text"
-                  placeholder="City name"
-                  media={<IonIcon icon={businessOutline} />}
-                />
-                <FormikInput
-                  name="area"
-                  label="Area"
-                  type="text"
-                  placeholder="Locality area"
-                  media={<IonIcon icon={locationOutline} />}
-                />
-                <FormikInput
-                  name="pincode"
-                  label="Pincode"
-                  type="text"
-                  placeholder="Area pincode"
-                  media={<IonIcon icon={mapOutline} />}
-                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
-                />
-              </List>
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setActivePage(null)}
-                  className="py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-sm active:bg-slate-200 dark:active:bg-slate-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!isValid || !dirty || updateUserMutation.isPending}
-                  className="py-3 rounded-xl bg-amber-500 text-white font-bold text-sm active:bg-amber-600 disabled:opacity-50"
-                >
-                  {updateUserMutation.isPending ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
-      </SlidePage>
 
       {/* About Us Page */}
       <SlidePage
