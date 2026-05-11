@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import {
   arrowBack,
   sendSharp,
@@ -99,6 +100,7 @@ export default function MessagesPage({
   const initiallyScrolled = useRef(false);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const lastMarkedMessageRef = useRef<string | null>(null);
+  const keyboardOffset = useKeyboardOffset();
 
   const { user } = useAppSelector((state) => state.auth);
   const typingUsers = useAppSelector((state) => state.chat.typingUsers);
@@ -365,7 +367,7 @@ export default function MessagesPage({
   });
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F5F5F0] dark:bg-slate-900">
+    <div className="flex flex-col bg-[#F5F5F0] dark:bg-slate-900" style={{ height: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "100dvh", transition: "height 0.15s ease-out" }}>
       {/* Header */}
       <div
         className="shrink-0 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-30"

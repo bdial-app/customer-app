@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { IonIcon } from "@ionic/react";
 import {
   lockOpenOutline,
@@ -57,6 +58,7 @@ export function LeadUnlockSheet({
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherResult, setVoucherResult] = useState<{ valid: boolean; discount?: number; finalAmount?: number; message: string } | null>(null);
   const [applyingVoucher, setApplyingVoucher] = useState(false);
+  const keyboardOffset = useKeyboardOffset();
 
   const config = tierConfig[tier];
   const isFreeUnlock = !monetizationEnabled || isProSubscriber || subscriptionCreditsRemaining > 0 || freeRemaining > 0;
@@ -101,7 +103,13 @@ export function LeadUnlockSheet({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 400, damping: 35 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-w-lg p-6 pb-8 shadow-xl"
+            className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-w-lg p-6 shadow-xl overflow-y-auto"
+            style={{
+              marginBottom: keyboardOffset,
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "90vh",
+              paddingBottom: keyboardOffset > 0 ? 12 : 32,
+              transition: "margin-bottom 0.15s ease-out, max-height 0.15s ease-out",
+            }}
           >
             {/* Handle */}
             <div className="flex justify-center mb-4">

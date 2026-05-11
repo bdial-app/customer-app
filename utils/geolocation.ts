@@ -154,42 +154,20 @@ function getWebPosition(options?: GeoOptions): Promise<GeoPosition> {
 
 /**
  * Open the device's app settings page so the user can enable location permission.
- * Uses native Capacitor bridge on Android/iOS.
+ * Uses capacitor-native-settings plugin on Android/iOS.
  */
 export async function openAppSettings(): Promise<void> {
   if (!isNativePlatform()) return;
 
-  const platform = getNativePlatform();
-
   try {
-    // Use Capacitor's native bridge to open settings
-    const Capacitor = (window as any).Capacitor;
-    if (!Capacitor) return;
-
-    if (platform === "android") {
-      // Call native Android intent to open app settings
-      const appId = Capacitor.Plugins?.App
-        ? (await Capacitor.Plugins.App.getInfo()).id
-        : "com.tijarah.app";
-      // Use Capacitor's native bridge to send intent
-      await Capacitor.Plugins.Geolocation?.requestPermissions?.({
-        permissions: ["location"],
-      }).catch(() => {});
-      // If that doesn't trigger settings, try opening location settings via native
-      try {
-        // Last resort: open Android location settings using intent URI
-        window.open(
-          `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:${appId};end`,
-          "_system",
-        );
-      } catch {
-        // Best effort
-      }
-    } else if (platform === "ios") {
-      // iOS opens app-specific settings via this URL scheme
-      window.open("app-settings:", "_system");
-    }
+    const { NativeSettings, AndroidSettings, IOSSettings } = await import(
+      "capacitor-native-settings"
+    );
+    await NativeSettings.open({
+      optionAndroid: AndroidSettings.ApplicationDetails,
+      optionIOS: IOSSettings.App,
+    });
   } catch {
-    // Best effort — user will see guidance message in UI
+    // Fallback — nothing we can do
   }
 }

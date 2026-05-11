@@ -38,6 +38,7 @@ import {
   mapOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, LOCATION_UNAVAILABLE, openAppSettings } from "@/utils/geolocation";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
@@ -63,6 +64,7 @@ const GeoLocation = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const dragControls = useDragControls();
+  const keyboardOffset = useKeyboardOffset();
 
   const { isLoaded: isMapLoaded } = useGoogleMapsLoader();
 
@@ -423,8 +425,13 @@ const GeoLocation = () => {
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.4 }}
               onDragEnd={handleDragEnd}
-              className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl max-h-[92dvh] flex flex-col shadow-2xl"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+              className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl flex flex-col shadow-2xl"
+              style={{
+                bottom: keyboardOffset,
+                maxHeight: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "92dvh",
+                paddingBottom: keyboardOffset > 0 ? 8 : "env(safe-area-inset-bottom)",
+                transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
+              }}
             >
               {/* Drag handle */}
               <div
@@ -456,7 +463,7 @@ const GeoLocation = () => {
                     placeholder="Search for area, street name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent text-base text-slate-800 placeholder:text-slate-400 outline-none"
+                    className="flex-1 bg-transparent text-base text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   />
                   {searchQuery && (
                     <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSearchQuery("")}>

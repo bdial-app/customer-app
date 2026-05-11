@@ -822,10 +822,10 @@ export default function AuthGateSheet() {
             className="fixed inset-x-0 z-[9999] rounded-t-3xl shadow-2xl overflow-hidden"
             style={{
               bottom: keyboardOffset,
-              maxHeight: "92vh",
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
               paddingBottom: keyboardOffset > 0 ? 8 : "max(env(safe-area-inset-bottom), 12px)",
               background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
-              transition: "bottom 0.2s ease-out, padding-bottom 0.2s ease-out",
+              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out, padding-bottom 0.15s ease-out",
             }}
           >
             {/* Abstract background decorations */}
@@ -849,7 +849,7 @@ export default function AuthGateSheet() {
               </button>
             </div>
 
-            <div className="overflow-y-auto relative" style={{ maxHeight: "calc(92vh - 52px)" }}>
+            <div className="overflow-y-auto relative" style={{ maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset + 52}px)` : "calc(92vh - 52px)" }}>
               <GoogleOAuthProvider clientId={clientId}>
                 <AuthGateSheetContent />
               </GoogleOAuthProvider>
