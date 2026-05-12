@@ -59,7 +59,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         // Re-inject on resume in case page was reloaded
         View content = findViewById(android.R.id.content);
