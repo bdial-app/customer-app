@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.tijarah.app",
+      "package_name": "com.pronttera.tijarah",
       "sha256_cert_fingerprints": [
-        "F3:41:90:F1:7A:6F:FE:7C:D6:2E:00:DA:47:C1:CE:4A:6C:C9:42:B8:B1:5B:DD:E2:34:19:70:38:69:CA:F4:47"
+        "47:6E:B5:EA:E8:06:56:E5:D4:60:5B:41:EB:E9:A6:E2:5A:99:50:E6:B6:AE:38:70:63:27:25:F4:98:0A:32:A3"
       ]
     }
   }
