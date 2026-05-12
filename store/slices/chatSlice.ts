@@ -69,6 +69,9 @@ const chatSlice = createSlice({
     clearPendingChat(state) {
       state.pendingChatOpen = null;
     },
+    resetChat() {
+      return initialState;
+    },
   },
 });
 
@@ -80,6 +83,7 @@ export const {
   clearAllTyping,
   openChat,
   clearPendingChat,
+  resetChat,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

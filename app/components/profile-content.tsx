@@ -54,10 +54,12 @@ import {
   setProfile as setReduxProfile,
   clearUser,
 } from "@/store/slices/authSlice";
+import { resetChat } from "@/store/slices/chatSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getMyProviderStatus,
   disableMyProvider,
@@ -76,7 +78,7 @@ import {
 } from "@/services/bug-report.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import { removeItemSync } from "@/utils/storage";
+import { removeItemSync, removeItem } from "@/utils/storage";
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
@@ -219,6 +221,7 @@ const ProfileContent = memo(() => {
   const user = useAppSelector((state) => state.auth.user as any);
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
+  const queryClient = useQueryClient();
   const { isDark, toggleTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
@@ -338,7 +341,11 @@ const ProfileContent = memo(() => {
     removeItemSync("user");
     removeItemSync("token");
     dispatch(clearUser());
+    dispatch(resetChat());
     resetProviderState();
+    // Clear all React Query in-memory + persisted cache to prevent stale data on next login
+    queryClient.clear();
+    removeItem("tijarah-query-cache");
     setLogoutActionSheetOpen(false);
     router.push("/");
     notify({
@@ -355,7 +362,10 @@ const ProfileContent = memo(() => {
       removeItemSync("user");
       removeItemSync("token");
       dispatch(clearUser());
+      dispatch(resetChat());
       resetProviderState();
+      queryClient.clear();
+      removeItem("tijarah-query-cache");
       setDeleteSheetOpen(false);
       router.push("/");
       notify({
@@ -381,7 +391,10 @@ const ProfileContent = memo(() => {
       removeItemSync("user");
       removeItemSync("token");
       dispatch(clearUser());
+      dispatch(resetChat());
       resetProviderState();
+      queryClient.clear();
+      removeItem("tijarah-query-cache");
       setPauseSheetOpen(false);
       router.push("/");
       notify({
