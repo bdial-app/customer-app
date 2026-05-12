@@ -79,6 +79,7 @@ import {
 import NotificationSettings from "./notification-center/NotificationSettings";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { removeItemSync, removeItem } from "@/utils/storage";
+import { checkContent } from "@/utils/content-sanitizer";
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
@@ -306,6 +307,15 @@ const ProfileContent = memo(() => {
       notify({
         title: "Invalid Name",
         subtitle: "Name must contain at least one letter.",
+        variant: "error",
+      });
+      return;
+    }
+    const nameCheck = checkContent(trimmed);
+    if (nameCheck.flagged) {
+      notify({
+        title: "Inappropriate Name",
+        subtitle: "Your name contains inappropriate language. Please choose a different name.",
         variant: "error",
       });
       return;
@@ -1892,6 +1902,15 @@ const ReportBugSlide = ({
 
   const handleSubmit = async () => {
     if (description.trim().length < 10) return;
+    const descCheck = checkContent(description.trim());
+    if (descCheck.flagged) {
+      notify({
+        title: "Inappropriate Content",
+        subtitle: "Your report contains inappropriate language. Please revise.",
+        variant: "error",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       await submitBugReport({

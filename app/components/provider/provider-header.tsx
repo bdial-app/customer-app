@@ -36,7 +36,13 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
 
   if (!provider) return null;
 
-  const status = statusConfig[provider.status] || statusConfig.unverified;
+  // If verified but status still says "unverified", treat as active to avoid
+  // showing both "Unverified" and "Verified" badges simultaneously
+  const effectiveStatus =
+    provider.status === "unverified" && verificationStatus === "approved"
+      ? "active"
+      : provider.status;
+  const status = statusConfig[effectiveStatus] || statusConfig.unverified;
   const initials = (provider.brandName || "?")
     .split(" ")
     .map((w) => w[0])

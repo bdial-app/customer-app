@@ -4,6 +4,7 @@ import {
   getLiveActivity,
   getCategoryProviders,
 } from "@/services/home.service";
+import { isNetworkError } from "@/utils/axios";
 
 export const HOME_FEED_QUERY_KEY = "home-feed";
 
@@ -20,6 +21,12 @@ export const useHomeFeed = (params?: {
     refetchOnWindowFocus: false,
     refetchOnMount: "always", // Always refetch on mount to avoid stale/corrupt cache
     placeholderData: (prev: any) => prev, // Show stale data instantly while revalidating
+    retry: (failureCount, error) => {
+      // Retry up to 2 times on network/timeout errors (common on mobile data)
+      if (isNetworkError(error)) return failureCount < 2;
+      return false;
+    },
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
   });
 };
 

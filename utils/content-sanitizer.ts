@@ -8,18 +8,47 @@
  *   import { checkContent, isClean, sanitizeText } from '@/utils/content-sanitizer';
  *   if (!isClean(text)) { show error }
  */
-import leoProfanity from 'leo-profanity';
+import * as leoProfanity from 'leo-profanity';
+
+// ── Hardcoded English fallback (used when leo-profanity fails to load) ──
+
+const ENGLISH_FALLBACK = new Set([
+  'fuck', 'fucked', 'fucking', 'fuckin', 'shit', 'shitty', 'ass', 'asshole',
+  'bitch', 'bitches', 'bastard', 'damn', 'dick', 'dicks', 'cock', 'cocks',
+  'cunt', 'cunts', 'piss', 'pissed', 'whore', 'slut', 'nigger', 'nigga',
+  'faggot', 'fag', 'retard', 'retarded', 'boob', 'boobs', 'penis', 'vagina',
+  'anus', 'blowjob', 'dildo', 'porn', 'pussy', 'rape', 'wanker', 'twat',
+]);
 
 // ── Initialise leo-profanity with custom words ─────────────────────
 
 let _initialised = false;
+let _leoAvailable = false;
 
 function ensureInit() {
   if (_initialised) return;
   _initialised = true;
 
-  leoProfanity.loadDictionary('en');
-  leoProfanity.add(SOUTH_ASIAN_PROFANITY);
+  try {
+    // Resolve the actual export — handle CJS default export wrapping
+    const lib = (leoProfanity as any).default || leoProfanity;
+    if (typeof lib.loadDictionary === 'function') {
+      lib.loadDictionary('en');
+      lib.add(SOUTH_ASIAN_PROFANITY);
+      _leoAvailable = lib.list().length > 0;
+    }
+    if (!_leoAvailable) {
+      console.error('[content-sanitizer] leo-profanity dictionary is empty after init');
+    }
+  } catch (err) {
+    console.error('[content-sanitizer] Failed to initialise leo-profanity:', err);
+    _leoAvailable = false;
+  }
+}
+
+/** Get the resolved leo-profanity instance */
+function leo(): typeof leoProfanity {
+  return (leoProfanity as any).default || leoProfanity;
 }
 
 // ── Exported API ────────────────────────────────────────────────────
@@ -43,17 +72,30 @@ export function checkContent(text: string): ContentCheckResult {
   const flaggedWords: string[] = [];
 
   // 1. leo-profanity (handles English + obfuscation + custom words)
-  try {
-    if (leoProfanity.check(text)) {
-      const words = text.split(/\s+/);
-      for (const w of words) {
-        if (leoProfanity.check(w) && !flaggedWords.includes(w.toLowerCase())) {
-          flaggedWords.push(w.toLowerCase());
+  if (_leoAvailable) {
+    try {
+      const lib = leo();
+      if (lib.check(text)) {
+        const words = text.split(/\s+/);
+        for (const w of words) {
+          if (lib.check(w) && !flaggedWords.includes(w.toLowerCase())) {
+            flaggedWords.push(w.toLowerCase());
+          }
         }
+        if (flaggedWords.length === 0) flaggedWords.push('[profanity detected]');
       }
-      if (flaggedWords.length === 0) flaggedWords.push('[profanity detected]');
+    } catch (err) {
+      console.error('[content-sanitizer] leo-profanity.check() error:', err);
     }
-  } catch { /* defensive */ }
+  } else {
+    // Fallback: check against hardcoded English words
+    const tokens = text.toLowerCase().replace(/[.,!?;:'"()\[\]{}<>]/g, '').split(/\s+/);
+    for (const token of tokens) {
+      if (token && ENGLISH_FALLBACK.has(token) && !flaggedWords.includes(token)) {
+        flaggedWords.push(token);
+      }
+    }
+  }
 
   // 2. Custom exact-match lookup (fast O(1) for South-Asian languages)
   const normalized = text.toLowerCase().replace(/[.,!?;:'"()\[\]{}<>]/g, '');
@@ -94,7 +136,15 @@ export function sanitizeText(text: string): string {
   if (!text) return text;
   ensureInit();
   try {
-    return leoProfanity.clean(text);
+    if (_leoAvailable) return leo().clean(text);
+    // Fallback: replace known bad words with asterisks
+    return text.replace(/\b\w+\b/g, (word) => {
+      const lower = word.toLowerCase();
+      if (ENGLISH_FALLBACK.has(lower) || CUSTOM_SET.has(lower)) {
+        return '*'.repeat(word.length);
+      }
+      return word;
+    });
   } catch {
     return text;
   }
@@ -107,6 +157,7 @@ const MULTI_WORD_PHRASES = [
   'ibn el sharmouta', 'ibn sharmouta', 'ibn el kalb', 'bint el kalb',
   'ibn el hmar', 'kos omak', 'ayreh feek', 'telhas teezi',
   'khotay ki aulad', 'khotey da puttar', 'suwar ki aulad',
+  'aaichya gaand', 'aaichya gavat', 'aichya gavat',
 ];
 
 // ─── South Asian + Arabic words ─────────────────────────────────────
@@ -155,6 +206,22 @@ const SOUTH_ASIAN_PROFANITY: string[] = [
   'chootiya', 'chootya',
   'gadhedo', 'gadhedi',
   'rakhdi', 'raand',
+  'fattu', 'fuddi', 'fuddu', 'chinal', 'randio',
+  'chodlo', 'ghelchodyo', 'bhondhu', 'bhadvo', 'bhadvi',
+
+  // Marathi
+  'zavnya', 'zavnya', 'zhavnya', 'zhavalya', 'zavlya',
+  'chiknya', 'chikne', 'madharchod', 'aichya gavat',
+  'bhikarchot', 'bolkya', 'gandya', 'bhadvya', 'bhadvyaa',
+  'raandecha', 'randecha', 'chhinaal', 'chinaal', 'chhinal',
+  'gavat', 'gavti', 'halkat', 'halkya',
+  'khandya', 'lundya', 'pucchya', 'popat',
+  'satak', 'satakli', 'shengdana',
+  'tatya', 'thobad', 'thobadya', 'bokya',
+  'gandhya', 'gandul', 'gandu',
+  'aaichya gaand', 'aaichya gavat',
+  'maderchod', 'bhosadchya', 'bhosadya',
+  'lavdya', 'goticha', 'jhavnya',
 
   // Bengali
   'banchod', 'magi', 'magir', 'khankir chele', 'khankir',

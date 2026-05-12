@@ -20,6 +20,7 @@ export function isNetworkError(error: unknown): boolean {
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
+  timeout: 20_000, // 20s — prevents requests from hanging on slow mobile data
   headers: {
     "Content-Type": "application/json",
   },

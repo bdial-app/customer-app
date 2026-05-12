@@ -30,6 +30,7 @@ import {
   useSavedLocations,
   useCreateSavedLocation,
   useDeleteSavedLocation,
+  MAX_SAVED_LOCATIONS,
 } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
 import PrivateRoute from "@/app/components/private-route";
@@ -58,6 +59,7 @@ const SavedAddressList = ({ onAdd }: { onAdd: () => void }) => {
   const { data: locations, isLoading } = useSavedLocations();
   const deleteMutation = useDeleteSavedLocation();
   const [pendingDelete, setPendingDelete] = useState<SavedLocation | null>(null);
+  const atCap = (locations?.length ?? 0) >= MAX_SAVED_LOCATIONS;
 
   const handleConfirmDelete = () => {
     if (!pendingDelete) return;
@@ -89,9 +91,12 @@ const SavedAddressList = ({ onAdd }: { onAdd: () => void }) => {
             </h1>
             <button
               onClick={onAdd}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-amber-400/10 active:scale-95 transition-all"
+              disabled={atCap}
+              className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-all ${
+                atCap ? "bg-neutral-100 dark:bg-neutral-800 opacity-50 cursor-not-allowed" : "bg-amber-400/10"
+              }`}
             >
-              <IonIcon icon={addOutline} className="text-xl text-amber-500" />
+              <IonIcon icon={addOutline} className={`text-xl ${atCap ? "text-neutral-400" : "text-amber-500"}`} />
             </button>
           </div>
         </div>
@@ -164,13 +169,19 @@ const SavedAddressList = ({ onAdd }: { onAdd: () => void }) => {
                 </motion.div>
               ))}
 
-              <button
-                onClick={onAdd}
-                className="w-full mt-2 h-12 rounded-xl border-2 border-dashed border-neutral-200 dark:border-neutral-700 text-sm font-medium text-neutral-400 hover:border-amber-400 hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
-              >
-                <IonIcon icon={addOutline} className="text-base" />
-                Add Another Address
-              </button>
+              {atCap ? (
+                <p className="text-center text-xs text-neutral-400 mt-3">
+                  Maximum of {MAX_SAVED_LOCATIONS} addresses reached. Remove one to add more.
+                </p>
+              ) : (
+                <button
+                  onClick={onAdd}
+                  className="w-full mt-2 h-12 rounded-xl border-2 border-dashed border-neutral-200 dark:border-neutral-700 text-sm font-medium text-neutral-400 hover:border-amber-400 hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+                >
+                  <IonIcon icon={addOutline} className="text-base" />
+                  Add Another Address
+                </button>
+              )}
             </div>
           )}
         </div>

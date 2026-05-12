@@ -68,7 +68,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
   const effectiveLat = user?.latitude ?? guestCoords?.lat ?? undefined;
   const effectiveLng = user?.longitude ?? guestCoords?.lng ?? undefined;
 
-  const { data: feed, isLoading } = useHomeFeed({
+  const { data: feed, isLoading, isError } = useHomeFeed({
     lat: effectiveLat,
     lng: effectiveLng,
     city: effectiveCity,
@@ -78,11 +78,11 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
   // skip it entirely so the user isn't shown a loading screen on return visits.
   const [showSplash, setShowSplash] = useState(!feed);
   useEffect(() => {
-    if (!isLoading && feed) {
+    if (!isLoading && (feed || isError)) {
       const timer = setTimeout(() => setShowSplash(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, feed]);
+  }, [isLoading, feed, isError]);
 
   // Offline + no cached feed → show fallback
   if (!isOnline && !feed) {
