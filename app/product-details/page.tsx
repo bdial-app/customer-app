@@ -29,6 +29,7 @@ import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
+import { store } from "@/store";
 import { useAppContext } from "@/app/context/AppContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
@@ -464,6 +465,9 @@ export default function ProductDetailsPage() {
             onClick={() => {
               requireAuth(() => {
                 if (!provider?.id) return;
+                // Re-check after auth — user may have logged in as this provider
+                const currentUser = store.getState().auth.user;
+                if (currentUser && currentUser.id === provider.userId) return;
                 createConversation({
                   providerId: provider.id,
                   contextType: 'product',

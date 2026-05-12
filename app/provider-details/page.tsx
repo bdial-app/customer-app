@@ -44,6 +44,7 @@ import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { openChat } from "@/store/slices/chatSlice";
+import { store } from "@/store";
 import { useAppContext } from "../context/AppContext";
 import { openDirections } from "@/utils/sharing";
 import {
@@ -225,6 +226,11 @@ export default function ProviderDetailsPage() {
   const isOwnProvider = Boolean(
     user && provider && user.id === provider.userId,
   );
+
+  // Close call sheet if user logs in as this provider (guest → own-provider transition)
+  useEffect(() => {
+    if (isOwnProvider) setCallSheetOpened(false);
+  }, [isOwnProvider]);
 
   // ─── Analytics Tracking ─────────────────────────────────────────
   const source = (searchParams.get("src") as any) || "direct";
@@ -1308,6 +1314,9 @@ export default function ProviderDetailsPage() {
                 onClick={() => {
                   requireAuth(() => {
                     if (!provider?.id) return;
+                    // Re-check after auth — user may have logged in as this provider
+                    const currentUser = store.getState().auth.user;
+                    if (currentUser && currentUser.id === provider.userId) return;
                     trackChat();
                     createConversation(
                       {

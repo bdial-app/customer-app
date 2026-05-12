@@ -15,7 +15,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  // NOTE: interactiveWidget is Chrome-only — removed to prevent old iOS Safari from misrendering
+  interactiveWidget: "overlays-content",
 };
 
 export async function generateMetadata(): Promise<Metadata> {

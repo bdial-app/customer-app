@@ -606,7 +606,7 @@ const ProfileContent = memo(() => {
               iconColor="text-cyan-500"
               iconBg="bg-cyan-50"
               label="Contact Us"
-              sublabel="support@tijarah.app"
+              sublabel="support@tijarahapp.in"
               onClick={() => setActivePage("contactUs")}
             />
             <MenuRow
@@ -1053,7 +1053,7 @@ const ProfileContent = memo(() => {
               iconColor="text-cyan-500"
               iconBg="bg-cyan-50"
               label="Contact Us"
-              sublabel="support@tijarah.app"
+              sublabel="support@tijarahapp.in"
               onClick={() => setActivePage("contactUs")}
             />
             <MenuRow
@@ -1191,70 +1191,166 @@ const ProfileContent = memo(() => {
         onClose={() => setActivePage(null)}
         title="About Us"
       >
-        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
-              <span className="text-2xl font-bold text-white">BC</span>
+        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          {/* Hero */}
+          <div className="text-center pb-2">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/40 dark:shadow-amber-900/30">
+              <span className="text-3xl font-black text-white tracking-tight">T</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white">
               Tijarah
             </h3>
-            <p className="text-xs text-slate-400">Version {APP_VERSION}</p>
+            <p className="text-xs text-slate-400 mt-0.5">BohriConnect</p>
+            <p className="text-[11px] text-slate-400 mt-1">Version {APP_VERSION}</p>
           </div>
-          <p>
-            Tijarah is a community-driven marketplace that connects customers
-            with trusted local service providers. Our mission is to empower
-            small businesses and make quality services accessible to everyone.
-          </p>
-          <p>
-            Founded with the vision of strengthening community bonds, we provide
-            a platform where skilled professionals can showcase their talents
-            and customers can find reliable services — from tailoring and beauty
-            to home repairs and catering.
-          </p>
-          <h4 className="font-bold text-slate-800 dark:text-white pt-2">
-            Our Values
-          </h4>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Trust:</strong> Every provider is verified to ensure
-                quality and safety.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Community:</strong> Built by the community, for the
-                community.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Empowerment:</strong> Supporting women-led businesses
-                and local entrepreneurs.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Transparency:</strong> Clear pricing and honest reviews.
-              </span>
-            </li>
-          </ul>
-          <h4 className="font-bold text-slate-800 dark:text-white pt-2">
-            Contact
-          </h4>
-          <p>
-            Email: support@tijarah.app
-            <br />
-            Website: www.tijarah.com
-          </p>
-          <p className="text-xs text-slate-400 pt-4 text-center">
-            © {new Date().getFullYear()} Tijarah. All rights reserved.
-          </p>
+
+          {/* Tagline */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/15 dark:to-orange-900/15 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl px-4 py-3.5 text-center">
+            <p className="text-[13px] font-semibold text-amber-800 dark:text-amber-300 italic leading-relaxed">
+              Making the Dawoodi Bohra community&apos;s entrepreneurial spirit visible, connected, and celebrated.
+            </p>
+          </div>
+
+          {/* Our Story */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Our Story</h4>
+            <p className="text-[13px]">
+              The Dawoodi Bohra community has always been a community of traders, creators, and entrepreneurs. For centuries, commerce has been woven into our identity &mdash; guided by values of honesty, hard work, and mutual support.
+            </p>
+            <p className="text-[13px] mt-2">
+              But finding Bohra businesses meant relying on WhatsApp forwards, word-of-mouth chains, and personal phone directories. There was no single place to search, browse, and connect with Bohra businesses in your city.
+            </p>
+            <p className="text-[13px] mt-2 font-medium text-slate-700 dark:text-slate-200">
+              Tijarah was built to change that.
+            </p>
+          </div>
+
+          {/* What We Do */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">What Tijarah Does</h4>
+            <p className="text-[13px] mb-3">
+              Tijarah is a community directory app &mdash; a connector between community members who need something and the Bohra business owners who provide it.
+            </p>
+            <div className="space-y-2">
+              {[
+                "Browse Bohra-owned businesses across categories: food, rida & fashion, home services, retail, tutoring, events & more",
+                "View detailed business profiles with photos, descriptions, contact details & operating hours",
+                "Connect directly via a single tap — call or WhatsApp instantly",
+                "Read community reviews from fellow Bohra users",
+                "Discover verified businesses with confirmed community membership",
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                  <span className="text-[13px]">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Values */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Our Values</h4>
+            <div className="grid grid-cols-1 gap-2.5">
+              {[
+                { icon: "🤝", title: "Trust Above All", desc: "Every feature is filtered through one question: does this make the community trust us more?" },
+                { icon: "🕌", title: "Community First", desc: "Built specifically for the Bohra community, shaped by its culture, values, and way of doing business." },
+                { icon: "✨", title: "Simplicity", desc: "Simple enough for anyone in the community to use — no training or tutorials needed." },
+                { icon: "🔒", title: "Privacy & Respect", desc: "We collect only what is necessary and protect what we hold with the utmost care." },
+                { icon: "💛", title: "Free for Community", desc: "Basic listings and discovery will always be free. Built for the community, not to extract value from it." },
+              ].map((v, i) => (
+                <div key={i} className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-3.5 py-3">
+                  <span className="text-lg mt-0.5">{v.icon}</span>
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-white">{v.title}</p>
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{v.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* How It Works */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">How It Works</h4>
+            <div className="space-y-2.5">
+              <div className="bg-blue-50 dark:bg-blue-900/15 border border-blue-100 dark:border-blue-800/30 rounded-xl px-3.5 py-3">
+                <p className="text-[12px] font-bold text-blue-700 dark:text-blue-300">For Community Members</p>
+                <p className="text-[12px] text-blue-600/80 dark:text-blue-400/80 mt-0.5">Browse or search for what you need and connect directly with a Bohra-owned business in one tap. No account required to explore.</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/15 border border-green-100 dark:border-green-800/30 rounded-xl px-3.5 py-3">
+                <p className="text-[12px] font-bold text-green-700 dark:text-green-300">For Business Owners</p>
+                <p className="text-[12px] text-green-600/80 dark:text-green-400/80 mt-0.5">Create a free listing in minutes — or let us do it for you. Optionally get a &apos;Verified&apos; badge by confirming your community membership.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Where We Are */}
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-4">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Where We Are</h4>
+            <p className="text-[13px]">
+              Launched in <strong>Pune</strong> in 2026 — home to one of Maharashtra&apos;s most active Bohra communities.
+            </p>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1.5">
+              Next: Mumbai · Surat · Hyderabad · Nagpur · Indore
+            </p>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Get in Touch</h4>
+            <div className="space-y-2.5">
+              <a
+                href="mailto:support@tijarahapp.in"
+                className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-2xl px-4 py-3 active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                  <IonIcon icon={mailOutline} className="text-white text-base" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Email Support</p>
+                  <p className="text-[13px] font-semibold text-blue-600 dark:text-blue-400">support@tijarahapp.in</p>
+                </div>
+              </a>
+
+              <a
+                href="https://wa.me/919834174885"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded-2xl px-4 py-3 active:bg-green-100 dark:active:bg-green-900/30 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.616l4.534-1.468A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.312-.727-5.994-1.96l-.42-.307-2.69.87.894-2.637-.336-.435A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">WhatsApp</p>
+                  <p className="text-[13px] font-semibold text-green-600 dark:text-green-400">+91 98341 74885</p>
+                </div>
+              </a>
+
+              <a
+                href="tel:+919834174885"
+                className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 rounded-2xl px-4 py-3 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+                  <IonIcon icon={callOutline} className="text-white text-base" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Call Us</p>
+                  <p className="text-[13px] font-semibold text-amber-600 dark:text-amber-400">+91 98341 74885</p>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center pt-2 space-y-1">
+            <p className="text-[11px] text-slate-400">
+              Tijarah (BohriConnect) · Pune, Maharashtra, India
+            </p>
+            <p className="text-[11px] text-slate-400">
+              © {new Date().getFullYear()} Tijarah. All rights reserved.
+            </p>
+          </div>
         </div>
       </SlidePage>
 
@@ -1408,7 +1504,7 @@ const ProfileContent = memo(() => {
           </h4>
           <p>
             Legal enquiries:{" "}
-            <span className="text-blue-600 font-medium">legal@tijarah.app</span>
+            <span className="text-blue-600 font-medium">support@tijarahapp.in</span>
           </p>
 
           <p className="text-xs text-slate-400 pt-2 text-center">
@@ -1426,9 +1522,9 @@ const ProfileContent = memo(() => {
       >
         <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <p className="text-xs text-slate-400 pb-1">
-            Can't find your answer? Contact us at{" "}
+            Can&apos;t find your answer? Contact us at{" "}
             <span className="text-blue-500 font-medium">
-              support@tijarah.app
+              support@tijarahapp.in
             </span>
           </p>
 
@@ -1493,7 +1589,7 @@ const ProfileContent = memo(() => {
           />
           <FAQItem
             q="How do I get the 'Verified' badge?"
-            a="Contact us at support@tijarah.app and we'll guide you through submitting a document (Aadhaar, PAN, or Ejmaat Card). Verification is optional — your listing works fully without it."
+            a="Contact us at support@tijarahapp.in and we'll guide you through submitting a document (Aadhaar, PAN, or Ejmaat Card). Verification is optional — your listing works fully without it."
           />
           <FAQItem
             q="My business was already listed. Why?"
@@ -1513,7 +1609,7 @@ const ProfileContent = memo(() => {
           />
           <FAQItem
             q="Can I delete my account and all my data?"
-            a="Yes. Contact us at privacy@tijarah.app to request full account and data deletion. We process requests within 30 days."
+            a="Yes. Contact us at support@tijarahapp.in to request full account and data deletion. We process requests within 30 days."
           />
           <FAQItem
             q="Does Tijarah sell my data?"
@@ -1539,10 +1635,10 @@ const ProfileContent = memo(() => {
           <div className="pt-4 text-center border-t border-slate-100 dark:border-slate-700 mt-2">
             <p className="text-xs text-slate-400">Still need help?</p>
             <p className="text-sm font-semibold text-blue-500 mt-1">
-              support@tijarah.app
+              support@tijarahapp.in
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              WhatsApp: +91 8904440498
+              WhatsApp: +91 98341 74885
             </p>
           </div>
         </div>
@@ -1652,7 +1748,7 @@ const ContactUsSlide = ({
       {/* Contact Cards */}
       <div className="space-y-3">
         <a
-          href="mailto:support@tijarah.app"
+          href="mailto:support@tijarahapp.in"
           className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-2xl px-4 py-3.5 active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
@@ -1663,14 +1759,52 @@ const ContactUsSlide = ({
               General Support
             </p>
             <p className="text-sm font-semibold text-blue-600">
-              support@tijarah.app
+              support@tijarahapp.in
             </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
 
         <a
-          href="mailto:privacy@tijarah.app"
+          href="https://wa.me/919834174885"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/40 rounded-2xl px-4 py-3.5 active:bg-emerald-100 dark:active:bg-emerald-900/30 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.616l4.534-1.468A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.312-.727-5.994-1.96l-.42-.307-2.69.87.894-2.637-.336-.435A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              WhatsApp Support
+            </p>
+            <p className="text-sm font-semibold text-emerald-600">
+              +91 98341 74885
+            </p>
+          </div>
+          <IonIcon icon={chevronForward} className="text-slate-300" />
+        </a>
+
+        <a
+          href="tel:+919834174885"
+          className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 rounded-2xl px-4 py-3.5 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+            <IonIcon icon={callOutline} className="text-white text-lg" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Call Us
+            </p>
+            <p className="text-sm font-semibold text-amber-600">
+              +91 98341 74885
+            </p>
+          </div>
+          <IonIcon icon={chevronForward} className="text-slate-300" />
+        </a>
+
+        <a
+          href="mailto:support@tijarahapp.in"
           className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded-2xl px-4 py-3.5 active:bg-green-100 dark:active:bg-green-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
@@ -1684,14 +1818,14 @@ const ContactUsSlide = ({
               Privacy & Data Requests
             </p>
             <p className="text-sm font-semibold text-green-600">
-              privacy@tijarah.app
+              support@tijarahapp.in
             </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
 
         <a
-          href="mailto:legal@tijarah.app"
+          href="mailto:support@tijarahapp.in"
           className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/40 rounded-2xl px-4 py-3.5 active:bg-purple-100 dark:active:bg-purple-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center shrink-0">
@@ -1705,7 +1839,7 @@ const ContactUsSlide = ({
               Legal & Terms
             </p>
             <p className="text-sm font-semibold text-purple-600">
-              legal@tijarah.app
+              support@tijarahapp.in
             </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
