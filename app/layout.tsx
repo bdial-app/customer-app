@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: "/icons/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
       ],
     },
-    metadataBase: new URL("https://www.tijarah.com"),
+    metadataBase: new URL("https://www.tijarahapp.in"),
   };
 }
 
@@ -84,6 +84,9 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/apple-touch-icon.png" />
         <meta name="msapplication-TileImage" content="/icons/192.png" />
         <link rel="manifest" href="/manifest.json" />
+        {/* DNS prefetch for API — speeds up first request on mobile data */}
+        <link rel="dns-prefetch" href="https://develop-customer-api.tijarahapp.in" />
+        <link rel="preconnect" href="https://develop-customer-api.tijarahapp.in" crossOrigin="" />
         {/* Apple splash screens — required to prevent white screen on old iOS PWA launch */}
         {/* iPad 1/2 (768×1024 @1x) */}
         <link rel="apple-touch-startup-image" href="/splash-screen.png"

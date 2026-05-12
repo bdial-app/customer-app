@@ -298,10 +298,11 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             refetchOnReconnect: true, // Auto-refetch stale queries when connectivity returns
             networkMode: "offlineFirst", // Serve cache when offline instead of erroring
             retry: (failureCount, error) => {
-              // Don't retry network errors (pointless when offline)
-              if (isNetworkError(error)) return false;
+              // Retry network errors (transient on mobile data / 5G transitions)
+              if (isNetworkError(error)) return failureCount < 2;
               return failureCount < 1; // 1 retry for server errors
             },
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
           },
           mutations: {
             networkMode: "offlineFirst",

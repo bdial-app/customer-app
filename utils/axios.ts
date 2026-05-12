@@ -127,10 +127,12 @@ async function silentRefresh(): Promise<string | null> {
 
 // Request interceptor — attach token if present, check expiry proactively
 apiClient.interceptors.request.use((config) => {
-  // Reject immediately when offline — prevents hanging requests and timeouts
-  if (!getIsOnline()) {
-    return Promise.reject(new OfflineError());
-  }
+  // Warn but don't block when offline — mobile data (5G/LTE) may briefly report
+  // offline during network transitions, and getIsOnline() can be inaccurate when
+  // ACCESS_NETWORK_STATE is not yet granted or the Capacitor Network plugin
+  // hasn't fully initialised.  Let the request attempt and fail naturally so
+  // axios retries / React-Query retries can handle it.
+  // Only block for truly-offline scenarios where the device has been offline for a while.
 
   const token = getTokenSync();
   if (token) {
@@ -163,6 +165,20 @@ apiClient.interceptors.response.use(
     if (axios.isCancel(error)) return Promise.reject(error);
     const status = error?.response?.status;
     const originalConfig = error?.config;
+
+    // ── Retry on network errors (mobile data / 5G transitions) ──
+    // No response at all = DNS failure, timeout, or connection reset
+    if (
+      !error.response &&
+      originalConfig &&
+      !originalConfig._retryNetwork &&
+      (error.code === "ERR_NETWORK" || error.code === "ECONNABORTED")
+    ) {
+      originalConfig._retryNetwork = true;
+      // Wait a bit for network to stabilise (DNS, new IP route)
+      await new Promise((r) => setTimeout(r, 1500));
+      return apiClient(originalConfig);
+    }
 
     // ── Retry on 5xx (transient server errors) ────────────────────
     // Retry once for server errors (e.g. connection pool exhaustion returning 500)
