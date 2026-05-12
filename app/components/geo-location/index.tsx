@@ -429,7 +429,7 @@ const GeoLocation = () => {
               style={{
                 bottom: keyboardOffset,
                 maxHeight: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "92dvh",
-                paddingBottom: keyboardOffset > 0 ? 8 : "env(safe-area-inset-bottom)",
+                paddingBottom: keyboardOffset > 0 ? 0 : "var(--sab, env(safe-area-inset-bottom))",
                 transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
               }}
             >
@@ -790,7 +790,7 @@ const GeoLocation = () => {
             {/* Bottom Confirm Bar */}
             <div
               className="shrink-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-4 py-3"
-              style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
+              style={{ paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 12px)" }}
             >
               {mapAddress ? (
                 <p className="text-[13px] text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">

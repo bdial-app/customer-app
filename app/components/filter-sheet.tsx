@@ -223,7 +223,7 @@ const FilterSheet = ({
             style={{
               bottom: keyboardOffset,
               maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
-              paddingBottom: keyboardOffset > 0 ? 8 : "max(env(safe-area-inset-bottom), 0px)",
+              paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 0px)",
               transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
             }}
           >

@@ -176,7 +176,7 @@ const SlidePage = ({
           exit={{ x: "100%" }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto overscroll-contain"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          style={{ paddingBottom: "var(--sab, env(safe-area-inset-bottom))" }}
         >
           <div
             className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"

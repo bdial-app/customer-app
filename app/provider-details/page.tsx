@@ -1256,8 +1256,9 @@ export default function ProviderDetailsPage() {
 
         {/* Floating CTA */}
         <div
-          className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
+          className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
           style={{
+            paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
             background:
               "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
             display: isLightboxOpen ? "none" : "block",

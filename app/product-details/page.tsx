@@ -416,8 +416,9 @@ export default function ProductDetailsPage() {
       </div>
 
       <div
-        className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
+        className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
         style={{
+          paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
           background: isDark
             ? "linear-gradient(to top, rgba(15,23,42,1) 60%, rgba(15,23,42,0))"
             : "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",

@@ -83,7 +83,7 @@ export const AppDialog = ({
             <div
               className="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-xl"
               style={{
-                paddingBottom: keyboardOffset > 0 ? 8 : "max(env(safe-area-inset-bottom), 16px)",
+                paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 16px)",
               }}
             >
               {/* Handle bar (mobile) */}

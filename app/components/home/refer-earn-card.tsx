@@ -1,16 +1,13 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { shareInvite } from "@/utils/sharing";
 import { trackInvite } from "@/services/invite.service";
 
 const ReferEarnCard = () => {
-  const router = useRouter();
   const [shared, setShared] = useState(false);
 
-  const handleShare = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleShare = useCallback(async () => {
     const result = await shareInvite();
     if (result === "shared" || result === "copied") {
       setShared(true);
@@ -31,9 +28,10 @@ const ReferEarnCard = () => {
       transition={{ duration: 0.4 }}
       className="mx-4 my-1"
     >
-      <div
-        onClick={() => router.push("/invite")}
-        className="relative overflow-hidden rounded-2xl p-4 cursor-pointer active:scale-[0.98] transition-transform bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] dark:from-indigo-950 dark:via-slate-800 dark:to-slate-700 dark:border dark:border-slate-600/40"
+      <div className="relative overflow-hidden rounded-2xl p-4"
+        style={{
+          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)",
+        }}
       >
         {/* Decorative elements */}
         <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-amber-400/10" />
@@ -55,7 +53,7 @@ const ReferEarnCard = () => {
             <h3 className="text-[15px] font-extrabold text-white leading-snug">
               Help others discover local businesses
             </h3>
-            <p className="text-[11px] text-white/40 dark:text-white/50 mt-1">
+            <p className="text-[11px] text-white/40 mt-1">
               Share Tijarah with friends & family
             </p>
           </div>

@@ -141,7 +141,7 @@ export default function ReportSheet({
             style={{
               bottom: keyboardOffset,
               maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "85vh",
-              paddingBottom: keyboardOffset > 0 ? 8 : undefined,
+              paddingBottom: keyboardOffset > 0 ? 0 : undefined,
               transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
             }}
           >

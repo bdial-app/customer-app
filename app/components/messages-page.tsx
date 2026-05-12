@@ -672,7 +672,7 @@ export default function MessagesPage({
       {/* Input bar */}
       <div
         className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
+        style={{ paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 8px)" }}
       >
         <div className="flex items-end gap-2">
           <motion.button

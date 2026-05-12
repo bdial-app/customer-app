@@ -44,16 +44,19 @@ export function useKeyboardOffset(): number {
             setOffset(info.keyboardHeight);
           }).then((l) => cleanups.push(() => l.remove()));
 
-          // On Android, visualViewport hasn't settled yet when this event
-          // fires. Defer one animation frame so the viewport is accurate
-          // before we measure. The vv "resize" listener below will also
-          // fire and converge to the same value.
+          // After keyboardDidShow, refine with the visual viewport
+          // measurement which is in CSS pixels. Only refine UPWARD —
+          // on Android the plugin value is now authoritative because the
+          // WebView extends behind the nav bar; the viewport measurement
+          // may undercount if interactive-widget resizes the layout viewport.
           Keyboard.addListener("keyboardDidShow", () => {
             pluginActive = true;
             requestAnimationFrame(() => {
               if (cancelled) return;
               const vvH = measureFromViewport();
-              if (vvH > 50) setOffset(vvH);
+              if (vvH > 50) {
+                setOffset((prev) => Math.max(prev, vvH));
+              }
             });
           }).then((l) => cleanups.push(() => l.remove()));
 
@@ -69,18 +72,18 @@ export function useKeyboardOffset(): number {
         })
         .catch(() => {});
 
-      // ── Source 2: visualViewport — always authoritative ──────────────
-      // Always let the visual viewport override the plugin's rough
-      // estimate. On Android the plugin overshoots (includes the nav bar);
-      // the vv resize event fires with the correct CSS value once the
-      // keyboard animation finishes. On iOS the two sources agree, so
-      // removing the `pluginActive` guard has no effect there.
+      // ── Source 2: visualViewport — secondary refinement ──────────────
+      // On native, the plugin value is authoritative. The viewport
+      // measurement is used only to refine upward (never reduce the
+      // offset below the plugin's value, which now correctly includes
+      // the nav bar since the WebView extends behind it).
       const vv = window.visualViewport;
       if (vv) {
         const vvUpdate = () => {
           const measured = measureFromViewport();
           if (measured > 50) {
-            setOffset(measured);
+            // Only increase — never shrink below the plugin's value
+            setOffset((prev) => Math.max(prev, measured));
           } else if (!pluginActive) {
             // Only reset to 0 when the plugin confirms keyboard is hidden.
             setOffset(0);

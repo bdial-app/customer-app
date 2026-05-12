@@ -132,7 +132,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
             className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-slate-800 rounded-t-3xl overflow-hidden"
-            style={{ maxHeight: "85vh", paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
+            style={{ maxHeight: "85vh", paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 0px)" }}
           >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-slate-700">

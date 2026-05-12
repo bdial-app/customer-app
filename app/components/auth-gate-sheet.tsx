@@ -837,7 +837,7 @@ export default function AuthGateSheet() {
             style={{
               bottom: keyboardOffset,
               maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
-              paddingBottom: keyboardOffset > 0 ? 8 : "max(env(safe-area-inset-bottom), 12px)",
+              paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 12px)",
               background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
               transition: "bottom 0.15s ease-out, max-height 0.15s ease-out, padding-bottom 0.15s ease-out",
             }}

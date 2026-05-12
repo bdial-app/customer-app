@@ -141,7 +141,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
       {/* Frosted glass bar */}
       <div
         className="w-full bg-white/80 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-700/50 shadow-[0_-2px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.3)]"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        style={{ paddingBottom: "var(--sab, env(safe-area-inset-bottom))" }}
       >
         <div className="flex items-center justify-around py-1.5">
           {visibleTabs.map((tab) => {
