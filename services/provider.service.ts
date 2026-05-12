@@ -4,8 +4,8 @@ import { PROVIDER_URLS, REVIEW_URLS } from "@/utils/urls";
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface ProviderNearbyParams {
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   radius?: number;
   page?: number;
   limit?: number;

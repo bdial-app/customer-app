@@ -21,7 +21,7 @@ export const useNearbyProviders = (params: Omit<ProviderNearbyParams, "page">) =
       if (typeof page !== "number" || typeof totalPages !== "number") return undefined;
       return page < totalPages ? page + 1 : undefined;
     },
-    enabled: !!params.lat && !!params.lng,
+    enabled: true, // Backend supports city-only browsing when lat/lng are absent
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };

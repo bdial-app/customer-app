@@ -27,9 +27,11 @@ import InfiniteScroll from "../components/infinite-scroll";
 import { useReverseGeocode } from "@/hooks/useGeocode";
 import { useNearbyProviders } from "@/hooks/useProvider";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { getItemSync, setItemSync } from "@/utils/storage";
+import { setGuestCoords } from "@/store/slices/locationSlice";
 
 type SortOption = "relevance" | "rating" | "distance" | "reviews";
 
@@ -51,6 +53,7 @@ const EMPTY_FILTERS: AllServicesFilters = {
 const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const router = useRouter();
   const { goBack } = useBackNavigation();
+  const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +124,22 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const effectiveLat = user?.latitude ?? guestCoords?.lat;
   const effectiveLng = user?.longitude ?? guestCoords?.lng;
 
+  // Auto-request geolocation when page opens without coordinates (fire-and-forget)
+  useEffect(() => {
+    if (effectiveLat || effectiveLng) return; // already have coordinates
+    let cancelled = false;
+    import("@/utils/geolocation").then(({ getCurrentPosition }) => {
+      getCurrentPosition({ timeout: 10000 }).then((pos) => {
+        if (!cancelled) {
+          dispatch(setGuestCoords({ lat: pos.latitude, lng: pos.longitude }));
+        }
+      }).catch(() => {
+        // Silently continue — page loads city-only or all providers
+      });
+    });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { data: addressData } = useReverseGeocode(
     !selectedCity && effectiveLat && effectiveLng
       ? { lat: effectiveLat, lng: effectiveLng }
@@ -138,8 +157,8 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     isLoading: isProvidersLoading,
     isFetching,
   } = useNearbyProviders({
-    lat: effectiveLat || 0,
-    lng: effectiveLng || 0,
+    lat: effectiveLat,
+    lng: effectiveLng,
     search: debouncedSearch,
     city: effectiveCity,
     categoryIds: Array.from(filters.categoryIds),
