@@ -15,7 +15,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  interactiveWidget: "overlays-content",
+  // NOTE: interactiveWidget is Chrome-only — removed to prevent old iOS Safari from misrendering
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -73,6 +73,24 @@ export default async function RootLayout({
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
+        {/* Apple splash screens — required to prevent white screen on old iOS PWA launch */}
+        {/* iPad 1/2 (768×1024 @1x) */}
+        <link rel="apple-touch-startup-image" href="/splash-screen.png"
+          media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 1) and (orientation: portrait)" />
+        {/* iPad 3/4/Air/mini-retina/Pro-9.7 (768×1024 @2x) */}
+        <link rel="apple-touch-startup-image" href="/splash-screen.png"
+          media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+        {/* iPad Pro 10.5 */}
+        <link rel="apple-touch-startup-image" href="/splash-screen.png"
+          media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+        {/* iPad Pro 11 */}
+        <link rel="apple-touch-startup-image" href="/splash-screen.png"
+          media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+        {/* iPad Pro 12.9 */}
+        <link rel="apple-touch-startup-image" href="/splash-screen.png"
+          media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+        {/* Generic fallback for any iPad not matched above */}
+        <link rel="apple-touch-startup-image" href="/splash-screen.png" />
       </head>
       <body
         className="min-h-full flex flex-col bg-[#FAFAFA] dark:bg-slate-900 transition-colors duration-300 overflow-hidden h-full"
