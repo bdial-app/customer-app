@@ -52,7 +52,7 @@ const schemas: Record<Step, Yup.ObjectSchema<any>> = {
       .trim()
       .min(3, "At least 3 characters")
       .max(100, "Under 100 characters")
-      .matches(/[a-zA-Z]/, "Name must contain at least one letter")
+      .matches(/^[a-zA-Z\s.'-]+$/, "Name should only contain letters")
       .required("Full name is required"),
     gender: Yup.string().oneOf(["male", "female", "other"]).required("Gender is required"),
     city: Yup.string().max(100, "Under 100 characters"),

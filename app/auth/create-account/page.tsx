@@ -43,7 +43,7 @@ const validationSchemas = {
       .trim()
       .min(3, "Must be at least 3 characters")
       .max(100, "Must be under 100 characters")
-      .matches(/[a-zA-Z]/, "Must contain at least one letter")
+      .matches(/^[a-zA-Z\s.'-]+$/, "Name should only contain letters")
       .required("Full name is required"),
     gender: Yup.string()
       .oneOf(["male", "female", "other"])
