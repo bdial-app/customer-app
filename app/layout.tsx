@@ -33,8 +33,15 @@ export async function generateMetadata(): Promise<Metadata> {
       telephone: false,
     },
     icons: {
-      icon: "/favicon.png",
-      apple: "/favicon.png",
+      icon: [
+        { url: "/icons/48.png", sizes: "48x48", type: "image/png" },
+        { url: "/icons/96.png", sizes: "96x96", type: "image/png" },
+        { url: "/icons/192.png", sizes: "192x192", type: "image/png" },
+        { url: "/favicon.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [
+        { url: "/icons/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
+      ],
     },
     metadataBase: new URL("https://www.tijarah.com"),
   };
@@ -70,8 +77,12 @@ export default async function RootLayout({
         />
         <meta name="apple-mobile-web-app-title" content="Tijarah" />
         <meta name="msapplication-TileColor" content="#F59E0B" />
-        <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/icons/48.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/icons/96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/apple-touch-icon.png" />
+        <meta name="msapplication-TileImage" content="/icons/192.png" />
         <link rel="manifest" href="/manifest.json" />
         {/* Apple splash screens — required to prevent white screen on old iOS PWA launch */}
         {/* iPad 1/2 (768×1024 @1x) */}

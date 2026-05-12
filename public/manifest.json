@@ -6,12 +6,9 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#F8CB45",
-  "theme_color": "#F59E0B",
-  "categories": [
-    "lifestyle",
-    "productivity"
-  ],
+  "background_color": "#1e2b56",
+  "theme_color": "#1e2b56",
+  "categories": ["lifestyle", "productivity"],
   "icons": [
     {
       "src": "/icons/48.png",
@@ -74,18 +71,6 @@
       "purpose": "maskable"
     },
     {
-      "src": "/icons/256.png",
-      "type": "image/png",
-      "sizes": "256x256",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/256.png",
-      "type": "image/png",
-      "sizes": "256x256",
-      "purpose": "maskable"
-    },
-    {
       "src": "/icons/512.png",
       "type": "image/png",
       "sizes": "512x512",
@@ -134,9 +119,6 @@
       ]
     }
   ],
-  "permissions": [
-    "geolocation",
-    "file_upload"
-  ],
+  "permissions": ["geolocation", "file_upload"],
   "gcm_sender_id": "426738425106"
 }

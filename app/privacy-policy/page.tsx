@@ -139,6 +139,17 @@ export default function PrivacyPolicyPage() {
           ))}
         </div>
 
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-xl px-4 py-3 space-y-2">
+          <p className="font-semibold text-blue-800 dark:text-blue-300 text-xs">How to Delete Your Account</p>
+          <ol className="list-decimal pl-4 space-y-1 text-xs text-blue-700 dark:text-blue-400">
+            <li>Go to the <strong>Profile</strong> screen</li>
+            <li>Tap <strong>Delete Account</strong></li>
+          </ol>
+          <p className="text-xs text-blue-600 dark:text-blue-500">
+            Your account and all associated data will be permanently removed within 30 days.
+          </p>
+        </div>
+
         <h4 className="font-bold text-slate-800 dark:text-white">
           6. Children's Privacy
         </h4>
