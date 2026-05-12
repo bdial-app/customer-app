@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.pronttera.tijarah",
       "sha256_cert_fingerprints": [
-        "47:6E:B5:EA:E8:06:56:E5:D4:60:5B:41:EB:E9:A6:E2:5A:99:50:E6:B6:AE:38:70:63:27:25:F4:98:0A:32:A3"
+        "47:6E:B5:EA:E8:06:56:E5:D4:60:5B:41:EB:E9:A6:E2:5A:99:50:E6:B6:AE:38:70:63:27:25:F4:98:0A:32:A3",
+        "CF:83:BB:B8:48:93:06:58:50:DA:FF:A1:B6:7D:03:C8:5C:09:52:5F:CB:89:F3:8D:7D:E0:A4:B0:3A:5E:E6:7F"
       ]
     }
   }
