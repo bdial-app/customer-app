@@ -6,9 +6,12 @@ const RUNTIME_CACHE = "tijarah-runtime-" + BUILD_ID;
 const IMAGE_CACHE = "tijarah-images"; // images persist across deploys
 const IMAGE_CACHE_MAX = 300;
 
-// Install event - skip waiting immediately to activate new SW
+// Install event - skip waiting immediately and pre-cache the offline fallback
 self.addEventListener("install", (event) => {
   console.log("[SW] Installing service worker, build:", BUILD_ID);
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.add("/offline.html")).catch(() => {})
+  );
   self.skipWaiting();
 });
 
@@ -102,7 +105,7 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match(request).then((cached) => cached || caches.match("/"));
+          return caches.match(request).then((cached) => cached || caches.match("/offline.html"));
         }),
     );
     return;
