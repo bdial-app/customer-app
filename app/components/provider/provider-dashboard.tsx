@@ -48,6 +48,7 @@ import {
 } from "@/services/provider.service";
 import { getWarningsUnreadCount } from "@/services/report.service";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
+import ProviderWarningModal from "./provider-warning-modal";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -1188,6 +1189,9 @@ const ProviderDashboard = ({
         isOpen={warningsSheetOpen}
         onClose={() => setWarningsSheetOpen(false)}
         onRead={() => refetchWarnings()}
+      />
+      <ProviderWarningModal
+        onViewAll={() => setWarningsSheetOpen(true)}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { IonIcon } from "@ionic/react";
 import {
   chatbubbleOutline,
@@ -11,8 +12,10 @@ import {
   flagOutline,
   mailOutline,
   trashOutline,
+  chevronDownOutline,
+  chevronUpOutline,
 } from "ionicons/icons";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { NotificationItem, NotificationType } from "@/services/notification.service";
 
 const TYPE_CONFIG: Record<
@@ -48,17 +51,32 @@ interface NotificationItemCardProps {
   onDelete: (id: string) => void;
 }
 
+// Long body threshold — expand toggle shown when body exceeds this
+const TRUNCATE_THRESHOLD = 80;
+
 export default function NotificationItemCard({
   notification,
   onPress,
   onDelete,
 }: NotificationItemCardProps) {
   const config = TYPE_CONFIG[notification.type] || TYPE_CONFIG.system_announcement;
+  const isLong = (notification.body?.length ?? 0) > TRUNCATE_THRESHOLD;
+  const [expanded, setExpanded] = useState(false);
+
+  const handleTap = () => {
+    if (isLong && !expanded) {
+      // First tap on long notification expands it rather than navigating
+      setExpanded(true);
+      onPress(notification); // still marks as read
+      return;
+    }
+    onPress(notification);
+  };
 
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      onClick={() => onPress(notification)}
+      onClick={handleTap}
       className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
         notification.isRead ? "bg-white dark:bg-slate-900" : "bg-amber-50/40 dark:bg-amber-900/10"
       }`}
@@ -80,12 +98,41 @@ export default function NotificationItemCard({
             <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
           )}
         </div>
-        <p className={`text-xs mt-0.5 line-clamp-2 ${notification.isRead ? "text-slate-400" : "text-slate-500"}`}>
-          {notification.body}
-        </p>
-        <span className="text-[10px] text-slate-400 mt-1 block">
-          {timeAgo(notification.createdAt)}
-        </span>
+        <AnimatePresence initial={false}>
+          {expanded ? (
+            <motion.p
+              key="expanded"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`text-xs mt-0.5 leading-relaxed ${notification.isRead ? "text-slate-400" : "text-slate-500"}`}
+            >
+              {notification.body}
+            </motion.p>
+          ) : (
+            <motion.p
+              key="collapsed"
+              className={`text-xs mt-0.5 line-clamp-2 ${notification.isRead ? "text-slate-400" : "text-slate-500"}`}
+            >
+              {notification.body}
+            </motion.p>
+          )}
+        </AnimatePresence>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[10px] text-slate-400">
+            {timeAgo(notification.createdAt)}
+          </span>
+          {isLong && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+              className="flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 active:opacity-60"
+            >
+              <IonIcon icon={expanded ? chevronUpOutline : chevronDownOutline} className="text-xs" />
+              {expanded ? "Show less" : "Read more"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Delete button */}

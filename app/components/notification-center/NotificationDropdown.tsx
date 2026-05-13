@@ -184,7 +184,7 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
                         <p className={`text-[13px] leading-tight line-clamp-1 ${!n.isRead ? "font-semibold text-slate-800 dark:text-white" : "font-medium text-slate-600 dark:text-slate-300"}`}>
                           {n.title}
                         </p>
-                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                        <p className={`text-[11px] mt-0.5 leading-snug ${n.type === 'provider_status' ? 'line-clamp-3' : 'line-clamp-2'} ${!n.isRead ? "text-slate-500" : "text-slate-400"}`}>
                           {n.body}
                         </p>
                       </div>
