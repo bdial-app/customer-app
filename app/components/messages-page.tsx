@@ -6,7 +6,6 @@ import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import {
   arrowBack,
   sendSharp,
-  happyOutline,
   attachOutline,
   checkmarkDone,
   checkmark,
@@ -640,24 +639,25 @@ export default function MessagesPage({
 
       {/* Attachment preview */}
       {attachedFile && (
-        <div className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2">
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl p-2">
+        <div className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-4 py-2.5">
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-700/60 rounded-2xl p-2.5">
             {attachedPreview ? (
-              <img src={attachedPreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover" loading="lazy" decoding="async" />
+              <img src={attachedPreview} alt="Preview" className="w-12 h-12 rounded-xl object-cover shrink-0" loading="lazy" decoding="async" />
             ) : (
-              <div className="w-14 h-14 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
-                <IonIcon icon={imageOutline} className="text-xl text-slate-400" />
+              <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-600 flex items-center justify-center shrink-0">
+                <IonIcon icon={imageOutline} className="text-lg text-slate-400" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{attachedFile.name}</p>
-              <p className="text-[10px] text-slate-400">{(attachedFile.size / 1024).toFixed(0)} KB</p>
+              <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300 truncate leading-tight">{attachedFile.name}</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{(attachedFile.size / 1024).toFixed(0)} KB</p>
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => { setAttachedFile(null); setAttachedPreview(null); }}
+              className="p-1 shrink-0"
             >
-              <IonIcon icon={closeCircle} className="text-xl text-slate-400" />
+              <IonIcon icon={closeCircle} className="text-xl text-slate-400 dark:text-slate-500" />
             </motion.button>
           </div>
         </div>
@@ -674,13 +674,13 @@ export default function MessagesPage({
         className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2"
         style={{ paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 8px)" }}
       >
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-1.5">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleAttachClick}
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-slate-100 dark:active:bg-slate-700"
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
           >
-            <IonIcon icon={attachOutline} className="text-xl text-slate-500 dark:text-slate-400" />
+            <IonIcon icon={attachOutline} className="text-[22px] text-slate-500 dark:text-slate-400" />
           </motion.button>
           <input
             ref={fileInputRef}
@@ -690,7 +690,7 @@ export default function MessagesPage({
             onChange={handleFileChange}
           />
 
-          <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3.5 py-2 flex items-end gap-2">
+          <div className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3.5 py-2.5">
             <textarea
               ref={inputRef}
               value={messageText}
@@ -698,24 +698,18 @@ export default function MessagesPage({
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-5"
+              className="w-full bg-transparent text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-[20px]"
               style={{ height: "auto" }}
             />
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="shrink-0 mb-px"
-            >
-              <IonIcon icon={happyOutline} className="text-xl text-slate-400" />
-            </motion.button>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={handleSend}
             disabled={sendMutation.isPending || uploadMutation.isPending}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 transition-colors ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 ${
               messageText.trim() || attachedFile
-                ? "bg-slate-800 dark:bg-slate-600 shadow-lg"
+                ? "bg-slate-800 dark:bg-amber-500 shadow-lg shadow-slate-800/20 dark:shadow-amber-500/20"
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
           >
@@ -724,7 +718,7 @@ export default function MessagesPage({
             ) : (
               <IonIcon
                 icon={sendSharp}
-                className={`text-base ${
+                className={`text-[16px] ${
                   messageText.trim() || attachedFile ? "text-white" : "text-slate-400"
                 }`}
                 style={{ transform: "rotate(-35deg)", marginLeft: 2 }}
