@@ -94,11 +94,6 @@ input, textarea, [contenteditable="true"] {
   contain: strict;
 }
 
-/* Force Konsta Page to not scroll — tabs handle their own scroll */
-.k-page {
-  overflow: hidden !important;
-}
-
 /* Hide native search clear button across all browsers */
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {

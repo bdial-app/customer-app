@@ -23,6 +23,7 @@ export function useKeyboardOffset(): number {
     const cleanups: (() => void)[] = [];
     let cancelled = false;
     let pluginActive = false; // true while the plugin says keyboard is open
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
     /** CSS-coordinate keyboard height derived from the visual viewport. */
     const measureFromViewport = (): number => {
@@ -40,6 +41,8 @@ export function useKeyboardOffset(): number {
           // Fast initial response — may overshoot on Android because
           // keyboardHeight includes the system navigation bar height.
           Keyboard.addListener("keyboardWillShow", (info) => {
+            // Cancel any pending hide — keyboard reopened quickly (e.g. step transition)
+            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
             pluginActive = true;
             setOffset(info.keyboardHeight);
           }).then((l) => cleanups.push(() => l.remove()));
@@ -50,6 +53,7 @@ export function useKeyboardOffset(): number {
           // WebView extends behind the nav bar; the viewport measurement
           // may undercount if interactive-widget resizes the layout viewport.
           Keyboard.addListener("keyboardDidShow", () => {
+            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
             pluginActive = true;
             requestAnimationFrame(() => {
               if (cancelled) return;
@@ -61,13 +65,23 @@ export function useKeyboardOffset(): number {
           }).then((l) => cleanups.push(() => l.remove()));
 
           Keyboard.addListener("keyboardWillHide", () => {
-            pluginActive = false;
-            setOffset(0);
+            // Delay the reset — if the keyboard reopens within 300ms
+            // (e.g. input focus switches during a step transition),
+            // keyboardWillShow will cancel this timer and keep the offset.
+            hideTimer = setTimeout(() => {
+              pluginActive = false;
+              setOffset(0);
+              hideTimer = null;
+            }, 300);
           }).then((l) => cleanups.push(() => l.remove()));
 
           Keyboard.addListener("keyboardDidHide", () => {
-            pluginActive = false;
-            setOffset(0);
+            // If keyboardWillHide already scheduled a delayed reset,
+            // let it handle it. Only force-reset if no timer is pending.
+            if (!hideTimer) {
+              pluginActive = false;
+              setOffset(0);
+            }
           }).then((l) => cleanups.push(() => l.remove()));
         })
         .catch(() => {});
@@ -112,6 +126,7 @@ export function useKeyboardOffset(): number {
 
     return () => {
       cancelled = true;
+      if (hideTimer) clearTimeout(hideTimer);
       cleanups.forEach((fn) => fn());
     };
   }, []);
