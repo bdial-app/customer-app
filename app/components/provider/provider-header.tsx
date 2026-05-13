@@ -8,6 +8,7 @@ import {
   checkmarkCircle,
   timeOutline,
   alertCircleOutline,
+  warningOutline,
 } from "ionicons/icons";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
@@ -18,6 +19,7 @@ import { shareProvider } from "@/utils/sharing";
 interface ProviderHeaderProps {
   provider: ProviderData | null;
   verificationStatus: string | null;
+  warningCount?: number;
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
@@ -29,7 +31,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
   disabled: { label: "Disabled", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800", icon: alertCircleOutline },
 };
 
-const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) => {
+const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: ProviderHeaderProps) => {
   const updateMutation = useUpdateProvider();
   const [notifOpen, setNotifOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -126,6 +128,12 @@ const ProviderHeader = ({ provider, verificationStatus }: ProviderHeaderProps) =
                 <IonIcon icon={status.icon} className="text-xs" />
                 {status.label}
               </span>
+              {warningCount > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-200 border border-amber-400/30">
+                  <IonIcon icon={warningOutline} className="text-xs" />
+                  {warningCount} warning{warningCount > 1 ? "s" : ""}
+                </span>
+              )}
               {/* Availability inline toggle */}
               <motion.button
                 whileTap={{ scale: 0.9 }}

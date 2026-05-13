@@ -11,7 +11,8 @@ export type ProviderStatus =
   | "rejected"
   | "disabled"
   | "deleted"
-  | "suspended";
+  | "suspended"
+  | "unverified";
 export type UserMode = "customer" | "provider";
 
 const USER_MODE_KEY = "tijarah_user_mode";
@@ -31,7 +32,7 @@ function readStoredProviderStatus(): ProviderStatus {
   if (typeof window === "undefined") return "not_applied";
   try {
     const v = getItemSync(PROVIDER_STATUS_KEY);
-    if (v && ["not_applied", "pending", "in_review", "approved", "rejected", "disabled", "deleted", "suspended"].includes(v)) {
+    if (v && ["not_applied", "pending", "in_review", "approved", "rejected", "disabled", "deleted", "suspended", "unverified"].includes(v)) {
       return v as ProviderStatus;
     }
     return "not_applied";
@@ -88,7 +89,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const now = Date.now();
     if (now - lastToggleRef.current < 400) return;
     lastToggleRef.current = now;
-    if (providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review" || providerStatus === "suspended") {
+    if (providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review" || providerStatus === "suspended" || providerStatus === "unverified") {
       _setUserMode((prev) => {
         const next = prev === "customer" ? "provider" : "customer";
         try { setItemSync(USER_MODE_KEY, next); } catch {}

@@ -771,7 +771,8 @@ const ProfileContent = memo(() => {
           {(providerStatus === "approved" ||
             providerStatus === "pending" ||
             providerStatus === "in_review" ||
-            providerStatus === "suspended") && (
+            providerStatus === "suspended" ||
+            providerStatus === "unverified") && (
             <div className="mx-4 mb-3">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
                 <div>

@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -46,8 +46,54 @@ import {
   ProviderDetailsReview,
   ProviderDetailsOffer,
 } from "@/services/provider.service";
+import { getWarningsUnreadCount } from "@/services/report.service";
+import ProviderWarningsSheet from "./provider-warnings-sheet";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
+
+// ─── Warnings Banner ────────────────────────────────────────────────
+const WarningsBanner = ({
+  unreadCount,
+  onTap,
+}: {
+  unreadCount: number;
+  onTap: () => void;
+}) => {
+  if (unreadCount <= 0) return null;
+  return (
+    <div className="px-4 mb-4">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={onTap}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 p-4 cursor-pointer active:opacity-90 transition-opacity"
+      >
+        <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10" />
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <IonIcon
+              icon={alertCircleOutline}
+              className="text-white text-xl"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-bold text-white">
+              {unreadCount} Unread Warning{unreadCount > 1 ? "s" : ""}
+            </h4>
+            <p className="text-[11px] text-white/70 mt-0.5">
+              Tap to view details. Repeated violations may lead to suspension.
+            </p>
+          </div>
+          <IonIcon
+            icon={chevronForwardOutline}
+            className="text-white/60 text-lg shrink-0"
+          />
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
   <div className="px-4 mb-4">
     <motion.div
@@ -975,6 +1021,13 @@ const ProviderDashboard = ({
     staleTime: 1000 * 60 * 2,
   });
   const { data: sponsorships } = useMySponsorships();
+  const [warningsSheetOpen, setWarningsSheetOpen] = useState(false);
+  const { data: warningsUnread, refetch: refetchWarnings } = useQuery({
+    queryKey: ["warnings-unread-count"],
+    queryFn: getWarningsUnreadCount,
+    staleTime: 1000 * 60 * 2,
+  });
+  const unreadWarningCount = warningsUnread?.count ?? warningsUnread ?? 0;
   const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
   const isLoading = providerLoading || detailsLoading;
@@ -1080,8 +1133,15 @@ const ProviderDashboard = ({
       <ProviderHeader
         provider={provider}
         verificationStatus={isApproved ? "approved" : verificationStatus}
+        warningCount={unreadWarningCount}
       />
       <ProviderQuickStats stats={providerStats} />
+      {unreadWarningCount > 0 && (
+        <WarningsBanner
+          unreadCount={unreadWarningCount}
+          onTap={() => setWarningsSheetOpen(true)}
+        />
+      )}
       {needsVerification && <VerificationPrompt onVerify={handleVerify} />}
       {!isApproved &&
         verificationStatus &&
@@ -1124,6 +1184,11 @@ const ProviderDashboard = ({
       />
       <ProductsOverview stats={providerStats} />
       <RecentReviewsList stats={providerStats} />
+      <ProviderWarningsSheet
+        isOpen={warningsSheetOpen}
+        onClose={() => setWarningsSheetOpen(false)}
+        onRead={() => refetchWarnings()}
+      />
     </div>
   );
 };
