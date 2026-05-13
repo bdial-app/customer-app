@@ -49,8 +49,7 @@ function InviteFriendsContent() {
   };
 
   const handleCopyLink = async () => {
-    const link = "https://develop.tijarahapp.in/";
-    window.open(link, "_blank", "noopener,noreferrer");
+    const link = getShareableLink();
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
