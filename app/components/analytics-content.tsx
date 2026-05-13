@@ -53,6 +53,7 @@ import {
 import { useProviderAnalytics, useMySponsorships } from "@/hooks/useMyProvider";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import OfflineFallback from "./offline-fallback";
+import { InfoTip } from "./info-tip";
 import {
   useAnalyticsSummary,
   useTopProducts,
@@ -569,6 +570,7 @@ const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
                   {summary && (
                     <div className="flex items-center gap-1.5 bg-emerald-500/20 px-2.5 py-1 rounded-full">
                       <span className="text-emerald-400 text-[10px] font-bold">{summary.conversionRate.toFixed(1)}% CVR</span>
+                      <InfoTip text="Conversion Rate — % of visitors who took action (called, enquired, got directions)" size={10} className="text-emerald-300" />
                     </div>
                   )}
                 </div>
@@ -762,6 +764,7 @@ const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
                   <div className="flex items-center gap-1.5">
                     <IonIcon icon={flameOutline} className="text-sm text-orange-500" />
                     <h3 className="text-xs font-bold text-slate-800 dark:text-white">Lead Funnel</h3>
+                    <InfoTip text="Shows visitor interest levels — Hot means ready to buy, Cold means just browsing" size={11} />
                   </div>
                   <button onClick={() => setView("leads")} className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
                     View all <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
@@ -913,8 +916,9 @@ const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
           {/* ═══ ENGAGEMENT STRIP ═══ */}
           <div className="px-4 mb-4">
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-              <div className="px-3.5 pt-3 pb-1.5">
+              <div className="px-3.5 pt-3 pb-1.5 flex items-center gap-1.5">
                 <h3 className="text-xs font-bold text-slate-800 dark:text-white">Engagement</h3>
+                <InfoTip text="How actively customers interact with your profile — saves, shares, calls, and direction requests" size={11} />
               </div>
               <div className="flex divide-x divide-slate-100 dark:divide-slate-700">
                 {[
@@ -950,6 +954,7 @@ const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
                       <h3 className="text-sm font-bold text-slate-800 dark:text-white">Audience Insights</h3>
                       <p className="text-[10px] text-slate-400">{visitorInsights.totalVisitors.toLocaleString()} total visitors</p>
                     </div>
+                    <InfoTip text="Breakdown of who's visiting your profile — registered users vs anonymous browsers" size={12} />
                   </div>
 
                   {/* Visitor split bar */}
@@ -1109,15 +1114,15 @@ const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
                   {/* Aggregate stats */}
                   <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-slate-700 border-b border-slate-100 dark:border-slate-700">
                     {[
-                      { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500" },
-                      { label: "Clicks", value: totalClicks.toLocaleString(), icon: flashOutline, color: "text-amber-500" },
-                      { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-emerald-500" },
-                      { label: "Avg CPC", value: `₹${cpc.toFixed(1)}`, icon: cashOutline, color: "text-violet-500" },
+                      { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500", tip: "Times your ad was shown to customers" },
+                      { label: "Clicks", value: totalClicks.toLocaleString(), icon: flashOutline, color: "text-amber-500", tip: "Times customers tapped your ad" },
+                      { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-emerald-500", tip: "Click-Through Rate — % of viewers who tapped" },
+                      { label: "Avg CPC", value: `₹${cpc.toFixed(1)}`, icon: cashOutline, color: "text-violet-500", tip: "Cost Per Click — what you pay per tap" },
                     ].map((stat) => (
                       <div key={stat.label} className="py-3 text-center">
                         <IonIcon icon={stat.icon} className={`text-sm ${stat.color}`} />
                         <div className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{stat.value}</div>
-                        <div className="text-[7px] text-slate-400 font-medium">{stat.label}</div>
+                        <div className="text-[7px] text-slate-400 font-medium flex items-center justify-center gap-0.5">{stat.label} <InfoTip text={stat.tip} size={9} /></div>
                       </div>
                     ))}
                   </div>

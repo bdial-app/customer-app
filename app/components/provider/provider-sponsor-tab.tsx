@@ -30,6 +30,7 @@ import {
 } from "ionicons/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/app/context/NotificationContext";
+import { InfoTip } from "../info-tip";
 import {
   useSponsorshipPlans,
   useMySponsorships,
@@ -402,15 +403,15 @@ const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredList
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-px bg-slate-100 dark:bg-slate-700">
         {[
-          { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500", sublabel: `${Math.round(totalImpressions / daysRunning)}/day` },
-          { label: "Clicks", value: totalClicks.toLocaleString(), icon: fingerPrintOutline, color: "text-emerald-500", sublabel: `${Math.round(totalClicks / daysRunning)}/day` },
-          { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-amber-500", sublabel: ctrRating.label },
-          { label: "Avg CPC", value: `₹${avgCpc.toFixed(1)}`, icon: walletOutline, color: "text-violet-500", sublabel: `₹${dailyBurnRate.toFixed(0)}/day` },
+          { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500", sublabel: `${Math.round(totalImpressions / daysRunning)}/day`, tip: "How many times your ad was shown to customers" },
+          { label: "Clicks", value: totalClicks.toLocaleString(), icon: fingerPrintOutline, color: "text-emerald-500", sublabel: `${Math.round(totalClicks / daysRunning)}/day`, tip: "How many customers tapped on your ad" },
+          { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-amber-500", sublabel: ctrRating.label, tip: "Click-Through Rate — % of people who saw your ad and tapped on it. Higher is better" },
+          { label: "Avg CPC", value: `₹${avgCpc.toFixed(1)}`, icon: walletOutline, color: "text-violet-500", sublabel: `₹${dailyBurnRate.toFixed(0)}/day`, tip: "Cost Per Click — average amount you pay each time someone taps your ad" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white dark:bg-slate-800 p-3 text-center">
             <IonIcon icon={stat.icon} className={`text-base ${stat.color}`} />
             <div className="text-base font-bold text-slate-800 dark:text-white mt-0.5">{stat.value}</div>
-            <div className="text-[9px] text-slate-400 font-medium">{stat.label}</div>
+            <div className="text-[9px] text-slate-400 font-medium flex items-center justify-center gap-0.5">{stat.label} <InfoTip text={stat.tip} size={10} /></div>
             <div className="text-[8px] text-slate-400 mt-0.5">{stat.sublabel}</div>
           </div>
         ))}
@@ -422,6 +423,7 @@ const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredList
           <div className="flex items-center gap-1.5">
             <IonIcon icon={walletOutline} className="text-sm text-slate-400" />
             <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Budget Utilization</span>
+            <InfoTip text="Shows how much of your total ad budget has been spent so far" size={11} />
           </div>
           <span className="text-[11px] font-bold text-slate-800 dark:text-white">
             ₹{totalSpent.toLocaleString()} / ₹{totalBudget.toLocaleString()}
@@ -695,17 +697,17 @@ const SponsorshipCard = ({
         <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-2 text-center">
           <IonIcon icon={eyeOutline} className="text-blue-500 text-sm" />
           <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{sponsorship.impressions}</p>
-          <p className="text-[9px] text-slate-500 dark:text-slate-400">Views</p>
+          <p className="text-[9px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-0.5">Views <InfoTip text="Times your ad was shown to customers" size={9} /></p>
         </div>
         <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-2 text-center">
           <IonIcon icon={fingerPrintOutline} className="text-emerald-500 text-sm" />
           <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{sponsorship.clicks}</p>
-          <p className="text-[9px] text-slate-500 dark:text-slate-400">Clicks</p>
+          <p className="text-[9px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-0.5">Clicks <InfoTip text="Number of customers who tapped your ad" size={9} /></p>
         </div>
         <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-2 text-center">
           <IonIcon icon={trendingUpOutline} className="text-amber-500 text-sm" />
           <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{ctr}%</p>
-          <p className="text-[9px] text-slate-500 dark:text-slate-400">CTR</p>
+          <p className="text-[9px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-0.5">CTR <InfoTip text="Click-Through Rate — % of viewers who tapped your ad" size={9} /></p>
         </div>
       </div>
 
