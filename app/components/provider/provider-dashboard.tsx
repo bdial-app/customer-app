@@ -1,6 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
   sparklesOutline,
@@ -46,11 +46,131 @@ import {
   ProviderDetailsReview,
   ProviderDetailsOffer,
 } from "@/services/provider.service";
-import { getWarningsUnreadCount } from "@/services/report.service";
+import { getWarningsUnreadCount, getMyWarnings } from "@/services/report.service";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
-import ProviderWarningModal from "./provider-warning-modal";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
+
+// ─── Warning Modal ──────────────────────────────────────────────────
+const WarningModal = ({
+  totalWarnings,
+  onClose,
+  onViewAll,
+}: {
+  totalWarnings: number;
+  onClose: () => void;
+  onViewAll: () => void;
+}) => {
+  if (totalWarnings <= 0) return null;
+
+  const isEscalation = totalWarnings >= 3;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center px-6"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          onClick={(e) => e.stopPropagation()}
+          className={`w-full max-w-sm rounded-3xl overflow-hidden ${
+            isEscalation
+              ? "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950"
+              : "bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950"
+          }`}
+        >
+          {/* Header */}
+          <div
+            className={`px-6 pt-6 pb-4 text-center ${
+              isEscalation
+                ? "bg-gradient-to-r from-red-500 to-orange-500"
+                : "bg-gradient-to-r from-amber-500 to-orange-500"
+            }`}
+          >
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+              <IonIcon
+                icon={alertCircleOutline}
+                className="text-white text-3xl"
+              />
+            </div>
+            <h2 className="text-lg font-bold text-white">
+              {isEscalation ? "Action Required" : "Account Warning"}
+            </h2>
+            <p className="text-white/80 text-sm mt-1">
+              {totalWarnings} warning{totalWarnings > 1 ? "s" : ""} on your account
+            </p>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-5">
+            <div className="space-y-3">
+              {/* Warning count bar */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      isEscalation
+                        ? "bg-gradient-to-r from-red-500 to-orange-500"
+                        : "bg-gradient-to-r from-amber-400 to-orange-400"
+                    }`}
+                    style={{ width: `${Math.min(100, (totalWarnings / 5) * 100)}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-bold ${isEscalation ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  {totalWarnings}/5
+                </span>
+              </div>
+
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                {isEscalation
+                  ? "Your account has received multiple warnings. Continued violations will result in account suspension. Please review and address the issues immediately."
+                  : "Your account has received a warning due to a report from a user. Please review your listings and ensure they comply with our community guidelines."}
+              </p>
+
+              {isEscalation && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-100/60 dark:bg-red-900/30 border border-red-200 dark:border-red-800">
+                  <IonIcon icon={alertCircleOutline} className="text-red-500 text-base mt-0.5 shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed font-medium">
+                    Your next warning may result in automatic account suspension.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="mt-5 space-y-2">
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={onViewAll}
+                className={`w-full py-3 rounded-xl text-sm font-bold text-white ${
+                  isEscalation
+                    ? "bg-gradient-to-r from-red-500 to-orange-500"
+                    : "bg-gradient-to-r from-amber-500 to-orange-500"
+                }`}
+              >
+                View All Warnings
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={onClose}
+                className="w-full py-3 rounded-xl text-sm font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+              >
+                I Understand
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 // ─── Warnings Banner ────────────────────────────────────────────────
 const WarningsBanner = ({
@@ -1023,12 +1143,20 @@ const ProviderDashboard = ({
   });
   const { data: sponsorships } = useMySponsorships();
   const [warningsSheetOpen, setWarningsSheetOpen] = useState(false);
+  const [warningModalDismissed, setWarningModalDismissed] = useState(false);
   const { data: warningsUnread, refetch: refetchWarnings } = useQuery({
     queryKey: ["warnings-unread-count"],
     queryFn: getWarningsUnreadCount,
     staleTime: 1000 * 60 * 2,
   });
-  const unreadWarningCount = warningsUnread?.count ?? warningsUnread ?? 0;
+  const { data: allWarnings } = useQuery({
+    queryKey: ["my-warnings"],
+    queryFn: getMyWarnings,
+    staleTime: 1000 * 60 * 2,
+  });
+  const unreadWarningCount = warningsUnread?.unreadCount ?? warningsUnread?.count ?? 0;
+  const totalWarningCount = Array.isArray(allWarnings) ? allWarnings.length : (allWarnings?.data?.length ?? 0);
+  const showWarningModal = unreadWarningCount > 0 && !warningModalDismissed;
   const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
   const isLoading = providerLoading || detailsLoading;
@@ -1190,9 +1318,16 @@ const ProviderDashboard = ({
         onClose={() => setWarningsSheetOpen(false)}
         onRead={() => refetchWarnings()}
       />
-      <ProviderWarningModal
-        onViewAll={() => setWarningsSheetOpen(true)}
-      />
+      {showWarningModal && (
+        <WarningModal
+          totalWarnings={totalWarningCount}
+          onClose={() => setWarningModalDismissed(true)}
+          onViewAll={() => {
+            setWarningModalDismissed(true);
+            setWarningsSheetOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 };

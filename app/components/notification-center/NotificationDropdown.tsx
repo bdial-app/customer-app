@@ -62,6 +62,7 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showAll, setShowAll] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const { userMode } = useAppContext();
   const otherModeCount = useAppSelector((s) =>
     userMode === "provider" ? s.notification.customerUnreadCount : s.notification.providerUnreadCount,
@@ -166,27 +167,49 @@ export default function NotificationDropdown({ open, onClose }: NotificationDrop
               ) : (
                 notifications.map((n) => {
                   const config = TYPE_ICON[n.type] || TYPE_ICON.system_announcement;
+                  const isWarning = n.type === 'provider_status' && n.title?.toLowerCase().includes('warning');
+                  const isExpanded = expandedId === n.id;
                   return (
                     <button
                       key={n.id}
                       onClick={() => handlePress(n)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors active:bg-slate-50 dark:active:bg-slate-700 ${
-                        !n.isRead ? "bg-amber-50/30 dark:bg-amber-900/10" : ""
+                      className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors active:bg-slate-50 dark:active:bg-slate-700 ${
+                        isWarning
+                          ? "bg-amber-50/60 dark:bg-amber-900/20 border-l-2 border-amber-500"
+                          : !n.isRead ? "bg-amber-50/30 dark:bg-amber-900/10" : ""
                       }`}
                     >
                       {/* Type icon */}
-                      <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                        <IonIcon icon={config.icon} className={`text-sm ${config.color}`} />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        isWarning ? "bg-amber-100 dark:bg-amber-900/40" : "bg-slate-50 dark:bg-slate-700"
+                      }`}>
+                        <IonIcon icon={config.icon} className={`text-sm ${isWarning ? "text-amber-600" : config.color}`} />
                       </div>
 
-                      {/* Content — compact */}
+                      {/* Content — expandable body */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-[13px] leading-tight line-clamp-1 ${!n.isRead ? "font-semibold text-slate-800 dark:text-white" : "font-medium text-slate-600 dark:text-slate-300"}`}>
+                        <p className={`text-[13px] leading-tight ${isExpanded ? '' : 'line-clamp-1'} ${!n.isRead ? "font-semibold text-slate-800 dark:text-white" : "font-medium text-slate-600 dark:text-slate-300"}`}>
                           {n.title}
                         </p>
-                        <p className={`text-[11px] mt-0.5 leading-snug ${n.type === 'provider_status' ? 'line-clamp-3' : 'line-clamp-2'} ${!n.isRead ? "text-slate-500" : "text-slate-400"}`}>
+                        <p
+                          className={`text-[11px] mt-0.5 leading-relaxed ${
+                            isExpanded ? '' : 'line-clamp-2'
+                          } ${isWarning ? 'text-amber-700 dark:text-amber-300' : 'text-slate-400'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedId(isExpanded ? null : n.id);
+                          }}
+                        >
                           {n.body}
                         </p>
+                        {!isExpanded && n.body && n.body.length > 80 && (
+                          <span
+                            className="text-[10px] text-blue-500 font-medium mt-0.5 inline-block"
+                            onClick={(e) => { e.stopPropagation(); setExpandedId(n.id); }}
+                          >
+                            Read more
+                          </span>
+                        )}
                       </div>
 
                       {/* Time + unread dot */}
