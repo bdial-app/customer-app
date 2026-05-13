@@ -11,8 +11,10 @@ import {
   copyOutline,
   logoWhatsapp,
   checkmarkCircle,
+  lockClosedOutline,
+  logInOutline,
 } from "ionicons/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   shareInvite,
   buildInviteLink,
@@ -21,7 +23,6 @@ import {
 } from "@/utils/sharing";
 import { trackInvite } from "@/services/invite.service";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import PrivateRoute from "@/app/components/private-route";
 import { isNativePlatform } from "@/utils/platform";
 
 function InviteFriendsContent() {
@@ -49,8 +50,7 @@ function InviteFriendsContent() {
   };
 
   const handleCopyLink = async () => {
-    const link = "https://develop.tijarahapp.in/";
-    window.open(link, "_blank", "noopener,noreferrer");
+    const link = getShareableLink();
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
@@ -237,19 +237,74 @@ function InviteFriendsContent() {
             </button>
           </div>
         </div>
-      </div>{" "}
-      {/* end h-full scroll container */}
+      </div>
     </Page>
   );
 }
 
 export default function InviteFriendsPage() {
-  return (
-    <PrivateRoute
-      title="Invite Friends"
-      description="Sign in to share Tijarah Connect with friends and help your community discover local businesses."
-    >
-      <InviteFriendsContent />
-    </PrivateRoute>
-  );
+  const [mounted, setMounted] = useState(false);
+  const { isAuthenticated, requireAuth } = useAuthGate();
+  const { goBack } = useBackNavigation();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isAuthenticated) {
+      requireAuth(() => {});
+    }
+  }, [mounted, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="relative min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col items-center justify-center px-8 text-center">
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center px-4 py-3"
+          style={{ paddingTop: "calc(var(--sat, 0px) + 12px)" }}
+        >
+          <button
+            onClick={() => goBack("/")}
+            className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:bg-gray-200 dark:active:bg-slate-700 transition-colors"
+          >
+            <IonIcon
+              icon={arrowBack}
+              className="w-5 h-5 text-gray-700 dark:text-gray-300"
+            />
+          </button>
+        </div>
+        <div className="w-20 h-20 bg-amber-50 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
+          <IonIcon
+            icon={lockClosedOutline}
+            className="text-4xl text-amber-500 dark:text-amber-400"
+          />
+        </div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          Invite Friends
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-8 max-w-xs leading-relaxed">
+          Sign in to share Tijarah Connect with friends and help your community
+          discover local businesses.
+        </p>
+        <button
+          onClick={() => requireAuth(() => {})}
+          className="flex items-center gap-2 bg-amber-400 text-white font-semibold text-sm px-8 py-3 rounded-2xl shadow-md active:scale-95 transition-transform"
+        >
+          <IonIcon icon={logInOutline} className="text-base" />
+          Sign In
+        </button>
+      </div>
+    );
+  }
+
+  return <InviteFriendsContent />;
 }

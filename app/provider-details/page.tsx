@@ -1493,7 +1493,6 @@ export default function ProviderDetailsPage() {
         {/* Review Sheet */}
         <BottomSheet opened={sheetOpened} onClose={() => setSheetOpened(false)}>
           <div className="px-5 pt-5 pb-8">
-            <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">
               Write a Review
             </h3>

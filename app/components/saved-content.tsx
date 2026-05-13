@@ -10,7 +10,6 @@ import {
   bookmark,
   star,
   locationOutline,
-  callOutline,
   searchOutline,
   closeCircle,
   checkmarkCircleOutline,
@@ -345,31 +344,19 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
                             </div>
                           )}
                           {item.location && (
-                            <div className="flex items-center gap-0.5 mt-1 text-[10px] text-slate-500">
-                              <IonIcon
-                                icon={locationOutline}
-                                className="text-[10px]"
-                              />
-                              {item.location}
+                            <div className="flex items-center justify-between gap-0.5 mt-1">
+                              <div className="flex items-center gap-0.5 text-2xs text-slate-500">
+                                <IonIcon
+                                  icon={locationOutline}
+                                  className="text-2xs"
+                                />
+                                {item.location}
+                              </div>
+                              <span className="text-[9px] text-slate-400 shrink-0">
+                                Saved {formatSavedAt(item.savedAt)}
+                              </span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1.5 mt-2">
-                            {item.contactNumber && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.location.href = `tel:${item.contactNumber}`;
-                                }}
-                                className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
-                              >
-                                <IonIcon
-                                  icon={callOutline}
-                                  className="text-[10px]"
-                                />
-                                Call
-                              </button>
-                            )}
-                          </div>
                         </>
                       )}
 
@@ -382,16 +369,12 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
                             </div>
                           )}
                           {item.providerName && (
-                            <p className="text-[10px] text-slate-400 mt-0.5">
+                            <p className="text-2xs text-slate-400 mt-0.5">
                               by {item.providerName}
                             </p>
                           )}
                         </>
                       )}
-
-                      <span className="text-[9px] text-slate-400 mt-1 block">
-                        Saved {formatSavedAt(item.savedAt)}
-                      </span>
                     </div>
                   </div>
                 </motion.div>
