@@ -5,6 +5,7 @@ import { useField, Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { useSendOtp, useRegistrationSendOtp, useCreateAccountMutation } from "@/hooks/useAuth";
 import { verifyOtp as verifyOtpDirect, googleSignIn as googleSignInDirect } from "@/services/auth.service";
+import { triggerAccountPaused } from "@/utils/axios";
 import { useAppDispatch } from "@/hooks/useAppStore";
 import { setToken, setProfile } from "@/store/slices/authSlice";
 import { useNotification } from "@/app/context/NotificationContext";
@@ -361,7 +362,13 @@ function AuthGateSheetContent() {
               dispatch(setToken(jwt));
             }
             dispatch(setProfile(res.user));
-            notify({ title: step === "otp" ? "Welcome back" : "Welcome", subtitle: res.user.name, variant: "success" });
+            // Check if user is paused — trigger paused modal instead of normal flow
+            if (res.user.status === 'paused') {
+              // Small delay so the token is set before the modal reads it
+              setTimeout(() => triggerAccountPaused(), 100);
+            } else {
+              notify({ title: step === "otp" ? "Welcome back" : "Welcome", subtitle: res.user.name, variant: "success" });
+            }
           } else {
             // User has no name — hold the token but DON'T put user in Redux.
             // This prevents the app from considering them "logged in".

@@ -1,6 +1,6 @@
 "use client";
 import { App } from "konsta/react";
-import { AppProvider } from "./context/AppContext";
+import { AppProvider, useAppContext } from "./context/AppContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { QueryClient, QueryClientProvider, onlineManager, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
@@ -17,6 +17,7 @@ import { onAccountPaused, onInappropriateContent, isNetworkError } from "@/utils
 import { AuthGateProvider } from "./context/AuthGateContext";
 import AuthGateSheet from "./components/auth-gate-sheet";
 import { resumeMyAccount } from "@/services/user.service";
+import { getMyProviderStatus } from "@/services/provider.service";
 import { useRouter } from "next/navigation";
 import { useNotification } from "./context/NotificationContext";
 import { AppDialog } from "./components/app-dialog";
@@ -227,6 +228,7 @@ function AccountPausedHandler() {
   const [isResuming, setIsResuming] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
   const router = useRouter();
+  const { setProviderStatus, setUserMode } = useAppContext();
 
   useEffect(() => {
     return onAccountPaused(() => setShowDialog(true));
@@ -241,6 +243,17 @@ function AccountPausedHandler() {
       if (updatedUser) {
         store.dispatch(setProfile(updatedUser));
       }
+      // Refresh provider status — after unpause, provider is disabled
+      try {
+        const providerRes = await getMyProviderStatus();
+        if (providerRes.providerStatus) {
+          setProviderStatus(providerRes.providerStatus as any);
+        }
+        // Force customer mode since provider is disabled
+        if (providerRes.providerStatus === 'disabled') {
+          setUserMode('customer');
+        }
+      } catch {}
       setShowDialog(false);
     } catch (err: any) {
       const msg =
@@ -250,7 +263,7 @@ function AccountPausedHandler() {
     } finally {
       setIsResuming(false);
     }
-  }, []);
+  }, [setProviderStatus, setUserMode]);
 
   const handleDismiss = useCallback(() => {
     removeItemSync("user");
