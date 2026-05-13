@@ -585,45 +585,47 @@ export default function ProviderDetailsPage() {
 
             {/* Provider Name */}
             <div className="absolute bottom-4 left-4 right-20">
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-white leading-tight wrap-break-word min-w-0">
+              <div className="flex items-center mb-1">
+                <h1 className="text-xl font-bold text-white leading-tight break-words min-w-0 flex-1">
                   {provider.brandName}
                 </h1>
                 {provider.status === "active" && (
                   <IonIcon
                     icon={checkmarkCircle}
-                    className="w-5 h-5 text-blue-400 shrink-0"
+                    className="w-5 h-5 text-blue-400 shrink-0 mt-0.5"
                   />
                 )}
               </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-white/80 text-sm truncate">
-                  {categoryLabel}
-                </p>
-                {isSponsored && (
-                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-linear-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm shrink-0">
-                    ⭐ Premium
-                  </span>
-                )}
-                {badges.length > 0 &&
-                  badges.slice(0, 3).map((b) => (
-                    <span
-                      key={b.id}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
-                    >
-                      {b.type === "gold_seller"
-                        ? "🥇"
-                        : b.type === "top_rated"
-                        ? "⭐"
-                        : b.type === "trusted"
-                        ? "🛡️"
-                        : b.type === "express_service"
-                        ? "⚡"
-                        : "🌟"}
-                      {b.type.replace(/_/g, " ")}
+              <p className="text-white/80 text-sm truncate mb-1.5">
+                {categoryLabel}
+              </p>
+              {(isSponsored || badges.length > 0) && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {isSponsored && (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-linear-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm shrink-0">
+                      ⭐ Premium
                     </span>
-                  ))}
-              </div>
+                  )}
+                  {badges.length > 0 &&
+                    badges.slice(0, 3).map((b) => (
+                      <span
+                        key={b.id}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
+                      >
+                        {b.type === "gold_seller"
+                          ? "🥇"
+                          : b.type === "top_rated"
+                          ? "⭐"
+                          : b.type === "trusted"
+                          ? "🛡️"
+                          : b.type === "express_service"
+                          ? "⚡"
+                          : "🌟"}
+                        {b.type.replace(/_/g, " ")}
+                      </span>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1137,10 +1139,15 @@ export default function ProviderDetailsPage() {
                       <StarRow rating={review.starRating} size={12} />
                       {user && user.id !== review.reviewerId && (
                         <button
-                          onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                          onClick={() =>
+                            requireAuth(() => setReportSheetOpen(true))
+                          }
                           className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
                         >
-                          <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
+                          <IonIcon
+                            icon={flagOutline}
+                            className="w-3.5 h-3.5 text-slate-400"
+                          />
                         </button>
                       )}
                     </div>
@@ -1264,7 +1271,8 @@ export default function ProviderDetailsPage() {
         <div
           className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
           style={{
-            paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
+            paddingBottom:
+              "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
             background:
               "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
             display: isLightboxOpen ? "none" : "block",
@@ -1316,7 +1324,8 @@ export default function ProviderDetailsPage() {
                     if (!provider?.id) return;
                     // Re-check after auth — user may have logged in as this provider
                     const currentUser = store.getState().auth.user;
-                    if (currentUser && currentUser.id === provider.userId) return;
+                    if (currentUser && currentUser.id === provider.userId)
+                      return;
                     trackChat();
                     createConversation(
                       {
@@ -1380,7 +1389,6 @@ export default function ProviderDetailsPage() {
             <div className="absolute -top-16 inset-x-0 bottom-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
             <div className="relative">
-
               <div className="flex flex-col items-center gap-4">
                 {/* Icon */}
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
@@ -1403,7 +1411,10 @@ export default function ProviderDetailsPage() {
                     onClick={() => trackCall()}
                     className="w-full flex items-center justify-center gap-3 py-3.5 bg-white/[0.07] border border-white/10 rounded-2xl active:bg-white/10 transition-colors"
                   >
-                    <IonIcon icon={callOutline} className="text-base text-amber-400" />
+                    <IonIcon
+                      icon={callOutline}
+                      className="text-base text-amber-400"
+                    />
                     <span className="text-base font-semibold text-white tracking-wide">
                       {provider?.contactNumber || "Not available"}
                     </span>
@@ -1415,16 +1426,27 @@ export default function ProviderDetailsPage() {
                       className="w-full flex items-center justify-center gap-3 py-3.5 bg-white/[0.07] border border-white/10 rounded-2xl select-none pointer-events-none"
                       aria-hidden
                     >
-                      <IonIcon icon={callOutline} className="text-base text-amber-400/50" />
+                      <IonIcon
+                        icon={callOutline}
+                        className="text-base text-amber-400/50"
+                      />
                       <span className="text-base font-semibold text-white/40 tracking-[0.2em] blur-[6px]">
                         +91 98765 43210
                       </span>
                     </div>
                     <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
                       <div className="flex items-center gap-2 bg-white/10 border border-white/15 text-white px-4 py-2 rounded-full">
-                        <IonIcon icon={lockClosedOutline} className="text-sm text-amber-400" />
-                        <span className="text-[12px] font-bold">Sign in to see number</span>
-                        <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
+                        <IonIcon
+                          icon={lockClosedOutline}
+                          className="text-sm text-amber-400"
+                        />
+                        <span className="text-[12px] font-bold">
+                          Sign in to see number
+                        </span>
+                        <IonIcon
+                          icon={logInOutline}
+                          className="text-sm text-amber-400"
+                        />
                       </div>
                     </div>
                   </div>
