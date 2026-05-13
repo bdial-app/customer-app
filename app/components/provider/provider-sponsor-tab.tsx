@@ -22,6 +22,7 @@ import {
   chevronUpOutline,
 } from "ionicons/icons";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotification } from "@/app/context/NotificationContext";
 import {
   useSponsorshipPlans,
   useMySponsorships,
@@ -52,6 +53,7 @@ const typeColors: Record<string, string> = {
 
 const ProviderSponsorTab = () => {
   const queryClient = useQueryClient();
+  const { notify } = useNotification();
   const { data: plans, isLoading: plansLoading } = useSponsorshipPlans();
   const { data: sponsorships, isLoading: sponsorshipsLoading } = useMySponsorships();
   const createMutation = useCreateSponsorship();
@@ -105,18 +107,24 @@ const ProviderSponsorTab = () => {
       await payWithRazorpay(orderResponse);
       setShowConfirm(false);
       queryClient.invalidateQueries({ queryKey: ['sponsorships'] });
+      notify({ title: "Boost activated!", subtitle: "Your listing is now being promoted.", variant: "success" });
     } catch (error) {
       console.error('Checkout failed:', error);
+      notify({ title: "Payment failed", subtitle: "Please try again.", variant: "error" });
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleToggleActive = (sponsorship: SponsoredListing) => {
-    updateMutation.mutate({
-      id: sponsorship.id,
-      payload: { isActive: !sponsorship.isActive },
-    });
+    const newState = !sponsorship.isActive;
+    updateMutation.mutate(
+      { id: sponsorship.id, payload: { isActive: newState } },
+      {
+        onSuccess: () => notify({ title: newState ? "Boost resumed!" : "Boost paused", subtitle: newState ? "Your listing is live again." : "Your remaining budget is preserved.", variant: "success" }),
+        onError: () => notify({ title: "Update failed", subtitle: "Please try again.", variant: "error" }),
+      },
+    );
   };
 
   const isLoading = plansLoading || sponsorshipsLoading;
