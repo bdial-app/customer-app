@@ -428,6 +428,7 @@ const GeoLocation = () => {
               className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl flex flex-col shadow-2xl"
               style={{
                 bottom: keyboardOffset,
+                minHeight: isSearching ? "60dvh" : undefined,
                 maxHeight: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "92dvh",
                 paddingBottom: keyboardOffset > 0 ? 0 : "var(--sab, env(safe-area-inset-bottom))",
                 transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
