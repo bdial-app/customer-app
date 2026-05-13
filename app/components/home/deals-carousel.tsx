@@ -51,13 +51,13 @@ const DealsCarousel = ({
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
             Deals Around You
           </h2>
-          <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full whitespace-nowrap">
             Limited Time
           </span>
         </div>
         <button
           onClick={() => router.push(ROUTE_PATH.DEALS)}
-          className="text-xs font-semibold px-3 py-1 rounded-full active:scale-95 transition-transform text-rose-500 bg-rose-50 dark:bg-rose-950/30"
+          className="text-xs font-semibold px-3 py-1 rounded-full active:scale-95 transition-transform text-rose-500 bg-rose-50 dark:bg-rose-950/30 whitespace-nowrap"
         >
           See All →
         </button>
