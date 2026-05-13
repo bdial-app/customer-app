@@ -33,6 +33,8 @@ import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 import FeatureGate from "./components/feature-gate";
+import FloatingNotificationPill from "./components/floating-notification-pill";
+import NotificationDropdown from "./components/notification-center/NotificationDropdown";
 import { useCheckServiceability } from "@/hooks/useServiceableCities";
 
 /** Sticky header used inside individual TabPanels */
@@ -68,6 +70,8 @@ export default function Home() {
   const prevUserMode = useRef(userMode);
   const pendingTabRef = useRef<string | null>(null);
   const prevActiveChat = useRef<string | null>(null);
+
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
   // Global chat subscription for unread badge
   useChatSubscription();
@@ -261,7 +265,7 @@ export default function Home() {
       </LazyTabPanel>
 
       <LazyTabPanel id="analytics" activeTab={activeTab}>
-        <AnalyticsContent />
+        <AnalyticsContent onNavigateToBoost={() => handleNavigateToListings("boost")} />
       </LazyTabPanel>
 
       {/* Provider Suspended Overlay — covers all provider views */}
@@ -297,6 +301,20 @@ export default function Home() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Floating notification pill — appears on foreground push, stacks above provider nudge */}
+      <FloatingNotificationPill
+        hasOtherPill={!!(user && userMode === "customer" && providerUnreadCount > 0)}
+        onTap={() => setNotifDropdownOpen(true)}
+      />
+
+      {/* Notification dropdown triggered by pill tap */}
+      {notifDropdownOpen && (
+        <NotificationDropdown
+          open={notifDropdownOpen}
+          onClose={() => setNotifDropdownOpen(false)}
+        />
+      )}
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
     </Page>

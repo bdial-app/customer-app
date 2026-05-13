@@ -10,7 +10,7 @@
 - **Name:** Tijarah
 - **Type:** Progressive Web App (PWA) + Responsive Web
 - **Framework:** Next.js 16.2.2 with React 19
-- **Language:** TypeScript
+- **Language:** TypeScrip
 - **Styling:** Tailwind CSS v4
 - **State Management:** Redux Toolkit
 - **UI Components:** Konsta (iOS/Android-like components)

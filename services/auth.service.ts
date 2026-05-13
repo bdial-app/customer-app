@@ -34,6 +34,7 @@ export interface AuthResponse {
     area?: string;
     pincode?: string;
     role?: string;
+    status?: string;
     ssoProvider?: string;
     latitude?: number;
     longitude?: number;

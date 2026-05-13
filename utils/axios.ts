@@ -36,6 +36,10 @@ export const onAccountPaused = (listener: AccountPausedListener) => {
     if (idx >= 0) pausedListeners.splice(idx, 1);
   };
 };
+/** Programmatically trigger the paused modal (e.g. after login detects paused status) */
+export const triggerAccountPaused = () => {
+  pausedListeners.forEach((fn) => fn());
+};
 
 // Event emitter for inappropriate content errors (400 from sanitizer)
 type InappropriateContentListener = (message: string) => void;

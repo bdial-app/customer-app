@@ -330,7 +330,11 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
 }
 
 // ─── Main Component ───────────────────────────────────────────────────
-const AnalyticsContent = () => {
+interface AnalyticsContentProps {
+  onNavigateToBoost?: () => void;
+}
+
+const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
   const { isOnline } = useNetworkStatus();
   const [period, setPeriod] = useState<Period>("7d");
   const [view, setView] = useState<View>("overview");
@@ -535,10 +539,10 @@ const AnalyticsContent = () => {
       {view === "overview" && (hasActivePlan || activeSponsorships.length > 0) && (
         <div className="pt-3">
           {hasActivePlan && (
-            <ActivePlanBanner subscription={currentSub!} onManage={() => {}} />
+            <ActivePlanBanner subscription={currentSub!} onManage={() => onNavigateToBoost?.()} />
           )}
           {activeSponsorships.length > 0 && (
-            <ActiveBoostBanner sponsorships={activeSponsorships} onManage={() => {}} />
+            <ActiveBoostBanner sponsorships={activeSponsorships} onManage={() => onNavigateToBoost?.()} />
           )}
         </div>
       )}
