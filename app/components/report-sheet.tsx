@@ -113,7 +113,13 @@ export default function ReportSheet({
       ? "business"
       : entityType === "product"
         ? "product"
-        : "message";
+        : entityType === "deal"
+          ? "deal"
+          : entityType === "review"
+            ? "review"
+            : entityType === "customer"
+              ? "customer"
+              : "message";
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
