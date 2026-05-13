@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
@@ -20,6 +20,13 @@ import {
   informationCircleOutline,
   chevronDownOutline,
   chevronUpOutline,
+  analyticsOutline,
+  pulseOutline,
+  trophyOutline,
+  ribbonOutline,
+  statsChartOutline,
+  megaphoneOutline,
+  warningOutline,
 } from "ionicons/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/app/context/NotificationContext";
@@ -139,6 +146,28 @@ const ProviderSponsorTab = () => {
           Get more customers by sponsoring your listing
         </p>
       </div>
+
+      {/* ═══ BOOST ANALYTICS DASHBOARD ═══ */}
+      {activeSponsorships.length > 0 && (
+        <BoostAnalyticsDashboard sponsorships={activeSponsorships} />
+      )}
+
+      {/* No Active Boosts — Upsell CTA */}
+      {activeSponsorships.length === 0 && sponsorships && sponsorships.length > 0 && (
+        <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-amber-900/20 dark:via-orange-900/20 dark:to-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+              <IonIcon icon={megaphoneOutline} className="text-white text-lg" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-800 dark:text-white">Reactivate Your Boost</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Your previous boosts generated {sponsorships.reduce((s, b) => s + (b.clicks ?? 0), 0)} clicks. Start a new boost to keep the momentum going!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Active Sponsorships */}
       {activeSponsorships.length > 0 && (
@@ -307,6 +336,208 @@ const ProviderSponsorTab = () => {
         )}
       </AnimatePresence>
       , document.body)}
+    </div>
+  );
+};
+
+// ─── Boost Analytics Dashboard ──────────────────────────────────────
+
+const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredListing[] }) => {
+  const totalImpressions = useMemo(() => sponsorships.reduce((s, b) => s + (b.impressions ?? 0), 0), [sponsorships]);
+  const totalClicks = useMemo(() => sponsorships.reduce((s, b) => s + (b.clicks ?? 0), 0), [sponsorships]);
+  const totalSpent = useMemo(() => sponsorships.reduce((s, b) => s + Number(b.spentAmount ?? 0), 0), [sponsorships]);
+  const totalBudget = useMemo(() => sponsorships.reduce((s, b) => s + Number(b.budgetAmount ?? 0), 0), [sponsorships]);
+  const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100) : 0;
+  const avgCpc = totalClicks > 0 ? totalSpent / totalClicks : 0;
+  const budgetUsedPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0;
+  const remainingBudget = totalBudget - totalSpent;
+
+  // Calculate burn rate and days until exhausted
+  const oldestStart = useMemo(() => {
+    const dates = sponsorships.map(s => new Date(s.startsAt).getTime());
+    return Math.min(...dates);
+  }, [sponsorships]);
+  const daysRunning = Math.max(1, Math.ceil((Date.now() - oldestStart) / 86400000));
+  const dailyBurnRate = totalSpent / daysRunning;
+  const daysUntilExhausted = dailyBurnRate > 0 ? Math.ceil(remainingBudget / dailyBurnRate) : Infinity;
+
+  // Find soonest expiring boost
+  const soonestExpiry = useMemo(() => {
+    const daysArr = sponsorships.map(s => Math.max(0, Math.ceil((new Date(s.endsAt).getTime() - Date.now()) / 86400000)));
+    return Math.min(...daysArr);
+  }, [sponsorships]);
+
+  // CTR performance rating
+  const getCtrRating = () => {
+    if (ctr >= 5) return { label: "Excellent", color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-900/40" };
+    if (ctr >= 2) return { label: "Good", color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-900/40" };
+    if (ctr >= 1) return { label: "Average", color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-900/40" };
+    return { label: "Low", color: "text-red-600", bg: "bg-red-100 dark:bg-red-900/40" };
+  };
+  const ctrRating = getCtrRating();
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <IonIcon icon={statsChartOutline} className="text-white text-base" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Performance Dashboard</h3>
+              <p className="text-[9px] text-white/80">
+                {sponsorships.length} active boost{sponsorships.length > 1 ? "s" : ""} · Running {daysRunning}d
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+            <span className="text-[8px] font-bold text-white">LIVE</span>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 gap-px bg-slate-100 dark:bg-slate-700">
+        {[
+          { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500", sublabel: `${Math.round(totalImpressions / daysRunning)}/day` },
+          { label: "Clicks", value: totalClicks.toLocaleString(), icon: fingerPrintOutline, color: "text-emerald-500", sublabel: `${Math.round(totalClicks / daysRunning)}/day` },
+          { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-amber-500", sublabel: ctrRating.label },
+          { label: "Avg CPC", value: `₹${avgCpc.toFixed(1)}`, icon: walletOutline, color: "text-violet-500", sublabel: `₹${dailyBurnRate.toFixed(0)}/day` },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white dark:bg-slate-800 p-3 text-center">
+            <IonIcon icon={stat.icon} className={`text-base ${stat.color}`} />
+            <div className="text-base font-bold text-slate-800 dark:text-white mt-0.5">{stat.value}</div>
+            <div className="text-[9px] text-slate-400 font-medium">{stat.label}</div>
+            <div className="text-[8px] text-slate-400 mt-0.5">{stat.sublabel}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Budget Utilization */}
+      <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <IonIcon icon={walletOutline} className="text-sm text-slate-400" />
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Budget Utilization</span>
+          </div>
+          <span className="text-[11px] font-bold text-slate-800 dark:text-white">
+            ₹{totalSpent.toLocaleString()} / ₹{totalBudget.toLocaleString()}
+          </span>
+        </div>
+        <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+          <motion.div
+            className={`h-full rounded-full ${
+              budgetUsedPct > 85
+                ? "bg-gradient-to-r from-red-400 to-red-500"
+                : budgetUsedPct > 60
+                  ? "bg-gradient-to-r from-amber-400 to-orange-500"
+                  : "bg-gradient-to-r from-violet-400 to-purple-500"
+            }`}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.max(budgetUsedPct, 2)}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="text-[9px] text-slate-400">
+            {budgetUsedPct.toFixed(0)}% used · ₹{remainingBudget.toLocaleString()} remaining
+          </span>
+          {daysUntilExhausted < Infinity && (
+            <span className={`text-[9px] font-semibold ${daysUntilExhausted <= 3 ? "text-red-500" : "text-slate-500"}`}>
+              ~{daysUntilExhausted}d until exhausted
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Per-Boost Breakdown */}
+      <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-700">
+        <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+          Boost Breakdown
+        </div>
+        <div className="space-y-2">
+          {sponsorships.map((b) => {
+            const bCtr = b.impressions > 0 ? ((b.clicks / b.impressions) * 100).toFixed(1) : "0.0";
+            const bBudgetPct = Number(b.budgetAmount) > 0 ? Math.min(100, (Number(b.spentAmount) / Number(b.budgetAmount)) * 100) : 0;
+            const bDaysLeft = Math.max(0, Math.ceil((new Date(b.endsAt).getTime() - Date.now()) / 86400000));
+            const typeColor = b.type === "carousel" ? "bg-blue-500" : b.type === "inline" ? "bg-emerald-500" : "bg-amber-500";
+            return (
+              <div key={b.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2.5 h-2.5 rounded-full ${typeColor}`} />
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                      {typeLabels[b.type] ?? b.type}
+                    </span>
+                  </div>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                    bDaysLeft <= 2 ? "bg-red-100 text-red-600 dark:bg-red-900/30" : "bg-slate-100 text-slate-500 dark:bg-slate-600 dark:text-slate-300"
+                  }`}>
+                    {bDaysLeft}d left
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+                  <span className="flex items-center gap-0.5">
+                    <IonIcon icon={eyeOutline} className="text-[10px]" /> {b.impressions.toLocaleString()}
+                  </span>
+                  <span className="flex items-center gap-0.5">
+                    <IonIcon icon={fingerPrintOutline} className="text-[10px]" /> {b.clicks}
+                  </span>
+                  <span className="flex items-center gap-0.5">
+                    <IonIcon icon={trendingUpOutline} className="text-[10px]" /> {bCtr}%
+                  </span>
+                  <span className="flex items-center gap-0.5">
+                    <IonIcon icon={walletOutline} className="text-[10px]" /> ₹{Number(b.spentAmount)}/₹{Number(b.budgetAmount)}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${typeColor}`} style={{ width: `${Math.max(bBudgetPct, 1)}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Engagement Insights */}
+      <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-700">
+        <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+          Insights & Tips
+        </div>
+        <div className="space-y-2">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${ctrRating.bg}`}>
+            <IonIcon icon={pulseOutline} className={`text-sm ${ctrRating.color}`} />
+            <span className={`text-[11px] font-medium ${ctrRating.color}`}>
+              {ctr >= 5
+                ? "Outstanding CTR! Your boosts are performing above industry average."
+                : ctr >= 2
+                  ? "Good engagement! Consider increasing budget to capture more clicks."
+                  : ctr >= 1
+                    ? "Average performance. Try a Top Result boost for better visibility."
+                    : "Low CTR. Consider updating your profile photos and description to attract more clicks."}
+            </span>
+          </div>
+          {soonestExpiry <= 3 && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-100 dark:bg-orange-900/30">
+              <IonIcon icon={warningOutline} className="text-sm text-orange-600" />
+              <span className="text-[11px] font-medium text-orange-600">
+                A boost expires in {soonestExpiry} day{soonestExpiry !== 1 ? "s" : ""}. Renew to keep your visibility!
+              </span>
+            </div>
+          )}
+          {budgetUsedPct > 80 && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20">
+              <IonIcon icon={walletOutline} className="text-sm text-red-500" />
+              <span className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                Budget nearly exhausted ({budgetUsedPct.toFixed(0)}% used). Top up to avoid downtime.
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

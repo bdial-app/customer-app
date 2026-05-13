@@ -265,7 +265,7 @@ export default function Home() {
       </LazyTabPanel>
 
       <LazyTabPanel id="analytics" activeTab={activeTab}>
-        <AnalyticsContent />
+        <AnalyticsContent onNavigateToBoost={() => handleNavigateToListings("boost")} />
       </LazyTabPanel>
 
       {/* Provider Suspended Overlay — covers all provider views */}
