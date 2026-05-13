@@ -19,6 +19,7 @@ import {
   locationOutline,
 } from "ionicons/icons";
 import { useLeads, useLeadDetail, useUnlockLead } from "@/hooks/useProviderAnalytics";
+import { InfoTip } from "../info-tip";
 import type { LeadItem } from "@/services/analytics.service";
 
 const TIERS = [
@@ -122,7 +123,7 @@ function LeadCard({
         {/* Score */}
         <div className="text-right shrink-0">
           <span className="text-lg font-bold text-gray-800 dark:text-white">{lead.score}</span>
-          <p className="text-[9px] text-gray-400 dark:text-slate-500 uppercase">Score</p>
+          <p className="text-[9px] text-gray-400 dark:text-slate-500 uppercase flex items-center gap-0.5 justify-end">Score <InfoTip text="Interest score based on time spent, products viewed, and actions taken. Higher = more likely to become a customer" size={9} /></p>
         </div>
       </div>
 
@@ -299,7 +300,7 @@ export default function ProviderLeadsTab() {
   return (
     <div className="p-4 space-y-4 pb-24">
       {/* Tier Filter */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
         {TIERS.map((t) => (
           <button
             key={t.label}
@@ -313,6 +314,7 @@ export default function ProviderLeadsTab() {
             {t.label}
           </button>
         ))}
+        <InfoTip text="Hot = ready to buy, Warm = interested, Soft = browsing, Cold = just looked" size={13} />
       </div>
 
       {/* Hot Leads CTA */}

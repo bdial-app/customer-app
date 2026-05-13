@@ -18,6 +18,7 @@ import {
   cubeOutline,
 } from "ionicons/icons";
 import { useAnalyticsSummary, useTopProducts, usePeakHours } from "@/hooks/useProviderAnalytics";
+import { InfoTip } from "../info-tip";
 import type { StatWithTrend } from "@/services/analytics.service";
 
 const PERIODS = ["7d", "30d", "90d"] as const;
@@ -82,6 +83,7 @@ function LeadFunnel({ leads }: { leads: { hot: number; warm: number; soft: numbe
       <div className="flex items-center gap-2 mb-3">
         <IonIcon icon={flameOutline} className="text-lg text-orange-500" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">Lead Funnel</h3>
+        <InfoTip text="Shows how interested visitors are — Hot means ready to buy, Cold means just browsing" size={12} />
         <span className="ml-auto text-xs text-gray-400">{total} total</span>
       </div>
       <div className="space-y-2">
@@ -214,7 +216,10 @@ export default function ProviderAnalyticsTab() {
 
       {/* Conversion Rate */}
       <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-4 text-white">
-        <p className="text-xs font-medium opacity-80 uppercase tracking-wider mb-1">Conversion Rate</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-xs font-medium opacity-80 uppercase tracking-wider mb-1">Conversion Rate</p>
+          <InfoTip text="% of people who viewed your profile and then took action (enquired, called, got directions)" size={11} className="text-white/60 mb-1" />
+        </div>
         <p className="text-3xl font-bold">{summary.conversionRate.toFixed(1)}%</p>
         <p className="text-[11px] opacity-70 mt-1">Profile views → enquiries/calls</p>
       </div>

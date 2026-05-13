@@ -17,6 +17,7 @@ export interface AppDialogProps {
   iconBg?: string;
   title: string;
   description?: string;
+  children?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm?: () => void;
@@ -43,6 +44,7 @@ export const AppDialog = ({
   iconBg = "bg-amber-50",
   title,
   description,
+  children,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   onConfirm,
@@ -116,6 +118,13 @@ export const AppDialog = ({
                   >
                     {description}
                   </p>
+                )}
+
+                {/* Custom Content */}
+                {children && (
+                  <div className={`mt-3 ${icon ? "ml-[56px]" : ""}`}>
+                    {children}
+                  </div>
                 )}
 
                 {/* Actions */}
