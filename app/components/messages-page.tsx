@@ -2,10 +2,10 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import {
   arrowBack,
   sendSharp,
+  happyOutline,
   attachOutline,
   checkmarkDone,
   checkmark,
@@ -99,7 +99,6 @@ export default function MessagesPage({
   const initiallyScrolled = useRef(false);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const lastMarkedMessageRef = useRef<string | null>(null);
-  const keyboardOffset = useKeyboardOffset();
 
   const { user } = useAppSelector((state) => state.auth);
   const typingUsers = useAppSelector((state) => state.chat.typingUsers);
@@ -155,10 +154,15 @@ export default function MessagesPage({
   }, [messagesData]);
 
   // Compute report entity info — report the provider if other is a provider,
+  // report the customer if reporter is a provider,
   // otherwise report the most recent message from the other user
   const reportEntity = useMemo((): { type: ReportEntityType; id: string } | null => {
     if (otherProviderId) {
       return { type: "provider", id: otherProviderId };
+    }
+    // If the current user is a provider, allow reporting the other user as a customer
+    if (convDetail?.myRole === "provider" && otherUserId) {
+      return { type: "customer", id: otherUserId };
     }
     // Find the last message from the other user
     const otherMessages = allMessages.filter((m) => m.senderId !== user?.id);
@@ -166,7 +170,7 @@ export default function MessagesPage({
       return { type: "message", id: otherMessages[otherMessages.length - 1].id };
     }
     return null;
-  }, [otherProviderId, allMessages, user?.id]);
+  }, [otherProviderId, allMessages, user?.id, convDetail?.myRole, otherUserId]);
 
   // Display name from conversation detail or fallback
   const displayName = convDetail?.otherParticipant?.name || chatName;
@@ -366,7 +370,7 @@ export default function MessagesPage({
   });
 
   return (
-    <div className="flex flex-col bg-[#F5F5F0] dark:bg-slate-900" style={{ height: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "100dvh", transition: "height 0.15s ease-out" }}>
+    <div className="flex flex-col h-[100dvh] bg-[#F5F5F0] dark:bg-slate-900">
       {/* Header */}
       <div
         className="shrink-0 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-30"
@@ -639,25 +643,24 @@ export default function MessagesPage({
 
       {/* Attachment preview */}
       {attachedFile && (
-        <div className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-4 py-2.5">
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-700/60 rounded-2xl p-2.5">
+        <div className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2">
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl p-2">
             {attachedPreview ? (
-              <img src={attachedPreview} alt="Preview" className="w-12 h-12 rounded-xl object-cover shrink-0" loading="lazy" decoding="async" />
+              <img src={attachedPreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover" loading="lazy" decoding="async" />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-600 flex items-center justify-center shrink-0">
-                <IonIcon icon={imageOutline} className="text-lg text-slate-400" />
+              <div className="w-14 h-14 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
+                <IonIcon icon={imageOutline} className="text-xl text-slate-400" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300 truncate leading-tight">{attachedFile.name}</p>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{(attachedFile.size / 1024).toFixed(0)} KB</p>
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{attachedFile.name}</p>
+              <p className="text-[10px] text-slate-400">{(attachedFile.size / 1024).toFixed(0)} KB</p>
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => { setAttachedFile(null); setAttachedPreview(null); }}
-              className="p-1 shrink-0"
             >
-              <IonIcon icon={closeCircle} className="text-xl text-slate-400 dark:text-slate-500" />
+              <IonIcon icon={closeCircle} className="text-xl text-slate-400" />
             </motion.button>
           </div>
         </div>
@@ -672,15 +675,15 @@ export default function MessagesPage({
       {/* Input bar */}
       <div
         className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2"
-        style={{ paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 8px)" }}
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
       >
-        <div className="flex items-end gap-1.5">
+        <div className="flex items-end gap-2">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleAttachClick}
-            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-slate-100 dark:active:bg-slate-700"
           >
-            <IonIcon icon={attachOutline} className="text-[22px] text-slate-500 dark:text-slate-400" />
+            <IonIcon icon={attachOutline} className="text-xl text-slate-500 dark:text-slate-400" />
           </motion.button>
           <input
             ref={fileInputRef}
@@ -690,7 +693,7 @@ export default function MessagesPage({
             onChange={handleFileChange}
           />
 
-          <div className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3.5 py-2.5">
+          <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3.5 py-2 flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={messageText}
@@ -698,18 +701,24 @@ export default function MessagesPage({
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
               rows={1}
-              className="w-full bg-transparent text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-[20px]"
+              className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-5"
               style={{ height: "auto" }}
             />
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              className="shrink-0 mb-px"
+            >
+              <IonIcon icon={happyOutline} className="text-xl text-slate-400" />
+            </motion.button>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={handleSend}
             disabled={sendMutation.isPending || uploadMutation.isPending}
-            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 transition-colors ${
               messageText.trim() || attachedFile
-                ? "bg-slate-800 dark:bg-amber-500 shadow-lg shadow-slate-800/20 dark:shadow-amber-500/20"
+                ? "bg-slate-800 dark:bg-slate-600 shadow-lg"
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
           >
@@ -718,7 +727,7 @@ export default function MessagesPage({
             ) : (
               <IonIcon
                 icon={sendSharp}
-                className={`text-[16px] ${
+                className={`text-base ${
                   messageText.trim() || attachedFile ? "text-white" : "text-slate-400"
                 }`}
                 style={{ transform: "rotate(-35deg)", marginLeft: 2 }}

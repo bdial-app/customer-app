@@ -52,6 +52,7 @@ import {
   useTrackAction,
 } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
+import type { ReportEntityType } from "@/services/report.service";
 import { checkContent } from "@/utils/content-sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -202,6 +203,7 @@ export default function ProviderDetailsPage() {
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: ReportEntityType; id: string }>({ type: "provider", id: id || "" });
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -450,7 +452,7 @@ export default function ProviderDetailsPage() {
                 </button>
                 {!isOwnProvider && (
                   <button
-                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                    onClick={() => requireAuth(() => { setReportTarget({ type: "provider", id: id! }); setReportSheetOpen(true); })}
                     className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
                   >
                     <IonIcon
@@ -560,7 +562,7 @@ export default function ProviderDetailsPage() {
                 </button>
                 {!isOwnProvider && (
                   <button
-                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                    onClick={() => requireAuth(() => { setReportTarget({ type: "provider", id: id! }); setReportSheetOpen(true); })}
                     className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
                   >
                     <IonIcon
@@ -863,6 +865,12 @@ export default function ProviderDetailsPage() {
                           day: "numeric",
                         })}
                       </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); requireAuth(() => { setReportTarget({ type: "deal", id: offer.id }); setReportSheetOpen(true); }); }}
+                        className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors shrink-0"
+                      >
+                        <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1137,7 +1145,7 @@ export default function ProviderDetailsPage() {
                       <StarRow rating={review.starRating} size={12} />
                       {user && user.id !== review.reviewerId && (
                         <button
-                          onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                          onClick={() => requireAuth(() => { setReportTarget({ type: "review", id: review.id }); setReportSheetOpen(true); })}
                           className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
                         >
                           <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
@@ -1560,8 +1568,8 @@ export default function ProviderDetailsPage() {
       {/* end scroll wrapper */}
       {id && (
         <ReportSheet
-          entityType="provider"
-          entityId={id}
+          entityType={reportTarget.type}
+          entityId={reportTarget.id}
           isOpen={reportSheetOpen}
           onClose={() => setReportSheetOpen(false)}
         />
