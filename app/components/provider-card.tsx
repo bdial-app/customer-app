@@ -79,7 +79,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
         }`}
       >
         {/* Image */}
-        <div className="relative w-[110px] shrink-0 overflow-hidden bg-gray-100 dark:bg-slate-800">
+        <div className="relative w-[110px] h-[110px] shrink-0 overflow-hidden bg-gray-100 dark:bg-slate-800">
           {provider.image ? (
             <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (
@@ -159,7 +159,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
       }`}
     >
       {/* Image */}
-      <div className="relative h-[130px] overflow-hidden bg-gray-100 dark:bg-slate-800">
+      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-800">
         {provider.image ? (
           <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" loading="lazy" />
         ) : (
