@@ -5,8 +5,12 @@ import { isNativePlatform, getNativePlatform } from "./platform";
  * Matches metadataBase in layout.tsx and deep link domains in AndroidManifest.xml.
  * On native, window.location.origin returns "https://localhost" which is useless for sharing.
  */
+<<<<<<< HEAD
 export const APP_BASE_URL: string = process.env.NEXT_PUBLIC_APP_BASE_URL || 'https://www.tijarah.com';
 
+=======
+export const APP_BASE_URL = process.env.NEXT_APP_BASE_URL ?? "https://tijarahapp.in";
+>>>>>>> 77f7fb8cc00e2666695a72e41ee16885c4e3585a
 /**
  * Store links for native app downloads.
  * Configure via NEXT_PUBLIC_PLAY_STORE_URL and NEXT_PUBLIC_APP_STORE_URL in .env
