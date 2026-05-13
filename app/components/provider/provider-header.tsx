@@ -123,7 +123,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
                 : provider.city || "Location not set"}
             </p>
             {/* Status + Availability */}
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center flex-wrap gap-1.5 mt-2">
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${status.bg} ${status.color}`}>
                 <IonIcon icon={status.icon} className="text-xs" />
                 {status.label}

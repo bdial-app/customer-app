@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -83,7 +83,7 @@ const WarningModal = ({
           className={`w-full max-w-sm rounded-3xl overflow-hidden ${
             isEscalation
               ? "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950"
-              : "bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950"
+              : "bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-950 dark:to-amber-950"
           }`}
         >
           {/* Header */}
@@ -91,7 +91,7 @@ const WarningModal = ({
             className={`px-6 pt-6 pb-4 text-center ${
               isEscalation
                 ? "bg-gradient-to-r from-red-500 to-orange-500"
-                : "bg-gradient-to-r from-amber-500 to-orange-500"
+                : "bg-gradient-to-r from-yellow-400 to-amber-500"
             }`}
           >
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
@@ -118,7 +118,7 @@ const WarningModal = ({
                     className={`h-full rounded-full transition-all ${
                       isEscalation
                         ? "bg-gradient-to-r from-red-500 to-orange-500"
-                        : "bg-gradient-to-r from-amber-400 to-orange-400"
+                        : "bg-gradient-to-r from-yellow-400 to-amber-400"
                     }`}
                     style={{ width: `${Math.min(100, (totalWarnings / 5) * 100)}%` }}
                   />
@@ -152,7 +152,7 @@ const WarningModal = ({
                 className={`w-full py-3 rounded-xl text-sm font-bold text-white ${
                   isEscalation
                     ? "bg-gradient-to-r from-red-500 to-orange-500"
-                    : "bg-gradient-to-r from-amber-500 to-orange-500"
+                    : "bg-gradient-to-r from-yellow-400 to-amber-500"
                 }`}
               >
                 View All Warnings
@@ -176,9 +176,11 @@ const WarningModal = ({
 const WarningsBanner = ({
   unreadCount,
   onTap,
+  onDismiss,
 }: {
   unreadCount: number;
   onTap: () => void;
+  onDismiss: () => void;
 }) => {
   if (unreadCount <= 0) return null;
   return (
@@ -186,18 +188,20 @@ const WarningsBanner = ({
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        onClick={onTap}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 p-4 cursor-pointer active:opacity-90 transition-opacity"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 p-4"
       >
         <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10" />
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+          <div
+            onClick={onTap}
+            className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 cursor-pointer"
+          >
             <IonIcon
               icon={alertCircleOutline}
               className="text-white text-xl"
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div onClick={onTap} className="flex-1 min-w-0 cursor-pointer">
             <h4 className="text-sm font-bold text-white">
               {unreadCount} Unread Warning{unreadCount > 1 ? "s" : ""}
             </h4>
@@ -205,10 +209,16 @@ const WarningsBanner = ({
               Tap to view details. Repeated violations may lead to suspension.
             </p>
           </div>
-          <IonIcon
-            icon={chevronForwardOutline}
-            className="text-white/60 text-lg shrink-0"
-          />
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+            className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0"
+          >
+            <span className="text-white text-sm font-bold leading-none">&times;</span>
+          </motion.button>
         </div>
       </motion.div>
     </div>
@@ -1143,7 +1153,22 @@ const ProviderDashboard = ({
   });
   const { data: sponsorships } = useMySponsorships();
   const [warningsSheetOpen, setWarningsSheetOpen] = useState(false);
-  const [warningModalDismissed, setWarningModalDismissed] = useState(false);
+  const [warningModalDismissed, setWarningModalDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const dismissed = localStorage.getItem("warning-modal-dismissed-at");
+    if (!dismissed) return false;
+    const dismissedAt = new Date(dismissed).getTime();
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+    return Date.now() - dismissedAt < twoDaysMs;
+  });
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const dismissed = localStorage.getItem("warning-banner-dismissed-at");
+    if (!dismissed) return false;
+    const dismissedAt = new Date(dismissed).getTime();
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+    return Date.now() - dismissedAt < twoDaysMs;
+  });
   const { data: warningsUnread, refetch: refetchWarnings } = useQuery({
     queryKey: ["warnings-unread-count"],
     queryFn: getWarningsUnreadCount,
@@ -1157,6 +1182,17 @@ const ProviderDashboard = ({
   const unreadWarningCount = warningsUnread?.unreadCount ?? warningsUnread?.count ?? 0;
   const totalWarningCount = Array.isArray(allWarnings) ? allWarnings.length : (allWarnings?.data?.length ?? 0);
   const showWarningModal = unreadWarningCount > 0 && !warningModalDismissed;
+  const showWarningBanner = unreadWarningCount > 0 && !bannerDismissed;
+
+  const dismissWarningModal = () => {
+    setWarningModalDismissed(true);
+    localStorage.setItem("warning-modal-dismissed-at", new Date().toISOString());
+  };
+  const dismissWarningBanner = () => {
+    setBannerDismissed(true);
+    localStorage.setItem("warning-banner-dismissed-at", new Date().toISOString());
+  };
+
   const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
   const isLoading = providerLoading || detailsLoading;
@@ -1265,10 +1301,11 @@ const ProviderDashboard = ({
         warningCount={unreadWarningCount}
       />
       <ProviderQuickStats stats={providerStats} />
-      {unreadWarningCount > 0 && (
+      {showWarningBanner && (
         <WarningsBanner
           unreadCount={unreadWarningCount}
           onTap={() => setWarningsSheetOpen(true)}
+          onDismiss={dismissWarningBanner}
         />
       )}
       {needsVerification && <VerificationPrompt onVerify={handleVerify} />}
@@ -1321,9 +1358,9 @@ const ProviderDashboard = ({
       {showWarningModal && (
         <WarningModal
           totalWarnings={totalWarningCount}
-          onClose={() => setWarningModalDismissed(true)}
+          onClose={dismissWarningModal}
           onViewAll={() => {
-            setWarningModalDismissed(true);
+            dismissWarningModal();
             setWarningsSheetOpen(true);
           }}
         />
