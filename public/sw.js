@@ -218,6 +218,18 @@ self.addEventListener("notificationclick", (event) => {
       case "/provider-onboarding/verify":
         targetUrl = "/provider-onboarding/verify";
         break;
+      case "/provider/subscription":
+        targetUrl = "/provider/subscription";
+        break;
+      case "/provider/deals":
+        targetUrl = "/provider/deals";
+        break;
+      case "/provider/sponsorships":
+        targetUrl = "/provider/sponsorships";
+        break;
+      case "/provider/leads":
+        targetUrl = "/provider/leads";
+        break;
       default:
         targetUrl = data.route.startsWith("/") ? data.route : "/";
     }

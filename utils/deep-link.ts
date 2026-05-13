@@ -52,6 +52,18 @@ export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
     case "/provider-onboarding/verify":
       return "/provider-onboarding/verify";
 
+    case "/provider/subscription":
+      return "/provider/subscription";
+
+    case "/provider/deals":
+      return "/provider/deals";
+
+    case "/provider/sponsorships":
+      return "/provider/sponsorships";
+
+    case "/provider/leads":
+      return "/provider/leads";
+
     case "/":
       if (params.tab) {
         return `${ROUTE_PATH.HOME}?tab=${params.tab}`;

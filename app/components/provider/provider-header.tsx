@@ -148,7 +148,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
                 <div className={`w-1.5 h-1.5 rounded-full ${provider.isAvailable ? "bg-emerald-500" : "bg-red-400"}`} />
                 {provider.isAvailable ? "Open" : "Closed"}
               </motion.button>
-              {verificationStatus === "approved" && (
+              {verificationStatus === "approved" && effectiveStatus !== "active" && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/15 text-white/80 border border-white/20">
                   Verified
                 </span>
@@ -158,7 +158,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
                   Pending Verification
                 </span>
               )}
-              {(!verificationStatus || verificationStatus === "rejected") && (
+              {effectiveStatus !== "unverified" && (!verificationStatus || verificationStatus === "rejected") && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/15 text-red-200 border border-red-400/20">
                   Not Verified
                 </span>
