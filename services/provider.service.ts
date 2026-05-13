@@ -485,6 +485,7 @@ export interface SponsoredListing {
   budgetAmount: number;
   spentAmount: number;
   costPerClick: number;
+  costPerImpression: number;
   impressions: number;
   clicks: number;
   targetCategoryIds: string[] | null;

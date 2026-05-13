@@ -27,7 +27,6 @@ import {
   useSponsorshipPlans,
   useMySponsorships,
   useCreateSponsorship,
-  useUpdateSponsorship,
 } from "@/hooks/useMyProvider";
 import { createSponsorshipCheckout, validateVoucher } from "@/services/payment.service";
 import { payWithRazorpay } from "@/services/razorpay.service";
@@ -57,7 +56,6 @@ const ProviderSponsorTab = () => {
   const { data: plans, isLoading: plansLoading } = useSponsorshipPlans();
   const { data: sponsorships, isLoading: sponsorshipsLoading } = useMySponsorships();
   const createMutation = useCreateSponsorship();
-  const updateMutation = useUpdateSponsorship();
   const [selectedPlan, setSelectedPlan] = useState<SponsorshipPlan | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [voucherCode, setVoucherCode] = useState("");
@@ -65,8 +63,9 @@ const ProviderSponsorTab = () => {
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > new Date()) ?? [];
-  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= new Date()) ?? [];
+  const now = new Date();
+  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > now && Number(s.spentAmount) < Number(s.budgetAmount)) ?? [];
+  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= now || Number(s.spentAmount) >= Number(s.budgetAmount)) ?? [];
 
   const handleSelectPlan = (plan: SponsorshipPlan) => {
     setSelectedPlan(plan);
@@ -106,7 +105,7 @@ const ProviderSponsorTab = () => {
 
       await payWithRazorpay(orderResponse);
       setShowConfirm(false);
-      queryClient.invalidateQueries({ queryKey: ['sponsorships'] });
+      queryClient.invalidateQueries({ queryKey: ['my-sponsorships'] });
       notify({ title: "Boost activated!", subtitle: "Your listing is now being promoted.", variant: "success" });
     } catch (error) {
       console.error('Checkout failed:', error);
@@ -114,17 +113,6 @@ const ProviderSponsorTab = () => {
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleToggleActive = (sponsorship: SponsoredListing) => {
-    const newState = !sponsorship.isActive;
-    updateMutation.mutate(
-      { id: sponsorship.id, payload: { isActive: newState } },
-      {
-        onSuccess: () => notify({ title: newState ? "Boost resumed!" : "Boost paused", subtitle: newState ? "Your listing is live again." : "Your remaining budget is preserved.", variant: "success" }),
-        onError: () => notify({ title: "Update failed", subtitle: "Please try again.", variant: "error" }),
-      },
-    );
   };
 
   const isLoading = plansLoading || sponsorshipsLoading;
@@ -161,7 +149,7 @@ const ProviderSponsorTab = () => {
           </h3>
           <div className="space-y-3">
             {activeSponsorships.map((s) => (
-              <SponsorshipCard key={s.id} sponsorship={s} onToggle={handleToggleActive} isUpdating={updateMutation.isPending} />
+              <SponsorshipCard key={s.id} sponsorship={s} />
             ))}
           </div>
         </div>
@@ -204,7 +192,7 @@ const ProviderSponsorTab = () => {
           </h3>
           <div className="space-y-2">
             {pastSponsorships.map((s) => (
-              <SponsorshipCard key={s.id} sponsorship={s} onToggle={handleToggleActive} isUpdating={updateMutation.isPending} isPast />
+              <SponsorshipCard key={s.id} sponsorship={s} isPast />
             ))}
           </div>
         </div>
@@ -434,20 +422,26 @@ const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: 
 
 const SponsorshipCard = ({
   sponsorship,
-  onToggle,
-  isUpdating,
   isPast,
 }: {
   sponsorship: SponsoredListing;
-  onToggle: (s: SponsoredListing) => void;
-  isUpdating: boolean;
   isPast?: boolean;
 }) => {
   const daysLeft = Math.max(0, Math.ceil((new Date(sponsorship.endsAt).getTime() - Date.now()) / 86400000));
-  const spent = sponsorship.spentAmount ?? 0;
-  const budget = sponsorship.budgetAmount ?? 0;
+  const spent = Number(sponsorship.spentAmount ?? 0);
+  const budget = Number(sponsorship.budgetAmount ?? 0);
   const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const ctr = sponsorship.impressions > 0 ? ((sponsorship.clicks / sponsorship.impressions) * 100).toFixed(1) : "0.0";
+  const isExpired = new Date(sponsorship.endsAt) <= new Date();
+  const isExhausted = spent >= budget;
+
+  // Status badge text
+  const getStatusLabel = () => {
+    if (isExhausted) return "Budget Exhausted";
+    if (isExpired) return "Expired";
+    if (!sponsorship.isActive) return "Inactive";
+    return `${daysLeft} days left`;
+  };
 
   return (
     <div className={`bg-white dark:bg-slate-800 rounded-2xl border p-4 ${isPast ? "border-slate-100 dark:border-slate-700 opacity-70" : "border-slate-100 dark:border-slate-700"}`}>
@@ -458,24 +452,11 @@ const SponsorshipCard = ({
           </div>
           <div>
             <p className="text-xs font-bold text-slate-800 dark:text-white">{typeLabels[sponsorship.type]} Sponsorship</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">
-              {isPast ? "Ended" : `${daysLeft} days left`}
+            <p className={`text-[10px] ${isExhausted ? "text-red-500" : isExpired ? "text-slate-400" : "text-slate-500 dark:text-slate-400"}`}>
+              {getStatusLabel()}
             </p>
           </div>
         </div>
-        {!isPast && (
-          <button
-            onClick={() => onToggle(sponsorship)}
-            disabled={isUpdating}
-            className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${
-              sponsorship.isActive
-                ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800"
-                : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
-            }`}
-          >
-            {sponsorship.isActive ? "Pause" : "Resume"}
-          </button>
-        )}
       </div>
 
       {/* Stats */}
@@ -504,7 +485,7 @@ const SponsorshipCard = ({
           <span className="font-semibold text-slate-700 dark:text-slate-300">₹{spent} / ₹{budget}</span>
         </div>
         <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-red-500" : "bg-gradient-to-r from-teal-400 to-teal-500"}`} style={{ width: `${progress}%` }} />
         </div>
       </div>
     </div>
