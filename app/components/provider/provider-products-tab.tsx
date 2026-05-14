@@ -182,96 +182,121 @@ const ProviderProductsTab = ({
 
       {/* Product List */}
       {products.length > 0 ? (
-        <div className="px-4 space-y-3">
-          {products.map((p, i) => {
-            const hasImage = !!(p.photoUrl || p.photoUrls?.[0]);
-            const isService = p.productType === "service";
-            const currencySymbol = p.currency === "INR" ? "₹" : "$";
-            return (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                onClick={() => handleEdit(p)}
-                className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden active:scale-[0.98] transition-transform cursor-pointer ${
-                  p.isHero
-                    ? "border-amber-200 dark:border-amber-700 shadow-[0_2px_12px_rgba(245,158,11,0.12)]"
-                    : !p.isActive
-                    ? "border-slate-200 dark:border-slate-700 opacity-50"
-                    : "border-slate-100 dark:border-slate-700 shadow-sm"
-                }`}
-              >
-                <div className="flex">
-                  {/* Thumbnail */}
-                  <div className="relative w-24 h-24 shrink-0 bg-slate-100 dark:bg-slate-700 overflow-hidden">
-                    {hasImage ? (
-                      <img
-                        src={p.photoUrl || p.photoUrls?.[0]}
-                        alt={p.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-2xl">{isService ? "🛠️" : "📦"}</span>
-                      </div>
-                    )}
-                    {/* Photo count */}
-                    {(p.photoUrls?.length ?? 0) > 1 && (
-                      <span className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm text-white text-[8px] font-bold px-1 py-0.5 rounded">
-                        +{(p.photoUrls?.length ?? 1) - 1}
-                      </span>
-                    )}
-                  </div>
+        <div className="px-4 pb-4">
+          {/* Stats pills */}
+          <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
+            <span className="shrink-0 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+              📦 {products.filter(p => p.productType !== "service").length} Products
+            </span>
+            {products.some(p => p.productType === "service") && (
+              <span className="shrink-0 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 text-[11px] font-semibold text-teal-600 dark:text-teal-400">
+                🛠️ {products.filter(p => p.productType === "service").length} Services
+              </span>
+            )}
+            {heroCount > 0 && (
+              <span className="shrink-0 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                ★ {heroCount} Hero
+              </span>
+            )}
+          </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 p-3 flex flex-col justify-center">
-                    {/* Title */}
-                    <p className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1">
-                      {p.name}
-                    </p>
-
-                    {/* Description */}
-                    {p.description && (
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">
-                        {p.description}
-                      </p>
-                    )}
-
-                    {/* Tags row */}
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      {isService && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-bold">
-                          🛠️ Service
-                        </span>
+          {/* Cards */}
+          <div className="space-y-2.5">
+            {products.map((p, i) => {
+              const hasImage = !!(p.photoUrl || p.photoUrls?.[0]);
+              const isService = p.productType === "service";
+              const currencySymbol = p.currency === "INR" ? "₹" : "$";
+              return (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.025 }}
+                  onClick={() => handleEdit(p)}
+                  className={`rounded-2xl active:scale-[0.98] transition-all cursor-pointer ${
+                    !p.isActive ? "opacity-45" : ""
+                  }`}
+                >
+                  <div
+                    className={`flex items-center gap-3.5 px-3.5 py-3 rounded-2xl ${
+                      p.isHero
+                        ? "bg-gradient-to-r from-amber-50 to-orange-50/50 dark:from-amber-900/15 dark:to-orange-900/10 border border-amber-200/70 dark:border-amber-800/40"
+                        : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700"
+                    }`}
+                  >
+                    {/* Image */}
+                    <div className="relative w-[60px] h-[60px] rounded-xl shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-700">
+                      {hasImage ? (
+                        <img
+                          src={p.photoUrl || p.photoUrls?.[0]}
+                          alt={p.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-xl">{isService ? "🛠️" : "📦"}</span>
+                        </div>
                       )}
-                      {p.isHero && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] font-bold">
-                          ★ Hero
-                        </span>
-                      )}
-                      {!p.isActive && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-[9px] font-bold">
-                          Inactive
+                      {(p.photoUrls?.length ?? 0) > 1 && (
+                        <span className="absolute bottom-0 right-0 bg-black/60 text-white text-[7px] font-bold px-1 py-px rounded-tl">
+                          +{(p.photoUrls?.length ?? 1) - 1}
                         </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Price + chevron */}
-                  <div className="flex flex-col items-end justify-center pr-3 shrink-0">
-                    <span className="text-[13px] font-extrabold text-slate-800 dark:text-white">
-                      {p.price !== null ? `${currencySymbol}${Number(p.price).toLocaleString()}` : ""}
-                    </span>
-                    {p.price === null && (
-                      <span className="text-[9px] text-slate-400 dark:text-slate-500">On request</span>
-                    )}
-                    <IonIcon icon={createOutline} className="text-slate-300 dark:text-slate-600 text-sm mt-1" />
+                    {/* Text content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <p className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight truncate">
+                          {p.name}
+                        </p>
+                        {p.isHero && (
+                          <span className="text-amber-500 text-[11px] shrink-0">★</span>
+                        )}
+                      </div>
+
+                      {p.description ? (
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed line-clamp-1">
+                          {p.description}
+                        </p>
+                      ) : null}
+
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {p.price !== null ? (
+                          <span className="text-[13px] font-extrabold text-slate-800 dark:text-white">
+                            {currencySymbol}{Number(p.price).toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 italic">
+                            Price on request
+                          </span>
+                        )}
+                        <span className="text-slate-200 dark:text-slate-600">·</span>
+                        <span className={`text-[10px] font-semibold ${
+                          isService
+                            ? "text-teal-500 dark:text-teal-400"
+                            : "text-slate-400 dark:text-slate-500"
+                        }`}>
+                          {isService ? "Service" : "Product"}
+                        </span>
+                        {!p.isActive && (
+                          <>
+                            <span className="text-slate-200 dark:text-slate-600">·</span>
+                            <span className="text-[10px] font-semibold text-red-400">Inactive</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Edit indicator */}
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center">
+                      <IonIcon icon={createOutline} className="text-[15px] text-slate-400 dark:text-slate-500" />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div className="px-4 py-12 text-center">
