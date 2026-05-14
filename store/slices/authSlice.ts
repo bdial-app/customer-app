@@ -56,6 +56,8 @@ const authSlice = createSlice({
       state.token = null;
       removeItemSync("token");
       removeItemSync("user");
+      removeItemSync("tijarah_user_mode");
+      removeItemSync("tijarah_provider_status");
     },
     hydrateAuth(state) {
       const stored = hydrateFromStorage();
