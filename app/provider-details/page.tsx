@@ -413,7 +413,7 @@ export default function ProviderDetailsPage() {
           >
             <div className="flex items-center gap-3 px-4 h-14">
               <button
-                onClick={() => goBack("/search")}
+                onClick={() => goBack("/")}
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
               >
                 <IonIcon
@@ -534,7 +534,7 @@ export default function ProviderDetailsPage() {
               }}
             >
               <button
-                onClick={() => goBack("/search")}
+                onClick={() => goBack("/")}
                 className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
               >
                 <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />

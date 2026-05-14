@@ -3,7 +3,7 @@ import { App } from "konsta/react";
 import { AppProvider, useAppContext } from "./context/AppContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { QueryClient, QueryClientProvider, onlineManager, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "@/store";
@@ -28,6 +28,7 @@ import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persis
 import { useDeepLinks } from "@/hooks/useDeepLinks";
 import { resolveDeepLink } from "@/utils/deep-link";
 import { isNativePlatform } from "@/utils/platform";
+import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
@@ -155,6 +156,21 @@ function NativeBackButtonHandler() {
 
 function DeepLinkBridge() {
   useDeepLinks();
+  return null;
+}
+
+/** Increments navigation depth on every route change so useBackNavigation works across remounts. */
+function NavigationTracker() {
+  const pathname = usePathname();
+  const last = useRef(pathname);
+
+  useEffect(() => {
+    if (pathname !== last.current) {
+      trackNavigation();
+      last.current = pathname;
+    }
+  }, [pathname]);
+
   return null;
 }
 
@@ -358,6 +374,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             <AppProvider>
               <AuthGateProvider>
               <LanguageSyncBridge />
+              <NavigationTracker />
               <PushNotificationBridge />
               <DeepLinkBridge />
               <ReconnectRefresher />
