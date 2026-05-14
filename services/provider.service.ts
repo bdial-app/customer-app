@@ -54,6 +54,11 @@ export interface BecomeProviderPayload {
   categoryIds?: string[];
   products?: Array<{ name: string; description?: string; price?: number; currency?: string; imageCount?: number }>;
   productImages?: File[];
+  websiteUrl?: string;
+  instagramHandle?: string;
+  facebookHandle?: string;
+  youtubeHandle?: string;
+  whatsappNumber?: string;
 }
 
 export interface ProviderData {
@@ -78,6 +83,12 @@ export interface ProviderData {
   createdAt: string;
   updatedAt: string;
   user?: any;
+  websiteUrl?: string | null;
+  websiteLogoUrl?: string | null;
+  instagramHandle?: string | null;
+  facebookHandle?: string | null;
+  youtubeHandle?: string | null;
+  whatsappNumber?: string | null;
 }
 
 export interface ProviderStatusResponse {
@@ -103,6 +114,11 @@ export interface UpdateProviderPayload {
   isAvailable?: boolean;
   profilePhotoUrl?: string | null;
   bannerImageUrl?: string | null;
+  websiteUrl?: string | null;
+  instagramHandle?: string | null;
+  facebookHandle?: string | null;
+  youtubeHandle?: string | null;
+  whatsappNumber?: string | null;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────
@@ -183,7 +199,6 @@ export interface ProviderDetailsProduct {
   photoUrls: string[];
   isActive: boolean;
   displayOrder: number;
-  isHero: boolean;
 }
 
 export interface ProviderDetailsReview {
@@ -301,6 +316,13 @@ export const becomeProvider = async (
     });
   }
 
+  // Online presence / social links
+  if (payload.websiteUrl) formData.append("websiteUrl", payload.websiteUrl);
+  if (payload.instagramHandle) formData.append("instagramHandle", payload.instagramHandle);
+  if (payload.facebookHandle) formData.append("facebookHandle", payload.facebookHandle);
+  if (payload.youtubeHandle) formData.append("youtubeHandle", payload.youtubeHandle);
+  if (payload.whatsappNumber) formData.append("whatsappNumber", payload.whatsappNumber);
+
   const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData);
   return data;
 };
@@ -320,6 +342,13 @@ export const verifyProviderOtp = async (
   otp: string,
 ): Promise<{ verified: boolean }> => {
   const { data } = await apiClient.post(PROVIDER_URLS.VERIFY_OTP, { mobileNumber, otp });
+  return data;
+};
+
+export const fetchWebsiteMeta = async (
+  domain: string,
+): Promise<{ logoUrl: string | null; title: string | null }> => {
+  const { data } = await apiClient.post(PROVIDER_URLS.WEBSITE_META, { domain });
   return data;
 };
 

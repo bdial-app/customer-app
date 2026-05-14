@@ -20,6 +20,12 @@ import {
   navigateOutline,
   searchOutline,
   checkmarkCircle,
+  linkOutline,
+  logoInstagram,
+  logoFacebook,
+  logoYoutube,
+  logoWhatsapp,
+  globeOutline,
 } from "ionicons/icons";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -51,6 +57,11 @@ const detailsSchema = Yup.object({
   pincode: Yup.string().matches(/^\d{6}$/, "Must be 6 digits").nullable(),
   openTime: Yup.string().nullable(),
   closeTime: Yup.string().nullable(),
+  websiteUrl: Yup.string().url("Enter a valid URL").max(512).nullable(),
+  instagramHandle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid handle").max(30).nullable(),
+  facebookHandle: Yup.string().max(128).nullable(),
+  youtubeHandle: Yup.string().max(128).nullable(),
+  whatsappNumber: Yup.string().matches(/^\+?\d{7,15}$/, "Invalid phone number").nullable(),
 });
 
 const InfoRow = ({
@@ -193,6 +204,11 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           pincode: values.pincode?.trim() || undefined,
           openTime: values.openTime || undefined,
           closeTime: values.closeTime || undefined,
+          websiteUrl: values.websiteUrl?.trim() || null,
+          instagramHandle: values.instagramHandle?.trim().replace(/^@/, "") || null,
+          facebookHandle: values.facebookHandle?.trim() || null,
+          youtubeHandle: values.youtubeHandle?.trim() || null,
+          whatsappNumber: values.whatsappNumber?.trim() || null,
           ...(mapCoords ? { latitude: String(mapCoords.lat), longitude: String(mapCoords.lng) } : {}),
         },
       });
@@ -442,6 +458,20 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
               />
               <InfoRow icon={timeOutline} label="Operating Hours" value={operatingHours} />
             </div>
+
+            {/* Online Presence (view) */}
+            {((provider as any).websiteUrl || (provider as any).instagramHandle || (provider as any).facebookHandle || (provider as any).youtubeHandle || (provider as any).whatsappNumber) && (
+              <div className="mx-4 mt-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
+                <div className="px-4 py-2.5">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Online Presence</p>
+                </div>
+                {(provider as any).websiteUrl && <InfoRow icon={globeOutline} label="Website" value={(provider as any).websiteUrl} />}
+                {(provider as any).instagramHandle && <InfoRow icon={logoInstagram} label="Instagram" value={`@${(provider as any).instagramHandle}`} />}
+                {(provider as any).facebookHandle && <InfoRow icon={logoFacebook} label="Facebook" value={(provider as any).facebookHandle} />}
+                {(provider as any).youtubeHandle && <InfoRow icon={logoYoutube} label="YouTube" value={(provider as any).youtubeHandle} />}
+                {(provider as any).whatsappNumber && <InfoRow icon={logoWhatsapp} label="WhatsApp" value={(provider as any).whatsappNumber} />}
+              </div>
+            )}
           </motion.div>
         ) : (
           /* Edit Mode */
@@ -476,6 +506,11 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   pincode: provider.pincode || "",
                   openTime: provider.openTime?.slice(0, 5) || "",
                   closeTime: provider.closeTime?.slice(0, 5) || "",
+                  websiteUrl: (provider as any).websiteUrl || "",
+                  instagramHandle: (provider as any).instagramHandle || "",
+                  facebookHandle: (provider as any).facebookHandle || "",
+                  youtubeHandle: (provider as any).youtubeHandle || "",
+                  whatsappNumber: (provider as any).whatsappNumber || "",
                 }}
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}
@@ -642,6 +677,54 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         label="Close Time"
                         value={values.closeTime}
                         onChange={(val) => setFieldValue("closeTime", val)}
+                      />
+                    </List>
+
+                    {/* ── Online Presence ── */}
+                    <div className="px-4 pt-3 pb-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
+                          <IonIcon icon={linkOutline} className="text-teal-600 text-sm" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700 dark:text-white">Online Presence</p>
+                        <span className="text-[9px] text-slate-400 ml-auto">Optional</span>
+                      </div>
+                    </div>
+                    <List strongIos insetIos className="!my-0">
+                      <FormikInput
+                        name="websiteUrl"
+                        label="Website"
+                        type="url"
+                        placeholder="https://yourbusiness.com"
+                        media={<IonIcon icon={globeOutline} />}
+                      />
+                      <FormikInput
+                        name="instagramHandle"
+                        label="Instagram"
+                        type="text"
+                        placeholder="yourhandle"
+                        media={<IonIcon icon={logoInstagram} />}
+                      />
+                      <FormikInput
+                        name="facebookHandle"
+                        label="Facebook"
+                        type="text"
+                        placeholder="Page name or URL"
+                        media={<IonIcon icon={logoFacebook} />}
+                      />
+                      <FormikInput
+                        name="youtubeHandle"
+                        label="YouTube"
+                        type="text"
+                        placeholder="@channel or URL"
+                        media={<IonIcon icon={logoYoutube} />}
+                      />
+                      <FormikInput
+                        name="whatsappNumber"
+                        label="WhatsApp"
+                        type="tel"
+                        placeholder="+966XXXXXXXXX"
+                        media={<IonIcon icon={logoWhatsapp} />}
                       />
                     </List>
 

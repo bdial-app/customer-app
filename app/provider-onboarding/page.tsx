@@ -33,6 +33,7 @@ import {
   shieldOutline,
   mapOutline,
   lockClosedOutline,
+  linkOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -93,6 +94,11 @@ const step1Schema = Yup.object({
     .required("Contact number is required"),
   open_time: Yup.string(),
   close_time: Yup.string(),
+  website_url: Yup.string().url("Enter a valid URL (e.g. https://example.com)").max(512).optional(),
+  instagram_handle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid Instagram handle").max(30).optional(),
+  facebook_handle: Yup.string().max(128).optional(),
+  youtube_handle: Yup.string().max(128).optional(),
+  whatsapp_number: Yup.string().matches(/^\+?\d{7,15}$/, "Enter a valid phone number (e.g. +966XXXXXXXXX)").optional(),
 });
 
 const step2Schema = Yup.object({
@@ -1709,6 +1715,11 @@ const ProviderOnboardingPage = () => {
         productImages: allProductImages.length
           ? allProductImages
           : undefined,
+        websiteUrl: values.website_url?.trim() || undefined,
+        instagramHandle: values.instagram_handle?.trim().replace(/^@/, "") || undefined,
+        facebookHandle: values.facebook_handle?.trim() || undefined,
+        youtubeHandle: values.youtube_handle?.trim() || undefined,
+        whatsappNumber: values.whatsapp_number?.trim() || undefined,
       });
       setProviderStatus(values.identity_doc ? "pending" : "approved");
     } catch (err: any) {
@@ -1772,6 +1783,11 @@ const ProviderOnboardingPage = () => {
           area: "",
           pincode: "",
           identity_doc: null as File | null,
+          website_url: "",
+          instagram_handle: "",
+          facebook_handle: "",
+          youtube_handle: "",
+          whatsapp_number: "",
         }}
         validationSchema={schemaForStep[currentStep]}
         onSubmit={handleSubmit}
@@ -1973,6 +1989,46 @@ const ProviderOnboardingPage = () => {
                         label="Close Time"
                         value={values.close_time}
                         onChange={(val) => setFieldValue("close_time", val)}
+                      />
+                    </List>
+
+                    {/* Online Presence (Optional) */}
+                    <SectionHeader
+                      icon={linkOutline}
+                      title="Online Presence"
+                      subtitle="Optional — help customers find you online"
+                    />
+                    <List strongIos insetIos className="!mt-0">
+                      <FormikInput
+                        name="website_url"
+                        label="Website"
+                        type="url"
+                        placeholder="https://yourbusiness.com"
+                      />
+                      <FormikInput
+                        name="instagram_handle"
+                        label="Instagram"
+                        type="text"
+                        placeholder="yourhandle (without @)"
+                        formatValue={(val) => val.replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, "").slice(0, 30)}
+                      />
+                      <FormikInput
+                        name="facebook_handle"
+                        label="Facebook"
+                        type="text"
+                        placeholder="Page name or URL"
+                      />
+                      <FormikInput
+                        name="youtube_handle"
+                        label="YouTube"
+                        type="text"
+                        placeholder="@channel or channel URL"
+                      />
+                      <FormikInput
+                        name="whatsapp_number"
+                        label="WhatsApp Business"
+                        type="tel"
+                        placeholder="+966XXXXXXXXX"
                       />
                     </List>
                   </>

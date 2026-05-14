@@ -33,7 +33,6 @@ export const GEOCODE_URLS = {
 export const SAVED_LOCATION_URLS = {
   LIST: "/saved-locations",
   CREATE: "/saved-locations",
-  DELETE: (id: string) => `/saved-locations/${id}`,
 };
 
 export const PROVIDER_URLS = {
@@ -47,6 +46,7 @@ export const PROVIDER_URLS = {
   MY_STATUS: "/providers/my-status",
   SEND_OTP: "/providers/send-otp",
   VERIFY_OTP: "/providers/verify-otp",
+  WEBSITE_META: "/providers/website-meta",
   SUBMIT_VERIFICATION: "/providers/submit-verification",
   MY_ANALYTICS: "/providers/my-analytics",
   MY_OFFERS: "/providers/my-offers",
@@ -175,7 +175,4 @@ export const PAYMENT_URLS = {
 
 export const CONFIG_URLS = {
   FEATURE_FLAGS: '/config/feature-flags',
-  SERVICEABLE_CITIES: '/config/serviceable-cities',
-  CHECK_SERVICEABILITY: '/config/check-serviceability',
-  CITY_REQUESTS: '/config/city-requests',
 };
