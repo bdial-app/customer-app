@@ -1253,17 +1253,17 @@ export default function ProviderDetailsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {/* Hero products — showcase cards with image overlay */}
                 {[...products].filter(p => p.isHero).length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-violet-500 dark:text-violet-400">★ Hero Products</p>
                     {[...products].filter(p => p.isHero).map((product) => {
                       const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                       return (
                         <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                          <div className="rounded-2xl overflow-hidden active:scale-[0.98] transition-transform mb-3 shadow-[0_4px_24px_rgba(139,92,246,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
-                            <div className="relative h-[200px] bg-gray-100 dark:bg-slate-700">
+                          <div className="rounded-2xl overflow-hidden active:scale-[0.98] transition-transform shadow-[0_4px_24px_rgba(139,92,246,0.12)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+                            <div className="relative h-[220px] bg-gray-100 dark:bg-slate-700">
                               {product.photoUrl ? (
                                 <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                               ) : (
@@ -1314,13 +1314,13 @@ export default function ProviderDetailsPage() {
                     {[...products].filter(p => p.isHero).length > 0 && (
                       <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">All Products</p>
                     )}
-                    <div className="space-y-2.5">
+                    <div className="space-y-3.5">
                       {[...products].filter(p => !p.isHero).map((product) => {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         return (
                           <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                            <div className="flex bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
-                              <div className="relative w-[100px] h-[100px] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
+                            <div className="flex bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-none active:scale-[0.98] transition-transform">
+                              <div className="relative w-[110px] h-[110px] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
                                   <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -1329,7 +1329,7 @@ export default function ProviderDetailsPage() {
                                   </div>
                                 )}
                               </div>
-                              <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+                              <div className="flex-1 px-3.5 py-3 flex flex-col justify-center min-w-0">
                                 <div className="flex items-center gap-1.5">
                                 <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white line-clamp-1">
                                   {product.name}
@@ -1339,17 +1339,17 @@ export default function ProviderDetailsPage() {
                                 )}
                                 </div>
                                 {product.description && (
-                                  <p className="text-[11px] text-gray-400 dark:text-slate-500 line-clamp-1 mt-0.5">
+                                  <p className="text-[11px] text-gray-400 dark:text-slate-500 line-clamp-2 mt-1">
                                     {product.description}
                                   </p>
                                 )}
-                                <span className="text-[14px] font-bold text-gray-900 dark:text-white mt-1.5">
+                                <span className="text-[14px] font-bold text-gray-900 dark:text-white mt-2">
                                   {product.price !== null
                                     ? `${currencySymbol}${Number(product.price).toLocaleString()}`
                                     : "Enquire"}
                                 </span>
                               </div>
-                              <div className="flex items-center pr-3">
+                              <div className="flex items-center pr-3.5">
                                 <div className="w-7 h-7 rounded-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center">
                                   <IonIcon icon={chevronForwardOutline} className="w-4 h-4 text-gray-300 dark:text-slate-500" />
                                 </div>
