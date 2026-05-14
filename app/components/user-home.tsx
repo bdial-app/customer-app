@@ -377,30 +377,45 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                     <div
                       key={product.id}
                       onClick={() => router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`)}
-                      className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl border border-violet-100 dark:border-violet-900/40 overflow-hidden shadow-[0_2px_12px_rgba(139,92,246,0.06)] active:scale-[0.97] transition-transform cursor-pointer"
+                      className="shrink-0 w-[200px] rounded-2xl overflow-hidden active:scale-[0.97] transition-transform cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
                     >
-                      <div className="relative aspect-[4/3] bg-gray-50 dark:bg-slate-700 overflow-hidden">
+                      <div className="relative h-[240px] bg-gray-100 dark:bg-slate-700">
                         {product.photoUrl ? (
                           <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20">
-                            <span className="text-2xl text-violet-300">★</span>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/40 dark:to-fuchsia-900/40">
+                            <span className="text-5xl font-bold text-violet-200 dark:text-violet-700">{product.name?.charAt(0)?.toUpperCase()}</span>
                           </div>
                         )}
-                        {product.isHero && (
-                          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[8px] font-bold shadow-sm">
-                            ★ HERO
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-2.5">
-                        <p className="text-[12px] font-semibold text-gray-900 dark:text-white line-clamp-1">{product.name}</p>
-                        <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-1 mt-0.5">{product.providerName}</p>
-                        <p className="text-[13px] font-bold text-violet-600 dark:text-violet-400 mt-1.5">
-                          {product.price !== null
-                            ? `${product.currency === "INR" ? "₹" : "$"}${Number(product.price).toLocaleString()}`
-                            : "Enquire"}
-                        </p>
+
+                        {/* Top badges */}
+                        <div className="absolute top-0 inset-x-0 p-2.5 flex items-start justify-between">
+                          {product.isHero ? (
+                            <span className="px-2 py-0.5 rounded-lg bg-violet-600/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
+                              ★ Hero
+                            </span>
+                          ) : <span />}
+                          {product.price !== null && (
+                            <span className="px-2 py-0.5 rounded-lg bg-white/90 dark:bg-black/60 backdrop-blur-sm text-[11px] font-extrabold text-gray-900 dark:text-white shadow-sm">
+                              {product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Bottom gradient overlay with info */}
+                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/75 via-black/40 to-transparent pt-14 pb-3 px-3">
+                          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2 mb-1.5">{product.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            {product.providerImage ? (
+                              <img src={product.providerImage} alt="" className="w-4 h-4 rounded-full object-cover ring-1 ring-white/30" />
+                            ) : (
+                              <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[8px] text-white font-bold">
+                                {product.providerName?.charAt(0)?.toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-[10px] text-white/80 font-medium truncate">{product.providerName}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
