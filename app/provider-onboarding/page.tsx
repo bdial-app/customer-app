@@ -862,7 +862,7 @@ const ProductFormCard = ({
           </div>
         </div>
 
-        {/* Product images (up to 5) */}}
+        {/* Product images (up to 5) */}
         <input ref={imgRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
         <div>
           <div className="flex items-center justify-between mb-1.5">

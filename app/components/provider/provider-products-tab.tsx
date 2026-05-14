@@ -478,7 +478,7 @@ const ProviderProductsTab = ({
                       </div>
                     </div>
 
-                    {/* Photo Upload Section */}}
+                    {/* Photo Upload Section */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                         Photos <span className="text-slate-400 dark:text-slate-500 font-normal">({photoPreviews.length}/5)</span>
