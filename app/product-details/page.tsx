@@ -240,8 +240,8 @@ export default function ProductDetailsPage() {
             {product.name}
           </h1>
           {product.isHero && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-bold mb-2">
-              ★ Hero Product
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-200/60 dark:border-violet-800/40 text-violet-600 dark:text-violet-400 text-xs font-bold mb-2">
+              ✦ Featured Product
             </span>
           )}
           <div className="flex items-center gap-3">

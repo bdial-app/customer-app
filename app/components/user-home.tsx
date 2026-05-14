@@ -357,37 +357,44 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               <>
                 <div className="px-5 pt-4 pb-2">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                        Best Products This Week
-                      </h2>
-                      <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
-                        Top picks from our providers
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+                        <span className="text-white text-[11px]">✦</span>
+                      </div>
+                      <div>
+                        <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">
+                          Best Products This Week
+                        </h2>
+                        <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
+                          Handpicked hero products from top providers
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-3 overflow-x-auto px-5 pb-3 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto px-5 pb-4 scrollbar-hide">
                   {feed.bestProducts.map((product) => (
                     <div
                       key={product.id}
                       onClick={() => router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`)}
-                      className="shrink-0 w-[160px] bg-white dark:bg-slate-800 rounded-2xl border border-amber-200/60 dark:border-amber-700/40 overflow-hidden shadow-sm active:scale-[0.97] transition-transform cursor-pointer"
+                      className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl border border-violet-100 dark:border-violet-900/40 overflow-hidden shadow-[0_2px_12px_rgba(139,92,246,0.08)] active:scale-[0.97] transition-transform cursor-pointer"
                     >
                       <div className="relative aspect-[4/3] bg-gray-100 dark:bg-slate-700 overflow-hidden">
                         {product.photoUrl ? (
                           <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-slate-500 text-2xl">📦</div>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20">
+                            <span className="text-3xl">✦</span>
+                          </div>
                         )}
-                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-white text-[8px] font-bold">
-                          ★ Hero
+                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[8px] font-bold shadow-sm">
+                          ✦ PICK
                         </span>
                       </div>
                       <div className="p-2.5">
                         <p className="text-[12px] font-semibold text-gray-900 dark:text-white line-clamp-1">{product.name}</p>
                         <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-1 mt-0.5">{product.providerName}</p>
-                        <p className="text-[13px] font-bold text-amber-600 mt-1">
+                        <p className="text-[13px] font-bold text-violet-600 dark:text-violet-400 mt-1.5">
                           {product.price !== null
                             ? `${product.currency === "INR" ? "₹" : "$"}${Number(product.price).toLocaleString()}`
                             : "Enquire"}
