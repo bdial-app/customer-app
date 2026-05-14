@@ -1199,7 +1199,7 @@ export default function ProviderDetailsPage() {
                 {/* Hero products — featured full-width cards */}
                 {[...products].filter(p => p.isHero).length > 0 && (
                   <div className="space-y-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-500 dark:text-violet-400">✦ Featured</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-500 dark:text-violet-400">★ Hero Products</p>
                     {[...products].filter(p => p.isHero).map((product) => {
                       const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                       return (
@@ -1215,7 +1215,7 @@ export default function ProviderDetailsPage() {
                                   </div>
                                 )}
                                 <span className="absolute top-2 left-2 z-10 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[8px] font-bold">
-                                  ✦ PICK
+                                  ★ HERO
                                 </span>
                               </div>
                               <div className="flex-1 p-3.5 flex flex-col justify-center min-w-0">

@@ -135,6 +135,7 @@ export interface HomeFeedProduct {
   currency: string;
   productType: 'product' | 'service';
   description: string | null;
+  isHero?: boolean;
   providerId: string;
   providerName: string;
   providerImage: string | null;

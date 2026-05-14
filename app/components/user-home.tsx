@@ -352,21 +352,21 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
-            {/* Best Products This Week */}
+            {/* Top Products */}
             {feed?.bestProducts && feed.bestProducts.length > 0 && (
               <>
                 <div className="px-5 pt-4 pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-                        <span className="text-white text-[11px]">✦</span>
+                        <span className="text-white text-[11px]">★</span>
                       </div>
                       <div>
                         <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                          Best Products This Week
+                          Top Products
                         </h2>
                         <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
-                          Handpicked hero products from top providers
+                          Popular picks from providers near you
                         </p>
                       </div>
                     </div>
@@ -377,19 +377,21 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                     <div
                       key={product.id}
                       onClick={() => router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`)}
-                      className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl border border-violet-100 dark:border-violet-900/40 overflow-hidden shadow-[0_2px_12px_rgba(139,92,246,0.08)] active:scale-[0.97] transition-transform cursor-pointer"
+                      className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl border border-violet-100 dark:border-violet-900/40 overflow-hidden shadow-[0_2px_12px_rgba(139,92,246,0.06)] active:scale-[0.97] transition-transform cursor-pointer"
                     >
-                      <div className="relative aspect-[4/3] bg-gray-100 dark:bg-slate-700 overflow-hidden">
+                      <div className="relative aspect-[4/3] bg-gray-50 dark:bg-slate-700 overflow-hidden">
                         {product.photoUrl ? (
                           <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20">
-                            <span className="text-3xl">✦</span>
+                            <span className="text-2xl text-violet-300">★</span>
                           </div>
                         )}
-                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[8px] font-bold shadow-sm">
-                          ✦ PICK
-                        </span>
+                        {product.isHero && (
+                          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[8px] font-bold shadow-sm">
+                            ★ HERO
+                          </span>
+                        )}
                       </div>
                       <div className="p-2.5">
                         <p className="text-[12px] font-semibold text-gray-900 dark:text-white line-clamp-1">{product.name}</p>
