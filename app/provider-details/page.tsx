@@ -209,6 +209,20 @@ export default function ProviderDetailsPage() {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
 
+  // Reset local UI state when navigating to a different provider
+  useEffect(() => {
+    setActiveTab("Overview");
+    setHeaderVisible(false);
+    setSheetOpened(false);
+    setCallSheetOpened(false);
+    setReviewRating(5);
+    setReviewComment("");
+    setReviewError("");
+    setReviewSuccess(false);
+    setReportSheetOpen(false);
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [id]);
+
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
   const { requireAuth } = useAuthGate();

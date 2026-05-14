@@ -1,6 +1,6 @@
 "use client";
 import { Page } from "konsta/react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
@@ -50,6 +50,12 @@ export default function ProductDetailsPage() {
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
+
+  // Reset local UI state when navigating to a different product
+  useEffect(() => {
+    setCurrentPhoto(0);
+    setReportSheetOpen(false);
+  }, [id]);
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();

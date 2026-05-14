@@ -40,7 +40,6 @@ export const useProviderDetails = (id: string) => {
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 2,
-    placeholderData: (prev) => prev, // Keep stale data visible during refetch
   });
 };
 
