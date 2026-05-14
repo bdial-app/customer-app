@@ -1195,41 +1195,44 @@ export default function ProviderDetailsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Hero products — featured full-width cards */}
                 {[...products].filter(p => p.isHero).length > 0 && (
-                  <div className="space-y-2.5 mb-4">
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-500 dark:text-violet-400">✦ Featured</p>
                     {[...products].filter(p => p.isHero).map((product) => {
                       const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                       return (
                         <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                          <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-violet-200/80 dark:border-violet-800/40 shadow-[0_2px_16px_rgba(139,92,246,0.1)] dark:shadow-none active:scale-[0.98] transition-transform">
-                            <div className="relative aspect-[16/9] overflow-hidden bg-gray-100 dark:bg-slate-700">
-                              <span className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[9px] font-bold shadow-sm">
-                                ✦ Featured
-                              </span>
-                              {product.photoUrl ? (
-                                <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20">
-                                  <IonIcon icon={imagesOutline} className="w-10 h-10 text-violet-300" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-4">
-                              <h4 className="text-[15px] font-bold text-gray-900 dark:text-white mb-1">
-                                {product.name}
-                              </h4>
-                              {product.description && (
-                                <p className="text-[12px] text-gray-500 dark:text-slate-400 mb-2.5 line-clamp-2">
-                                  {product.description}
-                                </p>
-                              )}
-                              <span className="text-[17px] font-extrabold text-violet-600 dark:text-violet-400">
-                                {product.price !== null
-                                  ? `${currencySymbol}${Number(product.price).toLocaleString()}`
-                                  : "Enquire"}
-                              </span>
+                          <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-violet-200/80 dark:border-violet-800/40 shadow-[0_2px_16px_rgba(139,92,246,0.08)] dark:shadow-none active:scale-[0.98] transition-transform mb-3">
+                            <div className="flex">
+                              <div className="relative w-[120px] h-[120px] shrink-0 overflow-hidden bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20">
+                                {product.photoUrl ? (
+                                  <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <IonIcon icon={imagesOutline} className="w-8 h-8 text-violet-300 dark:text-violet-600" />
+                                  </div>
+                                )}
+                                <span className="absolute top-2 left-2 z-10 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[8px] font-bold">
+                                  ✦ PICK
+                                </span>
+                              </div>
+                              <div className="flex-1 p-3.5 flex flex-col justify-center min-w-0">
+                                <h4 className="text-[14px] font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
+                                  {product.name}
+                                </h4>
+                                {product.description && (
+                                  <p className="text-[11px] text-gray-500 dark:text-slate-400 mb-2 line-clamp-2">
+                                    {product.description}
+                                  </p>
+                                )}
+                                <span className="text-[16px] font-extrabold text-violet-600 dark:text-violet-400">
+                                  {product.price !== null
+                                    ? `${currencySymbol}${Number(product.price).toLocaleString()}`
+                                    : "Enquire"}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </Link>
@@ -1239,41 +1242,43 @@ export default function ProviderDetailsPage() {
                 )}
 
                 {/* Regular products — 2-col grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[...products].filter(p => !p.isHero).map((product) => {
-                    const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
-                    return (
-                      <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                        <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
-                          <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-700">
-                            {product.photoUrl ? (
-                              <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                <IonIcon icon={imagesOutline} className="w-8 h-8" />
+                {[...products].filter(p => !p.isHero).length > 0 && (
+                  <div>
+                    {[...products].filter(p => p.isHero).length > 0 && (
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">All Products</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      {[...products].filter(p => !p.isHero).map((product) => {
+                        const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
+                        return (
+                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
+                            <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                              <div className="relative aspect-[4/3] overflow-hidden bg-gray-50 dark:bg-slate-700">
+                                {product.photoUrl ? (
+                                  <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <IonIcon icon={imagesOutline} className="w-7 h-7 text-gray-200 dark:text-slate-600" />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className="p-3">
-                            <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
-                              {product.name}
-                            </h4>
-                            {product.description && (
-                              <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-1.5 line-clamp-1">
-                                {product.description}
-                              </p>
-                            )}
-                            <span className="text-[14px] font-bold text-gray-900 dark:text-white">
-                              {product.price !== null
-                                ? `${currencySymbol}${Number(product.price).toLocaleString()}`
-                                : "Enquire"}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                              <div className="p-2.5">
+                                <h4 className="text-[12px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
+                                  {product.name}
+                                </h4>
+                                <span className="text-[13px] font-bold text-gray-900 dark:text-white">
+                                  {product.price !== null
+                                    ? `${currencySymbol}${Number(product.price).toLocaleString()}`
+                                    : "Enquire"}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
