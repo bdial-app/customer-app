@@ -1253,68 +1253,62 @@ export default function ProviderDetailsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {/* Hero products — featured showcase */}
+              <div className="space-y-5">
+                {/* Featured products — horizontal card layout */}
                 {[...products].filter(p => p.isHero).length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1 h-4 rounded-full bg-gradient-to-b from-amber-400 to-amber-500" />
-                      <p className="text-[12px] font-semibold text-gray-700 dark:text-slate-300 tracking-wide">Featured</p>
-                    </div>
-                    {[...products].filter(p => p.isHero).map((product) => {
-                      const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
-                      return (
-                        <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                          <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-100/80 dark:border-amber-900/30 active:scale-[0.98] transition-transform">
-                            {/* Image */}
-                            <div className="relative h-[180px] bg-gray-50 dark:bg-slate-700">
-                              {product.photoUrl ? (
-                                <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-                                  <IonIcon icon={imagesOutline} className="w-10 h-10 text-amber-200 dark:text-amber-800" />
-                                </div>
-                              )}
-                              {/* Price overlay */}
-                              {product.price !== null && (
-                                <div className="absolute top-3 right-3">
-                                  <span className="px-2.5 py-1 rounded-lg bg-white/90 dark:bg-black/60 backdrop-blur-sm text-[13px] font-bold text-gray-900 dark:text-white shadow-sm">
-                                    {currencySymbol}{Number(product.price).toLocaleString()}
-                                  </span>
-                                </div>
-                              )}
-                              {(product as any).productType === "service" && (
-                                <div className="absolute top-3 left-3">
-                                  <span className="px-2 py-0.5 rounded-md bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
-                                    Service
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            {/* Body */}
-                            <div className="p-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-[15px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2">
-                                    {product.name}
-                                  </h4>
-                                  {product.description && (
-                                    <p className="text-[12px] text-gray-500 dark:text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-                                      {product.description}
-                                    </p>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-500 dark:text-amber-400 mb-3">Featured</p>
+                    <div className="space-y-3">
+                      {[...products].filter(p => p.isHero).map((product) => {
+                        const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
+                        return (
+                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
+                            <div className="flex bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-gray-100 dark:border-slate-700 active:scale-[0.98] transition-transform shadow-sm">
+                              {/* Thumbnail */}
+                              <div className="relative w-[110px] flex-shrink-0 bg-gray-50 dark:bg-slate-700">
+                                {product.photoUrl ? (
+                                  <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <IonIcon icon={imagesOutline} className="w-7 h-7 text-gray-200 dark:text-slate-600" />
+                                  </div>
+                                )}
+                                {/* Featured indicator — thin amber stripe */}
+                                <div className="absolute top-0 left-0 w-[3px] h-full bg-amber-400" />
+                              </div>
+                              {/* Content */}
+                              <div className="flex-1 min-w-0 p-3.5 flex flex-col justify-center gap-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-amber-400 text-[10px]">★</span>
+                                  <span className="text-[9px] font-semibold text-amber-500 dark:text-amber-400 uppercase tracking-wider">Featured</span>
+                                  {(product as any).productType === "service" && (
+                                    <span className="ml-1 text-[9px] font-medium text-teal-500 dark:text-teal-400">• Service</span>
                                   )}
                                 </div>
-                                <div className="flex-shrink-0 mt-0.5">
-                                  <div className="w-7 h-7 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
-                                    <span className="text-amber-500 text-[13px]">★</span>
-                                  </div>
-                                </div>
+                                <h4 className="text-[14px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2">
+                                  {product.name}
+                                </h4>
+                                {product.description && (
+                                  <p className="text-[11px] text-gray-400 dark:text-slate-500 line-clamp-1 leading-relaxed">
+                                    {product.description}
+                                  </p>
+                                )}
+                                {product.price !== null ? (
+                                  <p className="text-[14px] font-bold text-gray-900 dark:text-white mt-0.5">
+                                    {currencySymbol}{Number(product.price).toLocaleString()}
+                                  </p>
+                                ) : (
+                                  <p className="text-[10px] font-medium text-gray-400 dark:text-slate-500 mt-0.5">Price on request</p>
+                                )}
+                              </div>
+                              <div className="flex items-center pr-3">
+                                <IonIcon icon={chevronForwardOutline} className="w-4 h-4 text-gray-300 dark:text-slate-600" />
                               </div>
                             </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -1322,12 +1316,9 @@ export default function ProviderDetailsPage() {
                 {[...products].filter(p => !p.isHero).length > 0 && (
                   <div>
                     {[...products].filter(p => p.isHero).length > 0 && (
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-1 h-4 rounded-full bg-gray-300 dark:bg-slate-600" />
-                        <p className="text-[12px] font-semibold text-gray-700 dark:text-slate-300 tracking-wide">All Items</p>
-                      </div>
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-3">All Items</p>
                     )}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3.5">
                       {[...products].filter(p => !p.isHero).map((product) => {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = (product as any).productType === "service";
@@ -1359,16 +1350,16 @@ export default function ProviderDetailsPage() {
                                 </div>
                               </div>
                               {/* Body */}
-                              <div className="p-3">
+                              <div className="p-3.5">
                                 <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 mb-1">
                                   {product.name}
                                 </h4>
                                 {product.description && (
-                                  <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-2 mb-2">
+                                  <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-2 mb-2.5">
                                     {product.description}
                                   </p>
                                 )}
-                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-700">
+                                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
                                   <span className="text-[13px] font-extrabold text-gray-900 dark:text-white">
                                     {product.price !== null
                                       ? `${currencySymbol}${Number(product.price).toLocaleString()}`
