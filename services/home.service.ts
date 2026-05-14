@@ -126,6 +126,23 @@ export interface PersonalizedCategory {
   source: 'behavioral' | 'default' | 'explicit';
 }
 
+export interface HomeFeedProduct {
+  id: string;
+  name: string;
+  photoUrl: string | null;
+  photoUrls: string[];
+  price: number | null;
+  currency: string;
+  productType: 'product' | 'service';
+  description: string | null;
+  providerId: string;
+  providerName: string;
+  providerImage: string | null;
+  providerCity: string | null;
+  providerArea: string | null;
+  providerStatus: string;
+}
+
 export interface HomeFeedResponse {
   nearbyProviders: HomeProvider[];
   featuredCategory: FeaturedCategory | null;
@@ -142,6 +159,7 @@ export interface HomeFeedResponse {
   searchPrompts: string[];
   dealsAroundYou: HomeProviderWithOffer[];
   sponsoredProviders: HomeSponsoredProvider[];
+  bestProducts: HomeFeedProduct[];
 }
 
 // ─── API Functions ──────────────────────────────────────────────────

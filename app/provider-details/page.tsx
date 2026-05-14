@@ -52,7 +52,6 @@ import {
   useTrackAction,
 } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
-import type { ReportEntityType } from "@/services/report.service";
 import { checkContent } from "@/utils/content-sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -203,7 +202,6 @@ export default function ProviderDetailsPage() {
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState<{ type: ReportEntityType; id: string }>({ type: "provider", id: id || "" });
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -452,7 +450,7 @@ export default function ProviderDetailsPage() {
                 </button>
                 {!isOwnProvider && (
                   <button
-                    onClick={() => requireAuth(() => { setReportTarget({ type: "provider", id: id! }); setReportSheetOpen(true); })}
+                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
                     className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
                   >
                     <IonIcon
@@ -562,7 +560,7 @@ export default function ProviderDetailsPage() {
                 </button>
                 {!isOwnProvider && (
                   <button
-                    onClick={() => requireAuth(() => { setReportTarget({ type: "provider", id: id! }); setReportSheetOpen(true); })}
+                    onClick={() => requireAuth(() => setReportSheetOpen(true))}
                     className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
                   >
                     <IonIcon
@@ -587,47 +585,45 @@ export default function ProviderDetailsPage() {
 
             {/* Provider Name */}
             <div className="absolute bottom-4 left-4 right-20">
-              <div className="flex items-center mb-1">
-                <h1 className="text-xl font-bold text-white leading-tight break-words min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-xl font-bold text-white leading-tight wrap-break-word min-w-0">
                   {provider.brandName}
                 </h1>
                 {provider.status === "active" && (
                   <IonIcon
                     icon={checkmarkCircle}
-                    className="w-5 h-5 text-blue-400 shrink-0 mt-0.5"
+                    className="w-5 h-5 text-blue-400 shrink-0"
                   />
                 )}
               </div>
-              <p className="text-white/80 text-sm truncate mb-1.5">
-                {categoryLabel}
-              </p>
-              {(isSponsored || badges.length > 0) && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {isSponsored && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-linear-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm shrink-0">
-                      ⭐ Premium
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-white/80 text-sm truncate">
+                  {categoryLabel}
+                </p>
+                {isSponsored && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-linear-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm shrink-0">
+                    ⭐ Premium
+                  </span>
+                )}
+                {badges.length > 0 &&
+                  badges.slice(0, 3).map((b) => (
+                    <span
+                      key={b.id}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
+                    >
+                      {b.type === "gold_seller"
+                        ? "🥇"
+                        : b.type === "top_rated"
+                        ? "⭐"
+                        : b.type === "trusted"
+                        ? "🛡️"
+                        : b.type === "express_service"
+                        ? "⚡"
+                        : "🌟"}
+                      {b.type.replace(/_/g, " ")}
                     </span>
-                  )}
-                  {badges.length > 0 &&
-                    badges.slice(0, 3).map((b) => (
-                      <span
-                        key={b.id}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
-                      >
-                        {b.type === "gold_seller"
-                          ? "🥇"
-                          : b.type === "top_rated"
-                          ? "⭐"
-                          : b.type === "trusted"
-                          ? "🛡️"
-                          : b.type === "express_service"
-                          ? "⚡"
-                          : "🌟"}
-                        {b.type.replace(/_/g, " ")}
-                      </span>
-                    ))}
-                </div>
-              )}
+                  ))}
+              </div>
             </div>
           </div>
 
@@ -867,12 +863,6 @@ export default function ProviderDetailsPage() {
                           day: "numeric",
                         })}
                       </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); requireAuth(() => { setReportTarget({ type: "deal", id: offer.id }); setReportSheetOpen(true); }); }}
-                        className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors shrink-0"
-                      >
-                        <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -1147,13 +1137,10 @@ export default function ProviderDetailsPage() {
                       <StarRow rating={review.starRating} size={12} />
                       {user && user.id !== review.reviewerId && (
                         <button
-                          onClick={() => requireAuth(() => { setReportTarget({ type: "review", id: review.id }); setReportSheetOpen(true); })}
+                          onClick={() => requireAuth(() => setReportSheetOpen(true))}
                           className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
                         >
-                          <IonIcon
-                            icon={flagOutline}
-                            className="w-3.5 h-3.5 text-slate-400"
-                          />
+                          <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
                         </button>
                       )}
                     </div>
@@ -1209,7 +1196,7 @@ export default function ProviderDetailsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {products.map((product) => {
+                {[...products].sort((a, b) => (b.isHero ? 1 : 0) - (a.isHero ? 1 : 0)).map((product) => {
                   const currencySymbol =
                     product.currency === "INR" ? "₹" : product.currency + " ";
                   return (
@@ -1217,8 +1204,17 @@ export default function ProviderDetailsPage() {
                       key={product.id}
                       href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}
                     >
-                      <div className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
+                      <div className={`group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform ${
+                        product.isHero
+                          ? "border-amber-300 dark:border-amber-600 ring-1 ring-amber-200/50"
+                          : "border-gray-100/80 dark:border-slate-700"
+                      }`}>
                         <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-slate-700">
+                          {product.isHero && (
+                            <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-amber-500/90 text-white text-[9px] font-bold backdrop-blur-sm">
+                              ★ Hero
+                            </span>
+                          )}
                           {product.photoUrl ? (
                             <img
                               src={product.photoUrl}
@@ -1277,8 +1273,7 @@ export default function ProviderDetailsPage() {
         <div
           className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
           style={{
-            paddingBottom:
-              "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
+            paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
             background:
               "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
             display: isLightboxOpen ? "none" : "block",
@@ -1330,8 +1325,7 @@ export default function ProviderDetailsPage() {
                     if (!provider?.id) return;
                     // Re-check after auth — user may have logged in as this provider
                     const currentUser = store.getState().auth.user;
-                    if (currentUser && currentUser.id === provider.userId)
-                      return;
+                    if (currentUser && currentUser.id === provider.userId) return;
                     trackChat();
                     createConversation(
                       {
@@ -1395,6 +1389,7 @@ export default function ProviderDetailsPage() {
             <div className="absolute -top-16 inset-x-0 bottom-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
             <div className="relative">
+
               <div className="flex flex-col items-center gap-4">
                 {/* Icon */}
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
@@ -1417,10 +1412,7 @@ export default function ProviderDetailsPage() {
                     onClick={() => trackCall()}
                     className="w-full flex items-center justify-center gap-3 py-3.5 bg-white/[0.07] border border-white/10 rounded-2xl active:bg-white/10 transition-colors"
                   >
-                    <IonIcon
-                      icon={callOutline}
-                      className="text-base text-amber-400"
-                    />
+                    <IonIcon icon={callOutline} className="text-base text-amber-400" />
                     <span className="text-base font-semibold text-white tracking-wide">
                       {provider?.contactNumber || "Not available"}
                     </span>
@@ -1432,27 +1424,16 @@ export default function ProviderDetailsPage() {
                       className="w-full flex items-center justify-center gap-3 py-3.5 bg-white/[0.07] border border-white/10 rounded-2xl select-none pointer-events-none"
                       aria-hidden
                     >
-                      <IonIcon
-                        icon={callOutline}
-                        className="text-base text-amber-400/50"
-                      />
+                      <IonIcon icon={callOutline} className="text-base text-amber-400/50" />
                       <span className="text-base font-semibold text-white/40 tracking-[0.2em] blur-[6px]">
                         +91 98765 43210
                       </span>
                     </div>
                     <div className="absolute inset-0 rounded-2xl bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
                       <div className="flex items-center gap-2 bg-white/10 border border-white/15 text-white px-4 py-2 rounded-full">
-                        <IonIcon
-                          icon={lockClosedOutline}
-                          className="text-sm text-amber-400"
-                        />
-                        <span className="text-[12px] font-bold">
-                          Sign in to see number
-                        </span>
-                        <IonIcon
-                          icon={logInOutline}
-                          className="text-sm text-amber-400"
-                        />
+                        <IonIcon icon={lockClosedOutline} className="text-sm text-amber-400" />
+                        <span className="text-[12px] font-bold">Sign in to see number</span>
+                        <IonIcon icon={logInOutline} className="text-sm text-amber-400" />
                       </div>
                     </div>
                   </div>
@@ -1493,6 +1474,7 @@ export default function ProviderDetailsPage() {
         {/* Review Sheet */}
         <BottomSheet opened={sheetOpened} onClose={() => setSheetOpened(false)}>
           <div className="px-5 pt-5 pb-8">
+            <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">
               Write a Review
             </h3>
@@ -1587,8 +1569,8 @@ export default function ProviderDetailsPage() {
       {/* end scroll wrapper */}
       {id && (
         <ReportSheet
-          entityType={reportTarget.type}
-          entityId={reportTarget.id}
+          entityType="provider"
+          entityId={id}
           isOpen={reportSheetOpen}
           onClose={() => setReportSheetOpen(false)}
         />

@@ -239,6 +239,11 @@ export default function ProductDetailsPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
+          {product.isHero && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-bold mb-2">
+              ★ Hero Product
+            </span>
+          )}
           <div className="flex items-center gap-3">
             {price !== null ? (
               <span className="text-2xl font-extrabold text-amber-600">

@@ -12,6 +12,7 @@ export interface ProductDetail {
   photoUrls: string[];
   isActive: boolean;
   displayOrder: number;
+  isHero: boolean;
 }
 
 export interface ProductProviderSummary {
@@ -78,6 +79,7 @@ export interface UpdateProductPayload {
   photoUrls?: string[];
   isActive?: boolean;
   displayOrder?: number;
+  isHero?: boolean;
 }
 
 export const createProduct = async (payload: CreateProductPayload): Promise<ProductDetail> => {

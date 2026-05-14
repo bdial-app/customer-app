@@ -116,6 +116,12 @@ const ProviderProductsTab = ({
     updateMutation.mutate({ id: p.id, isActive: !p.isActive });
   };
 
+  const handleToggleHero = (p: ProviderDetailsProduct) => {
+    updateMutation.mutate({ id: p.id, isHero: !p.isHero });
+  };
+
+  const heroCount = products.filter((p) => p.isHero).length;
+
   const [photoError, setPhotoError] = useState<string | null>(null);
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,6 +169,7 @@ const ProviderProductsTab = ({
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
             {activeCount} active
             {inactiveCount > 0 && ` · ${inactiveCount} inactive`}
+            {heroCount > 0 && <span className="text-amber-500"> · ★ {heroCount}/3 hero</span>}
           </p>
         </div>
         {!providerId && (
@@ -182,7 +189,9 @@ const ProviderProductsTab = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
               className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden flex shadow-sm ${
-                !p.isActive
+                p.isHero
+                  ? "border-amber-300 dark:border-amber-600 ring-1 ring-amber-200/50 dark:ring-amber-700/30"
+                  : !p.isActive
                   ? "border-slate-200 dark:border-slate-600 opacity-60"
                   : "border-slate-100 dark:border-slate-700"
               }`}
@@ -230,6 +239,11 @@ const ProviderProductsTab = ({
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-1.5">
+                  {p.isHero && (
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                      ★ Hero
+                    </span>
+                  )}
                   {p.price !== null && (
                     <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
                       <IonIcon
@@ -259,6 +273,16 @@ const ProviderProductsTab = ({
                     icon={createOutline}
                     className="text-slate-400 text-sm"
                   />
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
+                  onClick={() => handleToggleHero(p)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    p.isHero ? "bg-amber-50 dark:bg-amber-900/30" : "bg-slate-50 dark:bg-slate-700"
+                  }`}
+                  title={p.isHero ? "Remove hero status" : "Make hero product"}
+                >
+                  <span className={`text-sm ${p.isHero ? "text-amber-500" : "text-slate-300"}`}>★</span>
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.8 }}
@@ -537,6 +561,30 @@ const ProviderProductsTab = ({
                         })}
                       </div>
                     </div>
+
+                    {/* Hero Product Toggle */}
+                    {editing && (
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">★ Hero Product</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{heroCount}/3 slots used</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleHero(editing)}
+                          disabled={!editing.isHero && heroCount >= 3}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            editing.isHero
+                              ? "bg-amber-500 text-white"
+                              : heroCount >= 3
+                                ? "bg-slate-100 dark:bg-slate-700 text-slate-300 cursor-not-allowed"
+                                : "bg-white dark:bg-slate-700 text-amber-600 border border-amber-300"
+                          }`}
+                        >
+                          {editing.isHero ? "Remove" : "Make Hero"}
+                        </button>
+                      </div>
+                    )}
 
                     {/* Submit */}
                     <div className="pt-2 pb-8">
