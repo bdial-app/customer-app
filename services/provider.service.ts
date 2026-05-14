@@ -199,6 +199,7 @@ export interface ProviderDetailsProduct {
   photoUrls: string[];
   isActive: boolean;
   displayOrder: number;
+  isHero: boolean;
 }
 
 export interface ProviderDetailsReview {
