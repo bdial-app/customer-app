@@ -28,7 +28,7 @@ type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "cat
 
 const allTabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "details", label: "Details", icon: storefrontOutline },
-  { id: "products", label: "Products", icon: cubeOutline },
+  { id: "products", label: "Catalogue", icon: cubeOutline },
   { id: "photos", label: "Photos", icon: imagesOutline },
   { id: "reviews", label: "Reviews", icon: starOutline },
   { id: "deals", label: "Deals", icon: pricetagsOutline },

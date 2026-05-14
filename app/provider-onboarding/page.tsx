@@ -780,9 +780,10 @@ interface ProductItem {
   description: string;
   price: string;
   images: File[];
+  productType: 'product' | 'service';
 }
 
-const emptyProduct = (): ProductItem => ({ name: "", description: "", price: "", images: [] });
+const emptyProduct = (): ProductItem => ({ name: "", description: "", price: "", images: [], productType: "product" });
 
 const MAX_PRODUCT_IMAGES = 5;
 
@@ -829,7 +830,7 @@ const ProductFormCard = ({
             <span className="text-[10px] font-bold text-indigo-600">{index + 1}</span>
           </div>
           <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-            {product.name.trim() || `Product ${index + 1}`}
+            {product.name.trim() || (product.productType === "service" ? `Service ${index + 1}` : `Product ${index + 1}`)}
           </span>
         </div>
         <button type="button" onClick={onRemove} className="p-1 rounded-lg hover:bg-red-50 transition-colors active:scale-90">
@@ -838,7 +839,30 @@ const ProductFormCard = ({
       </div>
 
       <div className="p-4 space-y-3">
-        {/* Product images (up to 5) */}
+        {/* Product/Service Type Toggle */}
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Type</label>
+          <div className="flex gap-2">
+            {(["product", "service"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onUpdate({ ...product, productType: t })}
+                className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all ${
+                  product.productType === t
+                    ? t === "service"
+                      ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400"
+                      : "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400"
+                    : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600"
+                }`}
+              >
+                {t === "product" ? "📦 Product" : "🛠️ Service"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Product images (up to 5) */}}
         <input ref={imgRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
         <div>
           <div className="flex items-center justify-between mb-1.5">
@@ -1683,6 +1707,7 @@ const ProviderOnboardingPage = () => {
           description: p.description.trim() || undefined,
           price: p.price ? parseFloat(p.price) : undefined,
           imageCount: p.images.length,
+          productType: p.productType || "product",
         }));
 
       // Collect all product images as a flat array

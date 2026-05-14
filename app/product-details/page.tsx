@@ -244,6 +244,11 @@ export default function ProductDetailsPage() {
               ✦ Featured Product
             </span>
           )}
+          {(product as any).productType === "service" && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border border-teal-200/60 dark:border-teal-800/40 text-teal-600 dark:text-teal-400 text-xs font-bold mb-2 ml-1">
+              🛠️ Service
+            </span>
+          )}
           <div className="flex items-center gap-3">
             {price !== null ? (
               <span className="text-2xl font-extrabold text-amber-600">
@@ -501,7 +506,7 @@ export default function ProductDetailsPage() {
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? "Opening Chat..." : "Send Enquiry"}
+            {isCreatingChat ? "Opening Chat..." : (product as any)?.productType === "service" ? "Enquire About Service" : "Send Enquiry"}
           </button>
         )}
       </div>

@@ -37,6 +37,7 @@ const TABS: { key: SearchEntityType; label: string; icon: string }[] = [
   { key: "all", label: "All", icon: "🔍" },
   { key: "providers", label: "Businesses", icon: "🏪" },
   { key: "products", label: "Products", icon: "📦" },
+  { key: "services", label: "Services", icon: "🛠️" },
   { key: "categories", label: "Categories", icon: "📂" },
 ];
 
@@ -101,7 +102,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
         },
       };
     }
-    if (activeTab === "products") {
+    if (activeTab === "products" || activeTab === "services") {
       return {
         ...first,
         products: {
@@ -130,7 +131,8 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
     (filters.minRating ? 1 : 0) +
     (filters.maxDistance ? 1 : 0) +
     (filters.verifiedOnly ? 1 : 0) +
-    (filters.womenLedOnly ? 1 : 0);
+    (filters.womenLedOnly ? 1 : 0) +
+    (filters.listingType !== "all" ? 1 : 0);
 
   return (
     <div className="flex flex-col">
@@ -144,7 +146,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
                 ? totalResults
                 : tab.key === "providers"
                   ? results?.providers?.total ?? 0
-                  : tab.key === "products"
+                  : tab.key === "products" || tab.key === "services"
                     ? results?.products?.total ?? 0
                     : results?.categories?.total ?? 0;
 
@@ -296,7 +298,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
               ))}
             </div>
           </InfiniteScroll>
-        ) : activeTab === "products" ? (
+        ) : activeTab === "products" || activeTab === "services" ? (
           <InfiniteScroll
             hasMore={!!hasNextPage}
             isLoading={isFetchingNextPage}

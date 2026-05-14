@@ -463,7 +463,7 @@ const GrowthTips = ({
     },
     totalProducts === 0 && {
       icon: cubeOutline,
-      title: "Add your first product",
+      title: "Add your first product or service",
       desc: "Show customers what you offer with photos & prices",
       priority: "high" as const,
       action: () => onNavigate("products"),
@@ -664,10 +664,10 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
             <IonIcon icon={ribbonOutline} className="text-2xl text-teal-400" />
           </div>
           <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
-            No products yet
+            No products or services yet
           </h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            Add products to showcase to customers
+            Add products or services to showcase to customers
           </p>
         </div>
       </div>
@@ -678,7 +678,7 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-          My Products
+          My Catalogue
         </h3>
         <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
           {stats.products.length} total

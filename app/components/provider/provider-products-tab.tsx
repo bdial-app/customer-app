@@ -37,6 +37,7 @@ const productSchema = Yup.object({
   price: Yup.string().nullable(),
   description: Yup.string().max(2000).nullable(),
   currency: Yup.string().oneOf(["INR", "USD"]).default("INR"),
+  productType: Yup.string().oneOf(["product", "service"]).default("product"),
 });
 
 async function compressImage(file: File, maxDim = 1200, quality = 0.82): Promise<File> {
@@ -244,6 +245,11 @@ const ProviderProductsTab = ({
                       ★ Hero
                     </span>
                   )}
+                  {p.productType === "service" && (
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-bold">
+                      🛠️ Service
+                    </span>
+                  )}
                   {p.price !== null && (
                     <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
                       <IonIcon
@@ -312,7 +318,7 @@ const ProviderProductsTab = ({
             <IonIcon icon={cubeOutline} className="text-4xl text-teal-400" />
           </div>
           <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
-            No products yet
+            No products or services yet
           </h4>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px] mx-auto mb-5">
             Add your products or services to showcase to customers
@@ -324,7 +330,7 @@ const ProviderProductsTab = ({
             className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
           >
             <IonIcon icon={addOutline} className="text-lg" />
-            Add Product
+            Add Product or Service
           </motion.button>
         </div>
       )}
@@ -365,7 +371,7 @@ const ProviderProductsTab = ({
               {/* Header */}
               <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
                 <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                  {editing ? "Edit Product" : "New Product"}
+                  {editing ? (editing.productType === "service" ? "Edit Service" : "Edit Product") : "New Item"}
                 </h3>
                 <div className="flex items-center gap-2">
                   {editing && (
@@ -391,6 +397,7 @@ const ProviderProductsTab = ({
                   description: editing?.description || "",
                   price: editing?.price != null ? String(editing.price) : "",
                   currency: editing?.currency || "INR",
+                  productType: editing?.productType || "product",
                 }}
                 validationSchema={productSchema}
                 enableReinitialize
@@ -428,6 +435,7 @@ const ProviderProductsTab = ({
                     description: values.description?.trim() || undefined,
                     price: values.price ? parseFloat(values.price) : undefined,
                     currency: values.currency || "INR",
+                    productType: values.productType || "product",
                     photoUrl: photoUrls[0] || undefined,
                     photoUrls,
                   };
@@ -447,7 +455,30 @@ const ProviderProductsTab = ({
               >
                 {({ values, setFieldValue, isValid, dirty }) => (
                   <Form className="p-5 space-y-5">
-                    {/* Photo Upload Section */}
+                    {/* Product Type Toggle */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Type</label>
+                      <div className="flex gap-2">
+                        {(["product", "service"] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setFieldValue("productType", t)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                              values.productType === t
+                                ? t === "service"
+                                  ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400"
+                                  : "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400"
+                                : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600"
+                            }`}
+                          >
+                            {t === "product" ? "📦 Product" : "🛠️ Service"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Photo Upload Section */}}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                         Photos <span className="text-slate-400 dark:text-slate-500 font-normal">({photoPreviews.length}/5)</span>
@@ -601,7 +632,7 @@ const ProviderProductsTab = ({
                         ) : editing ? (
                           "Save Changes"
                         ) : (
-                          "Add Product"
+                          values.productType === "service" ? "Add Service" : "Add Product"
                         )}
                       </button>
                       {(createMutation.isError || updateMutation.isError) && (

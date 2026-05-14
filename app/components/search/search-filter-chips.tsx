@@ -13,6 +13,7 @@ import {
   setMinRating,
   setMaxDistance,
   setVerifiedOnly,
+  setListingType,
 } from "@/store/slices/searchSlice";
 
 const SearchFilterChips = () => {
@@ -69,6 +70,15 @@ const SearchFilterChips = () => {
       key: "verified",
       label: "Verified",
       onRemove: () => dispatch(setVerifiedOnly(false)),
+    });
+  }
+
+  // Listing type chip
+  if (filters.listingType && filters.listingType !== "all") {
+    chips.push({
+      key: "listingType",
+      label: filters.listingType === "services" ? "🛠️ Services only" : "📦 Products only",
+      onRemove: () => dispatch(setListingType("all")),
     });
   }
 

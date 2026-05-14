@@ -166,7 +166,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
             },
             {
               key: "products" as FilterTab,
-              label: "Products",
+              label: "Products & Services",
               count: counts.products,
               icon: cubeOutline,
             },
@@ -236,7 +236,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
               <p className="text-[12px] text-slate-500 text-center max-w-[240px]">
                 {search
                   ? "No items match your search."
-                  : "Bookmark providers and products while exploring to find them here."}
+                  : "Bookmark providers and products or services while exploring to find them here."}
               </p>
             </motion.div>
           ) : viewMode === "list" ? (

@@ -40,7 +40,14 @@ const ProductResultCard = ({ product, index }: Props) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-800">
-            <span className="text-3xl opacity-20">📦</span>
+            <span className="text-3xl opacity-20">{product.productType === "service" ? "🛠️" : "📦"}</span>
+          </div>
+        )}
+
+        {/* Service badge */}
+        {product.productType === "service" && (
+          <div className="absolute top-2 left-2 bg-teal-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+            🛠️ Service
           </div>
         )}
 

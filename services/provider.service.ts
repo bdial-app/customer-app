@@ -200,6 +200,7 @@ export interface ProviderDetailsProduct {
   isActive: boolean;
   displayOrder: number;
   isHero: boolean;
+  productType?: 'product' | 'service';
 }
 
 export interface ProviderDetailsReview {

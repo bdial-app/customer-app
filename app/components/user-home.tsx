@@ -363,7 +363,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                       </div>
                       <div>
                         <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                          Top Products
+                          Top Products & Services
                         </h2>
                         <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
                           Popular picks from providers near you
@@ -390,11 +390,18 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
 
                         {/* Top badges */}
                         <div className="absolute top-0 inset-x-0 p-2.5 flex items-start justify-between">
+                          <div className="flex flex-col gap-1">
                           {product.isHero ? (
                             <span className="px-2 py-0.5 rounded-lg bg-violet-600/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
                               ★ Hero
                             </span>
                           ) : <span />}
+                          {(product as any).productType === "service" && (
+                            <span className="px-2 py-0.5 rounded-lg bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
+                              🛠️ Service
+                            </span>
+                          )}
+                          </div>
                           {product.price !== null && (
                             <span className="px-2 py-0.5 rounded-lg bg-white/90 dark:bg-black/60 backdrop-blur-sm text-[11px] font-extrabold text-gray-900 dark:text-white shadow-sm">
                               {product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}

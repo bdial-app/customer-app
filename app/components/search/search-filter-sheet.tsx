@@ -25,6 +25,7 @@ import {
   setMaxDistance,
   setVerifiedOnly,
   setWomenLedOnly,
+  setListingType,
   resetFilters,
 } from "@/store/slices/searchSlice";
 
@@ -49,6 +50,12 @@ const DISTANCE_OPTIONS = [
   { value: 25, label: "25 km" },
 ];
 
+const LISTING_TYPE_OPTIONS: { value: 'all' | 'products' | 'services'; label: string; icon: string }[] = [
+  { value: "all", label: "All", icon: "✨" },
+  { value: "products", label: "Products", icon: "📦" },
+  { value: "services", label: "Services", icon: "🛠️" },
+];
+
 const SearchFilterSheet = ({ opened, onClose }: Props) => {
   const dispatch = useAppDispatch();
   const { filters } = useAppSelector((s) => s.search);
@@ -66,6 +73,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
   );
   const [tempVerified, setTempVerified] = useState(filters.verifiedOnly);
   const [tempWomenLed, setTempWomenLed] = useState(filters.womenLedOnly);
+  const [tempListingType, setTempListingType] = useState<'all' | 'products' | 'services'>(filters.listingType);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
 
   const handleOpen = useCallback(() => {
@@ -74,6 +82,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     setTempDistance(filters.maxDistance);
     setTempVerified(filters.verifiedOnly);
     setTempWomenLed(filters.womenLedOnly);
+    setTempListingType(filters.listingType);
   }, [filters]);
 
   const toggleCat = (id: string) => {
@@ -90,6 +99,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     dispatch(setMaxDistance(tempDistance));
     dispatch(setVerifiedOnly(tempVerified));
     dispatch(setWomenLedOnly(tempWomenLed));
+    dispatch(setListingType(tempListingType));
     onClose();
   };
 
@@ -99,6 +109,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     setTempDistance(null);
     setTempVerified(false);
     setTempWomenLed(false);
+    setTempListingType("all");
   };
 
   const tempFilterCount =
@@ -106,7 +117,8 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     (tempRating ? 1 : 0) +
     (tempDistance ? 1 : 0) +
     (tempVerified ? 1 : 0) +
-    (tempWomenLed ? 1 : 0);
+    (tempWomenLed ? 1 : 0) +
+    (tempListingType !== "all" ? 1 : 0);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -158,7 +170,35 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       <div
         className="overflow-auto px-4 pt-4 pb-4"
         style={{ maxHeight: "calc(85vh - 140px)" }}
-      >
+      >        {/* ── Listing Type ─────────────────── */}
+        <section className="mb-6">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
+            Listing Type
+          </h3>
+          <div className="flex gap-2">
+            {LISTING_TYPE_OPTIONS.map((opt) => {
+              const isActive = tempListingType === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setTempListingType(opt.value)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
+                    isActive
+                      ? opt.value === "services"
+                        ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400 shadow-sm shadow-teal-100 dark:shadow-none"
+                        : opt.value === "products"
+                          ? "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400 shadow-sm shadow-amber-100 dark:shadow-none"
+                          : "bg-gray-50 dark:bg-slate-700 border-gray-400 dark:border-slate-500 text-gray-700 dark:text-slate-200 shadow-sm"
+                      : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 active:bg-gray-50 dark:active:bg-slate-700"
+                  }`}
+                >
+                  <span>{opt.icon}</span>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
         {/* ── Rating ─────────────────────────── */}
         <section className="mb-6">
           <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">

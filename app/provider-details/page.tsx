@@ -61,7 +61,7 @@ import ReportSheet from "../components/report-sheet";
 import { checkContent } from "@/utils/content-sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
 
-const TABS = ["Overview", "Reviews", "Products", "Photos"] as const;
+const TABS = ["Overview", "Reviews", "Catalogue", "Photos"] as const;
 type Tab = (typeof TABS)[number];
 
 // -- Empty state defaults (no fake data) --
@@ -814,7 +814,7 @@ export default function ProviderDetailsPage() {
             <div className="grid grid-cols-2 gap-2.5">
               <InfoChip
                 icon={ribbonOutline}
-                label="Products"
+                label="Catalogue"
                 value={`${stats?.productCount ?? 0}`}
               />
               <InfoChip icon={time} label="Hours" value={hours} />
@@ -1239,17 +1239,17 @@ export default function ProviderDetailsPage() {
         )}
 
         {/* === PRODUCTS === */}
-        {activeTab === "Products" && (
+        {activeTab === "Catalogue" && (
           <div className="px-5 pt-5 pb-28">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                {products.length} {products.length === 1 ? 'Product' : 'Products'}
+                {products.length} {products.length === 1 ? 'Item' : 'Items'}
               </h3>
             </div>
             {products.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
                 <p className="text-sm text-gray-500 dark:text-slate-400">
-                  This provider hasn&apos;t added any products yet.
+                  This provider hasn&apos;t added any products or services yet.
                 </p>
               </div>
             ) : (
@@ -1273,9 +1273,16 @@ export default function ProviderDetailsPage() {
                               )}
                               {/* Top badges */}
                               <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+                                <div className="flex flex-col gap-1">
                                 <span className="px-2 py-1 rounded-lg bg-violet-600/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
                                   ★ Hero Product
                                 </span>
+                                {(product as any).productType === "service" && (
+                                  <span className="px-2 py-1 rounded-lg bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
+                                    🛠️ Service
+                                  </span>
+                                )}
+                                </div>
                                 {product.price !== null && (
                                   <span className="px-2.5 py-1 rounded-lg bg-white/90 dark:bg-black/60 backdrop-blur-sm text-[13px] font-extrabold text-gray-900 dark:text-white shadow-sm">
                                     {currencySymbol}{Number(product.price).toLocaleString()}
@@ -1323,9 +1330,14 @@ export default function ProviderDetailsPage() {
                                 )}
                               </div>
                               <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+                                <div className="flex items-center gap-1.5">
                                 <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white line-clamp-1">
                                   {product.name}
                                 </h4>
+                                {(product as any).productType === "service" && (
+                                  <span className="shrink-0 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full">🛠️ Service</span>
+                                )}
+                                </div>
                                 {product.description && (
                                   <p className="text-[11px] text-gray-400 dark:text-slate-500 line-clamp-1 mt-0.5">
                                     {product.description}

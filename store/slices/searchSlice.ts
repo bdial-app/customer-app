@@ -9,6 +9,7 @@ interface SearchFilters {
   verifiedOnly: boolean;
   womenLedOnly: boolean;
   sortBy: SearchSortBy;
+  listingType: 'all' | 'products' | 'services';
 }
 
 interface SearchState {
@@ -28,6 +29,7 @@ const initialState: SearchState = {
     verifiedOnly: false,
     womenLedOnly: false,
     sortBy: "relevance",
+    listingType: "all",
   },
   recentSearchesLocal:
     typeof window !== "undefined"
@@ -59,6 +61,9 @@ const searchSlice = createSlice({
     },
     setWomenLedOnly(state, action: PayloadAction<boolean>) {
       state.filters.womenLedOnly = action.payload;
+    },
+    setListingType(state, action: PayloadAction<'all' | 'products' | 'services'>) {
+      state.filters.listingType = action.payload;
     },
     resetFilters(state) {
       state.filters = initialState.filters;
@@ -105,6 +110,7 @@ export const {
   setMaxDistance,
   setVerifiedOnly,
   setWomenLedOnly,
+  setListingType,
   resetFilters,
   addRecentSearch,
   removeRecentSearch,

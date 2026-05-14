@@ -11,7 +11,7 @@ export const SEARCH_URLS = {
 
 // ─── Types ─────────────────────────────────────────────────────
 
-export type SearchEntityType = "all" | "providers" | "products" | "categories";
+export type SearchEntityType = "all" | "providers" | "products" | "categories" | "services";
 export type SearchSortBy = "relevance" | "distance" | "rating" | "newest";
 
 export interface SearchParams {
@@ -78,6 +78,7 @@ export interface ProductSearchResult {
   price: number | null;
   currency: string;
   photoUrl: string | null;
+  productType?: 'product' | 'service';
   providerId: string;
   providerName: string;
   providerCity: string;
