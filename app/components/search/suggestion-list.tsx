@@ -41,6 +41,15 @@ const TYPE_CONFIG = {
     labelBg: "bg-emerald-50 dark:bg-emerald-900/30",
     labelText: "text-emerald-600 dark:text-emerald-400",
   },
+  service: {
+    icon: cubeOutline,
+    color: "text-teal-500",
+    bg: "bg-teal-50 dark:bg-teal-900/30",
+    ring: "ring-teal-100",
+    label: "Service",
+    labelBg: "bg-teal-50 dark:bg-teal-900/30",
+    labelText: "text-teal-600 dark:text-teal-400",
+  },
   category: {
     icon: gridOutline,
     color: "text-purple-500",
@@ -137,12 +146,17 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                   {type === "provider"
                     ? "Businesses"
                     : type === "product"
-                      ? "Products"
+                      ? "Products & Services"
                       : "Categories"}
                 </span>
               </div>
             )}
-            {items.map((suggestion, i) => (
+            {items.map((suggestion, i) => {
+              // For product suggestions that are services, use the service config
+              const itemConfig = suggestion.type === "product" && suggestion.productType === "service"
+                ? TYPE_CONFIG.service
+                : config;
+              return (
               <motion.button
                 key={`${suggestion.type}-${suggestion.id}`}
                 initial={{ opacity: 0, x: -6 }}
@@ -159,17 +173,17 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                       alt=""
                       className="w-10 h-10 rounded-xl object-cover ring-1 ring-gray-100 dark:ring-slate-700"
                     />
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${config.bg} flex items-center justify-center ring-2 ring-white dark:ring-slate-900`}>
-                      <IonIcon icon={config.icon} className={`w-2.5 h-2.5 ${config.color}`} />
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${itemConfig.bg} flex items-center justify-center ring-2 ring-white dark:ring-slate-900`}>
+                      <IonIcon icon={itemConfig.icon} className={`w-2.5 h-2.5 ${itemConfig.color}`} />
                     </div>
                   </div>
                 ) : (
                   <div
-                    className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0`}
+                    className={`w-10 h-10 rounded-xl ${itemConfig.bg} flex items-center justify-center flex-shrink-0`}
                   >
                     <IonIcon
-                      icon={config.icon}
-                      className={`w-5 h-5 ${config.color}`}
+                      icon={itemConfig.icon}
+                      className={`w-5 h-5 ${itemConfig.color}`}
                     />
                   </div>
                 )}
@@ -201,9 +215,9 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                   </span>
                 ) : (
                   <span
-                    className={`text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${config.labelBg} ${config.labelText} flex-shrink-0`}
+                    className={`text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${itemConfig.labelBg} ${itemConfig.labelText} flex-shrink-0`}
                   >
-                    {config.label}
+                    {itemConfig.label}
                   </span>
                 )}
 
@@ -212,7 +226,8 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                   className="w-3.5 h-3.5 text-gray-300 dark:text-slate-600 flex-shrink-0 -rotate-45"
                 />
               </motion.button>
-            ))}
+              );
+            })}
           </div>
         );
       })}

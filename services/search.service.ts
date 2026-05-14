@@ -45,6 +45,7 @@ export interface SearchSuggestion {
   imageUrl?: string;
   isSponsored?: boolean;
   hasActiveOffer?: boolean;
+  productType?: "product" | "service";
 }
 
 export interface ProviderSearchResult {
