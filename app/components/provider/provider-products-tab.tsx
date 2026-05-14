@@ -182,7 +182,7 @@ const ProviderProductsTab = ({
 
       {/* Product List */}
       {products.length > 0 ? (
-        <div className="px-4 grid grid-cols-2 gap-3">
+        <div className="px-4 space-y-3">
           {products.map((p, i) => {
             const hasImage = !!(p.photoUrl || p.photoUrls?.[0]);
             const isService = p.productType === "service";
@@ -190,107 +190,83 @@ const ProviderProductsTab = ({
             return (
               <motion.div
                 key={p.id}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
+                transition={{ delay: i * 0.03 }}
                 onClick={() => handleEdit(p)}
-                className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden shadow-sm active:scale-[0.97] transition-transform cursor-pointer ${
+                className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden active:scale-[0.98] transition-transform cursor-pointer ${
                   p.isHero
-                    ? "border-amber-200 dark:border-amber-700 ring-1 ring-amber-100/60 dark:ring-amber-800/30"
+                    ? "border-amber-200 dark:border-amber-700 shadow-[0_2px_12px_rgba(245,158,11,0.12)]"
                     : !p.isActive
-                    ? "border-slate-200 dark:border-slate-700 opacity-55"
-                    : "border-slate-100 dark:border-slate-700"
+                    ? "border-slate-200 dark:border-slate-700 opacity-50"
+                    : "border-slate-100 dark:border-slate-700 shadow-sm"
                 }`}
               >
-                {/* Image */}
-                <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-700 overflow-hidden">
-                  {hasImage ? (
-                    <img
-                      src={p.photoUrl || p.photoUrls?.[0]}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                      <IonIcon icon={isService ? cubeOutline : cubeOutline} className="text-2xl text-slate-200 dark:text-slate-600" />
-                      <span className="text-[9px] text-slate-300 dark:text-slate-600 font-medium">No photo</span>
-                    </div>
-                  )}
-
-                  {/* Overlay badges */}
-                  <div className="absolute top-2 left-2 right-2 flex items-start justify-between pointer-events-none">
-                    <div className="flex flex-col gap-1">
-                      {p.isHero && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-amber-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
-                          ★ Hero
-                        </span>
-                      )}
-                      {isService && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
-                          🛠️ Service
-                        </span>
-                      )}
-                    </div>
-                    {!p.isActive && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-red-500/85 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
-                        Inactive
+                <div className="flex">
+                  {/* Thumbnail */}
+                  <div className="relative w-24 h-24 shrink-0 bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                    {hasImage ? (
+                      <img
+                        src={p.photoUrl || p.photoUrls?.[0]}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-2xl">{isService ? "🛠️" : "📦"}</span>
+                      </div>
+                    )}
+                    {/* Photo count */}
+                    {(p.photoUrls?.length ?? 0) > 1 && (
+                      <span className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm text-white text-[8px] font-bold px-1 py-0.5 rounded">
+                        +{(p.photoUrls?.length ?? 1) - 1}
                       </span>
                     )}
                   </div>
 
-                  {/* Photo count */}
-                  {(p.photoUrls?.length ?? 0) > 1 && (
-                    <span className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
-                      📷 {p.photoUrls?.length}
-                    </span>
-                  )}
-                </div>
-
-                {/* Body */}
-                <div className="p-3">
-                  <p className="text-[13px] font-bold text-slate-800 dark:text-white leading-snug line-clamp-2 mb-1">
-                    {p.name}
-                  </p>
-                  {p.description && (
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 mb-2">
-                      {p.description}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 p-3 flex flex-col justify-center">
+                    {/* Title */}
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1">
+                      {p.name}
                     </p>
-                  )}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
-                    <span className="text-[13px] font-extrabold text-slate-800 dark:text-white">
-                      {p.price !== null
-                        ? `${currencySymbol}${Number(p.price).toLocaleString()}`
-                        : <span className="text-[10px] font-medium text-slate-400">On request</span>
-                      }
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <motion.button
-                        whileTap={{ scale: 0.75 }}
-                        onClick={(e) => { e.stopPropagation(); handleToggleHero(p); }}
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                          p.isHero ? "bg-amber-50 dark:bg-amber-900/30" : "bg-slate-50 dark:bg-slate-700"
-                        }`}
-                        title={p.isHero ? "Remove hero" : "Make hero"}
-                      >
-                        <span className={`text-xs ${p.isHero ? "text-amber-500" : "text-slate-300 dark:text-slate-500"}`}>★</span>
-                      </motion.button>
-                      <motion.button
-                        whileTap={{ scale: 0.75 }}
-                        onClick={(e) => { e.stopPropagation(); handleToggleActive(p); }}
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                          p.isActive ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-50 dark:bg-slate-700"
-                        }`}
-                        title={p.isActive ? "Deactivate" : "Activate"}
-                      >
-                        <IonIcon
-                          icon={p.isActive ? checkmarkCircleOutline : alertCircleOutline}
-                          className={`text-sm ${p.isActive ? "text-emerald-500" : "text-slate-300 dark:text-slate-500"}`}
-                        />
-                      </motion.button>
+
+                    {/* Description */}
+                    {p.description && (
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">
+                        {p.description}
+                      </p>
+                    )}
+
+                    {/* Tags row */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      {isService && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-bold">
+                          🛠️ Service
+                        </span>
+                      )}
+                      {p.isHero && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] font-bold">
+                          ★ Hero
+                        </span>
+                      )}
+                      {!p.isActive && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-[9px] font-bold">
+                          Inactive
+                        </span>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Price + chevron */}
+                  <div className="flex flex-col items-end justify-center pr-3 shrink-0">
+                    <span className="text-[13px] font-extrabold text-slate-800 dark:text-white">
+                      {p.price !== null ? `${currencySymbol}${Number(p.price).toLocaleString()}` : ""}
+                    </span>
+                    {p.price === null && (
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500">On request</span>
+                    )}
+                    <IonIcon icon={createOutline} className="text-slate-300 dark:text-slate-600 text-sm mt-1" />
                   </div>
                 </div>
               </motion.div>
