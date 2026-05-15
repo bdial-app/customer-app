@@ -57,7 +57,6 @@ import {
   useTrackProviderView,
   useTrackAction,
 } from "@/hooks/useAnalyticsTrack";
-import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import ReportSheet from "../components/report-sheet";
 import { checkContent } from "@/utils/content-sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -236,15 +235,9 @@ export default function ProviderDetailsPage() {
   const { mutate: submitReviewMutation, isPending: isSubmittingReview } =
     useSubmitReview();
 
-  const { trackCategories } = useCategoryInteraction();
-
   const handleToggleSaved = () => {
     requireAuth(() => {
-      if (!liked) {
-        trackSave();
-        const catIds = (data?.categories ?? []).map((c: any) => c.id);
-        if (catIds.length) trackCategories(catIds, 'bookmark');
-      }
+      if (!liked) trackSave();
       toggleSaved.mutate({ itemId: id, itemType: "provider" });
     });
   };
@@ -277,13 +270,6 @@ export default function ProviderDetailsPage() {
   const categories = data?.categories ?? [];
   const badges = data?.badges ?? [];
   const activeOffers = data?.activeOffers ?? [];
-
-  // Track category view for personalization
-  useEffect(() => {
-    if (categories.length > 0 && !isOwnProvider) {
-      trackCategories(categories.map((c: any) => c.id), 'view');
-    }
-  }, [categories.length, isOwnProvider]); // eslint-disable-line react-hooks/exhaustive-deps
   const isSponsored = data?.isSponsored ?? false;
   const sponsorEndsAt = data?.sponsorEndsAt ?? null;
 
@@ -928,6 +914,8 @@ export default function ProviderDetailsPage() {
                     <h3 className="text-[13px] font-bold text-gray-900 dark:text-white">Connect Online</h3>
                   </div>
 
+                  {user ? (
+                    <>
                   {/* Social Icons Row — circular, centered, with brand colors */}
                   <div className="flex items-center justify-center gap-4 mb-3">
                     {provider.instagramHandle && (
@@ -1006,6 +994,38 @@ export default function ProviderDetailsPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </a>
+                  )}
+                    </>
+                  ) : (
+                    /* Guest — blurred socials with sign-in overlay */
+                    <button
+                      onClick={() => requireAuth(() => {})}
+                      className="relative w-full"
+                    >
+                      {/* Blurred placeholder icons */}
+                      <div className="flex items-center justify-center gap-4 blur-[6px] select-none pointer-events-none mb-3">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#833AB4] via-[#E4405F] to-[#FCAF45] flex items-center justify-center"><IonIcon icon={logoInstagram} className="w-5 h-5 text-white" /></div>
+                          <span className="text-[10px] font-semibold text-slate-400">Instagram</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-12 h-12 rounded-full bg-[#1877F2] flex items-center justify-center"><IonIcon icon={logoFacebook} className="w-5 h-5 text-white" /></div>
+                          <span className="text-[10px] font-semibold text-slate-400">Facebook</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center"><IonIcon icon={logoWhatsapp} className="w-5 h-5 text-white" /></div>
+                          <span className="text-[10px] font-semibold text-slate-400">WhatsApp</span>
+                        </div>
+                      </div>
+                      {/* Overlay sign-in prompt */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-600 shadow-lg">
+                          <IonIcon icon={lockClosedOutline} className="w-3.5 h-3.5 text-indigo-500" />
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Sign in to connect</span>
+                          <IonIcon icon={logInOutline} className="w-3.5 h-3.5 text-indigo-400" />
+                        </div>
+                      </div>
+                    </button>
                   )}
                 </div>
               </div>
@@ -1149,21 +1169,30 @@ export default function ProviderDetailsPage() {
                         {owner.mobileNumber}
                       </p>
                     ) : (
-                      <button
-                        onClick={() => requireAuth(() => {})}
-                        className="flex items-center gap-1 mt-0.5"
-                      >
-                        <p className="text-xs text-gray-400 blur-[4px] select-none pointer-events-none">
+                      <div className="mt-1">
+                        <p className="text-xs text-gray-400 dark:text-slate-500 blur-[5px] select-none pointer-events-none leading-none">
                           +91 98765 43210
                         </p>
-                        <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5 ml-1">
-                          <IonIcon icon={logInOutline} className="text-xs" />
-                          Sign in
-                        </span>
-                      </button>
+                      </div>
                     )}
                   </div>
                 </div>
+                {/* Guest sign-in CTA */}
+                {!user && (
+                  <button
+                    onClick={() => requireAuth(() => {})}
+                    className="w-full mt-3 flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/40 active:scale-[0.98] transition-transform"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+                      <IonIcon icon={lockClosedOutline} className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-[12px] font-bold text-amber-800 dark:text-amber-300">Sign in to view contact</p>
+                      <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60">Get phone number &amp; connect directly</p>
+                    </div>
+                    <IonIcon icon={logInOutline} className="w-4 h-4 text-amber-500" />
+                  </button>
+                )}
               </div>
             )}
           </div>

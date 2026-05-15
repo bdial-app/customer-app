@@ -617,7 +617,7 @@ const ExploreContent = memo(() => {
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
             </div>
             <button
-              onClick={() => router.push(`${ROUTE_PATH.SEARCH}?sortBy=rating`)}
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=rating&minRating=4`)}
               className="flex items-center gap-0.5 text-[11px] font-semibold text-amber-600 active:scale-95 transition-transform"
             >
               See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />

@@ -275,8 +275,10 @@ const ProfileContent = memo(() => {
               brandName: result.provider.brandName,
             });
           }
-          if (result.preferredMode) {
+          if (result.preferredMode && result.providerStatus !== 'disabled' && result.providerStatus !== 'deleted') {
             setUserMode(result.preferredMode);
+          } else if (result.providerStatus === 'disabled' || result.providerStatus === 'deleted') {
+            setUserMode('customer');
           }
           // Fetch cooldown status when provider is disabled
           if (result.providerStatus === "disabled") {
