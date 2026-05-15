@@ -30,6 +30,7 @@ import { useToggleSaved, useSavedItemIds } from "@/hooks/useSavedItems";
 import { useExploreFeed, useTrackAd } from "@/hooks/useExplore";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import CommunityReviews from "@/app/components/home/community-reviews";
+import CategoryIcon from "@/app/components/ui/category-icon";
 import type {
   ExploreProvider,
   SponsoredProvider,
@@ -551,7 +552,7 @@ const ExploreContent = memo(() => {
                 onClick={() => router.push(`${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}&categoryIds=${cat.id}`)}
                 className="shrink-0 flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm px-3 py-2 rounded-xl active:scale-95 transition-transform"
               >
-                {cat.icon && <span className="text-base">{cat.icon}</span>}
+                <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="xs" />
                 <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">{cat.name}</span>
                 {cat.providerCount > 0 && (
                   <span className="text-[9px] text-slate-400 bg-slate-50 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{cat.providerCount}</span>
@@ -655,9 +656,7 @@ const ExploreContent = memo(() => {
         <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
-              {feed.categorySpotlight.category.icon && (
-                <span className="text-base">{feed.categorySpotlight.category.icon}</span>
-              )}
+              <CategoryIcon icon={feed.categorySpotlight.category.icon} iconColor={feed.categorySpotlight.category.iconColor} name={feed.categorySpotlight.category.name} size="xs" />
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">
                 Explore {feed.categorySpotlight.category.name}
               </h2>

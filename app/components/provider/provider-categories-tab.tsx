@@ -13,6 +13,7 @@ import { useTopLevelCategories } from "@/hooks/useCategories";
 import { updateProviderCategories } from "@/services/provider.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Category } from "@/services/category.service";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 interface Props {
   providerId: string | null;
@@ -235,22 +236,7 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
                   }`}
                 >
                   {/* Icon */}
-                  {cat.icon && !brokenIcons.has(cat.id) && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
-                    <img
-                      src={cat.icon}
-                      alt={cat.name}
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={() => setBrokenIcons((s) => new Set(s).add(cat.id))}
-                    />
-                  ) : cat.icon && !brokenIcons.has(cat.id) ? (
-                    <span className="text-xl leading-none">{cat.icon}</span>
-                  ) : (
-                    <div
-                      className={`w-8 h-8 rounded-full bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center`}
-                    >
-                      <span className="text-xs font-bold text-white">{cat.name[0]}</span>
-                    </div>
-                  )}
+                  <CategoryIcon icon={cat.icon} iconColor={(cat as any).iconColor} imageUrl={(cat as any).imageUrl} name={cat.name} size="xs" />
 
                   {/* Name */}
                   <span className="flex-1 text-left text-sm font-medium text-slate-700 dark:text-slate-200">

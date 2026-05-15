@@ -40,6 +40,7 @@ export interface TrendingCategory {
   name: string;
   slug: string;
   icon: string | null;
+  iconColor?: string | null;
   providerCount: number;
   recentBookings: number;
   weeklyBookings: number;

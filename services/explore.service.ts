@@ -44,6 +44,7 @@ export interface ExploreCategory {
   name: string;
   slug: string;
   icon: string | null;
+  iconColor?: string | null;
   providerCount: number;
 }
 
@@ -53,6 +54,7 @@ export interface CategorySpotlight {
     name: string;
     slug: string;
     icon: string | null;
+    iconColor?: string | null;
   };
   providers: ExploreProvider[];
 }

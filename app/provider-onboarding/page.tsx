@@ -55,7 +55,8 @@ import {
   sendProviderOtp,
   verifyProviderOtp,
 } from "@/services/provider.service";
-import { getTopLevelCategories, Category, suggestCategories, SuggestedCategory } from "@/services/category.service";
+import { getTopLevelCategories, Category } from "@/services/category.service";
+import CategoryIcon from "@/app/components/ui/category-icon";
 import { reverseGeocode } from "@/services/geocode.service";
 import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
@@ -64,7 +65,6 @@ import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
 import FeatureGate from "@/app/components/feature-gate";
 import { checkContent } from "@/utils/content-sanitizer";
-import CategoryIcon from "@/app/components/ui/category-icon";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -464,95 +464,6 @@ const PLACEHOLDER_COLORS = [
 const getPlaceholderColor = (name: string) =>
   PLACEHOLDER_COLORS[name.charCodeAt(0) % PLACEHOLDER_COLORS.length];
 
-// ---------------------------------------------------------------------------
-// AI Category Suggestions — shown when we have business info
-// ---------------------------------------------------------------------------
-const CategorySuggestions = ({
-  suggestions,
-  isLoading,
-  selectedIds,
-  onSelect,
-  maxSelect = 2,
-}: {
-  suggestions: SuggestedCategory[];
-  isLoading: boolean;
-  selectedIds: string[];
-  onSelect: (id: string) => void;
-  maxSelect?: number;
-}) => {
-  if (!isLoading && suggestions.length === 0) return null;
-
-  return (
-    <div className="px-4 pb-1">
-      <div className="rounded-2xl border border-indigo-100 dark:border-indigo-800/50 bg-gradient-to-br from-indigo-50/80 via-white to-violet-50/50 dark:from-indigo-950/30 dark:via-slate-800 dark:to-violet-950/20 p-4 shadow-sm">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-200/50 dark:shadow-indigo-900/30">
-            <IonIcon icon={sparklesOutline} className="text-white text-sm" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
-              Suggested for you
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
-              Based on your business description
-            </p>
-          </div>
-        </div>
-
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex gap-2">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex-1 h-[52px] rounded-xl bg-white/60 dark:bg-slate-700/40 animate-pulse"
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Suggestion chips */}
-        {!isLoading && suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {suggestions.map((cat) => {
-              const isSelected = selectedIds.includes(cat.id);
-              const disabled = selectedIds.length >= maxSelect && !isSelected;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onSelect(cat.id)}
-                  className={`group flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.97] ${
-                    isSelected
-                      ? "bg-indigo-600 shadow-md shadow-indigo-200 dark:shadow-indigo-900/40 ring-2 ring-indigo-300 dark:ring-indigo-500"
-                      : disabled
-                        ? "bg-white/50 dark:bg-slate-700/30 opacity-40 cursor-not-allowed"
-                        : "bg-white dark:bg-slate-700 shadow-sm hover:shadow-md hover:ring-2 hover:ring-indigo-200 dark:hover:ring-indigo-700"
-                  }`}
-                >
-                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="xs" />
-                  <div className="min-w-0">
-                    <p className={`text-[11px] font-semibold leading-tight truncate ${
-                      isSelected ? "text-white" : "text-slate-700 dark:text-slate-200"
-                    }`}>
-                      {cat.name}
-                    </p>
-                  </div>
-                  {isSelected && (
-                    <IonIcon icon={checkmarkCircle} className="text-white/90 text-sm ml-auto flex-shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 const CategorySelector = ({
   categories,
   selectedIds,
@@ -667,12 +578,7 @@ const CategorySelector = ({
                 onClick={() => onToggle(cat.id)}
                 className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 shadow-sm hover:border-red-300 dark:hover:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-[0.96]"
               >
-                {hasValidIcon(cat) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={cat.icon!} alt="" className="w-4 h-4 rounded-full object-cover" onError={() => handleImgError(cat.id)} />
-                ) : (
-                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="xs" />
-                )}
+                <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="xs" />
                 {cat.name}
                 <IonIcon icon={closeCircle} className="text-indigo-300 dark:text-indigo-500 group-hover:text-red-400 dark:group-hover:text-red-400 text-sm transition-colors" />
               </button>
@@ -734,8 +640,8 @@ const CategorySelector = ({
                         : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   }`}
                 >
-                  {/* Icon / Placeholder */}
-                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="sm" />
+                  {/* Icon */}
+                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="sm" />
 
                   {/* Name */}
                   <span
@@ -1571,9 +1477,6 @@ const ProviderOnboardingPage = () => {
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [suggestedCats, setSuggestedCats] = useState<SuggestedCategory[]>([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [suggestionsFetched, setSuggestionsFetched] = useState(false);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [productItems, setProductItems] = useState<ProductItem[]>([emptyProduct()]);
@@ -1603,22 +1506,6 @@ const ProviderOnboardingPage = () => {
       .then((cats) => setCategories(cats))
       .catch(() => {});
   }, []);
-
-  // Fetch AI suggestions when entering Step 3 (once)
-  useEffect(() => {
-    if (currentStep !== 3 || suggestionsFetched) return;
-    const values = formikRef.current?.values;
-    const title = values?.brand_name || '';
-    const desc = values?.description || '';
-    if (!title.trim() && !desc.trim()) return;
-
-    setSuggestionsLoading(true);
-    setSuggestionsFetched(true);
-    suggestCategories(title, desc)
-      .then((results) => setSuggestedCats(results))
-      .catch(() => {})
-      .finally(() => setSuggestionsLoading(false));
-  }, [currentStep, suggestionsFetched]);
 
   // Fetch provider status
   useEffect(() => {
@@ -2290,21 +2177,6 @@ const ProviderOnboardingPage = () => {
                       icon={layersOutline}
                       title="Service Categories"
                       subtitle="What services do you offer?"
-                    />
-                    <CategorySuggestions
-                      suggestions={suggestedCats}
-                      isLoading={suggestionsLoading}
-                      selectedIds={selectedCategoryIds}
-                      maxSelect={2}
-                      onSelect={(id) =>
-                        setSelectedCategoryIds((prev) =>
-                          prev.includes(id)
-                            ? prev.filter((x) => x !== id)
-                            : prev.length >= 2
-                              ? prev
-                              : [...prev, id],
-                        )
-                      }
                     />
                     <CategorySelector
                       categories={categories}
