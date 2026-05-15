@@ -56,7 +56,15 @@ const detailsSchema = Yup.object({
   area: Yup.string().max(100, "Must be under 100 characters").nullable(),
   pincode: Yup.string().matches(/^\d{6}$/, "Must be 6 digits").nullable(),
   openTime: Yup.string().nullable(),
-  closeTime: Yup.string().nullable(),
+  closeTime: Yup.string().nullable().test(
+    "after-open",
+    "Close time must be after open time",
+    function (value) {
+      const { openTime } = this.parent;
+      if (!value || !openTime) return true;
+      return value > openTime;
+    },
+  ),
   websiteUrl: Yup.string().url("Enter a valid URL").max(512).nullable(),
   instagramHandle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid handle").max(30).nullable(),
   facebookHandle: Yup.string().max(128).nullable(),
@@ -515,7 +523,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}
               >
-                {({ isValid, dirty, isSubmitting, setFieldValue, values }) => (
+                {({ isValid, dirty, isSubmitting, setFieldValue, values, touched, errors }) => (
                   <Form>
                     <List strongIos insetIos className="!my-0">
                       <FormikInput
@@ -679,6 +687,9 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         onChange={(val) => setFieldValue("closeTime", val)}
                       />
                     </List>
+                    {touched.closeTime && errors.closeTime && (
+                      <p className="text-xs text-red-500 font-medium px-5 mt-1">{errors.closeTime}</p>
+                    )}
 
                     {/* ── Online Presence ── */}
                     <div className="px-4 pt-3 pb-1">

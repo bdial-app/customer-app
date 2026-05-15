@@ -98,7 +98,15 @@ const step1Schema = Yup.object({
     .matches(/^\d{10}$/, "Enter a valid 10-digit mobile number")
     .required("Contact number is required"),
   open_time: Yup.string(),
-  close_time: Yup.string(),
+  close_time: Yup.string().test(
+    "after-open",
+    "Close time must be after open time",
+    function (value) {
+      const { open_time } = this.parent;
+      if (!value || !open_time) return true;
+      return value > open_time;
+    },
+  ),
   website_url: Yup.string().url("Enter a valid URL (e.g. https://example.com)").max(512).optional(),
   instagram_handle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid Instagram handle").max(30).optional(),
   facebook_handle: Yup.string().max(128).optional(),
@@ -2021,6 +2029,9 @@ const ProviderOnboardingPage = () => {
                         onChange={(val) => setFieldValue("close_time", val)}
                       />
                     </List>
+                    {touched.close_time && errors.close_time && (
+                      <p className="text-xs text-red-500 font-medium px-5 -mt-1 mb-2">{errors.close_time}</p>
+                    )}
 
                     {/* Online Presence (Optional) */}
                     <SectionHeader
