@@ -12,6 +12,8 @@ import type { CategorySearchResult } from "@/services/search.service";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import CategoryIcon from "@/app/components/ui/category-icon";
 
+import { ROUTE_PATH } from "@/utils/contants";
+
 interface Props {
   category: CategorySearchResult;
   index: number;
@@ -27,7 +29,7 @@ const CategoryResultCard = ({ category, index, onTap }: Props) => {
     if (onTap) {
       onTap(category.name, category.id);
     } else {
-      router.push(`/search?q=${encodeURIComponent(category.name)}&categoryIds=${category.id}`);
+      router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${category.id}`);
     }
   };
 

@@ -17,14 +17,13 @@ import {
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchSuggestions } from "@/hooks/useSearch";
-import { addRecentSearch, setCategoryIds, resetFilters, setActiveTab, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
+import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { SearchSuggestion } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
 import SuggestionList from "./suggestion-list";
-import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 
 // Lazy-load the heavy results view — only needed after user submits a query
 const SearchResultsView = dynamic(
@@ -54,7 +53,6 @@ const SearchPageContent = () => {
   const user = useAppSelector((s) => s.auth.user as any);
   const lat = user?.latitude;
   const lng = user?.longitude;
-  const { trackCategory } = useCategoryInteraction();
 
   // Hydrate Redux filters from URL params BEFORE first render paints
   const [filtersReady, setFiltersReady] = useState(false);
@@ -126,15 +124,11 @@ const SearchPageContent = () => {
         // Navigate directly to the product page
         router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${suggestion.id}`);
       } else {
-        // Category: filter by category and show all businesses in it
-        dispatch(resetFilters());
-        dispatch(setCategoryIds([suggestion.id]));
-        dispatch(setActiveTab("all"));
-        setQuery(suggestion.text);
-        handleSubmit(suggestion.text);
+        // Category: navigate to all-services filtered by this category
+        router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${suggestion.id}`);
       }
     },
-    [handleSubmit, router, dispatch]
+    [router]
   );
 
   const handleRecentTap = useCallback(
@@ -278,10 +272,7 @@ const SearchPageContent = () => {
                 onRecentTap={handleRecentTap}
                 onTrendingTap={handleRecentTap}
                 onCategoryTap={(name, id) => {
-                  trackCategory(id, 'view');
-                  dispatch(setCategoryIds([id]));
-                  setQuery(name);
-                  handleSubmit(name);
+                  router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${id}`);
                 }}
               />
             </motion.div>
@@ -319,12 +310,7 @@ const SearchPageContent = () => {
                 lng={lng}
                 city={user?.city}
                 onCategoryTap={(name, id) => {
-                  trackCategory(id, 'view');
-                  dispatch(resetFilters());
-                  dispatch(setCategoryIds([id]));
-                  dispatch(setActiveTab("all"));
-                  setQuery(name);
-                  handleSubmit(name);
+                  router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${id}`);
                 }}
               />
             </motion.div>

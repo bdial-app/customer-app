@@ -73,12 +73,13 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   });
 
   const [filters, setFilters] = useState<AllServicesFilters>(() => {
+    const catIds = searchParams.get("categoryIds");
     const minRating = searchParams.get("minRating");
     const maxDistance = searchParams.get("maxDistance");
     const verified = searchParams.get("verified");
     const womenLed = searchParams.get("womenLed");
     return {
-      categoryIds: new Set(),
+      categoryIds: catIds ? new Set(catIds.split(",").filter(Boolean)) : new Set(),
       minRating: minRating ? parseFloat(minRating) : null,
       maxDistance: maxDistance ? parseFloat(maxDistance) : null,
       verifiedOnly: verified === "true",
