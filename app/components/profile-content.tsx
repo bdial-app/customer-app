@@ -64,6 +64,7 @@ import {
   getMyProviderStatus,
   disableMyProvider,
   enableMyProvider,
+  getProviderCooldownStatus,
 } from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
 import {
@@ -234,6 +235,8 @@ const ProfileContent = memo(() => {
   const [disableProviderSheetOpen, setDisableProviderSheetOpen] =
     useState(false);
   const [isDisablingProvider, setIsDisablingProvider] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
+  const canReEnable = cooldownRemaining === null || cooldownRemaining <= 0;
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
@@ -274,6 +277,18 @@ const ProfileContent = memo(() => {
           }
           if (result.preferredMode) {
             setUserMode(result.preferredMode);
+          }
+          // Fetch cooldown status when provider is disabled
+          if (result.providerStatus === "disabled") {
+            getProviderCooldownStatus()
+              .then((cd) => {
+                if (!cancelled) {
+                  setCooldownRemaining(cd.canReEnable ? 0 : (cd.disableRemainingHours ?? 0));
+                }
+              })
+              .catch(() => {
+                if (!cancelled) setCooldownRemaining(0);
+              });
           }
         }
       })
@@ -925,18 +940,21 @@ const ProfileContent = memo(() => {
                       Provider Disabled
                     </div>
                     <div className="text-slate-500 text-xs mt-0.5">
-                      Your provider profile is hidden from all listings.
-                      Re-enable it anytime.
+                      {canReEnable
+                        ? "Your provider profile is hidden from all listings. Re-enable it anytime."
+                        : `Your provider profile is hidden. You can re-enable in ${cooldownRemaining}h.`}
                     </div>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleEnableProvider}
-                      disabled={isDisablingProvider}
+                      disabled={isDisablingProvider || !canReEnable}
                       className="mt-3 px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl disabled:opacity-50"
                     >
                       {isDisablingProvider
                         ? "Enabling..."
-                        : "Re-enable Provider"}
+                        : canReEnable
+                          ? "Re-enable Provider"
+                          : `Cooldown: ${cooldownRemaining}h remaining`}
                     </motion.button>
                   </div>
                 </div>
@@ -979,9 +997,9 @@ const ProfileContent = memo(() => {
                     icon={eyeOutline}
                     iconColor="text-teal-500"
                     iconBg="bg-teal-50"
-                    label="Re-enable Provider"
-                    sublabel="Make your profile visible again"
-                    onClick={handleEnableProvider}
+                    label={canReEnable ? "Re-enable Provider" : `Re-enable in ${cooldownRemaining}h`}
+                    sublabel={canReEnable ? "Make your profile visible again" : "Cooldown period active"}
+                    onClick={canReEnable ? handleEnableProvider : undefined}
                     trailing={
                       isDisablingProvider ? (
                         <Preloader className="w-5 h-5" />
@@ -1702,35 +1720,14 @@ const ProfileContent = memo(() => {
         iconColor="text-red-500"
         iconBg="bg-red-50"
         title="Delete Account?"
-        description="This is permanent and cannot be undone."
-        confirmLabel="Yes, Delete Everything"
-        cancelLabel="Keep My Account"
+        description="This action is permanent and cannot be undone. All your data, bookings, saved locations, and preferences will be permanently deleted."
+        confirmLabel="Yes, Delete My Account"
+        cancelLabel="Cancel"
         onConfirm={handleDeleteAccount}
         confirmColor="red"
         isLoading={isDeleting}
         loadingLabel="Deleting..."
-      >
-        <div className="space-y-2">
-          <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">What will be deleted:</p>
-          <ul className="space-y-1.5">
-            {[
-              "Your profile, saved items & preferences",
-              "All messages and chat history",
-              "Any active bookings or enquiries",
-              ...(providerStatus ? [
-                "Your provider listing & all products",
-                "All reviews and ratings received",
-                "Active boosts/sponsorships (no refund)",
-              ] : []),
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-[12px] text-slate-500 dark:text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </AppDialog>
+      />
 
       <AppDialog
         open={pauseSheetOpen}
@@ -1739,38 +1736,14 @@ const ProfileContent = memo(() => {
         iconColor="text-amber-500"
         iconBg="bg-amber-50"
         title="Pause Account?"
-        description="You can reactivate anytime by logging back in."
+        description="Your profile won't be visible, you won't receive messages, and your provider listing (if any) will be hidden. You can reactivate anytime by logging in again."
         confirmLabel="Yes, Pause My Account"
-        cancelLabel="Keep Active"
+        cancelLabel="Cancel"
         onConfirm={handlePauseAccount}
         confirmColor="red"
         isLoading={isPausing}
         loadingLabel="Pausing..."
-      >
-        <div className="space-y-2">
-          <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">While paused:</p>
-          <ul className="space-y-1.5">
-            {[
-              "You won't appear in search or discovery",
-              "No one can message you",
-              "Existing chats will be hidden",
-              ...(providerStatus ? [
-                "Your provider listing will be hidden",
-                "Active boosts will stop running (budget preserved)",
-                "You won't receive enquiries or leads",
-              ] : []),
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-[12px] text-slate-500 dark:text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">✓ Your data stays safe — nothing is deleted</span>
-          </div>
-        </div>
-      </AppDialog>
+      />
 
       <AppDialog
         open={disableProviderSheetOpen}
@@ -1779,35 +1752,14 @@ const ProfileContent = memo(() => {
         iconColor="text-amber-500"
         iconBg="bg-amber-50"
         title="Disable Provider?"
-        description="Your listing will be hidden from all customers."
+        description="Your provider profile will be hidden from all listings and search results. Once disabled, you must wait a minimum of 2 days before you can re-enable it. This is to prevent profile spamming and ensure platform quality."
         confirmLabel="Yes, Disable Provider"
-        cancelLabel="Stay Visible"
+        cancelLabel="Cancel"
         onConfirm={handleDisableProvider}
         confirmColor="red"
         isLoading={isDisablingProvider}
         loadingLabel="Disabling..."
-      >
-        <div className="space-y-2">
-          <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">What happens:</p>
-          <ul className="space-y-1.5">
-            {[
-              "Profile hidden from search & explore",
-              "Active boosts will stop (budget preserved)",
-              "You won't receive new enquiries",
-              "Existing chats stay accessible",
-              "2-day cooldown before re-enabling",
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-[12px] text-slate-500 dark:text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">✓ Your customer account stays active</span>
-          </div>
-        </div>
-      </AppDialog>
+      />
     </div>
   );
 });
