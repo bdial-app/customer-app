@@ -6,7 +6,7 @@ import { useTopLevelCategories, useCategorySearch, useSubCategories, useCategory
 import { Category, CategorySearchResult, SubCategory } from "@/services/category.service";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
-import { ChevronLeft, Search, ChevronRight, X, Flame, TrendingUp, Star, MapPin, BadgeCheck, Users } from "lucide-react";
+import { ChevronLeft, Search, ChevronRight, X, Flame, TrendingUp, Star, MapPin, BadgeCheck, Users, Diamond } from "lucide-react";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import CategoryIcon from "@/app/components/ui/category-icon";
 import { GRADIENT_PALETTE } from "@/app/components/ui/category-icon";
@@ -354,11 +354,24 @@ export default function CategoriesPage() {
                 </div>
               ) : categoryProviders.length > 0 ? (
                 <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-3" style={{ WebkitOverflowScrolling: "touch" }}>
-                  {categoryProviders.slice(0, 6).map((provider, idx) => (
+                  {[...categoryProviders]
+                    .sort((a, b) => {
+                      // Sponsored first
+                      const aS = a.isSponsored ? 1 : 0;
+                      const bS = b.isSponsored ? 1 : 0;
+                      if (bS !== aS) return bS - aS;
+                      // Then by rating
+                      return b.rating - a.rating;
+                    })
+                    .slice(0, 8).map((provider, idx) => (
                     <div
                       key={provider.id}
                       onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
-                      className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800 active:scale-[0.97] transition-transform"
+                      className={`shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.97] transition-transform ${
+                        provider.isSponsored
+                          ? "border-2 border-amber-200/60 dark:border-amber-700/40"
+                          : "border border-slate-50 dark:border-slate-800"
+                      }`}
                     >
                       <div className="relative h-[100px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800">
                         {provider.image ? (
@@ -378,7 +391,14 @@ export default function CategoriesPage() {
                             </span>
                           </div>
                         )}
-                        {provider.verified && (
+                        {/* Sponsored badge */}
+                        {provider.isSponsored && (
+                          <div className="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+                            <Diamond size={8} />
+                            Ad
+                          </div>
+                        )}
+                        {provider.verified && !provider.isSponsored && (
                           <div className="absolute top-1.5 left-1.5 bg-green-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                             <BadgeCheck size={8} /> Verified
                           </div>

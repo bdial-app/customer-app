@@ -17,6 +17,7 @@ export interface HomeProvider {
   verified: boolean;
   isFeatured: boolean;
   isAvailable: boolean;
+  isSponsored?: boolean;
   distance: number | null;
 }
 
