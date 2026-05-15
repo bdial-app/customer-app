@@ -259,6 +259,11 @@ function BannerCarousel({
 const ExploreContent = memo(() => {
   const router = useRouter();
 
+  // Prefetch search route so navigation is instant
+  useEffect(() => {
+    router.prefetch(ROUTE_PATH.SEARCH);
+  }, [router]);
+
   const user = useAppSelector((state) => state.auth.user as any);
   const feedParams = {
     lat: user?.latitude ?? undefined,
@@ -383,7 +388,7 @@ const ExploreContent = memo(() => {
             <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
             <div className="h-4 w-20 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
           </div>
-          <CardCarouselSkeleton cards={3} />
+          <CardCarouselSkeleton cards={5} />
         </div>
       )}
       {!feedLoading && (feed?.sponsoredCarousel?.length ?? 0) > 0 && (
@@ -392,6 +397,9 @@ const ExploreContent = memo(() => {
             <IonIcon icon={megaphoneOutline} className="text-sm text-amber-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Sponsored</h2>
           </div>
+          <div className="relative">
+          {/* Scroll hint gradient */}
+          <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
             {(Array.isArray(feed?.sponsoredCarousel) ? feed.sponsoredCarousel : []).map((p, i) => (
               <div
@@ -435,6 +443,7 @@ const ExploreContent = memo(() => {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </div>
       )}

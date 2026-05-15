@@ -49,7 +49,7 @@ const SponsoredCarousel = ({
       {/* Skeleton Loading */}
       {isLoading ? (
         <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
               className="shrink-0 w-[220px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-amber-100 dark:border-amber-900/40 animate-pulse"
@@ -65,6 +65,9 @@ const SponsoredCarousel = ({
           ))}
         </div>
       ) : (
+        <div className="relative">
+        {/* Scroll hint gradient */}
+        <div className="absolute right-0 top-0 bottom-3 w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none rounded-r-2xl" />
         <div
           className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
           style={{ WebkitOverflowScrolling: "touch" }}
@@ -190,6 +193,7 @@ const SponsoredCarousel = ({
               </div>
             </div>
           ))}
+        </div>
         </div>
       )}
     </div>

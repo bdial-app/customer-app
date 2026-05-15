@@ -24,7 +24,16 @@ import type { SearchSuggestion } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
 import SuggestionList from "./suggestion-list";
-import SearchResultsView from "./search-results-view";
+
+// Lazy-load the heavy results view — only needed after user submits a query
+const SearchResultsView = dynamic(
+  () => import("./search-results-view"),
+  { ssr: false, loading: () => (
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )}
+);
 
 type SearchPhase = "zero" | "typing" | "results";
 
