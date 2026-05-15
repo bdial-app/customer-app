@@ -34,6 +34,11 @@ import {
   mapOutline,
   lockClosedOutline,
   linkOutline,
+  globeOutline,
+  logoInstagram,
+  logoFacebook,
+  logoYoutube,
+  logoWhatsapp,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -2023,39 +2028,102 @@ const ProviderOnboardingPage = () => {
                       title="Online Presence"
                       subtitle="Optional — help customers find you online"
                     />
-                    <List strongIos insetIos className="!mt-0">
-                      <FormikInput
-                        name="website_url"
-                        label="Website"
-                        type="url"
-                        placeholder="https://yourbusiness.com"
-                      />
-                      <FormikInput
-                        name="instagram_handle"
-                        label="Instagram"
-                        type="text"
-                        placeholder="yourhandle (without @)"
-                        formatValue={(val) => val.replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, "").slice(0, 30)}
-                      />
-                      <FormikInput
-                        name="facebook_handle"
-                        label="Facebook"
-                        type="text"
-                        placeholder="Page name or URL"
-                      />
-                      <FormikInput
-                        name="youtube_handle"
-                        label="YouTube"
-                        type="text"
-                        placeholder="@channel or channel URL"
-                      />
-                      <FormikInput
-                        name="whatsapp_number"
-                        label="WhatsApp Business"
-                        type="tel"
-                        placeholder="+966XXXXXXXXX"
-                      />
-                    </List>
+                    <div className="px-4 space-y-2.5 mb-4">
+                      {/* Website */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={globeOutline} className="text-blue-500 dark:text-blue-400 text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Website</label>
+                          <input
+                            type="url"
+                            name="website_url"
+                            value={values.website_url}
+                            onChange={(e) => setFieldValue("website_url", e.target.value)}
+                            placeholder="https://yourbusiness.com"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Instagram */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-purple-300 dark:focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-100 dark:focus-within:ring-purple-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoInstagram} className="text-[#E4405F] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Instagram</label>
+                          <div className="flex items-center">
+                            <span className="text-[13px] text-slate-300 dark:text-slate-600 font-medium mr-0.5">@</span>
+                            <input
+                              type="text"
+                              name="instagram_handle"
+                              value={values.instagram_handle}
+                              onChange={(e) => setFieldValue("instagram_handle", e.target.value.replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, "").slice(0, 30))}
+                              placeholder="yourhandle"
+                              className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Facebook */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoFacebook} className="text-[#1877F2] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Facebook</label>
+                          <input
+                            type="text"
+                            name="facebook_handle"
+                            value={values.facebook_handle}
+                            onChange={(e) => setFieldValue("facebook_handle", e.target.value)}
+                            placeholder="Page name or URL"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* YouTube */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-red-300 dark:focus-within:border-red-600 focus-within:ring-2 focus-within:ring-red-100 dark:focus-within:ring-red-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoYoutube} className="text-[#FF0000] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">YouTube</label>
+                          <input
+                            type="text"
+                            name="youtube_handle"
+                            value={values.youtube_handle}
+                            onChange={(e) => setFieldValue("youtube_handle", e.target.value)}
+                            placeholder="@channel or channel URL"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* WhatsApp */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-green-300 dark:focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100 dark:focus-within:ring-green-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoWhatsapp} className="text-[#25D366] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">WhatsApp</label>
+                          <input
+                            type="tel"
+                            name="whatsapp_number"
+                            value={values.whatsapp_number}
+                            onChange={(e) => setFieldValue("whatsapp_number", e.target.value)}
+                            placeholder="+91 98765 43210"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-1">All fields are optional — fill what applies to your business</p>
+                    </div>
                   </>
                 )}
 
