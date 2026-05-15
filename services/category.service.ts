@@ -8,6 +8,7 @@ export interface Category {
   slug: string;
   description?: string;
   icon?: string;
+  iconColor?: string;
   imageUrl?: string;
   isActive: boolean;
   displayOrder: number;
@@ -57,6 +58,7 @@ export interface CategorySearchResult {
   name: string;
   slug: string;
   icon?: string;
+  iconColor?: string;
   imageUrl?: string;
   description?: string;
   parentId: string | null;
@@ -75,6 +77,7 @@ export interface SuggestedCategory {
   name: string;
   slug: string;
   icon?: string;
+  iconColor?: string;
   imageUrl?: string;
   description?: string;
   score: number;

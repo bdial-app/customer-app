@@ -94,6 +94,7 @@ export interface CategorySearchResult {
   slug: string;
   description: string | null;
   icon: string | null;
+  iconColor?: string | null;
   imageUrl: string | null;
   parentId: string | null;
   providerCount: number;

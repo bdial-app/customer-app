@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { ChevronLeft, Search, ChevronRight, X, Flame, TrendingUp } from "lucide-react";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -129,13 +130,13 @@ export default function CategoriesPage() {
                     onClick={() => handleNavigateToSearch(result.name, result.id)}
                     className="w-full p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-3 text-left shadow-sm active:shadow-none transition-shadow"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">{result.icon || result.name[0]}</span>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <CategoryIcon icon={result.icon} iconColor={result.iconColor} name={result.name} size="sm" />
                     </div>
                     <div className="flex-1 min-w-0">
                       {result.parentName && (
                         <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate mb-0.5">
-                          {result.parentIcon || "📁"} {result.parentName}
+                          {result.parentName}
                         </p>
                       )}
                       <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
@@ -192,7 +193,7 @@ export default function CategoriesPage() {
                       onClick={() => handleNavigateToSearch(cat.name, cat.id)}
                       className="flex items-center gap-2 px-3 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-700 shadow-sm hover:shadow-md active:scale-[0.97] transition-all flex-shrink-0"
                     >
-                      <span className="text-sm">{cat.icon || cat.name[0]}</span>
+                      <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="xs" />
                       <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
                         {cat.name}
                       </span>
@@ -230,7 +231,7 @@ export default function CategoriesPage() {
                               : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700/50 opacity-60"
                           }`}
                         >
-                          <span className="text-2xl leading-none">{cat.icon || cat.name?.[0]}</span>
+                          <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="md" />
                           <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 text-center leading-tight line-clamp-2">
                             {cat.name}
                           </span>
@@ -296,8 +297,8 @@ export default function CategoriesPage() {
                           : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-100/70 dark:border-slate-700/40 opacity-70"
                       }`}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg">{sub.icon || "📋"}</span>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <CategoryIcon icon={sub.icon} iconColor={sub.iconColor} name={sub.name} size="sm" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">

@@ -64,6 +64,7 @@ import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
 import FeatureGate from "@/app/components/feature-gate";
 import { checkContent } from "@/utils/content-sanitizer";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -531,16 +532,7 @@ const CategorySuggestions = ({
                         : "bg-white dark:bg-slate-700 shadow-sm hover:shadow-md hover:ring-2 hover:ring-indigo-200 dark:hover:ring-indigo-700"
                   }`}
                 >
-                  {cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cat.icon} alt="" className="w-6 h-6 rounded-lg object-cover" />
-                  ) : cat.icon ? (
-                    <span className="text-lg leading-none">{cat.icon}</span>
-                  ) : (
-                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center`}>
-                      <span className="text-[9px] font-bold text-white">{cat.name.charAt(0)}</span>
-                    </div>
-                  )}
+                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="xs" />
                   <div className="min-w-0">
                     <p className={`text-[11px] font-semibold leading-tight truncate ${
                       isSelected ? "text-white" : "text-slate-700 dark:text-slate-200"
@@ -678,12 +670,8 @@ const CategorySelector = ({
                 {hasValidIcon(cat) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={cat.icon!} alt="" className="w-4 h-4 rounded-full object-cover" onError={() => handleImgError(cat.id)} />
-                ) : isEmojiIcon(cat) ? (
-                  <span className="text-sm leading-none">{cat.icon}</span>
                 ) : (
-                  <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center`}>
-                    <span className="text-[8px] font-bold text-white">{cat.name.charAt(0)}</span>
-                  </div>
+                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="xs" />
                 )}
                 {cat.name}
                 <IonIcon icon={closeCircle} className="text-indigo-300 dark:text-indigo-500 group-hover:text-red-400 dark:group-hover:text-red-400 text-sm transition-colors" />
@@ -747,29 +735,7 @@ const CategorySelector = ({
                   }`}
                 >
                   {/* Icon / Placeholder */}
-                  {hasValidIcon(cat) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={cat.icon!}
-                      alt=""
-                      onError={() => handleImgError(cat.id)}
-                      className={`w-9 h-9 rounded-xl object-cover shadow-sm ring-1 ${
-                        selected ? "ring-indigo-300" : "ring-slate-100"
-                      }`}
-                    />
-                  ) : isEmojiIcon(cat) ? (
-                    <span className="text-2xl leading-none">{cat.icon}</span>
-                  ) : (
-                    <div
-                      className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getPlaceholderColor(cat.name)} flex items-center justify-center shadow-sm ${
-                        selected ? "ring-2 ring-indigo-300 ring-offset-1" : ""
-                      }`}
-                    >
-                      <span className="text-sm font-bold text-white drop-shadow-sm">
-                        {cat.name.charAt(0)}
-                      </span>
-                    </div>
-                  )}
+                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="sm" />
 
                   {/* Name */}
                   <span

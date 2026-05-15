@@ -10,6 +10,7 @@ const IonIcon = dynamic(
 import { chevronForward, storefrontOutline } from "ionicons/icons";
 import type { CategorySearchResult } from "@/services/search.service";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 interface Props {
   category: CategorySearchResult;
@@ -39,25 +40,13 @@ const CategoryResultCard = ({ category, index, onTap }: Props) => {
       className="flex items-center gap-3 p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-none active:bg-gray-50 dark:active:bg-slate-700 active:scale-[0.99] transition-all cursor-pointer"
     >
       {/* Icon */}
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-100/60 dark:border-amber-800/40 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
-        {category.imageUrl ? (
-          <img
-            src={category.imageUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : category.icon && (category.icon.startsWith('http') || category.icon.startsWith('/')) ? (
-          <img
-            src={category.icon}
-            alt=""
-            className="w-6 h-6 object-contain"
-          />
-        ) : category.icon ? (
-          <span className="text-2xl leading-none">{category.icon}</span>
-        ) : (
-          <span className="text-lg">📂</span>
-        )}
-      </div>
+      <CategoryIcon
+        icon={category.icon}
+        iconColor={category.iconColor}
+        imageUrl={category.imageUrl}
+        name={category.name}
+        size="sm"
+      />
 
       {/* Text */}
       <div className="flex-1 min-w-0">

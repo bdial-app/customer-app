@@ -22,23 +22,13 @@ import {
 import { useTrendingSearches } from "@/hooks/useSearch";
 import { useTopLevelCategories } from "@/hooks/useCategories";
 import { useClearRecentSearches } from "@/hooks/useSearch";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 interface Props {
   onRecentTap: (query: string) => void;
   onTrendingTap: (query: string) => void;
   onCategoryTap: (name: string, id: string) => void;
 }
-
-const CATEGORY_COLORS = [
-  { bg: "bg-amber-50 dark:bg-amber-900/30", border: "border-amber-100 dark:border-amber-800/40", text: "text-amber-600" },
-  { bg: "bg-blue-50 dark:bg-blue-900/30", border: "border-blue-100 dark:border-blue-800/40", text: "text-blue-600" },
-  { bg: "bg-emerald-50 dark:bg-emerald-900/30", border: "border-emerald-100 dark:border-emerald-800/40", text: "text-emerald-600" },
-  { bg: "bg-rose-50 dark:bg-rose-900/30", border: "border-rose-100 dark:border-rose-800/40", text: "text-rose-600" },
-  { bg: "bg-violet-50 dark:bg-violet-900/30", border: "border-violet-100 dark:border-violet-800/40", text: "text-violet-600" },
-  { bg: "bg-cyan-50 dark:bg-cyan-900/30", border: "border-cyan-100 dark:border-cyan-800/40", text: "text-cyan-600" },
-  { bg: "bg-orange-50 dark:bg-orange-900/30", border: "border-orange-100 dark:border-orange-800/40", text: "text-orange-600" },
-  { bg: "bg-pink-50 dark:bg-pink-900/30", border: "border-pink-100 dark:border-pink-800/40", text: "text-pink-600" },
-];
 
 const SearchZeroState = ({ onRecentTap, onTrendingTap, onCategoryTap }: Props) => {
   const dispatch = useAppDispatch();
@@ -158,7 +148,6 @@ const SearchZeroState = ({ onRecentTap, onTrendingTap, onCategoryTap }: Props) =
           </div>
           <div className="grid grid-cols-4 gap-2 px-4">
             {(categories as any[]).slice(0, 8).map((cat: any, i: number) => {
-              const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
               return (
                 <motion.button
                   key={cat.id}
@@ -168,27 +157,13 @@ const SearchZeroState = ({ onRecentTap, onTrendingTap, onCategoryTap }: Props) =
                   onClick={() => onCategoryTap(cat.name, cat.id)}
                   className="flex flex-col items-center gap-2 p-2.5 rounded-2xl active:scale-95 transition-transform"
                 >
-                  <div
-                    className={`w-14 h-14 rounded-2xl ${color.bg} border ${color.border} flex items-center justify-center shadow-sm overflow-hidden`}
-                  >
-                    {cat.imageUrl ? (
-                      <img
-                        src={cat.imageUrl}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
-                      <img
-                        src={cat.icon}
-                        alt=""
-                        className="w-7 h-7 object-contain"
-                      />
-                    ) : cat.icon ? (
-                      <span className="text-2xl leading-none">{cat.icon}</span>
-                    ) : (
-                      <span className="text-xl">📂</span>
-                    )}
-                  </div>
+                  <CategoryIcon
+                    icon={cat.icon}
+                    iconColor={cat.iconColor}
+                    imageUrl={cat.imageUrl}
+                    name={cat.name}
+                    size="md"
+                  />
                   <span className="text-[10px] font-semibold text-gray-600 dark:text-slate-300 text-center leading-tight line-clamp-2">
                     {cat.name}
                   </span>

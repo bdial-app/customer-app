@@ -2,23 +2,10 @@
 import { motion } from "framer-motion";
 import { useTopLevelCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { ROUTE_PATH } from "@/utils/contants";
 import { PersonalizedCategory } from "@/services/home.service";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
-
-const CATEGORY_COLORS = [
-  { gradient: "from-orange-400 to-amber-500", text: "text-white" },
-  { gradient: "from-emerald-400 to-teal-500", text: "text-white" },
-  { gradient: "from-pink-400 to-rose-500", text: "text-white" },
-  { gradient: "from-blue-400 to-indigo-500", text: "text-white" },
-  { gradient: "from-yellow-400 to-orange-500", text: "text-white" },
-  { gradient: "from-purple-400 to-violet-500", text: "text-white" },
-  { gradient: "from-cyan-400 to-blue-500", text: "text-white" },
-  { gradient: "from-red-400 to-pink-500", text: "text-white" },
-  { gradient: "from-lime-400 to-green-500", text: "text-white" },
-  { gradient: "from-fuchsia-400 to-purple-500", text: "text-white" },
-];
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 const container = {
   hidden: {},
@@ -88,8 +75,6 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
         className="flex gap-3 overflow-x-auto no-scrollbar px-4"
       >
         {displayCategories.map((cat: any, i) => {
-          const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
-          // const Icon = ABSTRACT_ICONS[i % ABSTRACT_ICONS.length];
           return (
             <motion.div
               key={cat.id}
@@ -103,33 +88,13 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
               }}
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
             >
-              <div className="w-[62px] h-[62px] rounded-2xl relative overflow-hidden flex items-center justify-center">
-                {cat.imageUrl ? (
-                  <Image
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    fill
-                    sizes="62px"
-                    priority={i < 5}
-                    className="object-cover"
-                  />
-                ) : cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/')) ? (
-                  <Image
-                    src={cat.icon}
-                    alt={cat.name}
-                    fill
-                    sizes="62px"
-                    priority={i < 5}
-                    className="object-cover"
-                  />
-                ) : cat.icon ? (
-                  <span className="text-3xl leading-none">{cat.icon}</span>
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${color.gradient} flex items-center justify-center`}>
-                    <span className="text-xl font-bold text-white/80">{cat.name?.[0] || "?"}</span>
-                  </div>
-                )}
-              </div>
+              <CategoryIcon
+                icon={cat.icon}
+                iconColor={cat.iconColor}
+                imageUrl={cat.imageUrl}
+                name={cat.name}
+                size="lg"
+              />
               <span className="text-[10px] font-semibold text-white/70 text-center leading-tight w-[68px] line-clamp-2">
                 {cat.name}
               </span>
