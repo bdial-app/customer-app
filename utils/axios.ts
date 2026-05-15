@@ -24,6 +24,9 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  paramsSerializer: {
+    indexes: null, // serialize arrays as categoryIds=a&categoryIds=b (no brackets)
+  },
 });
 
 // Event emitter for account paused state

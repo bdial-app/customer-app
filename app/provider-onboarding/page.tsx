@@ -1483,7 +1483,9 @@ const ProviderOnboardingPage = () => {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
+  const [otpSentPhone, setOtpSentPhone] = useState(""); // the number OTP was sent to
   const [otpVerified, setOtpVerified] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState(""); // the exact number that was verified
   const [otpCode, setOtpCode] = useState("");
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
@@ -1577,6 +1579,7 @@ const ProviderOnboardingPage = () => {
     try {
       const res = await sendProviderOtp(phone);
       setOtpSent(true);
+      setOtpSentPhone(phone);
       setOtpCooldown(60);
       const testOtp = res?.data?.otp;
       notify({
@@ -1598,12 +1601,30 @@ const ProviderOnboardingPage = () => {
     setOtpError(null);
     try {
       const res = await verifyProviderOtp(phone, otpCode);
-      if (res.verified) setOtpVerified(true);
-      else setOtpError("Invalid OTP");
+      if (res.verified) {
+        setOtpVerified(true);
+        setVerifiedPhone(phone);
+      } else {
+        setOtpError("Invalid OTP");
+      }
     } catch (err: any) {
       setOtpError(err?.response?.data?.message ?? "Verification failed");
     } finally { setOtpVerifying(false); }
   }, [otpCode]);
+
+  // Reset OTP state when the contact number changes away from the verified number
+  const resetOtpState = useCallback(() => {
+    setOtpSent(false);
+    setOtpSentPhone("");
+    setOtpVerified(false);
+    setVerifiedPhone("");
+    setOtpCode("");
+    setOtpError(null);
+    setOtpCooldown(0);
+  }, []);
+
+  // Extract user's 10-digit phone (strip +91 / 91 prefix)
+  const userPhone10 = user?.mobileNumber?.replace(/^\+?91/, "") ?? "";
 
   // Map location select → reverse geocode to fill fields
   const handleMapLocationSelect = useCallback(async (lat: number, lng: number) => {
@@ -1811,11 +1832,13 @@ const ProviderOnboardingPage = () => {
           touched,
           submitForm,
         }) => {
+          // OTP is only valid if the verified number matches the current contact number
+          const phoneVerified = otpVerified && verifiedPhone === values.contact_number.trim();
           const isStep1Valid = Boolean(
             values.brand_name.trim() &&
               values.description.trim() &&
               values.contact_number.trim() &&
-              otpVerified,
+              phoneVerified,
           );
           const isStep2Valid = Boolean(
             values.address.trim() &&
@@ -1882,17 +1905,46 @@ const ProviderOnboardingPage = () => {
                       />
                     </List>
 
+                    {/* Use My Number shortcut */}
+                    {userPhone10.length === 10 && values.contact_number !== userPhone10 && !phoneVerified && (
+                      <div className="px-4 -mt-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFieldValue("contact_number", userPhone10);
+                            resetOtpState();
+                          }}
+                          className="flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 active:text-indigo-800 dark:active:text-indigo-300"
+                        >
+                          <IonIcon icon={callOutline} className="text-[13px]" />
+                          Use my number ({userPhone10.slice(0, 3)}***{userPhone10.slice(7)})
+                        </button>
+                      </div>
+                    )}
+
                     {/* OTP Verification for Contact Number */}
                     <div className="px-4 mb-4">
-                      {otpVerified ? (
-                        <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
-                          <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-xl shrink-0" />
-                          <div>
-                            <p className="text-xs font-bold text-emerald-700">Phone number verified</p>
-                            <p className="text-[10px] text-emerald-600/70">+91 {values.contact_number}</p>
+                      {phoneVerified ? (
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-700">
+                          <div className="flex items-center gap-2.5">
+                            <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-xl shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Phone number verified</p>
+                              <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">+91 {values.contact_number}</p>
+                            </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetOtpState();
+                              setFieldValue("contact_number", "");
+                            }}
+                            className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 active:text-emerald-900 px-2 py-1"
+                          >
+                            Change
+                          </button>
                         </div>
-                      ) : !otpSent ? (
+                      ) : !otpSent || values.contact_number.trim() !== otpSentPhone ? (
                         <div className="space-y-2">
                           <button type="button" disabled={values.contact_number.length !== 10 || otpSending}
                             onClick={() => handleSendOtp(values.contact_number)}
@@ -1918,7 +1970,7 @@ const ProviderOnboardingPage = () => {
                         <div className="p-4 rounded-2xl border border-indigo-400/30 dark:border-indigo-500/30 bg-indigo-50/30 dark:bg-indigo-950/40 space-y-3">
                           <div className="flex items-center gap-2">
                             <IonIcon icon={callOutline} className="text-indigo-500 dark:text-indigo-400 text-base" />
-                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">Enter OTP sent to +91 {values.contact_number}</p>
+                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">Enter OTP sent to +91 {otpSentPhone}</p>
                           </div>
                           <div className="flex gap-2">
                             <input type="text" inputMode="numeric" value={otpCode} maxLength={6}
@@ -1926,7 +1978,7 @@ const ProviderOnboardingPage = () => {
                               placeholder="6-digit OTP"
                               className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all" />
                             <button type="button" disabled={otpCode.length !== 6 || otpVerifying}
-                              onClick={() => handleVerifyOtp(values.contact_number)}
+                              onClick={() => handleVerifyOtp(otpSentPhone)}
                               className="px-4 py-2.5 rounded-xl bg-indigo-600 dark:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-all">
                               {otpVerifying ? "..." : "Verify"}
                             </button>
@@ -1937,7 +1989,7 @@ const ProviderOnboardingPage = () => {
                             </p>
                           )}
                           <button type="button" disabled={otpCooldown > 0 || otpSending}
-                            onClick={() => handleSendOtp(values.contact_number)}
+                            onClick={() => handleSendOtp(otpSentPhone)}
                             className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 disabled:text-slate-400 dark:disabled:text-slate-600">
                             {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend OTP"}
                           </button>
@@ -2356,7 +2408,7 @@ const ProviderOnboardingPage = () => {
                         disabled={!canAdvance[currentStep] || isSubmitting}
                         className="flex w-full items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
                       >
-                        {currentStep === 1 && !otpVerified ? (
+                        {currentStep === 1 && !phoneVerified ? (
                           <>
                             <IonIcon icon={lockClosedOutline} className="text-base shrink-0" />
                             Set Location
@@ -2368,7 +2420,7 @@ const ProviderOnboardingPage = () => {
                           </>
                         )}
                       </button>
-                      {currentStep === 1 && !otpVerified && (
+                      {currentStep === 1 && !phoneVerified && (
                         <p className="text-[10px] text-center text-slate-400 font-medium">
                           Verify your phone number above to continue
                         </p>
