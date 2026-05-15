@@ -901,50 +901,96 @@ export default function ProviderDetailsPage() {
 
             {/* Social / Online Presence */}
             {(provider.websiteUrl || provider.instagramHandle || provider.facebookHandle || provider.youtubeHandle || provider.whatsappNumber) && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-3">
-                  Find Us Online
-                </h3>
-                <div className="flex flex-wrap gap-3">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-100/80 dark:border-slate-700 bg-gradient-to-br from-white via-slate-50/50 to-white dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-800 shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-none">
+                {/* Subtle decorative gradient orb */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br from-indigo-100/40 to-purple-100/30 dark:from-indigo-900/20 dark:to-purple-900/10 blur-2xl pointer-events-none" />
+
+                <div className="relative p-4">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                      <IonIcon icon={globeOutline} className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h3 className="text-[13px] font-bold text-gray-900 dark:text-white">Connect Online</h3>
+                  </div>
+
+                  {/* Social Icons Row — circular, centered, with brand colors */}
+                  <div className="flex items-center justify-center gap-4 mb-3">
+                    {provider.instagramHandle && (
+                      <a
+                        href={`https://instagram.com/${provider.instagramHandle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#833AB4] via-[#E4405F] to-[#FCAF45] flex items-center justify-center shadow-md shadow-pink-200/40 dark:shadow-pink-900/20 group-active:scale-90 transition-transform">
+                          <IonIcon icon={logoInstagram} className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#E4405F] transition-colors">Instagram</span>
+                      </a>
+                    )}
+                    {provider.facebookHandle && (
+                      <a
+                        href={provider.facebookHandle.startsWith("http") ? provider.facebookHandle : `https://facebook.com/${provider.facebookHandle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-[#1877F2] flex items-center justify-center shadow-md shadow-blue-200/40 dark:shadow-blue-900/20 group-active:scale-90 transition-transform">
+                          <IonIcon icon={logoFacebook} className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#1877F2] transition-colors">Facebook</span>
+                      </a>
+                    )}
+                    {provider.youtubeHandle && (
+                      <a
+                        href={provider.youtubeHandle.startsWith("http") ? provider.youtubeHandle : `https://youtube.com/@${provider.youtubeHandle.replace(/^@/, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-[#FF0000] flex items-center justify-center shadow-md shadow-red-200/40 dark:shadow-red-900/20 group-active:scale-90 transition-transform">
+                          <IonIcon icon={logoYoutube} className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#FF0000] transition-colors">YouTube</span>
+                      </a>
+                    )}
+                    {provider.whatsappNumber && (
+                      <a
+                        href={`https://wa.me/${provider.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center shadow-md shadow-green-200/40 dark:shadow-green-900/20 group-active:scale-90 transition-transform">
+                          <IonIcon icon={logoWhatsapp} className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#25D366] transition-colors">WhatsApp</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Website — inline elegant link with favicon */}
                   {provider.websiteUrl && (
-                    <a href={provider.websiteUrl.startsWith("http") ? provider.websiteUrl : `https://${provider.websiteUrl}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 hover:border-blue-200 dark:hover:border-blue-700 transition-colors">
+                    <a
+                      href={provider.websiteUrl.startsWith("http") ? provider.websiteUrl : `https://${provider.websiteUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 mt-2 px-3.5 py-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 hover:border-indigo-200 dark:hover:border-indigo-700 active:scale-[0.98] transition-all"
+                    >
                       {provider.websiteLogoUrl ? (
-                        <img src={provider.websiteLogoUrl} alt="" className="w-5 h-5 rounded object-contain" />
+                        <img src={provider.websiteLogoUrl} alt="" className="w-5 h-5 rounded-md object-contain shrink-0" />
                       ) : (
-                        <IonIcon icon={globeOutline} className="text-blue-500 text-lg" />
+                        <div className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
+                          <IonIcon icon={globeOutline} className="w-3 h-3 text-indigo-500" />
+                        </div>
                       )}
-                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300 max-w-[120px] truncate">
+                      <span className="text-[12px] font-medium text-slate-600 dark:text-slate-300 truncate flex-1">
                         {provider.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                       </span>
-                    </a>
-                  )}
-                  {provider.instagramHandle && (
-                    <a href={`https://instagram.com/${provider.instagramHandle}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-100/80 dark:border-purple-800/40 hover:border-purple-300 transition-colors">
-                      <IonIcon icon={logoInstagram} className="text-[#E4405F] text-lg" />
-                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">@{provider.instagramHandle}</span>
-                    </a>
-                  )}
-                  {provider.facebookHandle && (
-                    <a href={provider.facebookHandle.startsWith("http") ? provider.facebookHandle : `https://facebook.com/${provider.facebookHandle}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100/80 dark:border-blue-800/40 hover:border-blue-300 transition-colors">
-                      <IonIcon icon={logoFacebook} className="text-[#1877F2] text-lg" />
-                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Facebook</span>
-                    </a>
-                  )}
-                  {provider.youtubeHandle && (
-                    <a href={provider.youtubeHandle.startsWith("http") ? provider.youtubeHandle : `https://youtube.com/@${provider.youtubeHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100/80 dark:border-red-800/40 hover:border-red-300 transition-colors">
-                      <IonIcon icon={logoYoutube} className="text-[#FF0000] text-lg" />
-                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">YouTube</span>
-                    </a>
-                  )}
-                  {provider.whatsappNumber && (
-                    <a href={`https://wa.me/${provider.whatsappNumber.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100/80 dark:border-green-800/40 hover:border-green-300 transition-colors">
-                      <IonIcon icon={logoWhatsapp} className="text-[#25D366] text-lg" />
-                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">WhatsApp</span>
+                      <svg className="w-3.5 h-3.5 text-slate-300 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </a>
                   )}
                 </div>
