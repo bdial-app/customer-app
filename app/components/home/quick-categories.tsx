@@ -50,21 +50,24 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
   }
 
   // Use personalized order if available, otherwise fall back to default order
+  // Show 4 categories, then "See All", then remaining — on wider screens show 9 then See All
+  const isWide = typeof window !== 'undefined' && window.innerWidth >= 768;
+  const seeAllIndex = isWide ? 9 : 4;
+  const maxDisplay = isWide ? 10 : 8;
+
   let displayCategories: any[];
   if (personalizedCategories?.length) {
-    // Map personalized weights to actual category objects
     const catMap = new Map(categories.map((c: any) => [c.id, c]));
     const personalized = personalizedCategories
       .map((pc) => catMap.get(pc.id))
       .filter(Boolean);
-    // Fill remaining with categories not in personalized list
     const personalizedIds = new Set(personalizedCategories.map((pc) => pc.id));
     const rest = categories.filter((c: any) => !personalizedIds.has(c.id));
-    displayCategories = [...personalized, ...rest].slice(0, 10);
+    displayCategories = [...personalized, ...rest].slice(0, maxDisplay);
   } else {
-    displayCategories = categories.slice(0, 10);
+    displayCategories = categories.slice(0, maxDisplay);
   }
-  const hasMore = categories.length > 10;
+  const hasMore = categories.length > maxDisplay;
 
   return (
     <div className="pb-5">
@@ -75,7 +78,29 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
         className="flex gap-3 overflow-x-auto no-scrollbar px-4"
       >
         {displayCategories.map((cat: any, i) => {
-          return (
+          const cards = [];
+
+          // Insert "See All" card at the seeAllIndex position
+          if (i === seeAllIndex && hasMore) {
+            cards.push(
+              <motion.div
+                key="see-all"
+                variants={cardItem}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
+                className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
+              >
+                <div className="w-[62px] h-[62px] rounded-2xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">
+                  <span className="text-lg text-white/50">→</span>
+                </div>
+                <span className="text-[10px] font-semibold text-white/40 text-center leading-tight">
+                  See All
+                </span>
+              </motion.div>
+            );
+          }
+
+          cards.push(
             <motion.div
               key={cat.id}
               variants={cardItem}
@@ -100,8 +125,11 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
               </span>
             </motion.div>
           );
+
+          return cards;
         })}
-        {hasMore && (
+        {/* If seeAllIndex >= displayCategories.length, show See All at end */}
+        {hasMore && seeAllIndex >= displayCategories.length && (
           <motion.div
             variants={cardItem}
             whileTap={{ scale: 0.92 }}
