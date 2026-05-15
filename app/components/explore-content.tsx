@@ -572,7 +572,7 @@ const ExploreContent = memo(() => {
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Popular Nearby</h2>
             </div>
             <button
-              onClick={() => router.push(`${ROUTE_PATH.SEARCH}?sortBy=distance`)}
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=10`)}
               className="flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 active:scale-95 transition-transform"
             >
               See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
@@ -652,7 +652,7 @@ const ExploreContent = memo(() => {
       />
 
       {/* ── 10. Category Spotlight ── */}
-      {feed?.categorySpotlight && (
+      {feed?.categorySpotlight && (feed.categorySpotlight.providers?.length ?? 0) > 0 && (
         <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
@@ -722,7 +722,7 @@ const ExploreContent = memo(() => {
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Women-Led Businesses</h2>
             </div>
             <button
-              onClick={() => router.push(`${ROUTE_PATH.SEARCH}?womenLed=true`)}
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=10&womenLed=true`)}
               className="flex items-center gap-0.5 text-[11px] font-semibold text-purple-600 active:scale-95 transition-transform"
             >
               See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />

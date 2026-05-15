@@ -76,12 +76,13 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     const minRating = searchParams.get("minRating");
     const maxDistance = searchParams.get("maxDistance");
     const verified = searchParams.get("verified");
+    const womenLed = searchParams.get("womenLed");
     return {
       categoryIds: new Set(),
       minRating: minRating ? parseFloat(minRating) : null,
       maxDistance: maxDistance ? parseFloat(maxDistance) : null,
       verifiedOnly: verified === "true",
-      womenLedOnly: false,
+      womenLedOnly: womenLed === "true",
     };
   });
 
