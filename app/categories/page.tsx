@@ -2,13 +2,15 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTopLevelCategories, useCategorySearch, useSubCategories } from "@/hooks/useCategories";
+import { useTopLevelCategories, useCategorySearch, useSubCategories, useCategoryProviders } from "@/hooks/useCategories";
 import { Category, CategorySearchResult, SubCategory } from "@/services/category.service";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
-import { ChevronLeft, Search, ChevronRight, X, Flame, TrendingUp } from "lucide-react";
+import { ChevronLeft, Search, ChevronRight, X, Flame, TrendingUp, Star, MapPin, BadgeCheck, Users } from "lucide-react";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import CategoryIcon from "@/app/components/ui/category-icon";
+import { GRADIENT_PALETTE } from "@/app/components/ui/category-icon";
+import OptimizedImage from "@/app/components/ui/optimized-image";
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function CategoriesPage() {
   const isSearching = debouncedQuery.length >= 2;
   const { data: searchResults = [], isLoading: searchLoading } = useCategorySearch(debouncedQuery);
   const { data: subCategories = [], isLoading: subsLoading } = useSubCategories(selectedParent?.id ?? null);
+  const { data: categoryProviders = [], isLoading: providersLoading } = useCategoryProviders(selectedParent?.slug ?? null);
 
   // Popular categories — top 5 by providerCount (derived client-side, no API)
   const popularCategories = useMemo(() => {
@@ -251,103 +254,252 @@ export default function CategoriesPage() {
             </div>
           </motion.div>
         ) : (
-          /* ========== SUBCATEGORY VIEW ========== */
+          /* ========== SUBCATEGORY VIEW — Rich Category Landing ========== */
           <motion.div
             key="sub"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            {/* Browse all in parent */}
-            <button
-              onClick={() => handleNavigateToSearch(selectedParent.name, selectedParent.id)}
-              className="w-full mb-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center justify-between active:scale-[0.99] transition-transform"
-            >
-              <div>
-                <span className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                  Browse all in {selectedParent.name}
-                </span>
-                <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60 mt-0.5">
-                  See all providers & services
-                </p>
-              </div>
-              <ChevronRight size={18} className="text-amber-600 dark:text-amber-400" />
-            </button>
-
-            {/* Subcategories list */}
-            {subsLoading ? (
-              <div className="space-y-2.5">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-[68px] rounded-xl bg-white dark:bg-slate-800 animate-pulse" />
-                ))}
-              </div>
-            ) : subCategories.length > 0 ? (
-              <div className="space-y-2">
-                {subCategories.map((sub: SubCategory) => {
-                  const hasProviders = (sub.providerCount ?? 0) > 0;
-                  const isPopular = (sub.recentBookings ?? 0) > 3;
-                  return (
-                    <motion.button
-                      key={sub.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleNavigateToSearch(sub.name, sub.id)}
-                      className={`w-full p-3.5 rounded-xl border flex items-center gap-3 text-left transition-all active:shadow-none ${
-                        hasProviders
-                          ? "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 shadow-sm"
-                          : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-100/70 dark:border-slate-700/40 opacity-70"
-                      }`}
-                    >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <CategoryIcon icon={sub.icon} iconColor={sub.iconColor} name={sub.name} size="sm" />
+            {/* ── Hero Header ── */}
+            {(() => {
+              const palette = GRADIENT_PALETTE[selectedParent.iconColor ?? ""] ?? GRADIENT_PALETTE.amber;
+              const totalProviders = subCategories.reduce((sum: number, s: SubCategory) => sum + (s.providerCount ?? 0), 0) || (selectedParent as any).providerCount || 0;
+              const totalBookings = subCategories.reduce((sum: number, s: SubCategory) => sum + (s.recentBookings ?? 0), 0);
+              return (
+                <div className={`relative overflow-hidden bg-gradient-to-br ${palette.gradient} px-4 pt-5 pb-6`}>
+                  <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/[0.06]" />
+                  <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white/[0.04]" />
+                  <div className="relative z-10 flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                      <CategoryIcon icon={selectedParent.icon} iconColor={selectedParent.iconColor} imageUrl={(selectedParent as any).imageUrl} name={selectedParent.name} size="md" />
+                    </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <h2 className="text-lg font-bold text-white leading-snug">
+                        {selectedParent.name}
+                      </h2>
+                      {selectedParent.description && (
+                        <p className="text-xs text-white/70 mt-0.5 line-clamp-2">
+                          {selectedParent.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2">
+                        {totalProviders > 0 && (
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-white/90 bg-white/20 rounded-full px-2.5 py-1">
+                            <Users size={11} /> {totalProviders} providers
+                          </span>
+                        )}
+                        {totalBookings > 0 && (
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-white/90 bg-white/20 rounded-full px-2.5 py-1">
+                            <Flame size={11} /> {totalBookings} this week
+                          </span>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                            {sub.name}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Subcategory Chips (horizontal scroll) ── */}
+            {!subsLoading && subCategories.length > 0 && (
+              <div className="px-4 pt-3 pb-1">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                  {subCategories.map((sub: SubCategory) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => handleNavigateToSearch(sub.name, sub.id)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm active:scale-[0.96] transition-transform flex-shrink-0"
+                    >
+                      <CategoryIcon icon={sub.icon} iconColor={sub.iconColor} name={sub.name} size="xs" />
+                      <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                        {sub.name}
+                      </span>
+                      {(sub.providerCount ?? 0) > 0 && (
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">
+                          {sub.providerCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Top Providers Preview ── */}
+            <div className="mt-2">
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                  Top Providers
+                </h3>
+                <button
+                  onClick={() => handleNavigateToSearch(selectedParent.name, selectedParent.id)}
+                  className="text-xs font-semibold text-amber-600 dark:text-amber-400"
+                >
+                  See All →
+                </button>
+              </div>
+
+              {providersLoading ? (
+                <div className="flex gap-3 overflow-hidden px-4 pb-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="shrink-0 w-[150px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-pulse">
+                      <div className="h-[100px] bg-slate-200 dark:bg-slate-700" />
+                      <div className="p-2.5 space-y-2">
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-4/5" />
+                        <div className="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-3/5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : categoryProviders.length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-3" style={{ WebkitOverflowScrolling: "touch" }}>
+                  {categoryProviders.slice(0, 6).map((provider, idx) => (
+                    <div
+                      key={provider.id}
+                      onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
+                      className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800 active:scale-[0.97] transition-transform"
+                    >
+                      <div className="relative h-[100px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800">
+                        {provider.image ? (
+                          <OptimizedImage
+                            src={provider.image}
+                            alt={provider.name}
+                            className="w-full h-full"
+                            width={150}
+                            height={100}
+                            priority={idx < 3}
+                            preset="card"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-2xl font-bold text-slate-200 dark:text-slate-600">
+                              {provider.name?.charAt(0)?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        {provider.verified && (
+                          <div className="absolute top-1.5 left-1.5 bg-green-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                            <BadgeCheck size={8} /> Verified
+                          </div>
+                        )}
+                        {provider.distance != null && (
+                          <div className="absolute bottom-1.5 left-1.5 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+                            <MapPin size={8} className="text-amber-500" />
+                            {provider.distance < 1
+                              ? `${Math.round(provider.distance * 1000)}m`
+                              : `${provider.distance.toFixed(1)} km`}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-2.5">
+                        <h4 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 leading-tight">
+                          {provider.name}
+                        </h4>
+                        {provider.services && (
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                            {provider.services}
                           </p>
-                          {isPopular && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                              <Flame size={9} /> Popular
+                        )}
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          {provider.rating > 0 ? (
+                            <div className="flex items-center gap-0.5 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded-md">
+                              <Star size={9} className="text-green-600 fill-green-600" />
+                              <span className="text-[10px] font-bold text-green-700 dark:text-green-400">
+                                {provider.rating.toFixed(1)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded-md">
+                              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">New</span>
+                            </div>
+                          )}
+                          {provider.reviewCount > 0 && (
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500">
+                              {provider.reviewCount} reviews
                             </span>
                           )}
                         </div>
-                        {sub.description && (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                            {sub.description}
-                          </p>
-                        )}
                       </div>
-                      {hasProviders ? (
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full flex-shrink-0">
-                          {sub.providerCount}
-                        </span>
-                      ) : (
-                        <span className="text-[9px] text-slate-300 dark:text-slate-600 italic flex-shrink-0">
-                          Soon
-                        </span>
-                      )}
-                      <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-                  <Search size={18} className="text-slate-300 dark:text-slate-600" />
+                    </div>
+                  ))}
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No subcategories yet
-                </p>
-                <button
-                  onClick={() => handleNavigateToSearch(selectedParent.name, selectedParent.id)}
-                  className="mt-3 text-sm font-medium text-amber-600 dark:text-amber-400"
-                >
-                  Search all {selectedParent.name} providers →
-                </button>
+              ) : (
+                <div className="px-4 pb-3">
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      No providers listed yet — be one of the first!
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Subcategory Cards ── */}
+            {!subsLoading && subCategories.length > 0 && (
+              <div className="px-4 pt-2 pb-6">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-2.5">
+                  Browse by Subcategory
+                </h3>
+                <div className="space-y-2">
+                  {subCategories.map((sub: SubCategory) => {
+                    const hasProviders = (sub.providerCount ?? 0) > 0;
+                    const isPopular = (sub.recentBookings ?? 0) > 3;
+                    return (
+                      <motion.button
+                        key={sub.id}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleNavigateToSearch(sub.name, sub.id)}
+                        className={`w-full p-3.5 rounded-xl border flex items-center gap-3 text-left transition-all active:shadow-none ${
+                          hasProviders
+                            ? "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 shadow-sm"
+                            : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-100/70 dark:border-slate-700/40 opacity-70"
+                        }`}
+                      >
+                        <CategoryIcon icon={sub.icon} iconColor={sub.iconColor} name={sub.name} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                              {sub.name}
+                            </p>
+                            {isPopular && (
+                              <span className="flex items-center gap-0.5 text-[9px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                <Flame size={9} /> Popular
+                              </span>
+                            )}
+                          </div>
+                          {sub.description && (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                              {sub.description}
+                            </p>
+                          )}
+                        </div>
+                        {hasProviders ? (
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full flex-shrink-0">
+                            {sub.providerCount}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-slate-300 dark:text-slate-600 italic flex-shrink-0">
+                            Soon
+                          </span>
+                        )}
+                        <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
             )}
+
+            {/* ── Browse All CTA ── */}
+            <div className="px-4 pb-8">
+              <button
+                onClick={() => handleNavigateToSearch(selectedParent.name, selectedParent.id)}
+                className="w-full py-3.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold active:scale-[0.98] transition-transform shadow-md"
+              >
+                Browse all {selectedParent.name} providers →
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -84,6 +84,12 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
             Trending This Week
           </h2>
         </div>
+        <button
+          onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
+          className="text-xs font-semibold text-amber-600 dark:text-amber-400"
+        >
+          See All
+        </button>
       </div>
 
       {isLoading ? (
@@ -196,7 +202,7 @@ const TrendingServices = ({ categories, isLoading }: TrendingServicesProps) => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             whileTap={{ scale: 0.96 }}
-            onClick={() => router.push(ROUTE_PATH.SEARCH)}
+            onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
             className="shrink-0 w-[80px] rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1 cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">

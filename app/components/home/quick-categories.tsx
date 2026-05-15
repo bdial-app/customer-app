@@ -50,10 +50,9 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
   }
 
   // Use personalized order if available, otherwise fall back to default order
-  // Show 4 categories, then "See All", then remaining — on wider screens show 9 then See All
+  // Mobile: show 4 categories + See All at end. Web (≥768px): show 9 + See All.
   const isWide = typeof window !== 'undefined' && window.innerWidth >= 768;
-  const seeAllIndex = isWide ? 9 : 4;
-  const maxDisplay = isWide ? 10 : 8;
+  const maxDisplay = isWide ? 9 : 4;
 
   let displayCategories: any[];
   if (personalizedCategories?.length) {
@@ -77,30 +76,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
         animate="show"
         className="flex gap-3 overflow-x-auto no-scrollbar px-4"
       >
-        {displayCategories.map((cat: any, i) => {
-          const cards = [];
-
-          // Insert "See All" card at the seeAllIndex position
-          if (i === seeAllIndex && hasMore) {
-            cards.push(
-              <motion.div
-                key="see-all"
-                variants={cardItem}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
-                className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
-              >
-                <div className="w-[62px] h-[62px] rounded-2xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">
-                  <span className="text-lg text-white/50">→</span>
-                </div>
-                <span className="text-[10px] font-semibold text-white/40 text-center leading-tight">
-                  See All
-                </span>
-              </motion.div>
-            );
-          }
-
-          cards.push(
+        {displayCategories.map((cat: any) => (
             <motion.div
               key={cat.id}
               variants={cardItem}
@@ -124,12 +100,9 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
                 {cat.name}
               </span>
             </motion.div>
-          );
-
-          return cards;
-        })}
-        {/* If seeAllIndex >= displayCategories.length, show See All at end */}
-        {hasMore && seeAllIndex >= displayCategories.length && (
+        ))}
+        {/* See All — always last card */}
+        {hasMore && (
           <motion.div
             variants={cardItem}
             whileTap={{ scale: 0.92 }}

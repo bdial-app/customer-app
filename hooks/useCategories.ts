@@ -5,6 +5,7 @@ import {
   searchCategoriesAPI,
   getSubCategories,
 } from "@/services/category.service";
+import { getCategoryProviders } from "@/services/home.service";
 
 export const useTopLevelCategories = () => {
   return useQuery({
@@ -47,6 +48,17 @@ export const useSubCategories = (parentId: string | null) => {
     enabled: !!parentId,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useCategoryProviders = (slug: string | null, limit = 5) => {
+  return useQuery({
+    queryKey: ["category-providers", slug, limit],
+    queryFn: () => getCategoryProviders({ slug: slug!, limit }),
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 };
