@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getTopLevelCategories,
   getAllCategories,
+  searchCategoriesAPI,
+  getSubCategories,
 } from "@/services/category.service";
 
 export const useTopLevelCategories = () => {
@@ -23,5 +25,28 @@ export const useAllCategories = (page = 1, limit = 20) => {
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnMount: false,
+  });
+};
+
+export const useCategorySearch = (query: string) => {
+  return useQuery({
+    queryKey: ["category-search", query],
+    queryFn: () => searchCategoriesAPI(query, 12),
+    enabled: query.trim().length >= 2,
+    staleTime: 2 * 60 * 1000, // matches backend 2-min cache
+    gcTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData, // no flash between queries
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useSubCategories = (parentId: string | null) => {
+  return useQuery({
+    queryKey: ["sub-categories", parentId],
+    queryFn: () => getSubCategories(parentId!),
+    enabled: !!parentId,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 };

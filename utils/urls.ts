@@ -22,6 +22,7 @@ export const CATEGORY_URLS = {
   LIST: "/categories",
   TOP_LEVEL: "/categories/top-level",
   SUGGEST: "/categories/suggest",
+  SEARCH: "/categories/search",
   BY_ID: (id: string) => `/categories/${id}`,
   SUB_CATEGORIES: (id: string) => `/categories/${id}/sub-categories`,
 };

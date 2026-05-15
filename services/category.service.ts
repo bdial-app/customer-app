@@ -39,9 +39,35 @@ export const getAllCategories = async (
   return data;
 };
 
-export const getSubCategories = async (parentId: string): Promise<Category[]> => {
+export interface SubCategory extends Category {
+  providerCount?: number;
+  recentBookings?: number;
+}
+
+export const getSubCategories = async (parentId: string): Promise<SubCategory[]> => {
   const { data } = await apiClient.get(CATEGORY_URLS.SUB_CATEGORIES(parentId));
-  return data;
+  // Backend returns { data: [...], meta: {...} } — unwrap properly
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.data)) return data.data;
+  return [];
+};
+
+export interface CategorySearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  imageUrl?: string;
+  description?: string;
+  parentId: string | null;
+  parentName?: string;
+  parentIcon?: string;
+  providerCount: number;
+}
+
+export const searchCategoriesAPI = async (q: string, limit = 10): Promise<CategorySearchResult[]> => {
+  const { data } = await apiClient.get(CATEGORY_URLS.SEARCH, { params: { q, limit } });
+  return Array.isArray(data) ? data : [];
 };
 
 export interface SuggestedCategory {
