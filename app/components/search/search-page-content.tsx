@@ -24,6 +24,7 @@ import type { SearchSuggestion } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
 import SuggestionList from "./suggestion-list";
+import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 
 // Lazy-load the heavy results view — only needed after user submits a query
 const SearchResultsView = dynamic(
@@ -53,6 +54,7 @@ const SearchPageContent = () => {
   const user = useAppSelector((s) => s.auth.user as any);
   const lat = user?.latitude;
   const lng = user?.longitude;
+  const { trackCategory } = useCategoryInteraction();
 
   // Hydrate Redux filters from URL params BEFORE first render paints
   const [filtersReady, setFiltersReady] = useState(false);
@@ -276,6 +278,7 @@ const SearchPageContent = () => {
                 onRecentTap={handleRecentTap}
                 onTrendingTap={handleRecentTap}
                 onCategoryTap={(name, id) => {
+                  trackCategory(id, 'view');
                   dispatch(setCategoryIds([id]));
                   setQuery(name);
                   handleSubmit(name);
@@ -316,6 +319,7 @@ const SearchPageContent = () => {
                 lng={lng}
                 city={user?.city}
                 onCategoryTap={(name, id) => {
+                  trackCategory(id, 'view');
                   dispatch(resetFilters());
                   dispatch(setCategoryIds([id]));
                   dispatch(setActiveTab("all"));

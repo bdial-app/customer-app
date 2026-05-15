@@ -9,6 +9,7 @@ const IonIcon = dynamic(
 );
 import { chevronForward, storefrontOutline } from "ionicons/icons";
 import type { CategorySearchResult } from "@/services/search.service";
+import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 
 interface Props {
   category: CategorySearchResult;
@@ -18,8 +19,10 @@ interface Props {
 
 const CategoryResultCard = ({ category, index, onTap }: Props) => {
   const router = useRouter();
+  const { trackCategory } = useCategoryInteraction();
 
   const handleClick = () => {
+    trackCategory(category.id, 'view');
     if (onTap) {
       onTap(category.name, category.id);
     } else {

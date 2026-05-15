@@ -57,6 +57,7 @@ import {
   useTrackProviderView,
   useTrackAction,
 } from "@/hooks/useAnalyticsTrack";
+import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import ReportSheet from "../components/report-sheet";
 import { checkContent } from "@/utils/content-sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -235,9 +236,15 @@ export default function ProviderDetailsPage() {
   const { mutate: submitReviewMutation, isPending: isSubmittingReview } =
     useSubmitReview();
 
+  const { trackCategories } = useCategoryInteraction();
+
   const handleToggleSaved = () => {
     requireAuth(() => {
-      if (!liked) trackSave();
+      if (!liked) {
+        trackSave();
+        const catIds = (data?.categories ?? []).map((c: any) => c.id);
+        if (catIds.length) trackCategories(catIds, 'bookmark');
+      }
       toggleSaved.mutate({ itemId: id, itemType: "provider" });
     });
   };
@@ -270,6 +277,13 @@ export default function ProviderDetailsPage() {
   const categories = data?.categories ?? [];
   const badges = data?.badges ?? [];
   const activeOffers = data?.activeOffers ?? [];
+
+  // Track category view for personalization
+  useEffect(() => {
+    if (categories.length > 0 && !isOwnProvider) {
+      trackCategories(categories.map((c: any) => c.id), 'view');
+    }
+  }, [categories.length, isOwnProvider]); // eslint-disable-line react-hooks/exhaustive-deps
   const isSponsored = data?.isSponsored ?? false;
   const sponsorEndsAt = data?.sponsorEndsAt ?? null;
 

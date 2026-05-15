@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ROUTE_PATH } from "@/utils/contants";
 import { PersonalizedCategory } from "@/services/home.service";
+import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 
 const CATEGORY_COLORS = [
   { gradient: "from-orange-400 to-amber-500", text: "text-white" },
@@ -34,9 +35,10 @@ const cardItem = {
 };
 
 const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: PersonalizedCategory[] | null }) => {
-  const { data: rawCategories = [], isLoading } = useTopLevelCategories();
+  const { data: rawCategories = [], isLoading, isError } = useTopLevelCategories();
   const categories = Array.isArray(rawCategories) ? rawCategories : [];
   const router = useRouter();
+  const { trackCategory } = useCategoryInteraction();
 
   if (isLoading) {
     return (
@@ -54,6 +56,10 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
         </div>
       </div>
     );
+  }
+
+  if (isError || categories.length === 0) {
+    return null;
   }
 
   // Use personalized order if available, otherwise fall back to default order
@@ -89,11 +95,12 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
               key={cat.id}
               variants={cardItem}
               whileTap={{ scale: 0.92 }}
-              onClick={() =>
+              onClick={() => {
+                trackCategory(cat.id, 'view');
                 router.push(
                   `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}`,
-                )
-              }
+                );
+              }}
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
             >
               <div className="w-[62px] h-[62px] rounded-2xl relative overflow-hidden flex items-center justify-center">

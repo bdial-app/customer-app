@@ -8,12 +8,14 @@ import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Search, ChevronRight } from "lucide-react";
+import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 
 export default function CategoriesPage() {
   const router = useRouter();
   const { data: categories = [], isLoading } = useTopLevelCategories();
   const [selectedParent, setSelectedParent] = useState<Category | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { trackCategory } = useCategoryInteraction();
 
   const { data: subCategories = [], isLoading: subsLoading } = useQuery({
     queryKey: ["sub-categories", selectedParent?.id],
@@ -33,16 +35,19 @@ export default function CategoriesPage() {
   }, [categories, searchQuery]);
 
   const handleCategoryTap = (cat: Category) => {
+    trackCategory(cat.id, 'view');
     setSelectedParent(cat);
   };
 
   const handleSubCategoryTap = (cat: Category) => {
+    trackCategory(cat.id, 'view');
     router.push(
       `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}&categoryIds=${cat.id}`,
     );
   };
 
   const handleParentSearch = (cat: Category) => {
+    trackCategory(cat.id, 'view');
     router.push(
       `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}&categoryIds=${cat.id}`,
     );
@@ -100,7 +105,15 @@ export default function CategoriesPage() {
                     className="aspect-square rounded-2xl bg-white dark:bg-slate-800 animate-pulse"
                   />
                 ))
-              : filteredCategories.map((cat: Category) => (
+              : filteredCategories.length === 0
+                ? (
+                  <div className="col-span-3 flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
+                    <p className="text-sm">
+                      {searchQuery ? "No categories match your search" : "No categories available"}
+                    </p>
+                  </div>
+                )
+                : filteredCategories.map((cat: Category) => (
                   <motion.div
                     key={cat.id}
                     whileTap={{ scale: 0.95 }}
