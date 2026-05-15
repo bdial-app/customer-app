@@ -43,3 +43,21 @@ export const getSubCategories = async (parentId: string): Promise<Category[]> =>
   const { data } = await apiClient.get(CATEGORY_URLS.SUB_CATEGORIES(parentId));
   return data;
 };
+
+export interface SuggestedCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  imageUrl?: string;
+  description?: string;
+  score: number;
+}
+
+export const suggestCategories = async (
+  title: string,
+  description: string,
+): Promise<SuggestedCategory[]> => {
+  const { data } = await apiClient.post(CATEGORY_URLS.SUGGEST, { title, description });
+  return Array.isArray(data) ? data : [];
+};
