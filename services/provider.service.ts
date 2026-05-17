@@ -59,6 +59,7 @@ export interface BecomeProviderPayload {
   facebookHandle?: string;
   youtubeHandle?: string;
   whatsappNumber?: string;
+  linkedinHandle?: string;
 }
 
 export interface ProviderData {
@@ -89,6 +90,7 @@ export interface ProviderData {
   facebookHandle?: string | null;
   youtubeHandle?: string | null;
   whatsappNumber?: string | null;
+  linkedinHandle?: string | null;
 }
 
 export interface ProviderStatusResponse {
@@ -119,6 +121,7 @@ export interface UpdateProviderPayload {
   facebookHandle?: string | null;
   youtubeHandle?: string | null;
   whatsappNumber?: string | null;
+  linkedinHandle?: string | null;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────
@@ -324,8 +327,11 @@ export const becomeProvider = async (
   if (payload.facebookHandle) formData.append("facebookHandle", payload.facebookHandle);
   if (payload.youtubeHandle) formData.append("youtubeHandle", payload.youtubeHandle);
   if (payload.whatsappNumber) formData.append("whatsappNumber", payload.whatsappNumber);
+  if (payload.linkedinHandle) formData.append("linkedinHandle", payload.linkedinHandle);
 
-  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData);
+  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
+    timeout: 120_000, // 2 min — multipart upload with images needs more time
+  });
   return data;
 };
 

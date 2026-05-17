@@ -39,6 +39,7 @@ import {
   logoFacebook,
   logoYoutube,
   logoWhatsapp,
+  logoLinkedin,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -900,7 +901,7 @@ export default function ProviderDetailsPage() {
             </div>
 
             {/* Social / Online Presence */}
-            {(provider.websiteUrl || provider.instagramHandle || provider.facebookHandle || provider.youtubeHandle || provider.whatsappNumber) && (
+            {(provider.websiteUrl || provider.instagramHandle || provider.facebookHandle || provider.youtubeHandle || provider.whatsappNumber || provider.linkedinHandle) && (
               <div className="relative overflow-hidden rounded-2xl border border-slate-100/80 dark:border-slate-700 bg-gradient-to-br from-white via-slate-50/50 to-white dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-800 shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-none">
                 {/* Subtle decorative gradient orb */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br from-indigo-100/40 to-purple-100/30 dark:from-indigo-900/20 dark:to-purple-900/10 blur-2xl pointer-events-none" />
@@ -969,6 +970,60 @@ export default function ProviderDetailsPage() {
                         </div>
                         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#25D366] transition-colors">WhatsApp</span>
                       </a>
+                    )}
+                    {provider.linkedinHandle && (
+                      <a
+                        href={provider.linkedinHandle.startsWith("http") ? provider.linkedinHandle : `https://linkedin.com/in/${provider.linkedinHandle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-[#0A66C2] flex items-center justify-center shadow-md shadow-blue-200/40 dark:shadow-blue-900/20 group-active:scale-90 transition-transform">
+                          <IonIcon icon={logoLinkedin} className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#0A66C2] transition-colors">LinkedIn</span>
+                      </a>
+                    )}
+                    {/* Placeholders for links not yet added */}
+                    {!provider.instagramHandle && (
+                      <div className="flex flex-col items-center gap-1.5 opacity-30">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                          <IonIcon icon={logoInstagram} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">Instagram</span>
+                      </div>
+                    )}
+                    {!provider.facebookHandle && (
+                      <div className="flex flex-col items-center gap-1.5 opacity-30">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                          <IonIcon icon={logoFacebook} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">Facebook</span>
+                      </div>
+                    )}
+                    {!provider.youtubeHandle && (
+                      <div className="flex flex-col items-center gap-1.5 opacity-30">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                          <IonIcon icon={logoYoutube} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">YouTube</span>
+                      </div>
+                    )}
+                    {!provider.whatsappNumber && (
+                      <div className="flex flex-col items-center gap-1.5 opacity-30">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                          <IonIcon icon={logoWhatsapp} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">WhatsApp</span>
+                      </div>
+                    )}
+                    {!provider.linkedinHandle && (
+                      <div className="flex flex-col items-center gap-1.5 opacity-30">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                          <IonIcon icon={logoLinkedin} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">LinkedIn</span>
+                      </div>
                     )}
                   </div>
 

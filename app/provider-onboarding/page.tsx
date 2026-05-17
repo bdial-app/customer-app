@@ -39,11 +39,13 @@ import {
   logoFacebook,
   logoYoutube,
   logoWhatsapp,
+  logoLinkedin,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
 import { useRouter } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useQueryClient } from "@tanstack/react-query";
 import TimePicker from "../components/time-picker";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -113,6 +115,7 @@ const step1Schema = Yup.object({
   facebook_handle: Yup.string().max(128).optional(),
   youtube_handle: Yup.string().max(128).optional(),
   whatsapp_number: Yup.string().matches(/^\+?\d{7,15}$/, "Enter a valid phone number (e.g. +966XXXXXXXXX)").optional(),
+  linkedin_handle: Yup.string().max(128).optional(),
 });
 
 const step2Schema = Yup.object({
@@ -1460,6 +1463,7 @@ const ProviderOnboardingPage = () => {
   const router = useRouter();
   const { goBack } = useBackNavigation();
   const user = useAppSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
 
   const stepScrollRef = useRef<HTMLDivElement>(null);
   const [currentStep, setCurrentStep] = useState<StepId>(1);
@@ -1749,7 +1753,11 @@ const ProviderOnboardingPage = () => {
         facebookHandle: values.facebook_handle?.trim() || undefined,
         youtubeHandle: values.youtube_handle?.trim() || undefined,
         whatsappNumber: values.whatsapp_number?.trim() || undefined,
+        linkedinHandle: values.linkedin_handle?.trim() || undefined,
       });
+      // Invalidate explore & home feed caches so the new provider appears immediately
+      queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["home-feed"] });
       setProviderStatus(values.identity_doc ? "pending" : "approved");
     } catch (err: any) {
       const message =
@@ -1817,6 +1825,7 @@ const ProviderOnboardingPage = () => {
           facebook_handle: "",
           youtube_handle: "",
           whatsapp_number: "",
+          linkedin_handle: "",
         }}
         validationSchema={schemaForStep[currentStep]}
         onSubmit={handleSubmit}
@@ -1960,7 +1969,12 @@ const ProviderOnboardingPage = () => {
                             )}
                             {otpSending ? "Sending OTP..." : "Verify Phone Number"}
                           </button>
-                          {values.contact_number.length === 10 && (
+                          {otpError && (
+                            <p className="text-[11px] text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
+                              <IonIcon icon={alertCircleOutline} className="text-xs" /> {otpError}
+                            </p>
+                          )}
+                          {!otpError && values.contact_number.length === 10 && (
                             <p className="text-[10px] text-indigo-400/80 text-center font-medium">
                               Required to continue to the next step
                             </p>
@@ -2150,6 +2164,24 @@ const ProviderOnboardingPage = () => {
                             value={values.whatsapp_number}
                             onChange={(e) => setFieldValue("whatsapp_number", e.target.value)}
                             placeholder="+91 98765 43210"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* LinkedIn */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoLinkedin} className="text-[#0A66C2] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">LinkedIn</label>
+                          <input
+                            type="text"
+                            name="linkedin_handle"
+                            value={values.linkedin_handle}
+                            onChange={(e) => setFieldValue("linkedin_handle", e.target.value)}
+                            placeholder="Profile or company page URL"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>
