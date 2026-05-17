@@ -68,6 +68,10 @@ export interface CreateProductPayload {
   currency?: string;
   photoUrl?: string;
   photoUrls?: string[];
+  productType?: 'product' | 'service';
+  categoryId?: string;
+  subcategoryId?: string;
+  keywords?: string[];
 }
 
 export interface UpdateProductPayload {
@@ -80,6 +84,10 @@ export interface UpdateProductPayload {
   isActive?: boolean;
   displayOrder?: number;
   isHero?: boolean;
+  productType?: 'product' | 'service';
+  categoryId?: string;
+  subcategoryId?: string;
+  keywords?: string[];
 }
 
 export const createProduct = async (payload: CreateProductPayload): Promise<ProductDetail> => {

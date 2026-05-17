@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
@@ -14,6 +14,10 @@ import {
   checkmarkCircleOutline,
   alertCircleOutline,
   closeCircleOutline,
+  chevronDownOutline,
+  searchOutline,
+  closeCircle,
+  checkmarkCircle,
 } from "ionicons/icons";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -26,6 +30,8 @@ import {
   useDeleteProduct,
 } from "@/hooks/useProduct";
 import { uploadProductImage } from "@/services/product.service";
+import { useTopLevelCategories, useSubCategories } from "@/hooks/useCategories";
+import { Category } from "@/services/category.service";
 
 interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
@@ -38,7 +44,162 @@ const productSchema = Yup.object({
   description: Yup.string().max(2000).nullable(),
   currency: Yup.string().oneOf(["INR", "USD"]).default("INR"),
   productType: Yup.string().oneOf(["product", "service"]).default("product"),
+  categoryId: Yup.string().nullable(),
+  subcategoryId: Yup.string().nullable(),
+  keywords: Yup.string().nullable(),
 });
+
+// ─── Searchable Category Picker Sub-component ────────────────────────────
+function SearchableCategoryDropdown({
+  categories,
+  selectedId,
+  onChange,
+  placeholder,
+  label,
+}: {
+  categories: Category[];
+  selectedId: string;
+  onChange: (id: string) => void;
+  placeholder: string;
+  label: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return categories;
+    const q = search.toLowerCase();
+    return categories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, search]);
+
+  const selectedCat = categories.find((c) => c.id === selectedId);
+
+  return (
+    <div className="relative">
+      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+        {label}
+      </label>
+      <button
+        type="button"
+        onClick={() => { setOpen(!open); setTimeout(() => inputRef.current?.focus(), 100); }}
+        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-left focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+      >
+        <span className={selectedCat ? "text-slate-800 dark:text-white" : "text-slate-400 dark:text-slate-500"}>
+          {selectedCat?.name || placeholder}
+        </span>
+        <IonIcon icon={chevronDownOutline} className={`text-slate-400 text-sm transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {selectedCat && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onChange(""); }}
+          className="absolute right-10 top-[34px] text-slate-300 hover:text-red-400 transition-colors"
+        >
+          <IonIcon icon={closeCircle} className="text-base" />
+        </button>
+      )}
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden"
+          >
+            {/* Search input */}
+            <div className="p-2 border-b border-slate-100 dark:border-slate-700">
+              <div className="relative">
+                <IonIcon icon={searchOutline} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:border-teal-400 text-slate-800 dark:text-white placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            {/* Options list */}
+            <div className="max-h-48 overflow-y-auto">
+              {filtered.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-4">No results</p>
+              )}
+              {filtered.map((cat) => {
+                const isSelected = cat.id === selectedId;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => { onChange(cat.id); setOpen(false); setSearch(""); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs transition-colors ${
+                      isSelected
+                        ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 font-semibold"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    <span className="flex-1">{cat.name}</span>
+                    {isSelected && <IonIcon icon={checkmarkCircle} className="text-teal-500 text-sm" />}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Click-away overlay */}
+      {open && (
+        <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setSearch(""); }} />
+      )}
+    </div>
+  );
+}
+
+function ProductCategoryPicker({
+  categoryId,
+  subcategoryId,
+  onCategoryChange,
+  onSubcategoryChange,
+}: {
+  categoryId: string;
+  subcategoryId: string;
+  onCategoryChange: (id: string) => void;
+  onSubcategoryChange: (id: string) => void;
+}) {
+  const { data: categories } = useTopLevelCategories();
+  const { data: subcategories } = useSubCategories(categoryId || null);
+
+  const parentCategories = useMemo(() => categories || [], [categories]);
+  const childCategories = useMemo(() => (subcategories || []) as Category[], [subcategories]);
+
+  return (
+    <div className="space-y-3">
+      <SearchableCategoryDropdown
+        categories={parentCategories}
+        selectedId={categoryId}
+        onChange={onCategoryChange}
+        placeholder="Select a category"
+        label="Category — optional, improves discoverability"
+      />
+
+      {categoryId && childCategories.length > 0 && (
+        <SearchableCategoryDropdown
+          categories={childCategories}
+          selectedId={subcategoryId}
+          onChange={onSubcategoryChange}
+          placeholder="Select a sub-category"
+          label="Sub-category"
+        />
+      )}
+    </div>
+  );
+}
 
 async function compressImage(file: File, maxDim = 1200, quality = 0.82): Promise<File> {
   return new Promise((resolve) => {
@@ -384,6 +545,9 @@ const ProviderProductsTab = ({
                   price: editing?.price != null ? String(editing.price) : "",
                   currency: editing?.currency || "INR",
                   productType: editing?.productType || "product",
+                  categoryId: (editing as any)?.categoryId || "",
+                  subcategoryId: (editing as any)?.subcategoryId || "",
+                  keywords: (editing as any)?.keywords?.join(", ") || "",
                 }}
                 validationSchema={productSchema}
                 enableReinitialize
@@ -424,6 +588,11 @@ const ProviderProductsTab = ({
                     productType: values.productType || "product",
                     photoUrl: photoUrls[0] || undefined,
                     photoUrls,
+                    categoryId: values.categoryId || undefined,
+                    subcategoryId: values.subcategoryId || undefined,
+                    keywords: values.keywords
+                      ? values.keywords.split(",").map((k: string) => k.trim().toLowerCase()).filter(Boolean)
+                      : undefined,
                   };
 
                   if (editing) {
@@ -577,6 +746,27 @@ const ProviderProductsTab = ({
                           );
                         })}
                       </div>
+                    </div>
+
+                    {/* Category & Sub-category */}
+                    <ProductCategoryPicker
+                      categoryId={values.categoryId}
+                      subcategoryId={values.subcategoryId}
+                      onCategoryChange={(id) => { setFieldValue("categoryId", id); setFieldValue("subcategoryId", ""); }}
+                      onSubcategoryChange={(id) => setFieldValue("subcategoryId", id)}
+                    />
+
+                    {/* Keywords */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Keywords <span className="text-slate-400 dark:text-slate-500 font-normal">— helps people find this</span>
+                      </label>
+                      <Field
+                        name="keywords"
+                        placeholder="e.g. rida, abaya, custom stitching (comma-separated)"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">Separate with commas. These help your product show in search.</p>
                     </div>
 
                     {/* Hero Product Toggle */}

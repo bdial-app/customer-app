@@ -205,6 +205,9 @@ export interface ProviderDetailsProduct {
   displayOrder: number;
   isHero: boolean;
   productType?: 'product' | 'service';
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  keywords?: string[] | null;
 }
 
 export interface ProviderDetailsReview {
