@@ -33,13 +33,14 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { getItemSync, setItemSync } from "@/utils/storage";
 import { setGuestCoords } from "@/store/slices/locationSlice";
 
-type SortOption = "relevance" | "rating" | "distance" | "reviews";
+type SortOption = "relevance" | "rating" | "distance" | "reviews" | "newest";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "relevance", label: "Relevance" },
   { value: "rating", label: "Highest Rated" },
   { value: "distance", label: "Nearest First" },
   { value: "reviews", label: "Most Reviewed" },
+  { value: "newest", label: "Recently Added" },
 ];
 
 const EMPTY_FILTERS: AllServicesFilters = {
@@ -66,11 +67,17 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   // Read URL params for pre-selected filters from home page "See All" buttons
   const [sortBy, setSortBy] = useState<SortOption>(() => {
     const urlSort = searchParams.get("sort");
-    if (urlSort && ["relevance", "rating", "distance", "reviews"].includes(urlSort)) {
+    if (urlSort && ["relevance", "rating", "distance", "reviews", "newest"].includes(urlSort)) {
       return urlSort as SortOption;
     }
     return "relevance";
   });
+
+  // sinceDays param for "Recently Added" filtering
+  const sinceDays = useMemo(() => {
+    const val = searchParams.get("sinceDays");
+    return val ? parseInt(val, 10) : undefined;
+  }, [searchParams]);
 
   const [filters, setFilters] = useState<AllServicesFilters>(() => {
     const catIds = searchParams.get("categoryIds");
@@ -170,6 +177,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     minRating: filters.minRating ?? undefined,
     verifiedOnly: filters.verifiedOnly || undefined,
     womenLedOnly: filters.womenLedOnly || undefined,
+    sinceDays,
   });
 
   const providers = useMemo(() => {

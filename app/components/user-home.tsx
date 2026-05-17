@@ -462,7 +462,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 <RecentlyAdded
                   providers={newArrivals}
                   isLoading={isLoading}
-                  viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
+                  viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=newest&sinceDays=30`}
                 />
               </Suspense>
             </div>
