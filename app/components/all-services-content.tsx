@@ -73,11 +73,11 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     return "relevance";
   });
 
-  // sinceDays param for "Recently Added" filtering
-  const sinceDays = useMemo(() => {
+  // sinceDays param for "Recently Added" filtering (stateful so user can clear it)
+  const [sinceDays, setSinceDays] = useState<number | undefined>(() => {
     const val = searchParams.get("sinceDays");
     return val ? parseInt(val, 10) : undefined;
-  }, [searchParams]);
+  });
 
   const [filters, setFilters] = useState<AllServicesFilters>(() => {
     const catIds = searchParams.get("categoryIds");
@@ -206,7 +206,8 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     (filters.minRating ? 1 : 0) +
     (filters.maxDistance ? 1 : 0) +
     (filters.verifiedOnly ? 1 : 0) +
-    (filters.womenLedOnly ? 1 : 0);
+    (filters.womenLedOnly ? 1 : 0) +
+    (sinceDays ? 1 : 0);
   const totalCount = data?.pages?.[0]?.meta?.total ?? providers.length;
   const isSearching = isFetching && !isFetchingNextPage && !isProvidersLoading;
 
@@ -243,6 +244,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
 
   const handleClearAllFilters = useCallback(() => {
     setFilters({ ...EMPTY_FILTERS, categoryIds: new Set() });
+    setSinceDays(undefined);
   }, []);
 
   const handleApplyFilters = useCallback((f: AllServicesFilters) => {
@@ -274,7 +276,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
             </button>
             <div className="flex-1">
               <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-                {initialSearch || "All Services"}
+                {initialSearch || (sinceDays ? "New Arrivals" : "All Services")}
               </h1>
               {!isProvidersLoading && (
                 <p className="text-[11px] text-gray-400 dark:text-slate-500 -mt-0.5">
@@ -337,6 +339,22 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
         <div className="px-4 pb-2">
           <QuickFilterPills filters={quickFilters} onToggle={handleQuickToggle} />
         </div>
+
+        {/* New Arrivals active filter banner */}
+        {sinceDays && (
+          <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex-1">
+              🆕 Showing new arrivals (last {sinceDays} days)
+            </span>
+            <button
+              onClick={() => setSinceDays(undefined)}
+              className="text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-200 transition-colors"
+              aria-label="Remove new arrivals filter"
+            >
+              <IonIcon icon={closeCircle} className="w-4.5 h-4.5" />
+            </button>
+          </div>
+        )}
 
         {/* Filter chips + sort + view toggle */}
         {(activeFilterCount > 0 || providers.length > 0) && (

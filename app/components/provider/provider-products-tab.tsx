@@ -15,9 +15,11 @@ import {
   alertCircleOutline,
   closeCircleOutline,
   chevronDownOutline,
+  chevronForwardOutline,
   searchOutline,
   closeCircle,
   checkmarkCircle,
+  layersOutline,
 } from "ionicons/icons";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -30,8 +32,8 @@ import {
   useDeleteProduct,
 } from "@/hooks/useProduct";
 import { uploadProductImage } from "@/services/product.service";
-import { useTopLevelCategories, useSubCategories } from "@/hooks/useCategories";
-import { Category } from "@/services/category.service";
+import { useTopLevelCategories, useCategorySearch, useSubCategories } from "@/hooks/useCategories";
+import type { Category, CategorySearchResult } from "@/services/category.service";
 
 interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
@@ -49,154 +51,250 @@ const productSchema = Yup.object({
   keywords: Yup.string().nullable(),
 });
 
-// ─── Searchable Category Picker Sub-component ────────────────────────────
-function SearchableCategoryDropdown({
-  categories,
-  selectedId,
-  onChange,
-  placeholder,
-  label,
-}: {
-  categories: Category[];
-  selectedId: string;
-  onChange: (id: string) => void;
-  placeholder: string;
-  label: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+// ─── Unified Category Picker (searches both parent & sub-categories) ─────
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return categories;
-    const q = search.toLowerCase();
-    return categories.filter((c) => c.name.toLowerCase().includes(q));
-  }, [categories, search]);
-
-  const selectedCat = categories.find((c) => c.id === selectedId);
-
-  return (
-    <div className="relative">
-      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-        {label}
-      </label>
-      <button
-        type="button"
-        onClick={() => { setOpen(!open); setTimeout(() => inputRef.current?.focus(), 100); }}
-        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-left focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
-      >
-        <span className={selectedCat ? "text-slate-800 dark:text-white" : "text-slate-400 dark:text-slate-500"}>
-          {selectedCat?.name || placeholder}
-        </span>
-        <IonIcon icon={chevronDownOutline} className={`text-slate-400 text-sm transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {selectedCat && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onChange(""); }}
-          className="absolute right-10 top-[34px] text-slate-300 hover:text-red-400 transition-colors"
-        >
-          <IonIcon icon={closeCircle} className="text-base" />
-        </button>
-      )}
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-            className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden"
-          >
-            {/* Search input */}
-            <div className="p-2 border-b border-slate-100 dark:border-slate-700">
-              <div className="relative">
-                <IonIcon icon={searchOutline} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:border-teal-400 text-slate-800 dark:text-white placeholder:text-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Options list */}
-            <div className="max-h-48 overflow-y-auto">
-              {filtered.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-4">No results</p>
-              )}
-              {filtered.map((cat) => {
-                const isSelected = cat.id === selectedId;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => { onChange(cat.id); setOpen(false); setSearch(""); }}
-                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs transition-colors ${
-                      isSelected
-                        ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 font-semibold"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
-                    }`}
-                  >
-                    <span className="flex-1">{cat.name}</span>
-                    {isSelected && <IonIcon icon={checkmarkCircle} className="text-teal-500 text-sm" />}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Click-away overlay */}
-      {open && (
-        <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setSearch(""); }} />
-      )}
-    </div>
-  );
-}
-
-function ProductCategoryPicker({
+function UnifiedCategoryPicker({
   categoryId,
   subcategoryId,
-  onCategoryChange,
-  onSubcategoryChange,
+  selectedCategoryName,
+  selectedSubcategoryName,
+  selectedParentName,
+  onSelect,
 }: {
   categoryId: string;
   subcategoryId: string;
-  onCategoryChange: (id: string) => void;
-  onSubcategoryChange: (id: string) => void;
+  selectedCategoryName?: string;
+  selectedSubcategoryName?: string;
+  selectedParentName?: string;
+  onSelect: (catId: string, subId: string, catName?: string, subName?: string, parentName?: string) => void;
 }) {
-  const { data: categories } = useTopLevelCategories();
-  const { data: subcategories } = useSubCategories(categoryId || null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [expandedParent, setExpandedParent] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const parentCategories = useMemo(() => categories || [], [categories]);
-  const childCategories = useMemo(() => (subcategories || []) as Category[], [subcategories]);
+  const { data: topCategories } = useTopLevelCategories();
+  const { data: searchResults, isFetching: isSearching } = useCategorySearch(search);
+  const { data: subCategories } = useSubCategories(expandedParent);
+
+  const parents = useMemo(() => topCategories || [], [topCategories]);
+  const subs = useMemo(() => (subCategories || []) as Category[], [subCategories]);
+  const results = useMemo(() => searchResults || [], [searchResults]);
+
+  const hasSearch = search.trim().length >= 2;
+  const hasSelection = !!categoryId;
+
+  const displayName = subcategoryId
+    ? (selectedSubcategoryName || "Sub-category selected")
+    : (selectedCategoryName || "Category selected");
+  const displayParent = subcategoryId
+    ? (selectedParentName || selectedCategoryName || "")
+    : "";
+
+  const handleSelect = (catId: string, subId: string, catName?: string, subName?: string, parentName?: string) => {
+    onSelect(catId, subId, catName, subName, parentName);
+    setIsOpen(false);
+    setSearch("");
+    setExpandedParent(null);
+  };
+
+  const handleClear = () => {
+    onSelect("", "", "", "", "");
+    setSearch("");
+  };
+
+  if (!isOpen) {
+    return (
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          Category
+          <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">— helps customers find you</span>
+        </label>
+        {hasSelection ? (
+          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl">
+            <IonIcon icon={layersOutline} className="text-teal-500 text-base shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-teal-700 dark:text-teal-300 truncate">{displayName}</p>
+              {displayParent && (
+                <p className="text-[10px] text-teal-500/70 dark:text-teal-400/50 truncate">in {displayParent}</p>
+              )}
+            </div>
+            <button type="button" onClick={handleClear} className="shrink-0 p-0.5">
+              <IonIcon icon={closeCircle} className="text-teal-400 dark:text-teal-600 text-lg" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="shrink-0 text-[11px] font-semibold text-teal-600 dark:text-teal-400"
+            >
+              Change
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setIsOpen(true); setTimeout(() => searchInputRef.current?.focus(), 150); }}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-left transition-colors active:border-teal-300"
+          >
+            <IonIcon icon={searchOutline} className="text-slate-400 dark:text-slate-500 text-base" />
+            <span className="text-sm text-slate-400 dark:text-slate-500">Search & select a category...</span>
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      <SearchableCategoryDropdown
-        categories={parentCategories}
-        selectedId={categoryId}
-        onChange={onCategoryChange}
-        placeholder="Select a category"
-        label="Category — optional, improves discoverability"
-      />
+    <div>
+      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+        Category
+      </label>
 
-      {categoryId && childCategories.length > 0 && (
-        <SearchableCategoryDropdown
-          categories={childCategories}
-          selectedId={subcategoryId}
-          onChange={onSubcategoryChange}
-          placeholder="Select a sub-category"
-          label="Sub-category"
+      {/* Search input */}
+      <div className="relative mb-2">
+        <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+        <input
+          ref={searchInputRef}
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder='Try "rida", "stitching", "salon"...'
+          className="w-full pl-9 pr-9 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-teal-300 dark:border-teal-700 rounded-xl focus:outline-none focus:border-teal-400 text-slate-800 dark:text-white placeholder:text-slate-400"
+          autoFocus
         />
-      )}
+        {search && (
+          <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+            <IonIcon icon={closeCircle} className="text-slate-300 text-base" />
+          </button>
+        )}
+      </div>
+
+      {/* Results area */}
+      <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">
+        {hasSearch ? (
+          /* ── Search results ── */
+          isSearching ? (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : results.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-xs text-slate-400">No categories matching &ldquo;{search}&rdquo;</p>
+            </div>
+          ) : (
+            results.map((r: CategorySearchResult) => {
+              const isActive = r.id === (subcategoryId || categoryId);
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => handleSelect(
+                    r.parentId || r.id,
+                    r.parentId ? r.id : "",
+                    r.parentId ? r.parentName || "" : r.name,
+                    r.parentId ? r.name : "",
+                    r.parentName || "",
+                  )}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors ${
+                    isActive ? "bg-teal-50 dark:bg-teal-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${r.parentId ? "bg-teal-400" : "bg-slate-300"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs truncate ${isActive ? "font-semibold text-teal-700 dark:text-teal-300" : "text-slate-700 dark:text-slate-300"}`}>
+                      {r.name}
+                    </p>
+                    {r.parentName && (
+                      <p className="text-[10px] text-slate-400 truncate">in {r.parentName}</p>
+                    )}
+                  </div>
+                  {isActive && <IonIcon icon={checkmarkCircle} className="text-teal-500 text-sm shrink-0" />}
+                </button>
+              );
+            })
+          )
+        ) : (
+          /* ── Browse mode: expandable parent → child tree ── */
+          parents.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-xs text-slate-400 animate-pulse">Loading categories...</p>
+            </div>
+          ) : (
+            <>
+              {parents.map((cat: Category) => {
+                const isExpanded = expandedParent === cat.id;
+                const isParentActive = categoryId === cat.id && !subcategoryId;
+                return (
+                  <div key={cat.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedParent(isExpanded ? null : cat.id)}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-left border-b border-slate-100 dark:border-slate-700 transition-colors ${
+                        isParentActive ? "bg-teal-50 dark:bg-teal-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                      }`}
+                    >
+                      <IonIcon
+                        icon={isExpanded ? chevronDownOutline : chevronForwardOutline}
+                        className="text-slate-400 text-xs shrink-0"
+                      />
+                      <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 flex-1 truncate">
+                        {cat.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleSelect(cat.id, "", cat.name, "", ""); }}
+                        className="text-[10px] font-semibold text-teal-500 dark:text-teal-400 px-2 py-1 rounded-lg bg-teal-50 dark:bg-teal-900/30 shrink-0 active:bg-teal-100"
+                      >
+                        Select
+                      </button>
+                    </button>
+                    {isExpanded && (
+                      <div className="bg-slate-50/50 dark:bg-slate-900/30">
+                        {subs.length === 0 ? (
+                          <div className="flex items-center gap-2 px-8 py-2">
+                            <div className="w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-[11px] text-slate-400">Loading...</span>
+                          </div>
+                        ) : (
+                          subs.map((sub: Category) => {
+                            const isSubActive = sub.id === subcategoryId;
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => handleSelect(cat.id, sub.id, cat.name, sub.name, cat.name)}
+                                className={`w-full flex items-center gap-2 pl-8 pr-3 py-2 text-left transition-colors ${
+                                  isSubActive ? "bg-teal-50 dark:bg-teal-900/20" : "hover:bg-white dark:hover:bg-slate-700/50"
+                                }`}
+                              >
+                                <span className="w-1 h-1 rounded-full bg-teal-400 shrink-0" />
+                                <span className={`text-xs flex-1 truncate ${
+                                  isSubActive ? "font-semibold text-teal-700 dark:text-teal-300" : "text-slate-600 dark:text-slate-400"
+                                }`}>
+                                  {sub.name}
+                                </span>
+                                {isSubActive && <IonIcon icon={checkmarkCircle} className="text-teal-500 text-xs shrink-0" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => { setIsOpen(false); setSearch(""); setExpandedParent(null); }}
+        className="mt-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500"
+      >
+        {hasSelection ? "Keep current" : "Skip category"}
+      </button>
     </div>
   );
 }
@@ -238,6 +336,7 @@ const ProviderProductsTab = ({
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [catNames, setCatNames] = useState({ category: "", subcategory: "", parent: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createMutation = useCreateProduct();
@@ -251,6 +350,7 @@ const ProviderProductsTab = ({
     setPhotoFiles([]);
     setPhotoPreviews([]);
     setPhotoError(null);
+    setCatNames({ category: "", subcategory: "", parent: "" });
     setSheetOpen(true);
   };
 
@@ -261,6 +361,7 @@ const ProviderProductsTab = ({
     const existing = p.photoUrls?.length ? [...p.photoUrls] : p.photoUrl ? [p.photoUrl] : [];
     setPhotoPreviews(existing);
     setPhotoError(null);
+    setCatNames({ category: "", subcategory: "", parent: "" });
     setSheetOpen(true);
   };
 
@@ -545,8 +646,8 @@ const ProviderProductsTab = ({
                   price: editing?.price != null ? String(editing.price) : "",
                   currency: editing?.currency || "INR",
                   productType: editing?.productType || "product",
-                  categoryId: (editing as any)?.categoryId || "",
-                  subcategoryId: (editing as any)?.subcategoryId || "",
+                  categoryId: editing?.categoryId || "",
+                  subcategoryId: editing?.subcategoryId || "",
                   keywords: (editing as any)?.keywords?.join(", ") || "",
                 }}
                 validationSchema={productSchema}
@@ -586,10 +687,10 @@ const ProviderProductsTab = ({
                     price: values.price ? parseFloat(values.price) : undefined,
                     currency: values.currency || "INR",
                     productType: values.productType || "product",
-                    photoUrl: photoUrls[0] || undefined,
-                    photoUrls,
                     categoryId: values.categoryId || undefined,
                     subcategoryId: values.subcategoryId || undefined,
+                    photoUrl: photoUrls[0] || undefined,
+                    photoUrls,
                     keywords: values.keywords
                       ? values.keywords.split(",").map((k: string) => k.trim().toLowerCase()).filter(Boolean)
                       : undefined,
@@ -749,11 +850,21 @@ const ProviderProductsTab = ({
                     </div>
 
                     {/* Category & Sub-category */}
-                    <ProductCategoryPicker
-                      categoryId={values.categoryId}
-                      subcategoryId={values.subcategoryId}
-                      onCategoryChange={(id) => { setFieldValue("categoryId", id); setFieldValue("subcategoryId", ""); }}
-                      onSubcategoryChange={(id) => setFieldValue("subcategoryId", id)}
+                    <UnifiedCategoryPicker
+                      categoryId={values.categoryId || ""}
+                      subcategoryId={values.subcategoryId || ""}
+                      selectedCategoryName={catNames.category}
+                      selectedSubcategoryName={catNames.subcategory}
+                      selectedParentName={catNames.parent}
+                      onSelect={(catId, subId, catName, subName, parentName) => {
+                        setFieldValue("categoryId", catId || "");
+                        setFieldValue("subcategoryId", subId || "");
+                        setCatNames({
+                          category: catName || "",
+                          subcategory: subName || "",
+                          parent: parentName || "",
+                        });
+                      }}
                     />
 
                     {/* Keywords */}
