@@ -16,6 +16,7 @@ export interface ProviderNearbyParams {
   minRating?: number;
   verifiedOnly?: boolean;
   womenLedOnly?: boolean;
+  sinceDays?: number;
 }
 
 export interface NearbyProviderResponse {
