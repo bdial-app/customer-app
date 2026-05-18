@@ -72,7 +72,7 @@ export default function GoogleReviewsLinkCard({
     try {
       const results = await verifyGooglePlace(providerId, providerPhone);
       if (results.length === 0) {
-        setError("No matching Google Business listing found. Ensure your Google Business Profile uses the same phone number as your Tijarah account.");
+        setError("No matching Google Business listing found. Ensure your Google Business Profile uses the same phone number as your Tijarah business contact number.");
       } else {
         setCandidates(results);
         setShowCandidates(true);
@@ -299,7 +299,7 @@ export default function GoogleReviewsLinkCard({
                 <span className="text-[10px]">🔒</span>
               </div>
               <p className="text-[10px] text-white/75 leading-relaxed">
-                We match your registered phone number with Google to find your business. Only your <span className="text-white font-medium">public rating &amp; reviews</span> are displayed — no private data is accessed.
+                We match your business contact number with Google to find your listing. Only your <span className="text-white font-medium">public rating &amp; reviews</span> are displayed — no private data is accessed.
               </p>
             </div>
           </div>
