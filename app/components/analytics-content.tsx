@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -333,12 +333,21 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
 // ─── Main Component ───────────────────────────────────────────────────
 interface AnalyticsContentProps {
   onNavigateToBoost?: () => void;
+  initialView?: string | null;
+  onViewConsumed?: () => void;
 }
 
-const AnalyticsContent = ({ onNavigateToBoost }: AnalyticsContentProps) => {
+const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: AnalyticsContentProps) => {
   const { isOnline } = useNetworkStatus();
   const [period, setPeriod] = useState<Period>("7d");
   const [view, setView] = useState<View>("overview");
+
+  useEffect(() => {
+    if (initialView && (initialView === "overview" || initialView === "leads")) {
+      setView(initialView);
+      onViewConsumed?.();
+    }
+  }, [initialView, onViewConsumed]);
   const [leadTier, setLeadTier] = useState<string | undefined>(undefined);
   const [leadPage, setLeadPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);

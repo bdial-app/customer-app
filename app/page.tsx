@@ -61,6 +61,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
+  const [analyticsView, setAnalyticsView] = useState<string | null>(null);
   const { userMode, setUserMode, providerStatus } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user } = useAppSelector((state) => state.auth);
@@ -187,6 +188,11 @@ export default function Home() {
     setActiveTab("listings");
   };
 
+  const handleNavigateToAnalytics = (view: string) => {
+    setAnalyticsView(view);
+    setActiveTab("analytics");
+  };
+
   const getPageTitle = () => {
     switch (activeTab) {
       case "home":
@@ -227,7 +233,7 @@ export default function Home() {
         {userMode === "customer" ? (
           <UserHome isServiceable={isServiceable} selectedCity={selectedCity} />
         ) : (
-          <ProviderDashboard onNavigateToListings={handleNavigateToListings} />
+          <ProviderDashboard onNavigateToListings={handleNavigateToListings} onNavigateToAnalytics={handleNavigateToAnalytics} />
         )}
       </TabPanel>
 
@@ -265,7 +271,11 @@ export default function Home() {
       </LazyTabPanel>
 
       <LazyTabPanel id="analytics" activeTab={activeTab}>
-        <AnalyticsContent onNavigateToBoost={() => handleNavigateToListings("boost")} />
+        <AnalyticsContent
+          onNavigateToBoost={() => handleNavigateToListings("boost")}
+          initialView={analyticsView}
+          onViewConsumed={() => setAnalyticsView(null)}
+        />
       </LazyTabPanel>
 
       {/* Provider Suspended Overlay — covers all provider views */}

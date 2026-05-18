@@ -954,8 +954,10 @@ const SubscriptionUpsell = ({
 // ─── Revenue Boosters Section ───────────────────────────────────────
 const RevenueBoosters = ({
   onNavigate,
+  onNavigateToAnalytics,
 }: {
   onNavigate: (tab: string) => void;
+  onNavigateToAnalytics?: (view: string) => void;
 }) => {
   const boosters = [
     {
@@ -988,7 +990,7 @@ const RevenueBoosters = ({
       gradient: "from-violet-500 to-purple-600",
       iconBg: "bg-violet-50 dark:bg-violet-900/30",
       iconColor: "text-violet-500",
-      action: () => onNavigate("analytics"),
+      action: () => onNavigateToAnalytics?.("leads"),
       cta: "View Leads",
     },
   ];
@@ -1002,7 +1004,7 @@ const RevenueBoosters = ({
         </h3>
       </div>
       <div
-        className="flex gap-3 overflow-x-auto scrollbar-none pb-1"
+        className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {boosters.map((b) => (
@@ -1146,10 +1148,12 @@ const DealsOverview = ({
 // ─── Main Dashboard (Home Tab) ──────────────────────────────────────
 interface ProviderDashboardProps {
   onNavigateToListings?: (subTab: string) => void;
+  onNavigateToAnalytics?: (view: string) => void;
 }
 
 const ProviderDashboard = ({
   onNavigateToListings,
+  onNavigateToAnalytics,
 }: ProviderDashboardProps) => {
   const router = useRouter();
   const { isOnline } = useNetworkStatus();
@@ -1358,7 +1362,7 @@ const ProviderDashboard = ({
       />
       {/* Google Reviews Link — show for approved providers */}
       {isApproved && (
-        <div id="google-link-card" className="px-4 mt-4">
+        <div id="google-link-card" className="px-4 mt-4 pb-4">
           <GoogleReviewsLinkCard
             providerId={providerId}
             providerPhone={provider?.contactNumber}
@@ -1369,7 +1373,7 @@ const ProviderDashboard = ({
           />
         </div>
       )}
-      <RevenueBoosters onNavigate={handleNavigate} />
+      <RevenueBoosters onNavigate={handleNavigate} onNavigateToAnalytics={onNavigateToAnalytics} />
       <DealsOverview
         offers={providerStats.activeOffers}
         onManage={() => handleNavigate("deals")}
