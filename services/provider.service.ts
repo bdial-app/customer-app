@@ -60,6 +60,7 @@ export interface BecomeProviderPayload {
   facebookHandle?: string;
   youtubeHandle?: string;
   whatsappNumber?: string;
+  linkedinHandle?: string;
 }
 
 export interface ProviderData {
@@ -90,6 +91,7 @@ export interface ProviderData {
   facebookHandle?: string | null;
   youtubeHandle?: string | null;
   whatsappNumber?: string | null;
+  linkedinHandle?: string | null;
 }
 
 export interface ProviderStatusResponse {
@@ -120,6 +122,7 @@ export interface UpdateProviderPayload {
   facebookHandle?: string | null;
   youtubeHandle?: string | null;
   whatsappNumber?: string | null;
+  linkedinHandle?: string | null;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────
