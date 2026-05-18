@@ -92,6 +92,14 @@ export interface ProviderData {
   youtubeHandle?: string | null;
   whatsappNumber?: string | null;
   linkedinHandle?: string | null;
+  // Google Reviews integration
+  googlePlaceId?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
+  googleVerifiedAt?: string | null;
+  combinedRating?: number | null;
+  combinedReviewCount?: number | null;
+  trustLevel?: 'unverified' | 'basic' | 'verified' | 'trusted';
 }
 
 export interface ProviderStatusResponse {

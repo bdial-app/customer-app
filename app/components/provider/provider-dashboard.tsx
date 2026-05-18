@@ -28,6 +28,7 @@ import {
   cameraOutline,
   brushOutline,
   diamondOutline,
+  logoGoogle,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import ProviderHeader from "./provider-header";
@@ -48,6 +49,8 @@ import {
 } from "@/services/provider.service";
 import { getWarningsUnreadCount, getMyWarnings } from "@/services/report.service";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
+
+import GoogleReviewsLinkCard from "./google-reviews-link-card";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -490,6 +493,16 @@ const GrowthTips = ({
       desc: "Verified providers rank higher & build more trust",
       priority: "medium" as const,
       action: onVerify,
+    },
+    !provider?.googlePlaceId && {
+      icon: logoGoogle,
+      title: "Link Google Reviews",
+      desc: "Show your Google reviews to build trust faster",
+      priority: "medium" as const,
+      action: () => {
+        // Scroll to the Google link card
+        document.getElementById("google-link-card")?.scrollIntoView({ behavior: "smooth" });
+      },
     },
     {
       icon: megaphoneOutline,
@@ -1343,6 +1356,19 @@ const ProviderDashboard = ({
         onNavigate={handleNavigate}
         onVerify={handleVerify}
       />
+      {/* Google Reviews Link — show for approved providers */}
+      {isApproved && (
+        <div id="google-link-card" className="px-4 mt-4">
+          <GoogleReviewsLinkCard
+            providerId={providerId}
+            providerPhone={provider?.contactNumber}
+            googlePlaceId={provider?.googlePlaceId}
+            trustLevel={provider?.trustLevel}
+            googleRating={provider?.googleRating}
+            googleReviewCount={provider?.googleReviewCount}
+          />
+        </div>
+      )}
       <RevenueBoosters onNavigate={handleNavigate} />
       <DealsOverview
         offers={providerStats.activeOffers}
