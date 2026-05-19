@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { isNativePlatform } from "@/utils/platform";
-import { PLAY_STORE_URL, APP_STORE_URL } from "@/utils/sharing";
+import { PLAY_STORE_URL } from "@/utils/sharing";
 
 const DISMISS_KEY = "smart_app_banner_dismissed";
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -9,34 +9,42 @@ const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 function getStoreInfo() {
   const ua = navigator.userAgent;
   if (/iPhone|iPad|iPod/.test(ua)) {
-    return { store: "App Store", url: APP_STORE_URL, platform: "ios" as const };
+    return { platform: "ios" as const, available: false };
   }
-  return { store: "Play Store", url: PLAY_STORE_URL, platform: "android" as const };
+  return { platform: "android" as const, available: true };
 }
+
+const PlayStoreBadge = () => (
+  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+    <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.3 2.3-8.636-8.632z" />
+  </svg>
+);
+
+const AppStoreBadge = () => (
+  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+  </svg>
+);
 
 export default function SmartAppBanner() {
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    // Only show on web browsers, not native apps or SSR
     if (typeof window === "undefined") return;
     if (isNativePlatform()) return;
 
-    // Don't show on desktop — only mobile web benefits from this
     const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(
       navigator.userAgent
     );
     if (!isMobile) return;
 
-    // Check if dismissed recently
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
     if (dismissedAt) {
       const elapsed = Date.now() - parseInt(dismissedAt, 10);
       if (elapsed < DISMISS_DURATION_MS) return;
     }
 
-    // Show after a short delay to not interrupt initial load
     const timer = setTimeout(() => setVisible(true), 2500);
     return () => clearTimeout(timer);
   }, []);
@@ -48,13 +56,15 @@ export default function SmartAppBanner() {
   };
 
   const handleOpen = () => {
-    const { url } = getStoreInfo();
-    window.open(url, "_blank", "noopener,noreferrer");
+    const { available } = getStoreInfo();
+    if (available) {
+      window.open(PLAY_STORE_URL, "_blank", "noopener,noreferrer");
+    }
   };
 
   if (!visible) return null;
 
-  const { store } = getStoreInfo();
+  const { platform, available } = getStoreInfo();
 
   return (
     <div
@@ -63,9 +73,13 @@ export default function SmartAppBanner() {
       }`}
     >
       <div className="w-full max-w-md mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-[0_-2px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-slate-700 p-3 flex items-center gap-3">
-        {/* App Icon */}
-        <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
-          <span className="text-white font-bold text-lg">T</span>
+        {/* Store Logo */}
+        <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${
+          platform === "ios"
+            ? "bg-black text-white"
+            : "bg-white border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-slate-700 dark:text-white"
+        }`}>
+          {platform === "ios" ? <AppStoreBadge /> : <PlayStoreBadge />}
         </div>
 
         {/* Text */}
@@ -74,20 +88,28 @@ export default function SmartAppBanner() {
             Tijarah
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">
-            Get the app for a better experience
+            {available
+              ? "Get the app for a better experience"
+              : "Coming soon to the App Store"}
           </p>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
-            Free on {store}
+            {available ? "Free on Google Play" : "Available on Play Store"}
           </p>
         </div>
 
         {/* CTA Button */}
-        <button
-          onClick={handleOpen}
-          className="shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-900 font-semibold text-sm rounded-full transition-colors shadow-sm"
-        >
-          GET
-        </button>
+        {available ? (
+          <button
+            onClick={handleOpen}
+            className="shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-900 font-semibold text-sm rounded-full transition-colors shadow-sm"
+          >
+            GET
+          </button>
+        ) : (
+          <span className="shrink-0 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-xs font-medium rounded-full">
+            Soon
+          </span>
+        )}
 
         {/* Close Button */}
         <button
