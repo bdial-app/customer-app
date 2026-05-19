@@ -34,6 +34,7 @@ import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
+import SmartAppBanner from "./components/smart-app-banner";
 import { initSentry } from "@/utils/sentry";
 import { hydrateStorageCache, removeItemSync } from "@/utils/storage";
 import { useStatusBar } from "@/hooks/useStatusBar";
@@ -393,6 +394,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <AccountPausedHandler />
                   <AuthGateSheet />
                   {children}
+                  <SmartAppBanner />
                   </MaintenanceGate>
                 </App>
               </NotificationProvider>
