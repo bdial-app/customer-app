@@ -6,6 +6,7 @@ import * as chatApi from "@/services/chat.service";
 import type { ChatMessage, ConversationDetail } from "@/services/chat.service";
 import { useAppDispatch, useAppSelector } from "./useAppStore";
 import { setTyping, setActiveConversation } from "@/store/slices/chatSlice";
+import { isNetworkError } from "@/utils/axios";
 
 // ─── Conversation List ────────────────────────
 
@@ -18,7 +19,7 @@ export function useConversations(
     queryKey: ["conversations", filter, search, role],
     queryFn: () => chatApi.getConversations({ filter, search, limit: 50, role }),
     refetchInterval: 30000, // Fallback polling every 30s
-    staleTime: 5000,
+    staleTime: 0,
   });
 }
 
@@ -46,6 +47,7 @@ export function useMessages(conversationId: string | null) {
       lastPage.hasMore ? lastPage.oldestTimestamp ?? undefined : undefined,
     enabled: !!conversationId,
     initialPageParam: undefined as string | undefined,
+    refetchOnMount: "always",
   });
 }
 
@@ -85,6 +87,10 @@ export function useMarkAsRead(conversationId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    },
+    onError: (error) => {
+      // Silently swallow network errors — will reconcile on reconnect
+      if (isNetworkError(error)) return;
     },
   });
 }
@@ -128,9 +134,61 @@ export function useArchiveConversation() {
 
   return useMutation({
     mutationFn: (conversationId: string) => chatApi.archiveConversation(conversationId),
+    onMutate: async (conversationId: string) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["conversations"] });
+
+      // Optimistically remove the conversation from all cached conversation lists
+      queryClient.setQueriesData<chatApi.ConversationsResponse>(
+        { queryKey: ["conversations"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            conversations: old.conversations.filter((c) => c.id !== conversationId),
+            total: Math.max(0, old.total - 1),
+          };
+        },
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    },
+    onError: () => {
+      // Refetch on error to restore correct state
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+// ─── Block Conversation ───────────────────────
+
+export function useBlockConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (conversationId: string) => chatApi.blockConversation(conversationId),
+    onMutate: async (conversationId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["conversations"] });
+      queryClient.setQueriesData<chatApi.ConversationsResponse>(
+        { queryKey: ["conversations"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            conversations: old.conversations.filter((c) => c.id !== conversationId),
+            total: Math.max(0, old.total - 1),
+          };
+        },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
@@ -161,6 +219,7 @@ export function useChatRealtime(conversationId: string | null) {
       })
       .on("broadcast", { event: "read_receipt" }, () => {
         queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       })
       .subscribe();
 

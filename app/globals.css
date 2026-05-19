@@ -3,6 +3,12 @@
 /* Tailwind v4: class-based dark mode toggle */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Safe area CSS variables — overridden by native Android bridge injection at runtime */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
 /* import Konsta UI theme */
 @import 'konsta/react/theme.css';
 
@@ -33,6 +39,61 @@ html, body {
   user-select: none;
 }
 
+/* ─── Native Mobile Performance ──────────────────────────────────── */
+
+/* Prevent overscroll/bounce on app shell (native apps don't bounce) */
+html {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+/* Next.js root must fill viewport for absolute-positioned children */
+#__next, [data-nextjs-scroll-focus-boundary] {
+  height: 100%;
+  position: relative;
+}
+
+/* All interactive elements: fast tap, no highlight */
+button, a, [role="button"], input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection only in inputs/textareas */
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* GPU-accelerated scrolling for scroll containers */
+.scroll-container,
+[data-scroll],
+.k-page-content {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  will-change: scroll-position;
+  scroll-behavior: smooth;
+}
+
+/* Tab panel optimization — prevent layout thrash on hidden tabs */
+.tab-panel {
+  will-change: auto;
+  contain: layout style;
+  overscroll-behavior: contain;
+}
+
+.tab-panel[style*="display: none"] {
+  contain: strict;
+}
+
 /* Hide native search clear button across all browsers */
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
@@ -45,11 +106,14 @@ input[type="search"]::-webkit-search-decoration {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Safe area support for notched devices */
-body {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+/* Prevent scroll chaining on ALL scrollable elements — no scroll leaks to parent */
+[class*="overflow-y-auto"],
+[class*="overflow-auto"],
+[style*="overflow"] {
+  overscroll-behavior: contain;
 }
+
+/* Safe area handled per-component (sticky headers, tab panels) */
 
 /* Skeleton shimmer animation */
 @keyframes shimmer {
@@ -95,6 +159,17 @@ body {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.4s ease-out both;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Stagger children animations */

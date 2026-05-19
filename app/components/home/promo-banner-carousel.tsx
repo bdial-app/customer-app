@@ -111,7 +111,7 @@ const PromoBannerCarousel = ({
   const liveOffset = useRef(0);
 
   const displayBanners: Banner[] = useMemo(() => {
-    if (!banners || banners.length === 0) return FALLBACK_BANNERS;
+    if (!Array.isArray(banners) || banners.length === 0) return FALLBACK_BANNERS;
     return banners.map((b) => ({
       id: b.id,
       title: b.title,
@@ -253,16 +253,14 @@ const PromoBannerCarousel = ({
               className="relative min-w-full h-full flex items-center shrink-0 overflow-hidden"
               style={{ background: banner.gradient }}
             >
-              {/* Background image */}
+              {/* Background image — use img for proper loading + caching */}
               {banner.image_url && !banner.image_url.includes("/path/to/") && (
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    backgroundImage: `url('${banner.image_url}')`,
-                    backgroundSize: "contain",
-                    backgroundPosition: "center right",
-                    backgroundRepeat: "no-repeat",
-                  }}
+                <img
+                  src={banner.image_url}
+                  alt=""
+                  loading={displayBanners.indexOf(banner) === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-contain object-right pointer-events-none"
                 />
               )}
 
@@ -311,10 +309,13 @@ const PromoBannerCarousel = ({
             key={i}
             animate={{
               width: i === current ? 20 : 6,
-              backgroundColor: i === current ? "#1a1a2e" : "#d1d5db",
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="h-[5px] rounded-full cursor-pointer"
+            className={`h-[5px] rounded-full cursor-pointer ${
+              i === current
+                ? "bg-slate-800 dark:bg-white"
+                : "bg-slate-300 dark:bg-slate-600"
+            }`}
             onClick={() => handleDot(i)}
           />
         ))}

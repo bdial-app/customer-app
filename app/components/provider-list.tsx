@@ -33,12 +33,18 @@ const ProviderList = ({ providerList }: { providerList: any[] }) => {
           >
             {/* Image */}
             <div className="relative h-[140px] overflow-hidden">
-              <img
-                src={provider.image}
-                alt={provider.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+              {provider.image ? (
+                <img
+                  src={provider.image}
+                  alt={provider.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-amber-100 to-amber-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-amber-600/40 dark:text-slate-400">{provider.name?.[0] || "?"}</span>
+                </div>
+              )}
               {/* Verified badge */}
               {provider.verified && (
                 <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">

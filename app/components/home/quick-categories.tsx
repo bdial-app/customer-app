@@ -2,40 +2,30 @@
 import { motion } from "framer-motion";
 import { useTopLevelCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { ROUTE_PATH } from "@/utils/contants";
-
-const CATEGORY_COLORS = [
-  { gradient: "from-orange-400 to-amber-500", text: "text-white" },
-  { gradient: "from-emerald-400 to-teal-500", text: "text-white" },
-  { gradient: "from-pink-400 to-rose-500", text: "text-white" },
-  { gradient: "from-blue-400 to-indigo-500", text: "text-white" },
-  { gradient: "from-yellow-400 to-orange-500", text: "text-white" },
-  { gradient: "from-purple-400 to-violet-500", text: "text-white" },
-  { gradient: "from-cyan-400 to-blue-500", text: "text-white" },
-  { gradient: "from-red-400 to-pink-500", text: "text-white" },
-  { gradient: "from-lime-400 to-green-500", text: "text-white" },
-  { gradient: "from-fuchsia-400 to-purple-500", text: "text-white" },
-];
+import { PersonalizedCategory } from "@/services/home.service";
+import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.015 } },
 };
 
 const cardItem = {
-  hidden: { opacity: 0, y: 20, scale: 0.9 },
+  hidden: { opacity: 0, y: 6 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { type: "spring" as const, stiffness: 260, damping: 20 },
+    transition: { type: "tween" as const, duration: 0.15, ease: "easeOut" as const },
   },
 };
 
-const QuickCategories = () => {
-  const { data: categories = [], isLoading } = useTopLevelCategories();
+const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: PersonalizedCategory[] | null }) => {
+  const { data: rawCategories = [], isLoading, isError } = useTopLevelCategories();
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
   const router = useRouter();
+  const { trackCategory } = useCategoryInteraction();
 
   if (isLoading) {
     return (
@@ -55,8 +45,28 @@ const QuickCategories = () => {
     );
   }
 
-  const displayCategories = categories.slice(0, 10);
-  const hasMore = categories.length > 10;
+  if (isError || categories.length === 0) {
+    return null;
+  }
+
+  // Use personalized order if available, otherwise fall back to default order
+  // Mobile: show 4 categories + See All at end. Web (≥768px): show 9 + See All.
+  const isWide = typeof window !== 'undefined' && window.innerWidth >= 768;
+  const maxDisplay = isWide ? 9 : 4;
+
+  let displayCategories: any[];
+  if (personalizedCategories?.length) {
+    const catMap = new Map(categories.map((c: any) => [c.id, c]));
+    const personalized = personalizedCategories
+      .map((pc) => catMap.get(pc.id))
+      .filter(Boolean);
+    const personalizedIds = new Set(personalizedCategories.map((pc) => pc.id));
+    const rest = categories.filter((c: any) => !personalizedIds.has(c.id));
+    displayCategories = [...personalized, ...rest].slice(0, maxDisplay);
+  } else {
+    displayCategories = categories.slice(0, maxDisplay);
+  }
+  const hasMore = categories.length > maxDisplay;
 
   return (
     <div className="pb-5">
@@ -66,41 +76,37 @@ const QuickCategories = () => {
         animate="show"
         className="flex gap-3 overflow-x-auto no-scrollbar px-4"
       >
-        {displayCategories.map((cat: any, i) => {
-          const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
-          // const Icon = ABSTRACT_ICONS[i % ABSTRACT_ICONS.length];
-          return (
+        {displayCategories.map((cat: any) => (
             <motion.div
               key={cat.id}
               variants={cardItem}
               whileTap={{ scale: 0.92 }}
-              onClick={() =>
+              onClick={() => {
+                trackCategory(cat.id, 'view');
                 router.push(
                   `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}`,
-                )
-              }
+                );
+              }}
               className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
             >
-              <div className="w-[62px] h-[62px] rounded-2xl relative overflow-hidden flex items-center justify-center">
-                <Image
-                  src={cat.imageUrl}
-                  alt={cat.name}
-                  fill
-                  sizes="62px"
-                  className="object-cover"
-                />
-              </div>
+              <CategoryIcon
+                icon={cat.icon}
+                iconColor={cat.iconColor}
+                imageUrl={cat.imageUrl}
+                name={cat.name}
+                size="lg"
+              />
               <span className="text-[10px] font-semibold text-white/70 text-center leading-tight w-[68px] line-clamp-2">
                 {cat.name}
               </span>
             </motion.div>
-          );
-        })}
+        ))}
+        {/* See All — always last card */}
         {hasMore && (
           <motion.div
             variants={cardItem}
             whileTap={{ scale: 0.92 }}
-            onClick={() => router.push(ROUTE_PATH.SEARCH)}
+            onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
             className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
           >
             <div className="w-[62px] h-[62px] rounded-2xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">

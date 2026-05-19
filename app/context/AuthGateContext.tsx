@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { onUnauthorized } from "@/utils/axios";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AuthGateContextValue {
   /** Wraps an action that requires authentication.
@@ -37,6 +38,9 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
   const pendingCallbackRef = useRef<(() => void) | null>(null);
   // Cooldown: prevent the 401 listener from reopening the sheet right after dismissal
   const lastDismissedRef = useRef<number>(0);
+  // Track whether the gate was opened due to a 401 (session recovery)
+  const was401Ref = useRef(false);
+  const queryClient = useQueryClient();
 
   const requireAuth = useCallback(
     (callback?: () => void) => {
@@ -54,6 +58,7 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
     setIsOpen(false);
     pendingCallbackRef.current = null;
     lastDismissedRef.current = Date.now();
+    was401Ref.current = false;
   }, []);
 
   // When user becomes truthy while the sheet is open → auth succeeded
@@ -62,13 +67,22 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
   // the sheet must stay open for the details step.
   useEffect(() => {
     if (user && user.name && isOpen) {
+      const wasSessionRecovery = was401Ref.current;
       setIsOpen(false);
+      was401Ref.current = false;
       const cb = pendingCallbackRef.current;
       pendingCallbackRef.current = null;
+
+      // After session recovery (401 → re-auth), invalidate all queries
+      // so provider tabs, analytics, etc. refetch with the new token
+      if (wasSessionRecovery) {
+        queryClient.invalidateQueries();
+      }
+
       // Defer so the sheet close animation starts before the callback fires
       if (cb) setTimeout(cb, 100);
     }
-  }, [user, isOpen]);
+  }, [user, isOpen, queryClient]);
 
   // Listen for 401/403 from the axios interceptor
   useEffect(() => {
@@ -77,6 +91,7 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
       const cooldownMs = 5000;
       if (!isOpen && Date.now() - lastDismissedRef.current > cooldownMs) {
         pendingCallbackRef.current = null;
+        was401Ref.current = true;
         setIsOpen(true);
       }
     });

@@ -1,3 +1,5 @@
+import { getTokenSync } from "@/utils/storage";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const EVENTS_URL = `${API_BASE}/analytics/events`;
 const FLUSH_INTERVAL = 10_000; // 10 seconds
@@ -81,7 +83,7 @@ function shouldDedupe(key: string): boolean {
 // ─── Flush Logic ────────────────────────────────────────────────────
 
 function getAuthHeaders(): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = typeof window !== "undefined" ? getTokenSync() : null;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;

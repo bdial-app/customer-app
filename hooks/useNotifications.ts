@@ -10,20 +10,22 @@ import {
 } from "@/services/notification.service";
 import type { NotificationPreferences } from "@/services/notification.service";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
-import { setUnreadCount, decrementUnread, clearUnread } from "@/store/slices/notificationSlice";
+import { setNotificationCounts, decrementUnread, clearUnread } from "@/store/slices/notificationSlice";
+import { useAppContext } from "@/app/context/AppContext";
 
 const notificationKeys = {
   all: ["notifications"] as const,
-  list: (page: number, type?: string, status?: string) =>
-    [...notificationKeys.all, "list", page, type, status] as const,
+  list: (page: number, type?: string, status?: string, targetMode?: string) =>
+    [...notificationKeys.all, "list", page, type, status, targetMode] as const,
   unreadCount: ["notifications", "unread-count"] as const,
   preferences: ["notifications", "preferences"] as const,
 };
 
 export function useNotifications(page = 1, type?: string, status?: "all" | "read" | "unread") {
+  const { userMode } = useAppContext();
   return useQuery({
-    queryKey: notificationKeys.list(page, type, status),
-    queryFn: () => getNotifications(page, 20, type, status),
+    queryKey: notificationKeys.list(page, type, status, userMode),
+    queryFn: () => getNotifications(page, 20, type, status, userMode),
   });
 }
 
@@ -34,9 +36,15 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: notificationKeys.unreadCount,
     queryFn: async () => {
-      const result = await getUnreadCount();
-      dispatch(setUnreadCount(result.count));
-      return result;
+      const [customerResult, providerResult] = await Promise.all([
+        getUnreadCount("customer"),
+        getUnreadCount("provider"),
+      ]);
+      dispatch(setNotificationCounts({
+        customer: customerResult.count,
+        provider: providerResult.count,
+      }));
+      return { customer: customerResult.count, provider: providerResult.count };
     },
     refetchInterval: 60_000, // Poll every 60s
     refetchOnWindowFocus: true,
@@ -47,11 +55,12 @@ export function useUnreadCount() {
 export function useMarkAsRead() {
   const qc = useQueryClient();
   const dispatch = useAppDispatch();
+  const { userMode } = useAppContext();
 
   return useMutation({
     mutationFn: markAsRead,
     onSuccess: () => {
-      dispatch(decrementUnread());
+      dispatch(decrementUnread(userMode));
       qc.invalidateQueries({ queryKey: notificationKeys.all });
       qc.invalidateQueries({ queryKey: notificationKeys.unreadCount });
     },
@@ -61,11 +70,12 @@ export function useMarkAsRead() {
 export function useMarkAllAsRead() {
   const qc = useQueryClient();
   const dispatch = useAppDispatch();
+  const { userMode } = useAppContext();
 
   return useMutation({
-    mutationFn: markAllAsRead,
+    mutationFn: () => markAllAsRead(userMode),
     onSuccess: () => {
-      dispatch(clearUnread());
+      dispatch(clearUnread(userMode));
       qc.invalidateQueries({ queryKey: notificationKeys.all });
       qc.invalidateQueries({ queryKey: notificationKeys.unreadCount });
     },

@@ -1,9 +1,10 @@
 "use client";
-import { motion } from "framer-motion";
+import { memo } from "react";
 import { IonIcon } from "@ionic/react";
 import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
+import OptimizedImage from "@/app/components/ui/optimized-image";
 
 interface Provider {
   id: string | number;
@@ -51,14 +52,13 @@ const ProviderCardSlider = ({
           )}
         </div>
         {viewAllLink && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => router.push(viewAllLink)}
-            className="text-xs font-semibold px-3 py-1 rounded-full"
+            className="text-xs font-semibold px-3 py-1 rounded-full active:scale-95 transition-transform"
             style={{ color: accentColor, backgroundColor: `${accentColor}15` }}
           >
             See All →
-          </motion.button>
+          </button>
         )}
       </div>
 
@@ -89,31 +89,24 @@ const ProviderCardSlider = ({
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {providers.map((provider, idx) => (
-            <motion.div
+            <div
               key={provider.id}
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 20,
-                delay: idx * 0.06,
-              }}
-              whileTap={{ scale: 0.97 }}
               onClick={() =>
                 router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
               }
-              className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
+              className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800 active:scale-[0.97] transition-transform"
             >
               {/* Image */}
               <div className="relative h-[120px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800">
                 {provider.image ? (
-                  <img
+                  <OptimizedImage
                     src={provider.image}
                     alt={provider.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+                    className="w-full h-full"
+                    width={150}
+                    height={120}
+                    priority={idx < 3}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -201,7 +194,7 @@ const ProviderCardSlider = ({
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -209,4 +202,4 @@ const ProviderCardSlider = ({
   );
 };
 
-export default ProviderCardSlider;
+export default memo(ProviderCardSlider);

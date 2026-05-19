@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { getItemSync, setItemSync } from "@/utils/storage";
 
 type Theme = "light" | "dark";
 const THEME_KEY = "bohri_theme";
@@ -16,7 +17,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 function getStoredTheme(): Theme {
   if (typeof window === "undefined") return "light";
   try {
-    const v = localStorage.getItem(THEME_KEY);
+    const v = getItemSync(THEME_KEY);
     return v === "dark" ? "dark" : "light";
   } catch {
     return "light";
@@ -50,7 +51,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const setTheme = useCallback((t: Theme) => {
     _setTheme(t);
     applyTheme(t);
-    try { localStorage.setItem(THEME_KEY, t); } catch {}
+    try { setItemSync(THEME_KEY, t); } catch {}
   }, []);
 
   const toggleTheme = useCallback(() => {

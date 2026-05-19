@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -17,18 +17,29 @@ import {
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchSuggestions } from "@/hooks/useSearch";
-import { addRecentSearch, setCategoryIds, resetFilters } from "@/store/slices/searchSlice";
+import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { SearchSuggestion } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
 import SuggestionList from "./suggestion-list";
-import SearchResultsView from "./search-results-view";
+
+// Lazy-load the heavy results view — only needed after user submits a query
+const SearchResultsView = dynamic(
+  () => import("./search-results-view"),
+  { ssr: false, loading: () => (
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )}
+);
 
 type SearchPhase = "zero" | "typing" | "results";
 
 const SearchPageContent = () => {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,11 +54,32 @@ const SearchPageContent = () => {
   const lat = user?.latitude;
   const lng = user?.longitude;
 
-  const phase: SearchPhase = committedQuery
-    ? "results"
-    : debouncedQuery.length >= 1
-      ? "typing"
-      : "zero";
+  // Hydrate Redux filters from URL params BEFORE first render paints
+  const [filtersReady, setFiltersReady] = useState(false);
+  useLayoutEffect(() => {
+    const catIds = searchParams.get("categoryIds");
+    const sortBy = searchParams.get("sortBy");
+    const minRating = searchParams.get("minRating");
+    const maxDistance = searchParams.get("maxDistance");
+    const verified = searchParams.get("verifiedOnly");
+    const womenLed = searchParams.get("womenLedOnly");
+
+    if (catIds) dispatch(setCategoryIds(catIds.split(",").filter(Boolean)));
+    if (sortBy && ["relevance", "distance", "rating", "newest"].includes(sortBy)) dispatch(setSortBy(sortBy as any));
+    if (minRating) dispatch(setMinRating(parseFloat(minRating)));
+    if (maxDistance) dispatch(setMaxDistance(parseFloat(maxDistance)));
+    if (verified === "true") dispatch(setVerifiedOnly(true));
+    if (womenLed === "true") dispatch(setWomenLedOnly(true));
+    setFiltersReady(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const phase: SearchPhase = !filtersReady
+    ? "zero"
+    : committedQuery
+      ? "results"
+      : debouncedQuery.length >= 1
+        ? "typing"
+        : "zero";
 
   const { data: suggestions = [], isFetching: isSuggestionsFetching } =
     useSearchSuggestions(
@@ -92,14 +124,11 @@ const SearchPageContent = () => {
         // Navigate directly to the product page
         router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${suggestion.id}`);
       } else {
-        // Category: filter by category and show all businesses in it
-        dispatch(resetFilters());
-        dispatch(setCategoryIds([suggestion.id]));
-        setQuery(suggestion.text);
-        handleSubmit(suggestion.text);
+        // Category: navigate to all-services filtered by this category
+        router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${suggestion.id}`);
       }
     },
-    [handleSubmit, router, dispatch]
+    [router]
   );
 
   const handleRecentTap = useCallback(
@@ -120,8 +149,8 @@ const SearchPageContent = () => {
 
   const handleBack = useCallback(() => {
     dispatch(resetFilters());
-    router.push(ROUTE_PATH.HOME);
-  }, [router, dispatch]);
+    goBack(ROUTE_PATH.HOME);
+  }, [goBack, dispatch]);
 
   const handleInputFocus = useCallback(() => {
     setIsFocused(true);
@@ -131,21 +160,21 @@ const SearchPageContent = () => {
   }, [committedQuery]);
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#FAFAFA]">
+    <div className="flex flex-col h-[100dvh] bg-[#FAFAFA] dark:bg-slate-900">
       {/* ── Header ─────────────────────────────────── */}
       <div
-        className="sticky top-0 z-50 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
+        className="sticky top-0 z-50 bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:shadow-none"
+        style={{ paddingTop: "var(--sat,0px)" }}
       >
         <div className="flex items-center gap-2 px-3 py-2">
           {/* Back button */}
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={handleBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors flex-shrink-0"
             aria-label="Back"
           >
-            <IonIcon icon={arrowBack} className="w-[22px] h-[22px] text-gray-800" />
+            <IonIcon icon={arrowBack} className="w-[22px] h-[22px] text-gray-800 dark:text-slate-200" />
           </motion.button>
 
           {/* Search input container */}
@@ -177,7 +206,7 @@ const SearchPageContent = () => {
                   handleSubmit();
                 }
               }}
-              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 text-[15px] text-gray-900 placeholder:text-gray-400 outline-none focus:bg-white focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
+              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 dark:bg-slate-700 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
             />
 
             {/* Right-side icons inside the input */}
@@ -188,17 +217,17 @@ const SearchPageContent = () => {
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   onClick={handleClear}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 active:bg-gray-300 dark:active:bg-slate-500 transition-colors"
                   aria-label="Clear search"
                 >
-                  <IonIcon icon={close} className="w-4 h-4 text-gray-500" />
+                  <IonIcon icon={close} className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 </motion.button>
               )}
               {query.length === 0 && (
                 <div className="flex items-center gap-1">
-                  <div className="w-px h-5 bg-gray-200" />
-                  <button className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-200 transition-colors">
-                    <IonIcon icon={micOutline} className="w-[18px] h-[18px] text-gray-400" />
+                  <div className="w-px h-5 bg-gray-200 dark:bg-slate-600" />
+                  <button className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-200 dark:active:bg-slate-600 transition-colors">
+                    <IonIcon icon={micOutline} className="w-[18px] h-[18px] text-gray-400 dark:text-slate-500" />
                   </button>
                 </div>
               )}
@@ -220,7 +249,7 @@ const SearchPageContent = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={handleClear}
-              className="flex-shrink-0 text-[13px] font-medium text-gray-500 px-2 py-1 active:opacity-60"
+              className="flex-shrink-0 text-[13px] font-medium text-gray-500 dark:text-slate-400 px-2 py-1 active:opacity-60"
             >
               Cancel
             </motion.button>
@@ -243,9 +272,7 @@ const SearchPageContent = () => {
                 onRecentTap={handleRecentTap}
                 onTrendingTap={handleRecentTap}
                 onCategoryTap={(name, id) => {
-                  dispatch(setCategoryIds([id]));
-                  setQuery(name);
-                  handleSubmit(name);
+                  router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${id}`);
                 }}
               />
             </motion.div>
@@ -283,10 +310,7 @@ const SearchPageContent = () => {
                 lng={lng}
                 city={user?.city}
                 onCategoryTap={(name, id) => {
-                  dispatch(resetFilters());
-                  dispatch(setCategoryIds([id]));
-                  setQuery(name);
-                  handleSubmit(name);
+                  router.push(`${ROUTE_PATH.ALL_SERVICES}?categoryIds=${id}`);
                 }}
               />
             </motion.div>

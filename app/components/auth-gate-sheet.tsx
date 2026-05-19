@@ -11,9 +11,11 @@ import { useNotification } from "@/app/context/NotificationContext";
 import { useAuthGateContext } from "@/app/context/AuthGateContext";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
+import { setItemSync, removeItemSync } from "@/utils/storage";
+import { checkContent } from "@/utils/content-sanitizer";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
-import type { Libraries } from "@react-google-maps/api";
+import { GoogleMap, MarkerF } from "@react-google-maps/api";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import { IonIcon } from "@ionic/react";
 import {
   logoApple, closeOutline, phonePortraitOutline, shieldCheckmarkOutline,
@@ -24,9 +26,11 @@ import {
 import { CITY_NAMES } from "@/app/data/locations";
 import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/geocode.service";
 import type { SearchGeocodeResult } from "@/services/geocode.service";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 // ─── Constants ──────────────────────────────────────────────────
-const GMAP_LIBRARIES: Libraries = ["places"];
+// TODO: Re-enable when native Google + Apple SSO are implemented
+const SHOW_SSO_BUTTONS = false;
 const MINI_MAP_STYLE = { width: "100%", height: "100%" };
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -44,10 +48,15 @@ const schemas: Record<Step, Yup.ObjectSchema<any>> = {
     otp: Yup.string().matches(/^\d{6}$/, "Enter 6 digit OTP").required("Required"),
   }),
   details: Yup.object({
-    name: Yup.string().min(3, "At least 3 characters").max(100, "Under 100 characters").required("Full name is required"),
+    name: Yup.string()
+      .trim()
+      .min(3, "At least 3 characters")
+      .max(100, "Under 100 characters")
+      .matches(/^[a-zA-Z\s.'-]+$/, "Name should only contain letters")
+      .required("Full name is required"),
     gender: Yup.string().oneOf(["male", "female", "other"]).required("Gender is required"),
-    city: Yup.string(),
-    area: Yup.string(),
+    city: Yup.string().max(100, "Under 100 characters"),
+    area: Yup.string().max(100, "Under 100 characters"),
     pincode: Yup.string().test("pincode", "Must be 6 digits", (v) => !v || /^\d{6}$/.test(v)),
   }),
 };
@@ -200,16 +209,13 @@ function AuthGateSheetContent() {
   const regSendOtp = useRegistrationSendOtp();
   const createAccountMutation = useCreateAccountMutation();
 
-  const { isLoaded: isMapLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
-    libraries: GMAP_LIBRARIES,
-  });
+  const { isLoaded: isMapLoaded } = useGoogleMapsLoader();
 
   // Clean up pending registration token if sheet unmounts before completion
   useEffect(() => {
     return () => {
       if (pendingTokenRef.current) {
-        localStorage.removeItem("token");
+        removeItemSync("token");
         pendingTokenRef.current = null;
       }
     };
@@ -222,35 +228,32 @@ function AuthGateSheetContent() {
   }, [resendCountdown]);
 
   // Auto-request location when entering details step, then reverse geocode to auto-fill
-  const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
+  const requestLocation = useCallback(async () => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setGeoLocation(coords);
-        setIsLocating(false);
-        notify({ title: "Location Pinned", subtitle: "GPS location captured", variant: "success" });
+    try {
+      const { getCurrentPosition } = await import("@/utils/geolocation");
+      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const coords = { lat: pos.latitude, lng: pos.longitude };
+      setGeoLocation(coords);
+      notify({ title: "Location Pinned", subtitle: "GPS location captured", variant: "success" });
 
-        // Reverse geocode to auto-populate city, area, pincode
-        try {
-          const geo = await reverseGeocodeApi(coords);
-          const sfv = setFieldValueRef.current;
-          if (sfv && geo) {
-            if (geo.city) sfv("city", geo.city);
-            if (geo.area) sfv("area", geo.area);
-            if (geo.pincode) sfv("pincode", geo.pincode);
-          }
-        } catch {
-          // Reverse geocode failed silently — user can fill manually
+      // Reverse geocode to auto-populate city, area, pincode
+      try {
+        const geo = await reverseGeocodeApi(coords);
+        const sfv = setFieldValueRef.current;
+        if (sfv && geo) {
+          if (geo.city) sfv("city", geo.city);
+          if (geo.area) sfv("area", geo.area);
+          if (geo.pincode) sfv("pincode", geo.pincode);
         }
-      },
-      () => {
-        setIsLocating(false);
-        notify({ title: "Location Required", subtitle: "Please enable location access", variant: "warning" });
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+      } catch {
+        // Reverse geocode failed silently — user can fill manually
+      }
+    } catch {
+      notify({ title: "Location Required", subtitle: "Please enable location access", variant: "warning" });
+    } finally {
+      setIsLocating(false);
+    }
   }, [notify]);
 
   const handleLocationSearch = useCallback((query: string) => {
@@ -351,10 +354,13 @@ function AuthGateSheetContent() {
         try {
           const res = await verifyOtpDirect({ mobileNumber: values.mobile, otp: values.otp });
           const jwt = (res as any).accessToken ?? (res as any).token;
+          // Clear previous user's provider view state so it doesn't leak across logins
+          removeItemSync("tijarah_user_mode");
+          removeItemSync("tijarah_provider_status");
           if (res.user?.name) {
             // User already has a complete profile → log them in immediately
             if (jwt) {
-              localStorage.setItem("token", jwt);
+              setItemSync("token", jwt);
               dispatch(setToken(jwt));
             }
             dispatch(setProfile(res.user));
@@ -364,7 +370,7 @@ function AuthGateSheetContent() {
             // This prevents the app from considering them "logged in".
             if (jwt) {
               pendingTokenRef.current = jwt;
-              localStorage.setItem("token", jwt); // needed for the PATCH call
+              setItemSync("token", jwt); // cache + localStorage + Preferences
             }
             setStep("details");
           }
@@ -372,21 +378,28 @@ function AuthGateSheetContent() {
           setIsVerifying(false);
         }
       } else if (step === "details") {
+        const trimmedName = values.name.trim();
+        // Content sanitization check
+        const nameCheck = checkContent(trimmedName);
+        if (nameCheck.flagged) {
+          notify({ title: "Invalid name", subtitle: "Your name contains inappropriate language. Please revise.", variant: "error" });
+          return;
+        }
         const payload: Record<string, any> = {
-          name: values.name,
+          name: trimmedName,
           gender: values.gender,
         };
         // Location fields are optional — include only if provided
-        if (values.city) payload.city = values.city;
-        if (values.area) payload.area = values.area;
+        if (values.city) payload.city = values.city?.trim();
+        if (values.area) payload.area = values.area?.trim();
         if (values.pincode) payload.pincode = values.pincode;
         if (geoLocation) {
           payload.latitude = geoLocation.lat;
           payload.longitude = geoLocation.lng;
         }
-        // Ensure the pending token is in localStorage for the PATCH call
+        // Ensure the pending token is available for the PATCH call
         if (pendingTokenRef.current) {
-          localStorage.setItem("token", pendingTokenRef.current);
+          setItemSync("token", pendingTokenRef.current);
         }
         await createAccountMutation.mutateAsync(payload as any);
         // createAccountMutation.onSuccess dispatches setProfile(user) — user now has a name.
@@ -442,7 +455,7 @@ function AuthGateSheetContent() {
         const jwt = (res as any).accessToken ?? (res as any).token;
         if (res.user?.name) {
           if (jwt) {
-            localStorage.setItem("token", jwt);
+            setItemSync("token", jwt);
             dispatch(setToken(jwt));
           }
           dispatch(setProfile(res.user));
@@ -451,7 +464,7 @@ function AuthGateSheetContent() {
           // Google SSO user without profile → hold token, show details
           if (jwt) {
             pendingTokenRef.current = jwt;
-            localStorage.setItem("token", jwt);
+            setItemSync("token", jwt);
           }
           setStep("details");
         }
@@ -620,7 +633,7 @@ function AuthGateSheetContent() {
                           value={locationSearch}
                           onChange={(e) => handleLocationSearch(e.target.value)}
                           placeholder="Search area, landmark, address…"
-                          className="flex-1 h-full bg-transparent px-2 text-[13px] outline-none text-white placeholder:text-slate-600"
+                          className="flex-1 h-full bg-transparent px-2 text-base outline-none text-white placeholder:text-slate-600"
                         />
                         {locationSearch && (
                           <button type="button" onClick={() => { setLocationSearch(""); setLocationSuggestions([]); }}
@@ -750,7 +763,7 @@ function AuthGateSheetContent() {
             )}
 
             {/* ─── Social Login (mobile step only) ─── */}
-            {step === "mobile" && (
+            {SHOW_SSO_BUTTONS && step === "mobile" && (
               <>
                 <div className="flex items-center gap-3 my-5">
                   <div className="flex-1 h-px bg-white/[0.08]" />
@@ -799,6 +812,7 @@ function AuthGateSheetContent() {
 export default function AuthGateSheet() {
   const { isAuthGateOpen, closeAuthGate } = useAuthGateContext();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const keyboardOffset = useKeyboardOffset();
 
   return (
     <AnimatePresence>
@@ -822,11 +836,13 @@ export default function AuthGateSheet() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="fixed bottom-0 inset-x-0 z-[9999] rounded-t-3xl shadow-2xl overflow-hidden"
+            className="fixed inset-x-0 z-[9999] rounded-t-3xl shadow-2xl overflow-hidden"
             style={{
-              maxHeight: "92vh",
-              paddingBottom: "max(env(safe-area-inset-bottom), 12px)",
+              bottom: keyboardOffset,
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
+              paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 12px)",
               background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
+              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out, padding-bottom 0.15s ease-out",
             }}
           >
             {/* Abstract background decorations */}
@@ -850,7 +866,7 @@ export default function AuthGateSheet() {
               </button>
             </div>
 
-            <div className="overflow-y-auto relative" style={{ maxHeight: "calc(92vh - 52px)" }}>
+            <div className="overflow-y-auto relative" style={{ maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset + 52}px)` : "calc(92vh - 52px)" }}>
               <GoogleOAuthProvider clientId={clientId}>
                 <AuthGateSheetContent />
               </GoogleOAuthProvider>

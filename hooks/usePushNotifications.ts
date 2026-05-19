@@ -19,12 +19,18 @@ import {
   unregisterDevice,
 } from "@/services/notification.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { isNativePlatform, getNativePlatform } from "@/utils/platform";
+import {
+  requestNativePushToken,
+  addNativePushListeners,
+  getNativePermissionStatus,
+} from "@/utils/capacitor-push";
 
 /**
  * Hook to manage push notification lifecycle:
- * - Checks support & permission status on mount
- * - Provides requestPermission() to trigger the permission flow
- * - Handles foreground message display via in-app toast
+ * - Detects native (Capacitor) vs web/PWA environment
+ * - On native: uses @capacitor/push-notifications for FCM/APNs
+ * - On web/PWA: uses Firebase Web Messaging
  * - Registers/unregisters device tokens with the backend
  */
 export function usePushNotifications() {
@@ -33,15 +39,26 @@ export function usePushNotifications() {
   const { permissionStatus, fcmToken } = useAppSelector((s) => s.notification);
   const isAuthenticated = useAppSelector((s) => s.auth.token !== null);
   const unsubRef = useRef<(() => void) | null>(null);
+  const isRegisteringRef = useRef(false);
   const [pushError, setPushError] = useState<string | null>(null);
 
-  // Derived: iOS but not installed as PWA
-  const isIOSNotStandalone = isIOS() && !isStandalone();
+  const isNative = isNativePlatform();
 
-  // Check support & current permission on mount
+  // ─── Check support & current permission on mount ───
   useEffect(() => {
     (async () => {
-      if (isIOSNotStandalone) {
+      if (isNative) {
+        // Native always supports push
+        const status = await getNativePermissionStatus();
+        const mapped = status === "granted" ? "granted"
+          : status === "denied" ? "denied"
+          : "default";
+        dispatch(setPermissionStatus(mapped as any));
+        return;
+      }
+
+      // Web/PWA path
+      if (!isNative && isIOS() && !isStandalone()) {
         dispatch(setPermissionStatus("unsupported"));
         return;
       }
@@ -52,55 +69,112 @@ export function usePushNotifications() {
       }
       dispatch(setPermissionStatus(getPermissionStatus() as any));
     })();
-  }, [dispatch, isIOSNotStandalone]);
+  }, [dispatch, isNative]);
 
-  // Auto-register token if permission already granted & authenticated
+  // ─── Auto-register token if permission already granted & authenticated ───
   useEffect(() => {
-    if (permissionStatus === "granted" && isAuthenticated && !fcmToken) {
+    if (permissionStatus === "granted" && isAuthenticated && !fcmToken && !isRegisteringRef.current) {
+      isRegisteringRef.current = true;
       (async () => {
-        const result = await requestFCMToken();
-        if (result.token) {
-          dispatch(setFcmToken(result.token));
-          try {
-            await registerDevice(result.token, detectPlatform(), getDeviceInfo());
-          } catch (err) {
-            console.warn("[Push] Failed to register device token:", err);
+        try {
+          if (isNative) {
+            const result = await requestNativePushToken();
+            if (result.token) {
+              dispatch(setFcmToken(result.token));
+              try {
+                await registerDevice(result.token, getNativePlatform(), getDeviceInfo());
+              } catch (err) {
+                console.warn("[Push] Failed to register device token:", err);
+              }
+            }
+          } else {
+            const result = await requestFCMToken();
+            if (result.token) {
+              dispatch(setFcmToken(result.token));
+              try {
+                await registerDevice(result.token, detectPlatform(), getDeviceInfo());
+              } catch (err) {
+                console.warn("[Push] Failed to register device token:", err);
+              }
+            }
           }
+        } finally {
+          isRegisteringRef.current = false;
         }
       })();
     }
-  }, [permissionStatus, isAuthenticated, fcmToken, dispatch]);
+  }, [permissionStatus, isAuthenticated, fcmToken, dispatch, isNative]);
 
-  // Listen for foreground messages
+  // ─── Native notification TAP listener (unconditional — must not be gated) ───
+  // Registered immediately on native regardless of auth/permission state so that
+  // cold-start taps (app killed → user taps notification) are never missed.
+  // Capacitor queues pushNotificationActionPerformed until a listener registers.
+  useEffect(() => {
+    if (!isNative) return;
+    const cleanup = addNativePushListeners({
+      onNotificationTap: (action) => {
+        const data = action.notification.data || {};
+        window.dispatchEvent(
+          new CustomEvent("native-notification-tap", { detail: data })
+        );
+      },
+    });
+    return cleanup;
+  }, [isNative]);
+
+  // ─── Listen for foreground messages ───
   useEffect(() => {
     if (!isAuthenticated || permissionStatus !== "granted") return;
 
-    (async () => {
-      const unsub = await onForegroundMessage((payload) => {
-        // Refresh unread count
-        qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
-        qc.invalidateQueries({ queryKey: ["notifications"] });
+    if (isNative) {
+      // Native foreground push listener (no tap handler here — handled above)
+      const cleanup = addNativePushListeners({
+        onForegroundPush: (notification) => {
+          qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+          qc.invalidateQueries({ queryKey: ["notifications"] });
 
-        if (payload.notification?.title) {
-          window.dispatchEvent(
-            new CustomEvent("push-notification", {
-              detail: {
-                title: payload.notification.title,
-                body: payload.notification.body,
-                data: payload.data,
-              },
-            })
-          );
-        }
+          if (notification.title) {
+            window.dispatchEvent(
+              new CustomEvent("push-notification", {
+                detail: {
+                  title: notification.title,
+                  body: notification.body,
+                  data: notification.data,
+                },
+              })
+            );
+          }
+        },
       });
-      unsubRef.current = unsub;
-    })();
+      unsubRef.current = cleanup;
+    } else {
+      // Web/PWA foreground push listener
+      (async () => {
+        const unsub = await onForegroundMessage((payload) => {
+          qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+          qc.invalidateQueries({ queryKey: ["notifications"] });
+
+          if (payload.notification?.title) {
+            window.dispatchEvent(
+              new CustomEvent("push-notification", {
+                detail: {
+                  title: payload.notification.title,
+                  body: payload.notification.body,
+                  data: payload.data,
+                },
+              })
+            );
+          }
+        });
+        unsubRef.current = unsub;
+      })();
+    }
 
     return () => {
       unsubRef.current?.();
       unsubRef.current = null;
     };
-  }, [isAuthenticated, permissionStatus, qc]);
+  }, [isAuthenticated, permissionStatus, qc, isNative]);
 
   /**
    * Request push notification permission.
@@ -108,8 +182,27 @@ export function usePushNotifications() {
    */
   const requestPermission = useCallback(async (): Promise<boolean> => {
     setPushError(null);
-    const result = await requestFCMToken();
 
+    if (isNative) {
+      const result = await requestNativePushToken();
+      if (result.token) {
+        dispatch(setPermissionStatus("granted"));
+        dispatch(setFcmToken(result.token));
+        try {
+          await registerDevice(result.token, getNativePlatform(), getDeviceInfo());
+        } catch (err) {
+          console.warn("[Push] Failed to register device token:", err);
+        }
+        return true;
+      }
+      setPushError(result.error);
+      const status = await getNativePermissionStatus();
+      dispatch(setPermissionStatus(status === "denied" ? "denied" : "default"));
+      return false;
+    }
+
+    // Web/PWA path
+    const result = await requestFCMToken();
     if (result.token) {
       dispatch(setPermissionStatus("granted"));
       dispatch(setFcmToken(result.token));
@@ -121,11 +214,10 @@ export function usePushNotifications() {
       return true;
     }
 
-    // Show the error to the user
     setPushError(result.error);
     dispatch(setPermissionStatus(getPermissionStatus() as any));
     return false;
-  }, [dispatch]);
+  }, [dispatch, isNative]);
 
   /**
    * Unregister push (on logout).
@@ -148,7 +240,6 @@ export function usePushNotifications() {
     requestPermission,
     unregisterPush,
     isSupported: permissionStatus !== "unsupported",
-    isIOSNotStandalone,
   };
 }
 
@@ -168,5 +259,7 @@ function getDeviceInfo(): Record<string, any> {
     userAgent: navigator.userAgent,
     language: navigator.language,
     platform: navigator.platform,
+    isNative: isNativePlatform(),
+    nativePlatform: getNativePlatform(),
   };
 }

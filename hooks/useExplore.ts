@@ -9,8 +9,11 @@ export const useExploreFeed = (params?: {
   return useQuery({
     queryKey: ["explore-feed", params?.lat, params?.lng, params?.city],
     queryFn: () => getExploreFeed(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes — prevents refetch on tab switch
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: (prev: any) => prev,
   });
 };
 

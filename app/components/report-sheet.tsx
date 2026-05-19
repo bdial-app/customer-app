@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
@@ -33,10 +35,10 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 function getErrorMessage(error: any): string {
+  const msg = error?.response?.data?.message;
+  if (typeof msg === "string" && msg.trim()) return msg;
   const status = error?.response?.status?.toString();
   if (status && ERROR_MESSAGES[status]) return ERROR_MESSAGES[status];
-  const msg = error?.response?.data?.message;
-  if (typeof msg === "string") return msg;
   return "Something went wrong. Please try again.";
 }
 
@@ -52,6 +54,7 @@ export default function ReportSheet({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notify } = useNotification();
+  const keyboardOffset = useKeyboardOffset();
 
   const reasons = REASONS_BY_TYPE[entityType] || [];
 
@@ -110,9 +113,18 @@ export default function ReportSheet({
       ? "business"
       : entityType === "product"
         ? "product"
-        : "message";
+        : entityType === "deal"
+          ? "deal"
+          : entityType === "review"
+            ? "review"
+            : entityType === "customer"
+              ? "customer"
+              : "message";
 
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const content = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -121,7 +133,7 @@ export default function ReportSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[100]"
+            className="fixed inset-0 bg-black/40 z-100"
             onClick={handleClose}
           />
 
@@ -131,10 +143,16 @@ export default function ReportSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 inset-x-0 z-[101] bg-white dark:bg-slate-900 rounded-t-2xl max-h-[85vh] flex flex-col safe-area-bottom"
+            className="fixed inset-x-0 z-101 bg-white dark:bg-slate-900 rounded-t-2xl flex flex-col safe-area-bottom"
+            style={{
+              bottom: keyboardOffset,
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "85vh",
+              paddingBottom: keyboardOffset > 0 ? 0 : undefined,
+              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
+            }}
           >
             {/* Handle + Header */}
-            <div className="flex-shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -195,6 +213,7 @@ export default function ReportSheet({
                     }
                     placeholder="Please describe the issue (max 500 characters)"
                     rows={3}
+                    maxLength={500}
                     className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] text-slate-700 dark:text-white bg-transparent dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 resize-none"
                   />
                   <p className="text-[11px] text-slate-400 text-right mt-1">
@@ -205,7 +224,7 @@ export default function ReportSheet({
             </div>
 
             {/* Submit */}
-            <div className="flex-shrink-0 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="shrink-0 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={handleSubmit}
                 disabled={!selectedReason || isSubmitting}
@@ -223,4 +242,7 @@ export default function ReportSheet({
       )}
     </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 }

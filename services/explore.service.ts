@@ -36,6 +36,7 @@ export interface ProviderWithOffer extends ExploreProvider {
   discountValue: number;
   offerEndsAt: string;
   hasActiveOffer: true;
+  providerDealCount?: number;
 }
 
 export interface ExploreCategory {
@@ -43,6 +44,7 @@ export interface ExploreCategory {
   name: string;
   slug: string;
   icon: string | null;
+  iconColor?: string | null;
   providerCount: number;
 }
 
@@ -52,6 +54,7 @@ export interface CategorySpotlight {
     name: string;
     slug: string;
     icon: string | null;
+    iconColor?: string | null;
   };
   providers: ExploreProvider[];
 }
@@ -77,6 +80,15 @@ export interface ExplorePlatformStats {
   totalBookings: number;
 }
 
+export interface ExploreCommunityReview {
+  id: string;
+  name: string;
+  providerName: string;
+  text: string;
+  rating: number;
+  timeAgo: string;
+}
+
 export interface ExploreFeedResponse {
   sponsoredCarousel: SponsoredProvider[];
   activeOffers: ProviderWithOffer[];
@@ -86,6 +98,8 @@ export interface ExploreFeedResponse {
   topRated: ExploreProvider[];
   categorySpotlight: CategorySpotlight | null;
   newArrivals: ExploreProvider[];
+  communityReviews: ExploreCommunityReview[];
+  womenLedProviders: ExploreProvider[];
   platformStats: ExplorePlatformStats;
 }
 
@@ -109,4 +123,34 @@ export const getExploreFeed = async (params?: {
 
 export const trackAdEvent = async (payload: TrackAdEventPayload): Promise<void> => {
   await apiClient.post(EXPLORE_URLS.TRACK, payload);
+};
+
+export interface DealsParams {
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  city?: string;
+  category?: string;
+  discountType?: 'percentage' | 'flat';
+  minDiscount?: number;
+  verified?: boolean;
+  minRating?: number;
+  endingSoon?: boolean;
+  womenLed?: boolean;
+  page?: number;
+  limit?: number;
+  sort?: 'discount' | 'ending_soon' | 'distance' | 'newest';
+}
+
+export interface DealsResponse {
+  data: ProviderWithOffer[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export const getDeals = async (params?: DealsParams): Promise<DealsResponse> => {
+  const { data } = await apiClient.get(EXPLORE_URLS.DEALS, { params });
+  return data;
 };

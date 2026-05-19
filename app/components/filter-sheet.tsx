@@ -1,7 +1,9 @@
 "use client";
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import {
-  Sheet,
   Preloader,
 } from "konsta/react";
 import dynamic from "next/dynamic";
@@ -77,8 +79,9 @@ const FilterSheet = ({
   onApply,
 }: FilterSheetProps) => {
   const { data: categoryResponse, isLoading } = useAllCategories(1, 100);
+  const keyboardOffset = useKeyboardOffset();
   const allCategories =
-    categoryResponse?.data.filter((c) => c.parentId === null) ?? [];
+    categoryResponse?.data?.filter((c) => c.parentId === null) ?? [];
 
   const [activeTab, setActiveTab] = useState<FilterTab>("rating");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -193,13 +196,37 @@ const FilterSheet = ({
     }
   };
 
-  return (
-    <Sheet
-      className="pb-safe"
-      opened={opened}
-      onBackdropClick={onClose}
-      style={{ maxHeight: "92vh" }}
-    >
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const content = (
+    <AnimatePresence>
+      {opened && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[9998] bg-black/40"
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl overflow-hidden"
+            style={{
+              bottom: keyboardOffset,
+              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
+              paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 0px)",
+              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
+            }}
+          >
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
         <div className="flex items-center gap-2">
@@ -547,8 +574,14 @@ const FilterSheet = ({
           {activeCount > 0 ? `Apply Filters (${activeCount})` : "Show All Results"}
         </button>
       </div>
-    </Sheet>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 };
 
 export default FilterSheet;

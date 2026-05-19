@@ -16,10 +16,13 @@ export const useNearbyProviders = (params: Omit<ProviderNearbyParams, "page">) =
       getNearbyProviders({ ...params, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      const { page, totalPages } = lastPage.meta;
+      const page = lastPage?.meta?.page;
+      const totalPages = lastPage?.meta?.totalPages;
+      if (typeof page !== "number" || typeof totalPages !== "number") return undefined;
       return page < totalPages ? page + 1 : undefined;
     },
-    enabled: !!params.lat && !!params.lng,
+    enabled: true, // Backend supports city-only browsing when lat/lng are absent
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
@@ -36,8 +39,7 @@ export const useProviderDetails = (id: string) => {
     queryKey: ["provider-details", id],
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 1000 * 60 * 2,
   });
 };
 

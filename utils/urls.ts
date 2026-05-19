@@ -12,11 +12,17 @@ export const USER_URLS = {
   PAUSE_ME: "/users/me/pause",
   RESUME_ME: "/users/me/resume",
   DATA_EXPORT: "/users/me/data-export",
+  CATEGORY_WEIGHTS: "/users/me/category-weights",
+  RECOMMENDED_CATEGORIES: "/users/me/recommended-categories",
+  CATEGORY_PREFERENCES: "/users/me/category-preferences",
+  CATEGORY_INTERACTION: "/users/me/category-interaction",
 };
 
 export const CATEGORY_URLS = {
   LIST: "/categories",
   TOP_LEVEL: "/categories/top-level",
+  SUGGEST: "/categories/suggest",
+  SEARCH: "/categories/search",
   BY_ID: (id: string) => `/categories/${id}`,
   SUB_CATEGORIES: (id: string) => `/categories/${id}/sub-categories`,
 };
@@ -29,11 +35,13 @@ export const GEOCODE_URLS = {
 export const SAVED_LOCATION_URLS = {
   LIST: "/saved-locations",
   CREATE: "/saved-locations",
+  DELETE: (id: string) => `/saved-locations/${id}`,
 };
 
 export const PROVIDER_URLS = {
   NEARBY: "/providers/nearby",
   FEATURED: "/providers/featured",
+  WOMEN_LED: "/providers/women-led",
   BY_ID: (id: string) => `/providers/${id}`,
   DETAILS: (id: string) => `/providers/${id}/details`,
   UPDATE: (id: string) => `/providers/${id}`,
@@ -41,6 +49,7 @@ export const PROVIDER_URLS = {
   MY_STATUS: "/providers/my-status",
   SEND_OTP: "/providers/send-otp",
   VERIFY_OTP: "/providers/verify-otp",
+  WEBSITE_META: "/providers/website-meta",
   SUBMIT_VERIFICATION: "/providers/submit-verification",
   MY_ANALYTICS: "/providers/my-analytics",
   MY_OFFERS: "/providers/my-offers",
@@ -53,10 +62,14 @@ export const PROVIDER_URLS = {
   DISABLE_PROVIDER: "/providers/my-provider/disable",
   ENABLE_PROVIDER: "/providers/my-provider/enable",
   DELETE_PROVIDER: "/providers/my-provider",
+  COOLDOWN_STATUS: "/providers/my-provider/cooldown-status",
+  UPDATE_CATEGORIES: (id: string) => `/providers/${id}/categories`,
+  UPDATE_CONTACT_NUMBER: (id: string) => `/providers/${id}/contact-number`,
 };
 
 export const PHOTO_URLS = {
   UPLOAD_PROVIDER: (providerId: string) => `/photos/provider/${providerId}`,
+  UPLOAD_PROFILE_IMAGE: (providerId: string) => `/photos/provider/${providerId}/profile-image`,
   DELETE_PROVIDER: (photoId: string) => `/photos/provider/${photoId}`,
   REORDER_PROVIDER: (providerId: string) => `/photos/provider/${providerId}/reorder`,
 };
@@ -89,6 +102,7 @@ export const HOME_URLS = {
 export const EXPLORE_URLS = {
   FEED: '/explore/feed',
   TRACK: '/explore/track',
+  DEALS: '/explore/deals',
 };
 
 export const INVITE_URLS = {
@@ -109,6 +123,7 @@ export const CHAT_URLS = {
   MESSAGES: (id: string) => `/chat/conversations/${id}/messages`,
   MARK_READ: (id: string) => `/chat/conversations/${id}/read`,
   ARCHIVE: (id: string) => `/chat/conversations/${id}/archive`,
+  BLOCK: (id: string) => `/chat/conversations/${id}/block`,
   UPLOAD_MEDIA: (id: string) => `/chat/conversations/${id}/media`,
   TYPING: (id: string) => `/chat/conversations/${id}/typing`,
   UNREAD_COUNT: '/chat/unread-count',
@@ -124,6 +139,7 @@ export const ANALYTICS_URLS = {
   UNLOCK_LEAD: (id: string) => `/analytics/leads/${id}/unlock`,
   TOP_PRODUCTS: '/analytics/top-products',
   PEAK_HOURS: '/analytics/peak-hours',
+  VISITOR_INSIGHTS: '/analytics/visitor-insights',
 };
 
 export const NOTIFICATION_URLS = {
@@ -139,4 +155,31 @@ export const NOTIFICATION_URLS = {
 
 export const BUG_REPORT_URLS = {
   CREATE: '/bug-reports',
+};
+
+// Payment URLs
+export const PAYMENT_URLS = {
+  SPONSORSHIP_CHECKOUT: '/payments/sponsorship/checkout',
+  LEAD_UNLOCK_CHECKOUT: '/payments/lead-unlock/checkout',
+  LEAD_UNLOCK_INFO: '/payments/lead-unlock/info',
+  DEAL_CREATION_CHECKOUT: '/payments/deal-creation/checkout',
+  DEAL_CREATION_INFO: '/payments/deal-creation/info',
+  SUBSCRIPTION_CHECKOUT: '/payments/subscriptions/checkout',
+  SUBSCRIPTION_PLANS: '/payments/subscriptions/plans',
+  SUBSCRIPTION_CURRENT: '/payments/subscriptions/current',
+  SUBSCRIPTION_CANCEL: '/payments/subscriptions/cancel',
+  SUBSCRIPTION_RESUME: '/payments/subscriptions/resume',
+  VALIDATE_VOUCHER: '/payments/vouchers/validate',
+  HISTORY: '/payments/history',
+  VERIFY_RAZORPAY: '/payments/verify/razorpay',
+  VERIFY_RAZORPAY_SUBSCRIPTION: '/payments/verify/razorpay-subscription',
+  VERIFY_APPLE: '/payments/verify/apple',
+  MONETIZATION_CONFIG: '/config/monetization',
+};
+
+export const CONFIG_URLS = {
+  FEATURE_FLAGS: '/config/feature-flags',
+  SERVICEABLE_CITIES: '/config/serviceable-cities',
+  CHECK_SERVICEABILITY: '/config/check-serviceability',
+  CITY_REQUESTS: '/config/city-requests',
 };

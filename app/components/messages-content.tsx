@@ -2,8 +2,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { searchOutline, checkmarkDone, checkmark, imageOutline, chatbubblesOutline } from "ionicons/icons";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useConversations } from "@/hooks/useChat";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "./offline-fallback";
 import type { ConversationListItem } from "@/services/chat.service";
 import { useAppSelector } from "@/hooks/useAppStore";
 
@@ -66,10 +68,11 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
 };
 
-const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
+const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const { user } = useAppSelector((state) => state.auth);
+  const { isOnline } = useNetworkStatus();
 
   const { data, isLoading } = useConversations(
     filter === "unread" ? "unread" : "all",
@@ -80,8 +83,13 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
   const conversations = data?.conversations || [];
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
+  // Offline + no cached conversations → show fallback
+  if (!isOnline && !data) {
+    return <OfflineFallback message="Connect to the internet to see your messages." />;
+  }
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col pb-20">
       {/* Search bar */}
       <div className="px-4 pt-2 pb-1">
         <div className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3.5 py-2.5">
@@ -168,6 +176,10 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
                     layout
                     whileTap={{ backgroundColor: "rgba(0,0,0,0.03)" }}
                     onClick={() => onChatClick(conv.id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open conversation with ${name}`}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onChatClick(conv.id); }}
                     className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-slate-50 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
                   >
                     {/* Avatar */}
@@ -263,6 +275,8 @@ const MessagesContent = ({ onChatClick }: MessagesContentProps) => {
       )}
     </div>
   );
-};
+});
+
+MessagesContent.displayName = "MessagesContent";
 
 export default MessagesContent;

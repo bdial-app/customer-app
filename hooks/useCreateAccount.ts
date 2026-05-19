@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useSendOtp, useRegistrationSendOtp, useVerifyOtp, useCreateAccountMutation } from "./useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
+import { getCurrentPosition } from "@/utils/geolocation";
 
 export type CreateAccountStep = "mobile" | "otp" | "details";
 
@@ -32,42 +33,26 @@ export const useCreateAccount = (initialMobile?: string) => {
     }, 1000);
   }, []);
 
-  const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) {
+  const requestLocation = useCallback(async () => {
+    try {
+      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      setLocation({ lat: pos.latitude, lng: pos.longitude });
       notify({
-        title: "Geolocation Error",
-        subtitle: "Your browser does not support geolocation.",
-        variant: "error",
+        title: "Location Secured",
+        subtitle: "We've accurately pinned your location.",
+        variant: "success",
       });
-      return;
+    } catch (error: any) {
+      const message =
+        error?.code === 1 || error?.message?.includes("denied")
+          ? "Location access denied. Please enable it in settings and try again."
+          : "Please enable location to complete registration.";
+      notify({
+        title: "Location Required",
+        subtitle: message,
+        variant: "warning",
+      });
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        notify({
-          title: "Location Secured",
-          subtitle: "We've accurately pinned your location.",
-          variant: "success",
-        });
-      },
-      (error) => {
-        let message = "Please enable location to complete registration.";
-        if (error.code === error.PERMISSION_DENIED) {
-          message =
-            "Location access denied. Please enable it in browser settings and try again.";
-        }
-        notify({
-          title: "Location Required",
-          subtitle: message,
-          variant: "warning",
-        });
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   }, [notify]);
 
   useEffect(
@@ -77,11 +62,6 @@ export const useCreateAccount = (initialMobile?: string) => {
     [],
   );
 
-  useEffect(() => {
-    if (currentStep === "details" && !location) {
-      requestLocation();
-    }
-  }, [currentStep, location, requestLocation]);
 
   const sendOtpMutation = useSendOtp();
   const registrationSendOtpMutation = useRegistrationSendOtp();
@@ -198,10 +178,10 @@ export const useCreateAccount = (initialMobile?: string) => {
 
     try {
       await createAccountMutation.mutateAsync({
-        name: values.name,
+        name: values.name?.trim(),
         gender: values.gender,
-        city: values.city,
-        area: values.area,
+        city: values.city?.trim(),
+        area: values.area?.trim(),
         pincode: values.pincode,
         latitude: location.lat,
         longitude: location.lng,

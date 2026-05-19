@@ -32,10 +32,20 @@ import {
   callOutline,
   shieldOutline,
   mapOutline,
+  lockClosedOutline,
+  linkOutline,
+  globeOutline,
+  logoInstagram,
+  logoFacebook,
+  logoYoutube,
+  logoWhatsapp,
+  logoLinkedin,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
 import { useRouter } from "next/navigation";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useQueryClient } from "@tanstack/react-query";
 import TimePicker from "../components/time-picker";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -48,16 +58,20 @@ import {
   verifyProviderOtp,
 } from "@/services/provider.service";
 import { getTopLevelCategories, Category } from "@/services/category.service";
+import CategoryIcon from "@/app/components/ui/category-icon";
 import { reverseGeocode } from "@/services/geocode.service";
 import { searchGeocode } from "@/services/geocode.service";
 import { AppDialog } from "../components/app-dialog";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
+import FeatureGate from "@/app/components/feature-gate";
+import { checkContent } from "@/utils/content-sanitizer";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // Accept up to 15MB — we compress client-side before upload
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -81,19 +95,33 @@ type StepId = 1 | 2 | 3 | 4 | 5;
 // Validation schemas per step
 // ---------------------------------------------------------------------------
 const step1Schema = Yup.object({
-  brand_name: Yup.string().trim().required("Brand name is required"),
-  description: Yup.string().trim().required("Description is required"),
+  brand_name: Yup.string().trim().max(150, "Must be under 150 characters").required("Brand name is required"),
+  description: Yup.string().trim().max(2000, "Must be under 2000 characters").required("Description is required"),
   contact_number: Yup.string()
     .matches(/^\d{10}$/, "Enter a valid 10-digit mobile number")
     .required("Contact number is required"),
   open_time: Yup.string(),
-  close_time: Yup.string(),
+  close_time: Yup.string().test(
+    "after-open",
+    "Close time must be after open time",
+    function (value) {
+      const { open_time } = this.parent;
+      if (!value || !open_time) return true;
+      return value > open_time;
+    },
+  ),
+  website_url: Yup.string().url("Enter a valid URL (e.g. https://example.com)").max(512).optional(),
+  instagram_handle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid Instagram handle").max(30).optional(),
+  facebook_handle: Yup.string().max(128).optional(),
+  youtube_handle: Yup.string().max(128).optional(),
+  whatsapp_number: Yup.string().matches(/^\+?\d{7,15}$/, "Enter a valid phone number (e.g. +966XXXXXXXXX)").optional(),
+  linkedin_handle: Yup.string().max(128).optional(),
 });
 
 const step2Schema = Yup.object({
-  address: Yup.string().trim().required("Address is required"),
-  city: Yup.string().trim().required("City is required"),
-  area: Yup.string().trim().required("Area is required"),
+  address: Yup.string().trim().max(300, "Must be under 300 characters").required("Address is required"),
+  city: Yup.string().trim().max(100, "Must be under 100 characters").required("City is required"),
+  area: Yup.string().trim().max(100, "Must be under 100 characters").required("Area is required"),
   pincode: Yup.string()
     .matches(/^\d{6}$/, "Pincode must be 6 digits")
     .required("Pincode is required"),
@@ -104,7 +132,7 @@ const step4Schema = Yup.object({});
 const step5Schema = Yup.object({
   identity_doc: Yup.mixed<File>()
     .nullable()
-    .test("fileSize", "File must be less than 5 MB", (val) =>
+    .test("fileSize", "File must be less than 15 MB", (val) =>
       !val || (val instanceof File && val.size <= MAX_FILE_SIZE),
     )
     .test("fileType", "Only JPEG, PNG or PDF allowed", (val) =>
@@ -170,7 +198,7 @@ const StepIndicator = ({
                     ? "bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-200 scale-110"
                     : isDone
                     ? "bg-emerald-500 border-emerald-500"
-                    : "bg-white border-slate-200"
+                    : "bg-white border-slate-200 dark:bg-slate-700 dark:border-slate-600"
                 }`}
               >
                 {isDone && !isActive ? (
@@ -204,7 +232,7 @@ const StepIndicator = ({
                 className={`h-0.5 flex-1 mx-0.5 rounded-full transition-colors duration-500 ${
                   completedSteps.has(step.id)
                     ? "bg-emerald-400"
-                    : "bg-slate-200"
+                    : "bg-slate-200 dark:bg-slate-600"
                 }`}
               />
             )}
@@ -228,13 +256,13 @@ const SectionHeader = ({
   subtitle?: string;
 }) => (
   <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-    <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-      <IonIcon icon={icon} className="text-indigo-500 text-lg" />
+    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 flex items-center justify-center shrink-0">
+      <IonIcon icon={icon} className="text-indigo-500 dark:text-indigo-400 text-lg" />
     </div>
     <div>
-      <p className="text-sm font-bold text-slate-800">{title}</p>
+      <p className="text-sm font-bold text-slate-800 dark:text-white">{title}</p>
       {subtitle && (
-        <p className="text-[11px] text-slate-400">{subtitle}</p>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">{subtitle}</p>
       )}
     </div>
   </div>
@@ -253,14 +281,14 @@ const TipBanner = ({
   color?: string;
 }) => {
   const colors: Record<string, string> = {
-    indigo: "bg-indigo-50/70 border-indigo-100 text-indigo-700",
-    amber: "bg-amber-50/70 border-amber-100 text-amber-800",
-    emerald: "bg-emerald-50/70 border-emerald-100 text-emerald-700",
+    indigo: "bg-indigo-50/70 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300",
+    amber: "bg-amber-50/70 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300",
+    emerald: "bg-emerald-50/70 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300",
   };
   const iconColors: Record<string, string> = {
-    indigo: "text-indigo-500",
-    amber: "text-amber-500",
-    emerald: "text-emerald-500",
+    indigo: "text-indigo-500 dark:text-indigo-400",
+    amber: "text-amber-500 dark:text-amber-400",
+    emerald: "text-emerald-500 dark:text-emerald-400",
   };
   return (
     <div
@@ -278,7 +306,6 @@ const TipBanner = ({
 // ---------------------------------------------------------------------------
 // Interactive Map location picker with search (Step 2)
 // ---------------------------------------------------------------------------
-const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
 const MAP_CONTAINER = { width: "100%", height: "260px", borderRadius: "16px" };
 const DEFAULT_CENTER = { lat: 18.5204, lng: 73.8567 }; // Pune default
 
@@ -295,7 +322,7 @@ const MapLocationPicker = ({
   isDetecting: boolean;
   detectedLabel: string | null;
 }) => {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_KEY });
+  const { isLoaded } = useGoogleMapsLoader();
   const [mapCenter, setMapCenter] = useState(coords || DEFAULT_CENTER);
   const [markerPos, setMarkerPos] = useState(coords || null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -359,13 +386,13 @@ const MapLocationPicker = ({
     <div className="px-4 space-y-3 mb-3">
       {/* GPS button */}
       <button type="button" onClick={onDetectGPS} disabled={isDetecting}
-        className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 transition-all active:scale-[0.99] disabled:opacity-60">
-        <div className={`w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0 ${isDetecting ? "animate-pulse" : ""}`}>
-          <IonIcon icon={navigateOutline} className="text-indigo-600 text-lg" />
+        className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-indigo-200 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/20 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all active:scale-[0.99] disabled:opacity-60">
+        <div className={`w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 ${isDetecting ? "animate-pulse" : ""}`}>
+          <IonIcon icon={navigateOutline} className="text-indigo-600 dark:text-indigo-400 text-lg" />
         </div>
         <div className="text-left flex-1 min-w-0">
-          <p className="text-xs font-bold text-indigo-700">{isDetecting ? "Detecting..." : "Use My Current Location"}</p>
-          <p className="text-[10px] text-indigo-500/70 truncate">{detectedLabel || "Auto-fill from GPS"}</p>
+          <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{isDetecting ? "Detecting..." : "Use My Current Location"}</p>
+          <p className="text-[10px] text-indigo-500/70 dark:text-indigo-400/70 truncate">{detectedLabel || "Auto-fill from GPS"}</p>
         </div>
         {detectedLabel && !isDetecting && <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-lg shrink-0" />}
       </button>
@@ -375,18 +402,18 @@ const MapLocationPicker = ({
         <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base z-10" />
         <input type="text" value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search for your business location..."
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+          className="w-full pl-9 pr-4 py-2.5 text-base bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
         {isSearching && <div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /></div>}
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-56 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg z-20 max-h-56 overflow-y-auto">
             {searchResults.map((r) => (
               <button key={r.placeId} type="button" onClick={() => selectResult(r)}
-                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-b-0 flex items-start gap-2.5">
-                <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center">
-                  <IonIcon icon={locationOutline} className="text-xs text-amber-500" />
+                className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-50 dark:border-slate-700 last:border-b-0 flex items-start gap-2.5">
+                <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-xs text-amber-500 dark:text-amber-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-700 leading-snug truncate">{r.mainText}</p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate">{r.mainText}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5 leading-snug truncate">{r.secondaryText}</p>
                 </div>
               </button>
@@ -397,13 +424,13 @@ const MapLocationPicker = ({
 
       {/* Map */}
       {isLoaded ? (
-        <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+        <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-600 shadow-sm">
           <GoogleMap mapContainerStyle={MAP_CONTAINER} center={mapCenter} zoom={markerPos ? 16 : 12}
             onClick={handleMapClick} onLoad={(map) => { mapRef.current = map; }}
             options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}>
             {markerPos && <Marker position={markerPos} draggable onDragEnd={handleDragEnd} />}
           </GoogleMap>
-          <div className="px-3 py-2 bg-slate-50 border-t border-slate-100">
+          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700 border-t border-slate-100 dark:border-slate-600">
             <p className="text-[10px] text-slate-400 flex items-center gap-1">
               <IonIcon icon={mapOutline} className="text-xs" />
               {markerPos ? `📍 ${markerPos.lat.toFixed(5)}, ${markerPos.lng.toFixed(5)}` : "Tap on the map or search to pin your location"}
@@ -411,7 +438,7 @@ const MapLocationPicker = ({
           </div>
         </div>
       ) : (
-        <div className="h-[260px] rounded-2xl bg-slate-100 flex items-center justify-center">
+        <div className="h-[260px] rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
         </div>
       )}
@@ -422,87 +449,241 @@ const MapLocationPicker = ({
 // ---------------------------------------------------------------------------
 // Category selector with search (Step 3)
 // ---------------------------------------------------------------------------
+// Placeholder icon colors by first letter (consistent per category)
+const PLACEHOLDER_COLORS = [
+  "from-indigo-400 to-indigo-500",
+  "from-violet-400 to-violet-500",
+  "from-blue-400 to-blue-500",
+  "from-cyan-400 to-cyan-500",
+  "from-teal-400 to-teal-500",
+  "from-emerald-400 to-emerald-500",
+  "from-amber-400 to-amber-500",
+  "from-orange-400 to-orange-500",
+  "from-rose-400 to-rose-500",
+  "from-pink-400 to-pink-500",
+  "from-fuchsia-400 to-fuchsia-500",
+  "from-sky-400 to-sky-500",
+];
+const getPlaceholderColor = (name: string) =>
+  PLACEHOLDER_COLORS[name.charCodeAt(0) % PLACEHOLDER_COLORS.length];
+
 const CategorySelector = ({
   categories,
   selectedIds,
   onToggle,
+  maxSelect = 2,
 }: {
   categories: Category[];
   selectedIds: string[];
   onToggle: (id: string) => void;
+  maxSelect?: number;
 }) => {
   const [search, setSearch] = useState("");
+  const [brokenIcons, setBrokenIcons] = useState<Set<string>>(new Set());
+  const atLimit = selectedIds.length >= maxSelect;
+
+  const handleImgError = (catId: string) => {
+    setBrokenIcons((prev) => new Set(prev).add(catId));
+  };
+
+  const hasValidIcon = (cat: Category) =>
+    cat.icon && cat.icon.trim() !== "" && !brokenIcons.has(cat.id) &&
+    (cat.icon.startsWith('http') || cat.icon.startsWith('/'));
+
+  const isEmojiIcon = (cat: Category) =>
+    cat.icon && cat.icon.trim() !== "" && !hasValidIcon(cat);
+
   const filtered = search.trim()
     ? categories.filter((c) =>
         c.name.toLowerCase().includes(search.toLowerCase()),
       )
     : categories;
 
+  // Group filtered categories alphabetically
+  const grouped = filtered.reduce<Record<string, Category[]>>((acc, cat) => {
+    const letter = cat.name.charAt(0).toUpperCase();
+    if (!acc[letter]) acc[letter] = [];
+    acc[letter].push(cat);
+    return acc;
+  }, {});
+  const sortedLetters = Object.keys(grouped).sort();
+
+  const selectedCats = categories.filter((c) => selectedIds.includes(c.id));
+
   return (
-    <div className="px-4 pb-2">
-      {/* Search */}
-      <div className="relative mb-3">
+    <div className="px-4 pb-2 space-y-3">
+      {/* Search bar */}
+      <div className="relative">
         <IonIcon
           icon={searchOutline}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base z-10"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg z-10"
         />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search categories..."
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+          placeholder="Search from categories..."
+          className="w-full pl-10 pr-4 py-3 text-sm bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 shadow-sm transition-all placeholder:text-slate-300 dark:placeholder:text-slate-500 dark:text-white"
         />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
+          >
+            <IonIcon icon={closeCircle} className="text-lg" />
+          </button>
+        )}
       </div>
 
-      {/* Selected count */}
-      {selectedIds.length > 0 && (
-        <p className="text-[11px] font-semibold text-indigo-600 mb-2">
-          {selectedIds.length} categor
-          {selectedIds.length === 1 ? "y" : "ies"} selected
+      {/* Results count when searching */}
+      {search.trim() && (
+        <p className="text-[11px] text-slate-400 px-1">
+          {filtered.length} result{filtered.length !== 1 ? "s" : ""} found
         </p>
       )}
 
-      {/* Chips */}
-      <div className="flex flex-wrap gap-2">
-        {filtered.map((cat) => {
-          const selected = selectedIds.includes(cat.id);
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => onToggle(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all active:scale-[0.96] ${
-                selected
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50"
-              }`}
-            >
-              {cat.icon && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cat.icon}
-                  alt=""
-                  className="w-4 h-4 rounded-sm object-cover"
-                />
-              )}
-              {cat.name}
-              {selected && (
-                <IonIcon
-                  icon={checkmarkCircle}
-                  className="text-white/80 text-xs"
-                />
-              )}
-            </button>
-          );
-        })}
-        {filtered.length === 0 && (
-          <p className="text-xs text-slate-400 py-4 text-center w-full">
-            {categories.length === 0
-              ? "Loading categories..."
-              : `No categories matching "${search}"`}
+      {/* Max selection hint */}
+      {atLimit && (
+        <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2">
+          <IonIcon icon={informationCircleOutline} className="text-amber-500 dark:text-amber-400 text-base flex-shrink-0" />
+          <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
+            Maximum {maxSelect} categories allowed. Remove one to change.
           </p>
+        </div>
+      )}
+
+      {/* Selected chips (pinned at top) */}
+      {selectedCats.length > 0 && (
+        <div className="bg-indigo-50/70 dark:bg-indigo-900/20 rounded-2xl p-3 border border-indigo-100 dark:border-indigo-800">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white">{selectedCats.length}</span>
+              </div>
+              <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                Selected <span className="font-normal text-indigo-400 dark:text-indigo-500">({selectedCats.length}/{maxSelect})</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => selectedIds.forEach((id) => onToggle(id))}
+              className="text-[11px] font-medium text-indigo-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+            >
+              Clear all
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {selectedCats.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => onToggle(cat.id)}
+                className="group flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 shadow-sm hover:border-red-300 dark:hover:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-[0.96]"
+              >
+                <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="xs" />
+                {cat.name}
+                <IonIcon icon={closeCircle} className="text-indigo-300 dark:text-indigo-500 group-hover:text-red-400 dark:group-hover:text-red-400 text-sm transition-colors" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Scrollable alphabetical list */}
+      <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-sm">
+        {categories.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center animate-pulse">
+              <IonIcon icon={layersOutline} className="text-slate-300 dark:text-slate-500 text-xl" />
+            </div>
+            <p className="text-xs text-slate-400">Loading categories...</p>
+          </div>
         )}
+        {filtered.length === 0 && categories.length > 0 && (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+              <IonIcon icon={searchOutline} className="text-slate-300 text-xl" />
+            </div>
+            <p className="text-xs text-slate-400">
+              No categories matching &ldquo;{search}&rdquo;
+            </p>
+          </div>
+        )}
+        {sortedLetters.map((letter, letterIdx) => (
+          <div key={letter}>
+            <div className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-700/95 backdrop-blur-md px-3 py-1.5 border-b border-slate-100 dark:border-slate-600">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                {letter}
+              </span>
+            </div>
+            {grouped[letter].map((cat, catIdx) => {
+              const selected = selectedIds.includes(cat.id);
+              const disabled = atLimit && !selected;
+              const isLast =
+                letterIdx === sortedLetters.length - 1 &&
+                catIdx === grouped[letter].length - 1;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onToggle(cat.id)}
+                  className={`flex items-center gap-3 w-full px-3 py-3 text-left transition-all ${
+                    !isLast ? "border-b border-slate-50 dark:border-slate-700/50" : ""
+                  } ${
+                    disabled
+                      ? "opacity-40 cursor-not-allowed"
+                      : "active:scale-[0.98]"
+                  } ${
+                    selected
+                      ? "bg-indigo-50/80 dark:bg-indigo-900/20"
+                      : disabled
+                        ? ""
+                        : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  {/* Icon */}
+                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="sm" />
+
+                  {/* Name */}
+                  <span
+                    className={`text-[13px] flex-1 leading-tight ${
+                      selected
+                        ? "font-semibold text-indigo-700"
+                        : "font-medium text-slate-600"
+                    }`}
+                  >
+                    {cat.name}
+                  </span>
+
+                  {/* Checkbox */}
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                      selected
+                        ? "bg-indigo-600 shadow-sm shadow-indigo-200"
+                        : disabled
+                          ? "border-2 border-slate-100 bg-slate-50"
+                          : "border-2 border-slate-200"
+                    }`}
+                  >
+                    {selected && (
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -542,7 +723,7 @@ const PhotoFileUpload = ({
 
   return (
     <div className="px-4 mb-3">
-      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+      <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ml-1">
         {label}
       </label>
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleChange} />
@@ -562,12 +743,12 @@ const PhotoFileUpload = ({
           </div>
         </div>
       ) : (
-        <button type="button" onClick={() => inputRef.current?.click()} className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-indigo-300 transition-all active:scale-[0.99]">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <IonIcon icon={icon} className="text-indigo-500 text-lg" />
+        <button type="button" onClick={() => inputRef.current?.click()} className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-700/50 hover:border-indigo-300 transition-all active:scale-[0.99]">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 flex items-center justify-center shrink-0">
+            <IonIcon icon={icon} className="text-indigo-500 dark:text-indigo-400 text-lg" />
           </div>
           <div className="text-left flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-700">Upload {label}</p>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Upload {label}</p>
             <p className="text-[10px] text-slate-400 mt-0.5">{hint}</p>
           </div>
           <IonIcon icon={cloudUploadOutline} className="text-slate-300 text-xl shrink-0" />
@@ -585,9 +766,10 @@ interface ProductItem {
   description: string;
   price: string;
   images: File[];
+  productType: 'product' | 'service';
 }
 
-const emptyProduct = (): ProductItem => ({ name: "", description: "", price: "", images: [] });
+const emptyProduct = (): ProductItem => ({ name: "", description: "", price: "", images: [], productType: "product" });
 
 const MAX_PRODUCT_IMAGES = 5;
 
@@ -626,15 +808,15 @@ const ProductFormCard = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50/80 border-b border-slate-100">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50/80 dark:bg-slate-700/80 border-b border-slate-100 dark:border-slate-600">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center">
             <span className="text-[10px] font-bold text-indigo-600">{index + 1}</span>
           </div>
-          <span className="text-xs font-bold text-slate-700">
-            {product.name.trim() || `Product ${index + 1}`}
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            {product.name.trim() || (product.productType === "service" ? `Service ${index + 1}` : `Product ${index + 1}`)}
           </span>
         </div>
         <button type="button" onClick={onRemove} className="p-1 rounded-lg hover:bg-red-50 transition-colors active:scale-90">
@@ -643,6 +825,29 @@ const ProductFormCard = ({
       </div>
 
       <div className="p-4 space-y-3">
+        {/* Product/Service Type Toggle */}
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Type</label>
+          <div className="flex gap-2">
+            {(["product", "service"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onUpdate({ ...product, productType: t })}
+                className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all ${
+                  product.productType === t
+                    ? t === "service"
+                      ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400"
+                      : "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400"
+                    : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600"
+                }`}
+              >
+                {t === "product" ? "📦 Product" : "🛠️ Service"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Product images (up to 5) */}
         <input ref={imgRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
         <div>
@@ -672,25 +877,25 @@ const ProductFormCard = ({
 
         {/* Name */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Product Name *</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Product Name *</label>
           <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehndi Package" maxLength={150}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Description</label>
           <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="Brief description of this product or service..." rows={2} maxLength={2000}
-            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none" />
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
         {/* Price */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Price (₹)</label>
+          <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Price (₹) <span className="normal-case font-normal text-slate-400">— optional</span></label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
-            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="0.00"
-              className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="Leave blank if not applicable"
+              className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
           </div>
         </div>
       </div>
@@ -771,7 +976,7 @@ const DocumentTypeSelector = ({
             className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all duration-200 active:scale-[0.97] ${
               isActive
                 ? `ring-2 ${c.ring} border-transparent`
-                : "border-slate-100 bg-white hover:border-slate-200"
+                : "border-slate-100 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-500"
             }`}
           >
             <div
@@ -998,8 +1203,8 @@ const DocFilePicker = ({
 // ---------------------------------------------------------------------------
 const DocumentGuidelines = () => (
   <div className="mx-4 mt-3 space-y-3">
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-3">
+    <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+      <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
         Document guidelines
       </p>
       <div className="space-y-2.5">
@@ -1015,7 +1220,7 @@ const DocumentGuidelines = () => (
                 {i + 1}
               </span>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">{text}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
@@ -1037,13 +1242,13 @@ const DocumentGuidelines = () => (
 // What happens next
 // ---------------------------------------------------------------------------
 const WhatHappensNext = () => (
-  <div className="mx-4 mt-4 mb-2 rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50/80 to-white p-4 shadow-sm">
+  <div className="mx-4 mt-4 mb-2 rounded-2xl border border-slate-100 dark:border-slate-700 bg-gradient-to-b from-slate-50/80 to-white dark:from-slate-800 dark:to-slate-800 p-4 shadow-sm">
     <div className="flex items-center gap-2 mb-3">
       <IonIcon
         icon={informationCircleOutline}
         className="text-indigo-400 text-lg"
       />
-      <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+      <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
         What happens next
       </p>
     </div>
@@ -1070,7 +1275,7 @@ const WhatHappensNext = () => (
             {item.step}
           </div>
           <div className="flex-1">
-            <p className="text-xs text-slate-700 font-medium">{item.text}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">{item.text}</p>
             <p className="text-[10px] text-slate-400">{item.time}</p>
           </div>
         </div>
@@ -1089,10 +1294,12 @@ const UnderReviewBanner = ({
   status: "pending" | "in_review" | "approved";
   onGoBack: () => void;
 }) => {
+  const { setUserMode } = useAppContext();
+  const router = useRouter();
   const config = {
     pending: {
       icon: timeOutline,
-      iconBg: "bg-amber-50 border-amber-200",
+      iconBg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800",
       iconColor: "text-amber-500",
       title: "Application Submitted",
       subtitle:
@@ -1105,7 +1312,7 @@ const UnderReviewBanner = ({
     },
     in_review: {
       icon: shieldCheckmarkOutline,
-      iconBg: "bg-blue-50 border-blue-200",
+      iconBg: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
       iconColor: "text-blue-500",
       title: "Under Active Review",
       subtitle:
@@ -1118,15 +1325,15 @@ const UnderReviewBanner = ({
     },
     approved: {
       icon: sparklesOutline,
-      iconBg: "bg-green-50 border-green-200",
+      iconBg: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800",
       iconColor: "text-green-500",
-      title: "You're Approved!",
+      title: "Registration Complete!",
       subtitle:
-        "Your provider account is active. Switch to Provider Mode from your profile to start listing services.",
+        "Your provider account has been created successfully. You can now switch to Provider Mode to set up your business, add products, and start connecting with customers.",
       steps: [
         { label: "Application submitted", done: true },
-        { label: "Identity verified", done: true },
-        { label: "Account activated", done: true },
+        { label: "Account created", done: true },
+        { label: "Ready to get started", done: true },
       ],
     },
   }[status];
@@ -1150,14 +1357,14 @@ const UnderReviewBanner = ({
           />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
             {config.title}
           </h2>
-          <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
             {config.subtitle}
           </p>
         </div>
-        <div className="w-full bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-0">
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm space-y-0">
           {config.steps.map((s, i) => (
             <div key={i}>
               <div className="flex items-center gap-3 py-2">
@@ -1165,7 +1372,7 @@ const UnderReviewBanner = ({
                   className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 ${
                     s.done
                       ? "bg-green-500 border-green-500"
-                      : "bg-white border-slate-200"
+                      : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-500"
                   }`}
                 >
                   {s.done && (
@@ -1177,31 +1384,71 @@ const UnderReviewBanner = ({
                 </div>
                 <p
                   className={`text-sm font-medium ${
-                    s.done ? "text-slate-800" : "text-slate-400"
+                    s.done ? "text-slate-800 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"
                   }`}
                 >
                   {s.label}
                 </p>
               </div>
               {i < config.steps.length - 1 && (
-                <div className="ml-3 w-0.5 h-3 bg-slate-100 rounded-full" />
+                <div className="ml-3 w-0.5 h-3 bg-slate-100 dark:bg-slate-600 rounded-full" />
               )}
             </div>
           ))}
         </div>
-        <div className="w-full bg-indigo-50 border border-indigo-100 rounded-2xl p-3 flex items-start gap-2">
-          <IonIcon
-            icon={informationCircleOutline}
-            className="text-indigo-400 text-lg shrink-0 mt-0.5"
-          />
-          <p className="text-xs text-indigo-700 leading-relaxed">
-            You can continue using the app as a customer while your application
-            is being reviewed.
-          </p>
-        </div>
-        <Button large rounded className="w-full" onClick={onGoBack}>
-          Continue as Customer
-        </Button>
+        {status === "approved" ? (
+          <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-3 flex items-start gap-2">
+            <IonIcon
+              icon={storefrontOutline}
+              className="text-emerald-500 dark:text-emerald-400 text-lg shrink-0 mt-0.5"
+            />
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+              Your provider dashboard is ready. Switch to Provider Mode from your profile to manage products, bookings, and business settings.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-3 flex items-start gap-2">
+            <IonIcon
+              icon={informationCircleOutline}
+              className="text-indigo-400 text-lg shrink-0 mt-0.5"
+            />
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+              Your application is being reviewed. You'll be notified once approved.
+            </p>
+          </div>
+        )}
+
+        {status === "approved" ? (
+          <div className="w-full flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setUserMode("provider");
+                router.replace("/");
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-600 active:bg-emerald-700 transition-colors shadow-md shadow-emerald-200/30"
+            >
+              <IonIcon icon={storefrontOutline} className="text-white text-xl" />
+              <span className="text-white font-semibold text-[15px]">Continue as Provider</span>
+              <IonIcon icon={arrowForwardOutline} className="text-white/80 text-base ml-auto" />
+            </button>
+            <button
+              type="button"
+              onClick={onGoBack}
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-medium text-sm active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
+            >
+              Back to Home
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onGoBack}
+            className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-[15px] active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
+          >
+            Go Back
+          </button>
+        )}
       </div>
     </Page>
   );
@@ -1214,9 +1461,16 @@ const ProviderOnboardingPage = () => {
   const { providerStatus, setProviderStatus } = useAppContext();
   const { notify } = useNotification();
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const user = useAppSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
 
+  const stepScrollRef = useRef<HTMLDivElement>(null);
   const [currentStep, setCurrentStep] = useState<StepId>(1);
+
+  useEffect(() => {
+    stepScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentStep]);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(
     new Set(),
   );
@@ -1233,12 +1487,15 @@ const ProviderOnboardingPage = () => {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
+  const [otpSentPhone, setOtpSentPhone] = useState(""); // the number OTP was sent to
   const [otpVerified, setOtpVerified] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState(""); // the exact number that was verified
   const [otpCode, setOtpCode] = useState("");
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [isWomenLed, setIsWomenLed] = useState(false);
   const [detectedLocationLabel, setDetectedLocationLabel] = useState<
     string | null
   >(null);
@@ -1285,13 +1542,9 @@ const ProviderOnboardingPage = () => {
     if (!formikRef.current) return;
     setIsDetectingLocation(true);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 10000,
-          enableHighAccuracy: true,
-        }),
-      );
-      const { latitude: lat, longitude: lng } = pos.coords;
+      const { getCurrentPosition } = await import("@/utils/geolocation");
+      const pos = await getCurrentPosition({ timeout: 10000, enableHighAccuracy: true });
+      const { latitude: lat, longitude: lng } = pos;
       setDetectedCoords({ lat, lng });
 
       try {
@@ -1330,6 +1583,7 @@ const ProviderOnboardingPage = () => {
     try {
       const res = await sendProviderOtp(phone);
       setOtpSent(true);
+      setOtpSentPhone(phone);
       setOtpCooldown(60);
       const testOtp = res?.data?.otp;
       notify({
@@ -1351,12 +1605,30 @@ const ProviderOnboardingPage = () => {
     setOtpError(null);
     try {
       const res = await verifyProviderOtp(phone, otpCode);
-      if (res.verified) setOtpVerified(true);
-      else setOtpError("Invalid OTP");
+      if (res.verified) {
+        setOtpVerified(true);
+        setVerifiedPhone(phone);
+      } else {
+        setOtpError("Invalid OTP");
+      }
     } catch (err: any) {
       setOtpError(err?.response?.data?.message ?? "Verification failed");
     } finally { setOtpVerifying(false); }
   }, [otpCode]);
+
+  // Reset OTP state when the contact number changes away from the verified number
+  const resetOtpState = useCallback(() => {
+    setOtpSent(false);
+    setOtpSentPhone("");
+    setOtpVerified(false);
+    setVerifiedPhone("");
+    setOtpCode("");
+    setOtpError(null);
+    setOtpCooldown(0);
+  }, []);
+
+  // Extract user's 10-digit phone (strip +91 / 91 prefix)
+  const userPhone10 = user?.mobileNumber?.replace(/^\+?91/, "") ?? "";
 
   // Map location select → reverse geocode to fill fields
   const handleMapLocationSelect = useCallback(async (lat: number, lng: number) => {
@@ -1378,7 +1650,7 @@ const ProviderOnboardingPage = () => {
   const handleBack = () => {
     if (isSubmitting) return;
     if (currentStep > 1) setCurrentStep((currentStep - 1) as StepId);
-    else router.back();
+    else goBack("/");
   };
 
   const handleNext = async (validateForm: any, setTouched: any) => {
@@ -1412,6 +1684,15 @@ const ProviderOnboardingPage = () => {
       setSubmitError("You must be logged in to become a provider.");
       return;
     }
+
+    // Content sanitization check
+    const nameCheck = checkContent(values.brand_name);
+    const descCheck = checkContent(values.description);
+    if (nameCheck.flagged || descCheck.flagged) {
+      setSubmitError("Your brand name or description contains inappropriate language. Please revise.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -1434,6 +1715,7 @@ const ProviderOnboardingPage = () => {
           description: p.description.trim() || undefined,
           price: p.price ? parseFloat(p.price) : undefined,
           imageCount: p.images.length,
+          productType: p.productType || "product",
         }));
 
       // Collect all product images as a flat array
@@ -1456,6 +1738,7 @@ const ProviderOnboardingPage = () => {
         aadhaarFile: values.identity_doc || undefined,
         latitude,
         longitude,
+        isWomenLed,
         categoryIds: selectedCategoryIds.length
           ? selectedCategoryIds
           : undefined,
@@ -1465,7 +1748,16 @@ const ProviderOnboardingPage = () => {
         productImages: allProductImages.length
           ? allProductImages
           : undefined,
+        websiteUrl: values.website_url?.trim() || undefined,
+        instagramHandle: values.instagram_handle?.trim().replace(/^@/, "") || undefined,
+        facebookHandle: values.facebook_handle?.trim() || undefined,
+        youtubeHandle: values.youtube_handle?.trim() || undefined,
+        whatsappNumber: values.whatsapp_number?.trim() || undefined,
+        linkedinHandle: values.linkedin_handle?.trim() || undefined,
       });
+      // Invalidate explore & home feed caches so the new provider appears immediately
+      queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["home-feed"] });
       setProviderStatus(values.identity_doc ? "pending" : "approved");
     } catch (err: any) {
       const message =
@@ -1498,13 +1790,13 @@ const ProviderOnboardingPage = () => {
     return (
       <UnderReviewBanner
         status={providerStatus as "pending" | "in_review" | "approved"}
-        onGoBack={() => router.back()}
+        onGoBack={() => goBack("/")}
       />
     );
   }
 
   return (
-    <Page>
+    <Page className="!bg-white dark:!bg-slate-900">
       <Navbar
         title="Become a Provider"
         leftClassName="w-11"
@@ -1528,6 +1820,12 @@ const ProviderOnboardingPage = () => {
           area: "",
           pincode: "",
           identity_doc: null as File | null,
+          website_url: "",
+          instagram_handle: "",
+          facebook_handle: "",
+          youtube_handle: "",
+          whatsapp_number: "",
+          linkedin_handle: "",
         }}
         validationSchema={schemaForStep[currentStep]}
         onSubmit={handleSubmit}
@@ -1543,11 +1841,13 @@ const ProviderOnboardingPage = () => {
           touched,
           submitForm,
         }) => {
+          // OTP is only valid if the verified number matches the current contact number
+          const phoneVerified = otpVerified && verifiedPhone === values.contact_number.trim();
           const isStep1Valid = Boolean(
             values.brand_name.trim() &&
               values.description.trim() &&
               values.contact_number.trim() &&
-              otpVerified,
+              phoneVerified,
           );
           const isStep2Valid = Boolean(
             values.address.trim() &&
@@ -1574,7 +1874,7 @@ const ProviderOnboardingPage = () => {
                 isSubmitting={isSubmitting}
               />
 
-              <div className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
+              <div ref={stepScrollRef} className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
                 {/* ======================================================= */}
                 {/* STEP 1 — Business Information                           */}
                 {/* ======================================================= */}
@@ -1614,58 +1914,138 @@ const ProviderOnboardingPage = () => {
                       />
                     </List>
 
+                    {/* Use My Number shortcut */}
+                    {userPhone10.length === 10 && values.contact_number !== userPhone10 && !phoneVerified && (
+                      <div className="px-4 -mt-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFieldValue("contact_number", userPhone10);
+                            resetOtpState();
+                          }}
+                          className="flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 active:text-indigo-800 dark:active:text-indigo-300"
+                        >
+                          <IonIcon icon={callOutline} className="text-[13px]" />
+                          Use my number ({userPhone10.slice(0, 3)}***{userPhone10.slice(7)})
+                        </button>
+                      </div>
+                    )}
+
                     {/* OTP Verification for Contact Number */}
                     <div className="px-4 mb-4">
-                      {otpVerified ? (
-                        <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
-                          <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-xl shrink-0" />
-                          <div>
-                            <p className="text-xs font-bold text-emerald-700">Phone number verified</p>
-                            <p className="text-[10px] text-emerald-600/70">+91 {values.contact_number}</p>
+                      {phoneVerified ? (
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-700">
+                          <div className="flex items-center gap-2.5">
+                            <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-xl shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Phone number verified</p>
+                              <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">+91 {values.contact_number}</p>
+                            </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetOtpState();
+                              setFieldValue("contact_number", "");
+                            }}
+                            className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 active:text-emerald-900 px-2 py-1"
+                          >
+                            Change
+                          </button>
                         </div>
-                      ) : !otpSent ? (
-                        <button type="button" disabled={values.contact_number.length !== 10 || otpSending}
-                          onClick={() => handleSendOtp(values.contact_number)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 transition-all active:scale-[0.99] disabled:opacity-50">
-                          {otpSending ? (
-                            <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                          ) : (
-                            <IonIcon icon={shieldOutline} className="text-indigo-500 text-base" />
-                          )}
-                          <span className="text-xs font-bold text-indigo-600">
+                      ) : !otpSent || values.contact_number.trim() !== otpSentPhone ? (
+                        <div className="space-y-2">
+                          <button type="button" disabled={values.contact_number.length !== 10 || otpSending}
+                            onClick={() => handleSendOtp(values.contact_number)}
+                            className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed ${
+                              values.contact_number.length === 10 && !otpSending
+                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-4 ring-indigo-500/20"
+                                : "border-2 border-dashed border-slate-600 bg-slate-800/50 text-slate-500"
+                            }`}>
+                            {otpSending ? (
+                              <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            ) : (
+                              <IonIcon icon={shieldOutline} className="text-[17px]" />
+                            )}
                             {otpSending ? "Sending OTP..." : "Verify Phone Number"}
-                          </span>
-                        </button>
+                          </button>
+                          {otpError && (
+                            <p className="text-[11px] text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
+                              <IonIcon icon={alertCircleOutline} className="text-xs" /> {otpError}
+                            </p>
+                          )}
+                          {!otpError && values.contact_number.length === 10 && (
+                            <p className="text-[10px] text-indigo-400/80 text-center font-medium">
+                              Required to continue to the next step
+                            </p>
+                          )}
+                        </div>
                       ) : (
-                        <div className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/30 space-y-3">
+                        <div className="p-4 rounded-2xl border border-indigo-400/30 dark:border-indigo-500/30 bg-indigo-50/30 dark:bg-indigo-950/40 space-y-3">
                           <div className="flex items-center gap-2">
-                            <IonIcon icon={callOutline} className="text-indigo-500 text-base" />
-                            <p className="text-xs font-bold text-indigo-700">Enter OTP sent to +91 {values.contact_number}</p>
+                            <IonIcon icon={callOutline} className="text-indigo-500 dark:text-indigo-400 text-base" />
+                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">Enter OTP sent to +91 {otpSentPhone}</p>
                           </div>
                           <div className="flex gap-2">
                             <input type="text" inputMode="numeric" value={otpCode} maxLength={6}
                               onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }}
                               placeholder="6-digit OTP"
-                              className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all" />
+                              className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all" />
                             <button type="button" disabled={otpCode.length !== 6 || otpVerifying}
-                              onClick={() => handleVerifyOtp(values.contact_number)}
-                              className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-all">
+                              onClick={() => handleVerifyOtp(otpSentPhone)}
+                              className="px-4 py-2.5 rounded-xl bg-indigo-600 dark:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-all">
                               {otpVerifying ? "..." : "Verify"}
                             </button>
                           </div>
                           {otpError && (
-                            <p className="text-[11px] text-red-500 font-medium flex items-center gap-1">
+                            <p className="text-[11px] text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
                               <IonIcon icon={alertCircleOutline} className="text-xs" /> {otpError}
                             </p>
                           )}
                           <button type="button" disabled={otpCooldown > 0 || otpSending}
-                            onClick={() => handleSendOtp(values.contact_number)}
-                            className="text-[11px] font-semibold text-indigo-600 disabled:text-slate-400">
+                            onClick={() => handleSendOtp(otpSentPhone)}
+                            className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 disabled:text-slate-400 dark:disabled:text-slate-600">
                             {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend OTP"}
                           </button>
                         </div>
                       )}
+                    </div>
+
+                    {/* Women-Led Business Toggle */}
+                    <div className="px-4 mb-4">
+                      <div className={`p-4 rounded-2xl border-2 transition-colors ${
+                        isWomenLed
+                          ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-600"
+                          : "border-slate-200 bg-slate-50/50 dark:bg-slate-800 dark:border-slate-700"
+                      }`}>
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">♀</span>
+                              <h4 className="text-sm font-bold text-gray-800 dark:text-white">Women-Led Business</h4>
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
+                              Mark this if your business is owned or led by a woman. Women-led businesses get extra visibility, featured placement, and bonus free leads on Tijarah.
+                            </p>
+                            {isWomenLed && (
+                              <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1.5 font-medium">
+                                ✓ Admin verification required — your badge will appear once approved
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsWomenLed(!isWomenLed)}
+                            className={`shrink-0 w-12 h-6 rounded-full transition-colors relative ${
+                              isWomenLed ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-600"
+                            }`}
+                          >
+                            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-200 ${
+                              isWomenLed ? "left-[26px]" : "left-0.5"
+                            }`} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <SectionHeader
@@ -1685,6 +2065,130 @@ const ProviderOnboardingPage = () => {
                         onChange={(val) => setFieldValue("close_time", val)}
                       />
                     </List>
+                    {touched.close_time && errors.close_time && (
+                      <p className="text-xs text-red-500 font-medium px-5 -mt-1 mb-2">{errors.close_time}</p>
+                    )}
+
+                    {/* Online Presence (Optional) */}
+                    <SectionHeader
+                      icon={linkOutline}
+                      title="Online Presence"
+                      subtitle="Optional — help customers find you online"
+                    />
+                    <div className="px-4 space-y-2.5 mb-4">
+                      {/* Website */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={globeOutline} className="text-blue-500 dark:text-blue-400 text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Website</label>
+                          <input
+                            type="url"
+                            name="website_url"
+                            value={values.website_url}
+                            onChange={(e) => setFieldValue("website_url", e.target.value)}
+                            placeholder="https://yourbusiness.com"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Instagram */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-purple-300 dark:focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-100 dark:focus-within:ring-purple-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoInstagram} className="text-[#E4405F] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Instagram</label>
+                          <div className="flex items-center">
+                            <span className="text-[13px] text-slate-300 dark:text-slate-600 font-medium mr-0.5">@</span>
+                            <input
+                              type="text"
+                              name="instagram_handle"
+                              value={values.instagram_handle}
+                              onChange={(e) => setFieldValue("instagram_handle", e.target.value.replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, "").slice(0, 30))}
+                              placeholder="yourhandle"
+                              className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Facebook */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoFacebook} className="text-[#1877F2] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Facebook</label>
+                          <input
+                            type="text"
+                            name="facebook_handle"
+                            value={values.facebook_handle}
+                            onChange={(e) => setFieldValue("facebook_handle", e.target.value)}
+                            placeholder="Page name or URL"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* YouTube */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-red-300 dark:focus-within:border-red-600 focus-within:ring-2 focus-within:ring-red-100 dark:focus-within:ring-red-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoYoutube} className="text-[#FF0000] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">YouTube</label>
+                          <input
+                            type="text"
+                            name="youtube_handle"
+                            value={values.youtube_handle}
+                            onChange={(e) => setFieldValue("youtube_handle", e.target.value)}
+                            placeholder="@channel or channel URL"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* WhatsApp */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-green-300 dark:focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100 dark:focus-within:ring-green-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoWhatsapp} className="text-[#25D366] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">WhatsApp</label>
+                          <input
+                            type="tel"
+                            name="whatsapp_number"
+                            value={values.whatsapp_number}
+                            onChange={(e) => setFieldValue("whatsapp_number", e.target.value)}
+                            placeholder="+91 98765 43210"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* LinkedIn */}
+                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                          <IonIcon icon={logoLinkedin} className="text-[#0A66C2] text-lg" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">LinkedIn</label>
+                          <input
+                            type="text"
+                            name="linkedin_handle"
+                            value={values.linkedin_handle}
+                            onChange={(e) => setFieldValue("linkedin_handle", e.target.value)}
+                            placeholder="Profile or company page URL"
+                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-1">All fields are optional — fill what applies to your business</p>
+                    </div>
                   </>
                 )}
 
@@ -1761,11 +2265,14 @@ const ProviderOnboardingPage = () => {
                     <CategorySelector
                       categories={categories}
                       selectedIds={selectedCategoryIds}
+                      maxSelect={2}
                       onToggle={(id) =>
                         setSelectedCategoryIds((prev) =>
                           prev.includes(id)
                             ? prev.filter((x) => x !== id)
-                            : [...prev, id],
+                            : prev.length >= 2
+                              ? prev
+                              : [...prev, id],
                         )
                       }
                     />
@@ -1839,7 +2346,7 @@ const ProviderOnboardingPage = () => {
                         </button>
                       )}
                     </div>
-                    <div className="mx-4 mt-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+                    <div className="mx-4 mt-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-xl">
                       <p className="text-[10px] text-slate-400 font-medium">
                         This step is optional — you can add products later from your provider dashboard.
                       </p>
@@ -1908,7 +2415,7 @@ const ProviderOnboardingPage = () => {
               </div>
 
               {/* Bottom action bar */}
-              <div className="fixed bottom-0 left-0 w-full z-10 bg-white/90 backdrop-blur-md border-t border-slate-100 px-4 pt-3 pb-6">
+              <div className="fixed bottom-0 left-0 w-full z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-700 px-4 pt-3 pb-6">
                 <p className="text-[10px] text-center text-slate-400 font-medium tracking-wide uppercase mb-3">
                   Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].label}
                 </p>
@@ -1918,7 +2425,7 @@ const ProviderOnboardingPage = () => {
                     type="button"
                     onClick={handleBack}
                     disabled={isSubmitting}
-                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
+                    className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
                   >
                     <IonIcon icon={arrowBack} className="text-base shrink-0" />
                     {currentStep === 1 ? "Exit" : "Back"}
@@ -1926,15 +2433,31 @@ const ProviderOnboardingPage = () => {
 
                   {/* Continue / Submit */}
                   {currentStep < 5 ? (
-                    <button
-                      type="button"
-                      onClick={() => handleNext(validateForm, setTouched)}
-                      disabled={!canAdvance[currentStep] || isSubmitting}
-                      className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
-                    >
-                      {(["Set Location", "Choose Categories", "Add Products", "Verify Identity"] as const)[currentStep - 1]}
-                      <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
-                    </button>
+                    <div className="flex flex-1 flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleNext(validateForm, setTouched)}
+                        disabled={!canAdvance[currentStep] || isSubmitting}
+                        className="flex w-full items-center justify-center gap-2 h-12 rounded-2xl bg-amber-400 text-slate-900 font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-amber-200"
+                      >
+                        {currentStep === 1 && !phoneVerified ? (
+                          <>
+                            <IonIcon icon={lockClosedOutline} className="text-base shrink-0" />
+                            Set Location
+                          </>
+                        ) : (
+                          <>
+                            {(["Set Location", "Choose Categories", "Add Products", "Verify Identity"] as const)[currentStep - 1]}
+                            <IonIcon icon={arrowForwardOutline} className="text-base shrink-0" />
+                          </>
+                        )}
+                      </button>
+                      {currentStep === 1 && !phoneVerified && (
+                        <p className="text-[10px] text-center text-slate-400 font-medium">
+                          Verify your phone number above to continue
+                        </p>
+                      )}
+                    </div>
                   ) : isStep5HasDoc ? (
                     <button
                       type="submit"
@@ -2011,7 +2534,9 @@ export default function ProviderOnboardingExport() {
       title="Become a Provider"
       description="Sign in to register your business and start reaching customers on Tijarah Connect."
     >
-      <ProviderOnboardingPage />
+      <FeatureGate flag="provider_onboarding_enabled">
+        <ProviderOnboardingPage />
+      </FeatureGate>
     </PrivateRoute>
   );
 }

@@ -23,6 +23,11 @@ const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: strin
     ? prompts.map((p) => `Search "${p}"`)
     : FALLBACK_TEXTS;
 
+  // Prefetch the search route so it loads instantly on tap
+  useEffect(() => {
+    router.prefetch(ROUTE_PATH.SEARCH);
+  }, [router]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholderTexts.length);

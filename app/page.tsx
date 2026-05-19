@@ -1,6 +1,6 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Page } from "konsta/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
@@ -27,21 +27,52 @@ import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useChatSubscription } from "@/hooks/useChatSubscription";
 import { useHeartbeat } from "@/hooks/useChat";
+import { useQueryClient } from "@tanstack/react-query";
 import { clearPendingChat } from "@/store/slices/chatSlice";
 import { useUnreadCount } from "@/hooks/useNotifications";
+import { useNotification } from "./context/NotificationContext";
+import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
+import FeatureGate from "./components/feature-gate";
+import FloatingNotificationPill from "./components/floating-notification-pill";
+import NotificationDropdown from "./components/notification-center/NotificationDropdown";
+import { useCheckServiceability } from "@/hooks/useServiceableCities";
+
+/** Sticky header used inside individual TabPanels */
+function TabHeader({ title }: { title: string }) {
+  return (
+    <div
+      className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
+      style={{ paddingTop: "calc(var(--sat,0px) + 6px)" }}
+    >
+      <div className="px-4 py-3 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+          {title}
+        </h1>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const { notify } = useNotification();
   const [activeTab, setActiveTab] = useState("home");
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
+  const [analyticsView, setAnalyticsView] = useState<string | null>(null);
   const { userMode, setUserMode, providerStatus } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user } = useAppSelector((state) => state.auth);
   const { requireAuth } = useAuthGate();
   const pendingChatOpen = useAppSelector((state) => state.chat.pendingChatOpen);
+  const queryClient = useQueryClient();
   const prevUserMode = useRef(userMode);
+  const pendingTabRef = useRef<string | null>(null);
+  const prevActiveChat = useRef<string | null>(null);
+
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
   // Global chat subscription for unread badge
   useChatSubscription();
@@ -49,6 +80,54 @@ export default function Home() {
   useHeartbeat();
   // Poll notification unread count
   useUnreadCount();
+
+  // City gating state
+  const selectedCity = useAppSelector((state) => state.location.selectedCity);
+  const guestCoords = useAppSelector((state) => state.location.guestCoords);
+  const userLat = (user as any)?.latitude;
+  const userLng = (user as any)?.longitude;
+  const effectiveLat = userLat || guestCoords?.lat;
+  const effectiveLng = userLng || guestCoords?.lng;
+  const hasSelectedCity = !!selectedCity;
+
+  const { data: serviceability } = useCheckServiceability(
+    selectedCity,
+    effectiveLat,
+    effectiveLng,
+  );
+
+  const isServiceable = !hasSelectedCity || (serviceability?.serviceable ?? true);
+
+  // Handle deep-link query params (e.g. /?tab=chats&conversationId=xxx from notifications)
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const conversationId = searchParams.get("conversationId");
+    const subTab = searchParams.get("subTab");
+    const payment = searchParams.get("payment");
+
+    if (tab) {
+      setActiveTab(tab);
+      if (conversationId) {
+        setActiveChat(conversationId);
+      }
+      if (subTab) {
+        setListingsSubTab(subTab);
+      }
+    }
+
+    // Show payment result toast
+    if (payment === "success") {
+      notify({ title: "Payment successful", subtitle: "Your payment has been processed. It may take a moment to reflect.", variant: "success" });
+    } else if (payment === "cancelled") {
+      notify({ title: "Payment cancelled", subtitle: "Your payment was cancelled. No charges were made.", variant: "warning" });
+    }
+
+    // Clear query params after consuming them
+    if (tab || payment) {
+      router.replace("/", { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Force customer mode for guests — provider mode requires authentication
   // Also reset to home tab when user logs out while on a protected tab
@@ -70,25 +149,48 @@ export default function Home() {
     }
   }, [pendingChatOpen, dispatch]);
 
-  // When provider/customer mode CHANGES (not on initial mount), go to home tab
+  // When provider/customer mode CHANGES (not on initial mount), navigate to pending tab or home
   useEffect(() => {
     if (prevUserMode.current !== userMode) {
       prevUserMode.current = userMode;
-      setActiveTab("home");
+      const targetTab = pendingTabRef.current || "home";
+      pendingTabRef.current = null;
+      setActiveTab(targetTab);
+      // Invalidate conversations cache so the new mode's chat list is fresh
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
-  }, [userMode]);
+  }, [userMode, queryClient]);
 
-  const handleTabChange = (tab: string) => {
+  // When returning from a conversation view, invalidate conversations for fresh last-message previews
+  useEffect(() => {
+    if (prevActiveChat.current && !activeChat) {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    }
+    prevActiveChat.current = activeChat;
+  }, [activeChat, queryClient]);
+
+  // Throttle tab switches to prevent rapid mount/unmount crashes
+  const lastTabSwitch = useRef(0);
+  const handleTabChange = useCallback((tab: string) => {
+    const now = Date.now();
+    if (now - lastTabSwitch.current < 100) return; // 100ms throttle
+    lastTabSwitch.current = now;
+
     if (!user && (tab === "chats" || tab === "saved")) {
       requireAuth(() => setActiveTab(tab));
       return;
     }
     setActiveTab(tab);
-  };
+  }, [user, requireAuth]);
 
   const handleNavigateToListings = (subTab: string) => {
     setListingsSubTab(subTab);
     setActiveTab("listings");
+  };
+
+  const handleNavigateToAnalytics = (view: string) => {
+    setAnalyticsView(view);
+    setActiveTab("analytics");
   };
 
   const getPageTitle = () => {
@@ -123,70 +225,63 @@ export default function Home() {
 
   return (
     <Page
-      className="!overflow-x-hidden dark:!bg-slate-900"
-      style={{
-        background:
-          activeTab === "home" && userMode === "customer"
-            ? undefined
-            : undefined,
-      }}
+      className="!overflow-hidden !bg-white dark:!bg-slate-900"
     >
-      {/* Modern header for non-home tabs (skip for provider views which have own headers) */}
-      {activeTab !== "home" &&
-        !(
-          userMode === "provider" &&
-          (activeTab === "listings" || activeTab === "analytics")
-        ) && (
-          <div
-            className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
-            style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
-          >
-            <div className="px-4 py-3 flex items-center justify-between">
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
-                {getPageTitle()}
-              </h1>
-            </div>
-          </div>
-        )}
-
-      {activeTab === "home" && userMode === "customer" && <GeoLocation />}
-
-      {activeTab === "home" &&
-        (userMode === "customer" ? (
-          <UserHome />
+      {/* Tab panels — absolute inset-0, each is its own scroll container */}
+      <TabPanel id="home" activeTab={activeTab}>
+        {userMode === "customer" && <GeoLocation />}
+        {userMode === "customer" ? (
+          <UserHome isServiceable={isServiceable} selectedCity={selectedCity} />
         ) : (
-          <ProviderDashboard onNavigateToListings={handleNavigateToListings} />
-        ))}
+          <ProviderDashboard onNavigateToListings={handleNavigateToListings} onNavigateToAnalytics={handleNavigateToAnalytics} />
+        )}
+      </TabPanel>
 
-      {activeTab === "explore" && <ExploreContent />}
+      <LazyTabPanel id="explore" activeTab={activeTab}>
+        <TabHeader title="Explore" />
+        <ExploreContent />
+      </LazyTabPanel>
 
-      {activeTab === "saved" && <SavedContent />}
+      <LazyTabPanel id="saved" activeTab={activeTab}>
+        <TabHeader title="Saved" />
+        <SavedContent isActive={activeTab === "saved"} />
+      </LazyTabPanel>
 
-      {activeTab === "listings" && (
+      <LazyTabPanel id="listings" activeTab={activeTab}>
         <ProviderListingsManager
           initialSubTab={listingsSubTab}
           onSubTabConsumed={() => setListingsSubTab(null)}
         />
-      )}
+      </LazyTabPanel>
 
-      {activeTab === "chats" &&
-        (userMode === "provider" ? (
-          <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
-        ) : (
-          <MessagesContent onChatClick={(id) => setActiveChat(id)} />
-        ))}
+      <LazyTabPanel id="chats" activeTab={activeTab}>
+        <TabHeader title="Messages" />
+        <FeatureGate flag="chat_enabled">
+          {userMode === "provider" ? (
+            <ProviderMessagesContent onChatClick={(id) => setActiveChat(id)} />
+          ) : (
+            <MessagesContent onChatClick={(id) => setActiveChat(id)} />
+          )}
+        </FeatureGate>
+      </LazyTabPanel>
 
-      {activeTab === "profile" && <ProfileContent />}
+      <LazyTabPanel id="profile" activeTab={activeTab}>
+        <TabHeader title="My Profile" />
+        <ProfileContent />
+      </LazyTabPanel>
 
-      {activeTab === "analytics" && <AnalyticsContent />}
+      <LazyTabPanel id="analytics" activeTab={activeTab}>
+        <AnalyticsContent
+          onNavigateToBoost={() => handleNavigateToListings("boost")}
+          initialView={analyticsView}
+          onViewConsumed={() => setAnalyticsView(null)}
+        />
+      </LazyTabPanel>
 
       {/* Provider Suspended Overlay — covers all provider views */}
       {userMode === "provider" && providerStatus === "suspended" && (
         <ProviderSuspendedOverlay />
       )}
-
-      {/* Spacer for floating bottom bar */}
-      <div className="h-24"></div>
 
       {/* Provider notification nudge — only shown in customer mode for logged-in users */}
       <AnimatePresence>
@@ -198,8 +293,8 @@ export default function Home() {
             exit={{ opacity: 0, y: 16, scale: 0.92 }}
             transition={{ type: "spring", stiffness: 400, damping: 28 }}
             onClick={() => {
+              pendingTabRef.current = "chats";
               setUserMode("provider");
-              handleTabChange("chats");
             }}
             className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
           >
@@ -216,6 +311,20 @@ export default function Home() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Floating notification pill — appears on foreground push, stacks above provider nudge */}
+      <FloatingNotificationPill
+        hasOtherPill={!!(user && userMode === "customer" && providerUnreadCount > 0)}
+        onTap={() => setNotifDropdownOpen(true)}
+      />
+
+      {/* Notification dropdown triggered by pill tap */}
+      {notifDropdownOpen && (
+        <NotificationDropdown
+          open={notifDropdownOpen}
+          onClose={() => setNotifDropdownOpen(false)}
+        />
+      )}
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
     </Page>

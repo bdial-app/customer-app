@@ -17,6 +17,7 @@ export interface HomeProvider {
   verified: boolean;
   isFeatured: boolean;
   isAvailable: boolean;
+  isSponsored?: boolean;
   distance: number | null;
 }
 
@@ -39,8 +40,12 @@ export interface TrendingCategory {
   name: string;
   slug: string;
   icon: string | null;
+  iconColor?: string | null;
   providerCount: number;
   recentBookings: number;
+  weeklyBookings: number;
+  growthRate: number;
+  trendDirection: 'up' | 'down' | 'stable';
 }
 
 export interface CommunityReview {
@@ -75,6 +80,70 @@ export interface CityProviders {
 export interface LiveActivity {
   count: number;
   text: string;
+  format?: 'rating';
+}
+
+export interface HomeProviderWithOffer {
+  id: string;
+  name: string;
+  image: string | null;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  verified: boolean;
+  distance: number | null;
+  offerId: string;
+  offerTitle: string;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  offerEndsAt: string;
+  hasActiveOffer: true;
+  totalOffers: number;
+}
+
+export interface HomeSponsoredProvider {
+  id: string;
+  name: string;
+  image: string | null;
+  description: string | null;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  services: string | null;
+  primaryCategory: string | null;
+  verified: boolean;
+  distance: number | null;
+  sponsorType: 'carousel' | 'inline' | 'top_result';
+  hasActiveOffer: boolean;
+  sponsoredListingId: string;
+  endsAt: string;
+}
+
+export interface PersonalizedCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  weight: number;
+  source: 'behavioral' | 'default' | 'explicit';
+}
+
+export interface HomeFeedProduct {
+  id: string;
+  name: string;
+  photoUrl: string | null;
+  photoUrls: string[];
+  price: number | null;
+  currency: string;
+  productType: 'product' | 'service';
+  description: string | null;
+  isHero?: boolean;
+  providerId: string;
+  providerName: string;
+  providerImage: string | null;
+  providerCity: string | null;
+  providerArea: string | null;
+  providerStatus: string;
 }
 
 export interface HomeFeedResponse {
@@ -85,9 +154,15 @@ export interface HomeFeedResponse {
   newArrivals: HomeProvider[];
   promoBanners: PromoBanner[];
   trendingCategories: TrendingCategory[];
+  personalizedCategories: PersonalizedCategory[] | null;
+  forYouProviders: HomeProvider[] | null;
+  womenLedProviders: HomeProvider[] | null;
   communityReviews: CommunityReview[];
   platformStats: PlatformStats;
   searchPrompts: string[];
+  dealsAroundYou: HomeProviderWithOffer[];
+  sponsoredProviders: HomeSponsoredProvider[];
+  bestProducts: HomeFeedProduct[];
 }
 
 // ─── API Functions ──────────────────────────────────────────────────
@@ -98,6 +173,9 @@ export const getHomeFeed = async (params?: {
   city?: string;
 }): Promise<HomeFeedResponse> => {
   const { data } = await apiClient.get(HOME_URLS.FEED, { params });
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {} as HomeFeedResponse;
+  }
   return data;
 };
 
@@ -107,7 +185,7 @@ export const getLiveActivity = async (params?: {
   city?: string;
 }): Promise<LiveActivity[]> => {
   const { data } = await apiClient.get(HOME_URLS.LIVE_ACTIVITY, { params });
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const getCategoryProviders = async (params: {

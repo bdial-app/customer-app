@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -30,6 +30,14 @@ import {
   personOutline,
   chevronForwardOutline,
   arrowBack,
+  megaphoneOutline,
+  cashOutline,
+  mailOutline,
+  locationOutline,
+  funnelOutline,
+  swapVerticalOutline,
+  closeOutline,
+  chevronDownOutline,
 } from "ionicons/icons";
 import {
   AreaChart,
@@ -42,7 +50,10 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { useProviderAnalytics } from "@/hooks/useMyProvider";
+import { useProviderAnalytics, useMySponsorships } from "@/hooks/useMyProvider";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import OfflineFallback from "./offline-fallback";
+import { InfoTip } from "./info-tip";
 import {
   useAnalyticsSummary,
   useTopProducts,
@@ -50,7 +61,15 @@ import {
   useLeads,
   useLeadDetail,
   useUnlockLead,
+  useVisitorInsights,
 } from "@/hooks/useProviderAnalytics";
+import { useLeadUnlockInfo, useMonetizationConfig } from "@/hooks/useMonetizationConfig";
+import { LeadUnlockSheet } from "@/app/components/monetization/lead-unlock-sheet";
+import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
+import { MonetizationBanner } from "@/app/components/monetization/monetization-banner";
+import { ActivePlanBanner, ActiveBoostBanner } from "@/app/components/provider/active-status-cards";
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentSubscription } from "@/services/payment.service";
 import type { StatWithTrend } from "@/services/analytics.service";
 
 type Period = "7d" | "30d" | "90d";
@@ -74,10 +93,10 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 
 // ─── Tier Badge Styles ────────────────────────────────────────────────
 const TIER_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
-  hot: { bg: "bg-red-50", text: "text-red-600", dot: "bg-red-500" },
-  warm: { bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-400" },
-  soft: { bg: "bg-yellow-50", text: "text-yellow-700", dot: "bg-yellow-400" },
-  cold: { bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-400" },
+  hot: { bg: "bg-red-50 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
+  warm: { bg: "bg-orange-50 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-400" },
+  soft: { bg: "bg-yellow-50 dark:bg-yellow-900/30", text: "text-yellow-700 dark:text-yellow-400", dot: "bg-yellow-400" },
+  cold: { bg: "bg-blue-50 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-400" },
 };
 
 function timeAgo(dateStr: string) {
@@ -88,6 +107,27 @@ function timeAgo(dateStr: string) {
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 }
+
+// ─── Timeline Event Info ──────────────────────────────────────────────
+const TIMELINE_EVENTS: Record<string, { label: string; description: string; icon: string; color: string; bg: string }> = {
+  profile_view: { label: "Viewed Your Profile", description: "Opened your business page", icon: eyeOutline, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" },
+  product_view: { label: "Viewed a Product", description: "Checked out one of your products", icon: cubeOutline, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/30" },
+  search_appear: { label: "Found via Search", description: "Your business appeared in their search", icon: searchOutline, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
+  call_click: { label: "Tapped Call", description: "Clicked to call your business", icon: callOutline, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
+  direction_click: { label: "Got Directions", description: "Opened directions to your location", icon: navigateOutline, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-900/30" },
+  save: { label: "Saved Your Business", description: "Added you to their saved list", icon: bookmarkOutline, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30" },
+  share: { label: "Shared Your Profile", description: "Shared your business with someone", icon: shareSocialOutline, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-900/30" },
+  enquiry: { label: "Sent an Enquiry", description: "Reached out with a question", icon: chatbubbleOutline, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
+  like: { label: "Liked Your Business", description: "Showed appreciation for your page", icon: heartOutline, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30" },
+};
+const getTimelineEventInfo = (eventType: string) =>
+  TIMELINE_EVENTS[eventType] || {
+    label: eventType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    description: "Interacted with your business",
+    icon: pulseOutline,
+    color: "text-slate-500",
+    bg: "bg-slate-100 dark:bg-slate-700",
+  };
 
 // ─── Lead Detail View ─────────────────────────────────────────────────
 function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void }) {
@@ -104,15 +144,23 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
   }
 
   const badge = TIER_BADGE[detail.tier] || TIER_BADGE.cold;
+  const visitMinutes = Math.round(detail.totalDuration / 60);
+  const hasSearchQuery = !!detail.searchQuery;
+
+  // Generate actionable insights
+  const insights: { icon: string; text: string; color: string }[] = [];
+  if (detail.productsViewed.length >= 3) insights.push({ icon: "🔥", text: `Viewed ${detail.productsViewed.length} products — high purchase intent`, color: "text-red-600" });
+  if (visitMinutes >= 5) insights.push({ icon: "⏱️", text: `Spent ${visitMinutes} min browsing — very engaged visitor`, color: "text-blue-600" });
+  if (hasSearchQuery) insights.push({ icon: "🔍", text: `Searched for "${detail.searchQuery}" — knows what they want`, color: "text-violet-600" });
+  if (detail.actionsPerformed.includes("share") || detail.actionsPerformed.includes("save")) insights.push({ icon: "⭐", text: "Saved or shared your profile — strong interest signal", color: "text-amber-600" });
+  if (detail.tier === "hot") insights.push({ icon: "💰", text: "Hot lead — highest conversion probability", color: "text-emerald-600" });
 
   return (
     <div className="p-4 space-y-4 pb-24">
+      {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
-          <IonIcon icon={arrowBack} className="text-lg text-slate-600" />
-        </button>
         <div className="flex-1">
-          <h3 className="text-base font-bold text-slate-900">{detail.visitor.name}</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">{detail.visitor.name}</h3>
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
             {detail.tier} · Score {detail.score}
@@ -120,50 +168,162 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
         </div>
       </div>
 
+      {/* Contact info — shown for unlocked non-anonymous leads */}
+      {detail.isUnlocked && !detail.isAnonymous && (detail.visitor.phone || detail.visitor.email || detail.visitor.city) && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4">
+          <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2.5">Contact Information</h4>
+          <div className="space-y-2">
+            {detail.visitor.phone && (
+              <a href={`tel:${detail.visitor.phone}`} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-800/50 flex items-center justify-center">
+                  <IonIcon icon={callOutline} className="text-emerald-600 dark:text-emerald-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.phone}</p>
+                  <p className="text-[9px] text-slate-400">Tap to call</p>
+                </div>
+              </a>
+            )}
+            {detail.visitor.email && (
+              <a href={`mailto:${detail.visitor.email}`} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">
+                  <IonIcon icon={mailOutline} className="text-blue-600 dark:text-blue-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.email}</p>
+                  <p className="text-[9px] text-slate-400">Tap to email</p>
+                </div>
+              </a>
+            )}
+            {detail.visitor.city && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-800/50 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-violet-600 dark:text-violet-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.city}</p>
+                  <p className="text-[9px] text-slate-400">Location</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Contact hint — masked info to encourage unlock */}
+      {!detail.isUnlocked && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <IonIcon icon={lockClosedOutline} className="text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">Contact Info Locked</span>
+          </div>
+          <div className="space-y-1.5">
+            {detail.visitor.userId && (
+              <div className="flex items-center gap-2">
+                <IonIcon icon={callOutline} className="text-slate-400 text-sm" />
+                <span className="text-sm text-slate-600 dark:text-slate-400 font-mono">+91 •••••• ••{Math.floor(Math.random() * 90 + 10)}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <IonIcon icon={chatbubbleOutline} className="text-slate-400 text-sm" />
+              <span className="text-xs text-slate-500 dark:text-slate-400">Direct chat available after unlock</span>
+            </div>
+          </div>
+          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-medium">
+            Unlock to reveal phone number and start a conversation
+          </p>
+        </div>
+      )}
+
+      {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-slate-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900">{detail.productsViewed.length}</p>
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{detail.productsViewed.length}</p>
           <p className="text-[10px] text-slate-400">Products</p>
         </div>
-        <div className="bg-slate-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900">{Math.round(detail.totalDuration / 60)}</p>
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{visitMinutes}</p>
           <p className="text-[10px] text-slate-400">Minutes</p>
         </div>
-        <div className="bg-slate-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900">{detail.actionsPerformed.length}</p>
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{detail.actionsPerformed.length}</p>
           <p className="text-[10px] text-slate-400">Actions</p>
         </div>
       </div>
 
-      {detail.products.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 border border-slate-100">
-          <h4 className="text-sm font-bold text-slate-900 mb-2">Products Viewed</h4>
+      {/* Insights — actionable tips */}
+      {insights.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
+            <IonIcon icon={sparklesOutline} className="text-amber-500" />
+            Insights
+          </h4>
           <div className="space-y-2">
-            {detail.products.map((p) => (
-              <div key={p.id} className="flex items-center gap-2">
-                <IonIcon icon={cubeOutline} className="text-slate-400" />
-                <span className="text-sm text-slate-700">{p.name}</span>
+            {insights.map((ins, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="text-sm shrink-0">{ins.icon}</span>
+                <p className={`text-xs ${ins.color} dark:opacity-90 leading-relaxed`}>{ins.text}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-4 border border-slate-100">
-        <h4 className="text-sm font-bold text-slate-900 mb-3">Activity Timeline</h4>
-        <div className="space-y-3">
-          {detail.timeline.slice(0, 20).map((ev, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-2 h-2 mt-1.5 rounded-full bg-amber-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-700">{ev.eventType.replace(/_/g, " ")}</p>
-                <p className="text-[10px] text-slate-400">
-                  {new Date(ev.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  {ev.duration ? ` · ${ev.duration}s` : ""}
-                </p>
+      {/* Search query */}
+      {hasSearchQuery && (
+        <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3 border border-violet-100 dark:border-violet-800">
+          <p className="text-[10px] text-violet-500 font-bold uppercase tracking-wider mb-1">Search Query</p>
+          <p className="text-sm font-medium text-violet-800 dark:text-violet-200">&ldquo;{detail.searchQuery}&rdquo;</p>
+        </div>
+      )}
+
+      {/* Products Viewed */}
+      {detail.products.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Products Viewed</h4>
+          <div className="space-y-2">
+            {detail.products.map((p) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <IonIcon icon={cubeOutline} className="text-slate-400" />
+                <span className="text-sm text-slate-700 dark:text-slate-300">{p.name}</span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Activity Timeline */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-1.5">
+          <IonIcon icon={timeOutline} className="text-blue-500" />
+          Activity Timeline
+        </h4>
+        <div className="relative">
+          {/* Vertical line */}
+          <div className="absolute left-[15px] top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-600" />
+          <div className="space-y-0">
+            {detail.timeline.slice(0, 20).map((ev, i) => {
+              const info = getTimelineEventInfo(ev.eventType);
+              const time = new Date(ev.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              return (
+                <div key={i} className="flex items-start gap-3 relative py-2">
+                  <div className={`w-[30px] h-[30px] rounded-full flex items-center justify-center shrink-0 z-10 ${info.bg}`}>
+                    <IonIcon icon={info.icon} className={`text-sm ${info.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{info.label}</p>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">{time}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      {info.description}
+                      {ev.duration ? ` · ${ev.duration}s` : ""}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -171,19 +331,81 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
 }
 
 // ─── Main Component ───────────────────────────────────────────────────
-const AnalyticsContent = () => {
+interface AnalyticsContentProps {
+  onNavigateToBoost?: () => void;
+  initialView?: string | null;
+  onViewConsumed?: () => void;
+}
+
+const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: AnalyticsContentProps) => {
+  const { isOnline } = useNetworkStatus();
   const [period, setPeriod] = useState<Period>("7d");
   const [view, setView] = useState<View>("overview");
+
+  useEffect(() => {
+    if (initialView && (initialView === "overview" || initialView === "leads")) {
+      setView(initialView);
+      onViewConsumed?.();
+    }
+  }, [initialView, onViewConsumed]);
   const [leadTier, setLeadTier] = useState<string | undefined>(undefined);
   const [leadPage, setLeadPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [leadStatus, setLeadStatus] = useState<"unlocked" | "locked" | undefined>(undefined);
+  const [leadSource, setLeadSource] = useState<string | undefined>(undefined);
+  const [leadDateRange, setLeadDateRange] = useState<string>("all"); // "today" | "7d" | "30d" | "90d" | "all"
+  const [leadSortBy, setLeadSortBy] = useState<"score" | "lastSeen" | "firstSeen" | "duration">("score");
+  const [leadSortOrder, setLeadSortOrder] = useState<"ASC" | "DESC">("DESC");
+  const [leadSearch, setLeadSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const leadFilters = useMemo(() => {
+    const f: Record<string, any> = {
+      tier: leadTier,
+      page: leadPage,
+      limit: 20,
+      status: leadStatus,
+      source: leadSource,
+      sortBy: leadSortBy,
+      sortOrder: leadSortOrder,
+    };
+    if (leadSearch.trim()) f.search = leadSearch.trim();
+    if (leadDateRange !== "all") {
+      const now = new Date();
+      const from = new Date();
+      if (leadDateRange === "today") from.setHours(0, 0, 0, 0);
+      else if (leadDateRange === "7d") from.setDate(now.getDate() - 7);
+      else if (leadDateRange === "30d") from.setDate(now.getDate() - 30);
+      else if (leadDateRange === "90d") from.setDate(now.getDate() - 90);
+      f.dateFrom = from.toISOString();
+    }
+    // Strip undefined values
+    return Object.fromEntries(Object.entries(f).filter(([, v]) => v !== undefined));
+  }, [leadTier, leadPage, leadStatus, leadSource, leadDateRange, leadSortBy, leadSortOrder, leadSearch]);
+
+  const activeFilterCount = [leadStatus, leadSource, leadDateRange !== "all" ? leadDateRange : undefined, leadSearch.trim() || undefined, leadSortBy !== "score" ? leadSortBy : undefined].filter(Boolean).length;
 
   const { data: analytics } = useProviderAnalytics();
-  const { data: summary, isLoading: summaryLoading } = useAnalyticsSummary(period);
+  const { data: summary, isLoading: summaryLoading, isError: summaryError, refetch: refetchSummary } = useAnalyticsSummary(period);
   const { data: topProducts } = useTopProducts(period);
   const { data: peakHours } = usePeakHours(period);
-  const { data: leadsData, isLoading: leadsLoading } = useLeads(leadTier, leadPage);
+  const { data: leadsData, isLoading: leadsLoading } = useLeads(leadFilters);
   const unlockMutation = useUnlockLead();
+  const { data: leadUnlockInfo } = useLeadUnlockInfo();
+  const { data: monetizationConfig } = useMonetizationConfig();
+  const { data: currentSub } = useQuery({
+    queryKey: ["current-subscription"],
+    queryFn: getCurrentSubscription,
+    staleTime: 1000 * 60 * 2,
+  });
+  const { data: sponsorships } = useMySponsorships();
+  const { data: visitorInsights } = useVisitorInsights(period);
+  const [unlockSheetLead, setUnlockSheetLead] = useState<{ id: string; tier: string } | null>(null);
+
+  const hasActivePlan = currentSub && currentSub.status === "active" && currentSub.plan;
+  const activeSponsorships = sponsorships?.filter(
+    (s) => s.isActive && new Date(s.endsAt) > new Date(),
+  ) ?? [];
 
   // Build sparkline chart data from summary
   const chartData = summary?.profileViews.sparkline?.map((v, i) => ({
@@ -223,13 +445,47 @@ const AnalyticsContent = () => {
       ]
     : [];
 
+  // Offline + no cached analytics data → show fallback
+  if (!isOnline && !summary) {
+    return <OfflineFallback message="Connect to the internet to view your analytics." />;
+  }
+
+  // Error state — show retry UI instead of eternal loading skeletons
+  if (summaryError && !summary) {
+    return (
+      <div className="pb-24">
+        <div
+          className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
+        >
+          <div className="px-4 py-3">
+            <h1 className="text-lg font-bold text-white">Analytics</h1>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center mb-4">
+            <IonIcon icon={pulseOutline} className="text-3xl text-red-500" />
+          </div>
+          <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">Unable to load analytics</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Something went wrong. Please try again.</p>
+          <button
+            onClick={() => refetchSummary()}
+            className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Lead detail drill-in
   if (view === "lead-detail" && selectedLeadId) {
     return (
-      <div className="pb-8 overflow-x-hidden">
+      <div className="pb-24">
         <div
           className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
         >
           <div className="px-4 py-3 flex items-center gap-3">
             <button onClick={() => { setView("leads"); setSelectedLeadId(null); }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
@@ -244,12 +500,12 @@ const AnalyticsContent = () => {
   }
 
   return (
-    <div className="pb-8 overflow-x-hidden">
+    <div className="pb-24">
 
       {/* ═══ HEADER ═══ */}
       <div
         className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="px-4 py-3 flex items-center justify-between">
           <div>
@@ -286,7 +542,20 @@ const AnalyticsContent = () => {
             )}
           </button>
         </div>
+
       </div>
+
+      {/* Active plan & boost banners — only on overview */}
+      {view === "overview" && (hasActivePlan || activeSponsorships.length > 0) && (
+        <div className="pt-3">
+          {hasActivePlan && (
+            <ActivePlanBanner subscription={currentSub!} onManage={() => onNavigateToBoost?.()} />
+          )}
+          {activeSponsorships.length > 0 && (
+            <ActiveBoostBanner sponsorships={activeSponsorships} onManage={() => onNavigateToBoost?.()} />
+          )}
+        </div>
+      )}
 
       {view === "overview" ? (
         <>
@@ -310,6 +579,7 @@ const AnalyticsContent = () => {
                   {summary && (
                     <div className="flex items-center gap-1.5 bg-emerald-500/20 px-2.5 py-1 rounded-full">
                       <span className="text-emerald-400 text-[10px] font-bold">{summary.conversionRate.toFixed(1)}% CVR</span>
+                      <InfoTip text="Conversion Rate — % of visitors who took action (called, enquired, got directions)" size={10} className="text-emerald-300" />
                     </div>
                   )}
                 </div>
@@ -380,7 +650,7 @@ const AnalyticsContent = () => {
 
           {/* ═══ PERIOD SELECTOR ═══ */}
           <div className="px-4 mb-4">
-            <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 gap-1">
               {([
                 { value: "7d" as Period, label: "7 Days", icon: todayOutline },
                 { value: "30d" as Period, label: "30 Days", icon: calendarOutline },
@@ -391,8 +661,8 @@ const AnalyticsContent = () => {
                   onClick={() => setPeriod(o.value)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-semibold transition-all ${
                     period === o.value
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500"
+                      ? "bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400"
                   }`}
                 >
                   <IonIcon icon={o.icon} className="text-xs" />
@@ -428,23 +698,23 @@ const AnalyticsContent = () => {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.04 }}
-                      className="bg-white rounded-2xl p-3 border border-slate-100 relative overflow-hidden"
+                      className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 relative overflow-hidden"
                     >
                       <div className={`absolute top-0 left-0 right-0 h-[2px] ${k.bg} rounded-t-2xl`} />
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={k.icon} className={`text-xs ${k.accent}`} />
                         </div>
                         {k.change !== 0 && (
                           <div className={`flex items-center gap-0.5 text-[8px] font-bold px-1 py-0.5 rounded ${
-                            k.change >= 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
+                            k.change >= 0 ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30" : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"
                           }`}>
                             <IonIcon icon={k.change >= 0 ? arrowUpOutline : arrowDownOutline} className="text-[6px]" />
                             {Math.abs(k.change)}%
                           </div>
                         )}
                       </div>
-                      <div className="text-[18px] font-black text-slate-800 leading-none">{k.value}</div>
+                      <div className="text-[18px] font-black text-slate-800 dark:text-white leading-none">{k.value}</div>
                       <div className="text-[9px] text-slate-400 mt-0.5 font-medium">{k.sub}</div>
                     </motion.div>
                   ))}
@@ -456,9 +726,9 @@ const AnalyticsContent = () => {
           {/* ═══ VIEWS & ENQUIRIES CHART ═══ */}
           {chartData.length > 1 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold text-slate-800">Views & Enquiries</h3>
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">Views & Enquiries</h3>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
@@ -498,11 +768,12 @@ const AnalyticsContent = () => {
           {/* ═══ LEAD FUNNEL ═══ */}
           {summary && (summary.leads.hot + summary.leads.warm + summary.leads.soft + summary.leads.cold) > 0 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-1.5">
                     <IonIcon icon={flameOutline} className="text-sm text-orange-500" />
-                    <h3 className="text-xs font-bold text-slate-800">Lead Funnel</h3>
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-white">Lead Funnel</h3>
+                    <InfoTip text="Shows visitor interest levels — Hot means ready to buy, Cold means just browsing" size={11} />
                   </div>
                   <button onClick={() => setView("leads")} className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
                     View all <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
@@ -516,7 +787,7 @@ const AnalyticsContent = () => {
                     return (
                       <div key={tier} className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-slate-500 w-9 capitalize">{tier}</span>
-                        <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                           <motion.div
                             className={`h-full rounded-full ${colors[tier]}`}
                             initial={{ width: 0 }}
@@ -524,7 +795,7 @@ const AnalyticsContent = () => {
                             transition={{ duration: 0.6, ease: "easeOut" }}
                           />
                         </div>
-                        <span className="text-[11px] font-bold text-slate-700 w-7 text-right">{summary.leads[tier]}</span>
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 w-7 text-right">{summary.leads[tier]}</span>
                       </div>
                     );
                   })}
@@ -536,12 +807,12 @@ const AnalyticsContent = () => {
           {/* ═══ PEAK HOURS ═══ */}
           {peakHoursData.length > 0 && peakMax > 0 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold text-slate-800">Peak Hours</h3>
-                  <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg">
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">Peak Hours</h3>
+                  <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-lg">
                     <IonIcon icon={flashOutline} className="text-amber-600 text-[9px]" />
-                    <span className="text-[8px] font-bold text-amber-700">{peakLabel}</span>
+                    <span className="text-[8px] font-bold text-amber-700 dark:text-amber-400">{peakLabel}</span>
                   </div>
                 </div>
                 <div className="h-[80px] -mx-1">
@@ -570,24 +841,24 @@ const AnalyticsContent = () => {
           {/* ═══ TOP PRODUCTS ═══ */}
           {topProducts && topProducts.length > 0 && (
             <div className="px-4 mb-4">
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-100">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-1.5 mb-2.5">
                   <IonIcon icon={cubeOutline} className="text-sm text-teal-500" />
-                  <h3 className="text-xs font-bold text-slate-800">Top Products</h3>
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-white">Top Products</h3>
                 </div>
                 <div className="space-y-2">
                   {topProducts.slice(0, 5).map((p, i) => (
                     <div key={p.productId} className="flex items-center gap-2.5">
                       <span className="text-[10px] font-bold text-slate-300 w-3">#{i + 1}</span>
                       {p.photoUrl ? (
-                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100" />
+                        <img src={p.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100" loading="lazy" decoding="async" />
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={cubeOutline} className="text-xs text-slate-300" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+                        <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">{p.name}</p>
                         <p className="text-[10px] text-slate-400">{p.views} views · {p.uniqueVisitors} visitors</p>
                       </div>
                     </div>
@@ -600,7 +871,7 @@ const AnalyticsContent = () => {
           {/* ═══ SMART INSIGHTS ═══ */}
           <div className="px-4 mb-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-slate-800">Smart Insights</h3>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-white">Smart Insights</h3>
               <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -653,11 +924,12 @@ const AnalyticsContent = () => {
 
           {/* ═══ ENGAGEMENT STRIP ═══ */}
           <div className="px-4 mb-4">
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-              <div className="px-3.5 pt-3 pb-1.5">
-                <h3 className="text-xs font-bold text-slate-800">Engagement</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+              <div className="px-3.5 pt-3 pb-1.5 flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-slate-800 dark:text-white">Engagement</h3>
+                <InfoTip text="How actively customers interact with your profile — saves, shares, calls, and direction requests" size={11} />
               </div>
-              <div className="flex divide-x divide-slate-100">
+              <div className="flex divide-x divide-slate-100 dark:divide-slate-700">
                 {[
                   { icon: heartOutline, label: "Saves", value: String(summary?.saves.count ?? 0), color: "text-pink-500" },
                   { icon: shareSocialOutline, label: "Shares", value: String(summary?.shares.count ?? 0), color: "text-blue-500" },
@@ -666,20 +938,285 @@ const AnalyticsContent = () => {
                 ].map((e) => (
                   <div key={e.label} className="flex-1 py-2.5 text-center">
                     <IonIcon icon={e.icon} className={`text-base ${e.color}`} />
-                    <div className="text-sm font-bold text-slate-800 mt-0.5">{e.value}</div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{e.value}</div>
                     <div className="text-[7px] text-slate-400 font-medium">{e.label}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* ═══ AUDIENCE INSIGHTS ═══ */}
+          {visitorInsights && visitorInsights.totalVisitors > 0 && (() => {
+            const { anonymous: anon, registered: reg, topSearchQueries, topSources } = visitorInsights;
+            const tiers = anon.tiers;
+            const totalTiers = tiers.hot + tiers.warm + tiers.soft + tiers.cold;
+            return (
+              <div className="px-4 mb-4">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                <div className="p-4 pb-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 flex items-center justify-center">
+                      <IonIcon icon={peopleOutline} className="text-base text-indigo-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white">Audience Insights</h3>
+                      <p className="text-[10px] text-slate-400">{visitorInsights.totalVisitors.toLocaleString()} total visitors</p>
+                    </div>
+                    <InfoTip text="Breakdown of who's visiting your profile — registered users vs anonymous browsers" size={12} />
+                  </div>
+
+                  {/* Visitor split bar */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Visitor Breakdown</span>
+                    </div>
+                    <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
+                      <div
+                        className="bg-indigo-500 transition-all"
+                        style={{ width: `${reg.percentage}%` }}
+                      />
+                      <div
+                        className="bg-slate-300 dark:bg-slate-500 transition-all"
+                        style={{ width: `${anon.percentage}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">Registered {reg.count} ({reg.percentage}%)</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500" />
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">Anonymous {anon.count} ({anon.percentage}%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Engagement comparison */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { label: "Avg Score", reg: reg.avgScore, anon: anon.avgScore },
+                      { label: "Avg Duration", reg: `${Math.round(reg.avgDurationSec / 60)}m`, anon: `${Math.round(anon.avgDurationSec / 60)}m` },
+                      { label: "Products", reg: reg.avgProductsViewed.toFixed(1), anon: anon.avgProductsViewed.toFixed(1) },
+                    ].map((m) => (
+                      <div key={m.label} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-2.5 text-center">
+                        <p className="text-[8px] font-semibold text-slate-400 uppercase mb-1">{m.label}</p>
+                        <div className="flex items-center justify-center gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{m.reg}</p>
+                            <p className="text-[7px] text-slate-400">Reg</p>
+                          </div>
+                          <div className="w-px h-5 bg-slate-200 dark:bg-slate-600" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{m.anon}</p>
+                            <p className="text-[7px] text-slate-400">Anon</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Anonymous intent tiers */}
+                  {totalTiers > 0 && (
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Anonymous Intent Levels</p>
+                      <div className="flex gap-1.5">
+                        {[
+                          { key: "hot", count: tiers.hot, color: "bg-red-500", label: "Hot" },
+                          { key: "warm", count: tiers.warm, color: "bg-orange-400", label: "Warm" },
+                          { key: "soft", count: tiers.soft, color: "bg-yellow-400", label: "Soft" },
+                          { key: "cold", count: tiers.cold, color: "bg-slate-300 dark:bg-slate-600", label: "Cold" },
+                        ].map((t) => (
+                          <div key={t.key} className="flex-1 text-center">
+                            <div className="h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700 mb-1">
+                              <div className={`h-full rounded-full ${t.color}`} style={{ width: `${totalTiers ? (t.count / totalTiers) * 100 : 0}%` }} />
+                            </div>
+                            <p className="text-[9px] font-bold text-slate-600 dark:text-slate-300">{t.count}</p>
+                            <p className="text-[7px] text-slate-400">{t.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top search queries */}
+                  {topSearchQueries.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Top Searches</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {topSearchQueries.slice(0, 6).map((q) => (
+                          <span key={q.query} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-[10px] text-slate-600 dark:text-slate-300">
+                            <IonIcon icon={searchOutline} className="text-[8px] text-slate-400" />
+                            {q.query}
+                            <span className="text-[8px] text-slate-400 ml-0.5">({q.count})</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top sources */}
+                  {topSources.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Traffic Sources</p>
+                      <div className="space-y-1">
+                        {topSources.slice(0, 4).map((s) => {
+                          const maxCount = topSources[0]?.count || 1;
+                          return (
+                            <div key={s.source} className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-600 dark:text-slate-300 w-16 truncate shrink-0">{s.source}</span>
+                              <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                <div className="h-full rounded-full bg-indigo-400" style={{ width: `${(s.count / maxCount) * 100}%` }} />
+                              </div>
+                              <span className="text-[9px] text-slate-400 w-6 text-right shrink-0">{s.count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              </div>
+            );
+          })()}
+
+          {/* ═══ BOOST PERFORMANCE ═══ */}
+          {activeSponsorships.length > 0 && (() => {
+            const totalImpressions = activeSponsorships.reduce((s, b) => s + (b.impressions ?? 0), 0);
+            const totalClicks = activeSponsorships.reduce((s, b) => s + (b.clicks ?? 0), 0);
+            const totalSpent = activeSponsorships.reduce((s, b) => s + (b.spentAmount ?? 0), 0);
+            const totalBudget = activeSponsorships.reduce((s, b) => s + (b.budgetAmount ?? 0), 0);
+            const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100) : 0;
+            const cpc = totalClicks > 0 ? totalSpent / totalClicks : 0;
+            const budgetUsedPct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0;
+
+            const boostTypeLabels: Record<string, string> = {
+              carousel: "Carousel",
+              inline: "Inline",
+              top_result: "Top Result",
+            };
+
+            return (
+              <div className="px-4 mb-4">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-amber-700 to-orange-700 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <IonIcon icon={megaphoneOutline} className="text-white text-base" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Boost Performance</h3>
+                        <p className="text-[9px] text-white/90">
+                          {activeSponsorships.length} active boost{activeSponsorships.length > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
+                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-200 animate-pulse" />
+                      <span className="text-[8px] font-bold text-white">LIVE</span>
+                    </div>
+                  </div>
+
+                  {/* Aggregate stats */}
+                  <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-slate-700 border-b border-slate-100 dark:border-slate-700">
+                    {[
+                      { label: "Impressions", value: totalImpressions.toLocaleString(), icon: eyeOutline, color: "text-blue-500", tip: "Times your ad was shown to customers" },
+                      { label: "Clicks", value: totalClicks.toLocaleString(), icon: flashOutline, color: "text-amber-500", tip: "Times customers tapped your ad" },
+                      { label: "CTR", value: `${ctr.toFixed(1)}%`, icon: trendingUpOutline, color: "text-emerald-500", tip: "Click-Through Rate — % of viewers who tapped" },
+                      { label: "Avg CPC", value: `₹${cpc.toFixed(1)}`, icon: cashOutline, color: "text-violet-500", tip: "Cost Per Click — what you pay per tap" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="py-3 text-center">
+                        <IonIcon icon={stat.icon} className={`text-sm ${stat.color}`} />
+                        <div className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{stat.value}</div>
+                        <div className="text-[7px] text-slate-400 font-medium flex items-center justify-center gap-0.5">{stat.label} <InfoTip text={stat.tip} size={9} /></div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Budget bar */}
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">Budget Used</span>
+                      <span className="text-[10px] font-bold text-slate-800 dark:text-white">
+                        ₹{totalSpent.toLocaleString()} / ₹{totalBudget.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <motion.div
+                        className={`h-full rounded-full ${
+                          budgetUsedPct > 80
+                            ? "bg-gradient-to-r from-red-400 to-red-500"
+                            : budgetUsedPct > 50
+                              ? "bg-gradient-to-r from-amber-400 to-orange-500"
+                              : "bg-gradient-to-r from-emerald-400 to-teal-500"
+                        }`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.max(budgetUsedPct, 1)}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-1">
+                      {budgetUsedPct.toFixed(0)}% used · ₹{(totalBudget - totalSpent).toLocaleString()} remaining
+                    </div>
+                  </div>
+
+                  {/* Per-boost breakdown */}
+                  <div className="px-4 py-3">
+                    <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-2">Breakdown by Type</div>
+                    <div className="space-y-2">
+                      {activeSponsorships.map((b) => {
+                        const bCtr = b.impressions > 0 ? ((b.clicks / b.impressions) * 100).toFixed(1) : "0.0";
+                        const bBudgetPct = b.budgetAmount > 0 ? Math.min(100, (b.spentAmount / b.budgetAmount) * 100) : 0;
+                        const daysLeft = Math.max(0, Math.ceil((new Date(b.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                        return (
+                          <div key={b.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-2.5">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  b.type === "carousel" ? "bg-blue-500" : b.type === "inline" ? "bg-emerald-500" : "bg-amber-500"
+                                }`} />
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                                  {boostTypeLabels[b.type] ?? b.type}
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-slate-400">{daysLeft}d left</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[9px] text-slate-500 dark:text-slate-400">
+                              <span>{b.impressions.toLocaleString()} imp</span>
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span>{b.clicks} clicks</span>
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span>{bCtr}% CTR</span>
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span>₹{b.spentAmount}/{b.budgetAmount}</span>
+                            </div>
+                            <div className="mt-1.5 h-1 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  b.type === "carousel" ? "bg-blue-500" : b.type === "inline" ? "bg-emerald-500" : "bg-amber-500"
+                                }`}
+                                style={{ width: `${Math.max(bBudgetPct, 1)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </>
       ) : (
         /* ═══ LEADS VIEW ═══ */
         <div className="px-4 pt-3 space-y-4">
 
           {/* Hot Leads CTA */}
-          {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && (
+          {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && !showFilters && (
             <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 text-white">
               <div className="flex items-center gap-2 mb-1">
                 <IonIcon icon={flameOutline} className="text-lg" />
@@ -697,28 +1234,308 @@ const AnalyticsContent = () => {
             </div>
           )}
 
-          {/* Tier filter */}
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {([
-              { key: undefined as string | undefined, label: "All" },
-              { key: "hot", label: "Hot" },
-              { key: "warm", label: "Warm" },
-              { key: "soft", label: "Soft" },
-              { key: "cold", label: "Cold" },
-            ]).map((t) => (
+          {/* Quota indicator */}
+          {leadUnlockInfo && monetizationConfig?.flags.leadsMonetizationEnabled && (
+            <div className="flex items-center justify-between mb-2">
+              <QuotaIndicator
+                used={leadUnlockInfo.freeUsedThisMonth}
+                total={monetizationConfig.freeQuotas.leadsPerMonth}
+                label="free/mo"
+                unlimited={leadUnlockInfo.isProSubscriber}
+              />
+              {leadUnlockInfo.subscriptionCreditsRemaining > 0 && !leadUnlockInfo.isProSubscriber && (
+                <span className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
+                  +{leadUnlockInfo.subscriptionCreditsRemaining} plan credits
+                </span>
+              )}
+            </div>
+          )}
+          {leadUnlockInfo && !monetizationConfig?.flags.leadsMonetizationEnabled && (
+            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                All lead unlocks are free during launch
+              </span>
+            </div>
+          )}
+
+          {/* ─── Search + Filter Bar ─── */}
+          <div className="space-y-3">
+            {/* Search input + Filter toggle */}
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                <input
+                  type="text"
+                  placeholder="Search leads by name..."
+                  value={leadSearch}
+                  onChange={(e) => { setLeadSearch(e.target.value); setLeadPage(1); }}
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:border-slate-400 dark:focus:border-slate-500 transition-colors"
+                />
+                {leadSearch && (
+                  <button
+                    onClick={() => { setLeadSearch(""); setLeadPage(1); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                  >
+                    <IonIcon icon={closeOutline} className="text-sm text-slate-400" />
+                  </button>
+                )}
+              </div>
               <button
-                key={t.label}
-                onClick={() => { setLeadTier(t.key); setLeadPage(1); }}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  leadTier === t.key
-                    ? "bg-slate-800 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-500 active:bg-slate-200"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`relative px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
+                  showFilters || activeFilterCount > 0
+                    ? "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800"
+                    : "bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
                 }`}
               >
-                {t.label}
+                <IonIcon icon={funnelOutline} className="text-sm" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
-            ))}
+            </div>
+
+            {/* Tier pills row */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              {([
+                { key: undefined as string | undefined, label: "All" },
+                { key: "hot", label: "🔥 Hot" },
+                { key: "warm", label: "🟠 Warm" },
+                { key: "soft", label: "🟡 Soft" },
+                { key: "cold", label: "🔵 Cold" },
+              ]).map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => { setLeadTier(t.key); setLeadPage(1); }}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                    leadTier === t.key
+                      ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 active:bg-slate-200 dark:active:bg-slate-600"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Expandable filter panel */}
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 space-y-4">
+                    {/* Date Range */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={calendarOutline} className="text-[10px] mr-1" />
+                        Date Range
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          { key: "all", label: "All Time" },
+                          { key: "today", label: "Today" },
+                          { key: "7d", label: "7 Days" },
+                          { key: "30d", label: "30 Days" },
+                          { key: "90d", label: "90 Days" },
+                        ]).map((d) => (
+                          <button
+                            key={d.key}
+                            onClick={() => { setLeadDateRange(d.key); setLeadPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                              leadDateRange === d.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={lockOpenOutline} className="text-[10px] mr-1" />
+                        Status
+                      </p>
+                      <div className="flex gap-1.5">
+                        {([
+                          { key: undefined as "unlocked" | "locked" | undefined, label: "All" },
+                          { key: "unlocked" as const, label: "Unlocked" },
+                          { key: "locked" as const, label: "Locked" },
+                        ]).map((s) => (
+                          <button
+                            key={s.label}
+                            onClick={() => { setLeadStatus(s.key); setLeadPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                              leadStatus === s.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Source */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={navigateOutline} className="text-[10px] mr-1" />
+                        Source
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          { key: undefined as string | undefined, label: "All" },
+                          { key: "search", label: "Search" },
+                          { key: "direct", label: "Direct" },
+                          { key: "home_feed", label: "Feed" },
+                          { key: "explore", label: "Explore" },
+                          { key: "saved", label: "Saved" },
+                          { key: "chat", label: "Chat" },
+                          { key: "product_link", label: "Product Link" },
+                        ]).map((s) => (
+                          <button
+                            key={s.label}
+                            onClick={() => { setLeadSource(s.key); setLeadPage(1); }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                              leadSource === s.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sort */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                        <IonIcon icon={swapVerticalOutline} className="text-[10px] mr-1" />
+                        Sort By
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          { key: "score" as const, label: "Score" },
+                          { key: "lastSeen" as const, label: "Last Seen" },
+                          { key: "firstSeen" as const, label: "First Seen" },
+                          { key: "duration" as const, label: "Time Spent" },
+                        ]).map((s) => (
+                          <button
+                            key={s.key}
+                            onClick={() => {
+                              if (leadSortBy === s.key) {
+                                setLeadSortOrder(leadSortOrder === "DESC" ? "ASC" : "DESC");
+                              } else {
+                                setLeadSortBy(s.key);
+                                setLeadSortOrder("DESC");
+                              }
+                              setLeadPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all flex items-center gap-1 ${
+                              leadSortBy === s.key
+                                ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {s.label}
+                            {leadSortBy === s.key && (
+                              <IonIcon
+                                icon={leadSortOrder === "DESC" ? arrowDownOutline : arrowUpOutline}
+                                className="text-[9px]"
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Clear all filters */}
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={() => {
+                          setLeadStatus(undefined);
+                          setLeadSource(undefined);
+                          setLeadDateRange("all");
+                          setLeadSortBy("score");
+                          setLeadSortOrder("DESC");
+                          setLeadSearch("");
+                          setLeadPage(1);
+                        }}
+                        className="w-full py-2 text-center text-[11px] font-semibold text-red-500 dark:text-red-400 active:opacity-70"
+                      >
+                        Clear All Filters
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Active filter chips (when panel is closed) */}
+            {!showFilters && activeFilterCount > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {leadStatus && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    {leadStatus === "unlocked" ? "🔓" : "🔒"} {leadStatus}
+                    <button onClick={() => { setLeadStatus(undefined); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+                {leadSource && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    📍 {leadSource.replace("_", " ")}
+                    <button onClick={() => { setLeadSource(undefined); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+                {leadDateRange !== "all" && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    📅 {leadDateRange}
+                    <button onClick={() => { setLeadDateRange("all"); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+                {leadSortBy !== "score" && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    ↕ {leadSortBy === "lastSeen" ? "Last Seen" : leadSortBy === "firstSeen" ? "First Seen" : "Duration"}
+                    <button onClick={() => { setLeadSortBy("score"); setLeadSortOrder("DESC"); setLeadPage(1); }}>
+                      <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Results count */}
+          {leadsData && (
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-slate-400">
+                {leadsData.meta.total} lead{leadsData.meta.total !== 1 ? "s" : ""} found
+              </p>
+              {leadsData.meta.totalPages > 1 && (
+                <p className="text-[10px] text-slate-400">
+                  Page {leadsData.meta.page} of {leadsData.meta.totalPages}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Leads list */}
           {leadsLoading ? (
@@ -729,9 +1546,32 @@ const AnalyticsContent = () => {
             </div>
           ) : !leadsData?.data.length ? (
             <div className="text-center py-12">
-              <IonIcon icon={personOutline} className="text-4xl text-slate-300 mb-3" />
-              <p className="text-sm font-semibold text-slate-400">No leads yet</p>
-              <p className="text-xs text-slate-300 mt-1">Leads appear when customers interact with your profile</p>
+              <IonIcon icon={activeFilterCount > 0 ? funnelOutline : personOutline} className="text-4xl text-slate-300 mb-3" />
+              <p className="text-sm font-semibold text-slate-400">
+                {activeFilterCount > 0 ? "No leads match your filters" : "No leads yet"}
+              </p>
+              <p className="text-xs text-slate-300 mt-1">
+                {activeFilterCount > 0
+                  ? "Try adjusting or clearing your filters"
+                  : "Leads appear when customers interact with your profile"}
+              </p>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={() => {
+                    setLeadTier(undefined);
+                    setLeadStatus(undefined);
+                    setLeadSource(undefined);
+                    setLeadDateRange("all");
+                    setLeadSortBy("score");
+                    setLeadSortOrder("DESC");
+                    setLeadSearch("");
+                    setLeadPage(1);
+                  }}
+                  className="mt-3 px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 active:scale-[0.97]"
+                >
+                  Clear All Filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -742,31 +1582,63 @@ const AnalyticsContent = () => {
                     key={lead.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl p-4 border border-slate-100"
+                    className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center shrink-0 relative">
+                      <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 relative">
                         {lead.isUnlocked && lead.visitor.avatar ? (
-                          <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                          <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
                         ) : (
                           <IonIcon icon={personOutline} className="text-xl text-slate-400" />
                         )}
                         {!lead.isUnlocked && (
-                          <div className="absolute inset-0 rounded-full bg-slate-200/60 backdrop-blur-[2px] flex items-center justify-center">
+                          <div className="absolute inset-0 rounded-full bg-slate-200/60 dark:bg-slate-600/60 backdrop-blur-[2px] flex items-center justify-center">
                             <IonIcon icon={lockClosedOutline} className="text-sm text-slate-500" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-sm font-bold ${lead.isUnlocked ? "text-slate-900" : "text-slate-500"}`}>
-                            {lead.visitor.name}
-                          </span>
+                          {lead.isUnlocked ? (
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">
+                              {lead.visitor.name}
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-3 w-24 rounded-full bg-slate-600/60 dark:bg-slate-500/50 animate-pulse" />
+                              <div className="h-3 w-14 rounded-full bg-slate-600/40 dark:bg-slate-500/30 animate-pulse" />
+                            </div>
+                          )}
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
                             {lead.tier}
                           </span>
                         </div>
+
+                        {/* Contact info for unlocked leads */}
+                        {lead.isUnlocked && (lead.visitor.phone || lead.visitor.email) && (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+                            {lead.visitor.phone && (
+                              <a href={`tel:${lead.visitor.phone}`} className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                <IonIcon icon={callOutline} className="text-[10px]" />
+                                {lead.visitor.phone}
+                              </a>
+                            )}
+                            {lead.visitor.email && (
+                              <a href={`mailto:${lead.visitor.email}`} className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+                                <IonIcon icon={mailOutline} className="text-[10px]" />
+                                {lead.visitor.email}
+                              </a>
+                            )}
+                            {lead.visitor.city && (
+                              <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <IonIcon icon={locationOutline} className="text-[10px]" />
+                                {lead.visitor.city}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
                           {lead.searchQuery && (
                             <span className="flex items-center gap-1">
@@ -786,7 +1658,7 @@ const AnalyticsContent = () => {
                         <p className="text-[10px] text-slate-300 mt-1">Last seen {timeAgo(lead.lastSeenAt)}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-lg font-bold text-slate-800">{lead.score}</span>
+                        <span className="text-lg font-bold text-slate-800 dark:text-white">{lead.score}</span>
                         <p className="text-[9px] text-slate-400 uppercase">Score</p>
                       </div>
                     </div>
@@ -794,18 +1666,28 @@ const AnalyticsContent = () => {
                       {lead.isUnlocked ? (
                         <button
                           onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
-                          className="flex-1 py-2.5 bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"
+                          className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"
                         >
                           View Details
                         </button>
                       ) : (
                         <button
-                          onClick={() => unlockMutation.mutate(lead.id)}
+                          onClick={() => setUnlockSheetLead({ id: lead.id, tier: lead.tier || "cold" })}
                           disabled={unlockMutation.isPending}
                           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 text-white rounded-xl text-xs font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
                         >
                           <IonIcon icon={lockOpenOutline} className="text-sm" />
-                          {unlockMutation.isPending ? "Unlocking..." : "Unlock Lead"}
+                          {(() => {
+                            const info = leadUnlockInfo;
+                            const config = monetizationConfig;
+                            if (!config?.flags.leadsMonetizationEnabled || !info) return "Unlock Lead";
+                            if (info.isProSubscriber || info.subscriptionCreditsRemaining > 0 || info.freeRemaining > 0) return "Unlock Free";
+                            const tier = (lead.tier || "cold") as "hot" | "warm" | "soft" | "cold";
+                            const price = info.isGrowthSubscriber
+                              ? config.leadPricing[`${tier}Discounted` as keyof typeof config.leadPricing]
+                              : config.leadPricing[tier];
+                            return `Unlock ₹${price}`;
+                          })()}
                         </button>
                       )}
                     </div>
@@ -821,7 +1703,7 @@ const AnalyticsContent = () => {
               <button
                 disabled={leadPage <= 1}
                 onClick={() => setLeadPage((p) => p - 1)}
-                className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold disabled:opacity-40"
               >
                 Previous
               </button>
@@ -831,7 +1713,7 @@ const AnalyticsContent = () => {
               <button
                 disabled={leadPage >= leadsData.meta.totalPages}
                 onClick={() => setLeadPage((p) => p + 1)}
-                className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold disabled:opacity-40"
               >
                 Next
               </button>
@@ -840,6 +1722,39 @@ const AnalyticsContent = () => {
         </div>
       )}
 
+      {/* Lead Unlock Sheet */}
+      {unlockSheetLead && (
+        <LeadUnlockSheet
+          open={!!unlockSheetLead}
+          onClose={() => setUnlockSheetLead(null)}
+          onUnlock={(voucherCode) => {
+            unlockMutation.mutate(
+              { leadId: unlockSheetLead.id, voucherCode },
+              { onSuccess: (data) => { if (data.unlocked) setUnlockSheetLead(null); } }
+            );
+          }}
+          tier={(unlockSheetLead.tier as "hot" | "warm" | "soft" | "cold") || "cold"}
+          price={(() => {
+            if (!monetizationConfig) return 49;
+            const tier = unlockSheetLead.tier as "hot" | "warm" | "soft" | "cold";
+            return leadUnlockInfo?.isGrowthSubscriber
+              ? monetizationConfig.leadPricing[`${tier}Discounted` as keyof typeof monetizationConfig.leadPricing]
+              : monetizationConfig.leadPricing[tier];
+          })()}
+          originalPrice={(() => {
+            if (!monetizationConfig || !leadUnlockInfo?.isGrowthSubscriber) return undefined;
+            const tier = unlockSheetLead.tier as "hot" | "warm" | "soft" | "cold";
+            return monetizationConfig.leadPricing[tier];
+          })()}
+          freeRemaining={leadUnlockInfo?.freeRemaining ?? 5}
+          freeTotal={monetizationConfig?.freeQuotas.leadsPerMonth ?? 5}
+          subscriptionCreditsRemaining={leadUnlockInfo?.subscriptionCreditsRemaining ?? 0}
+          isProSubscriber={leadUnlockInfo?.isProSubscriber ?? false}
+          isGrowthSubscriber={leadUnlockInfo?.isGrowthSubscriber ?? false}
+          monetizationEnabled={monetizationConfig?.flags.leadsMonetizationEnabled ?? false}
+          isLoading={unlockMutation.isPending}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 import { Page } from "konsta/react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
@@ -22,13 +22,16 @@ import {
   flagOutline,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useProduct } from "@/hooks/useProduct";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
+import { store } from "@/store";
 import { useAppContext } from "@/app/context/AppContext";
+import { useTheme } from "@/app/context/ThemeContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
 import { shareContent, openDirections } from "@/utils/sharing";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
@@ -39,6 +42,7 @@ const FALLBACK_IMAGE =
 
 export default function ProductDetailsPage() {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? "";
 
@@ -47,6 +51,12 @@ export default function ProductDetailsPage() {
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
 
+  // Reset local UI state when navigating to a different product
+  useEffect(() => {
+    setCurrentPhoto(0);
+    setReportSheetOpen(false);
+  }, [id]);
+
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
   const { requireAuth } = useAuthGate();
@@ -54,6 +64,7 @@ export default function ProductDetailsPage() {
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
+  const { isDark } = useTheme();
   const { mutate: createConversation, isPending: isCreatingChat } =
     useCreateConversation();
 
@@ -81,7 +92,10 @@ export default function ProductDetailsPage() {
   );
 
   const photos = useMemo(() => {
-    if (product?.photoUrls?.length) return product.photoUrls;
+    if (product?.photoUrls?.length) {
+      const valid = product.photoUrls.filter((u: string) => !!u);
+      if (valid.length) return valid;
+    }
     if (product?.photoUrl) return [product.photoUrl];
     return [FALLBACK_IMAGE];
   }, [product?.photoUrls, product?.photoUrl]);
@@ -125,6 +139,7 @@ export default function ProductDetailsPage() {
 
   return (
     <Page className="!bg-gray-50/80 dark:!bg-slate-900">
+      <div className="h-full overflow-y-auto overscroll-contain">
       <div className="relative">
         <div className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
           <img
@@ -133,9 +148,9 @@ export default function ProductDetailsPage() {
             className="w-full h-full object-cover transition-opacity duration-300"
           />
 
-          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3">
+          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(var(--sat,0px)+12px)] pb-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => goBack("/")}
               className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
             >
               <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
@@ -175,7 +190,7 @@ export default function ProductDetailsPage() {
           </div>
 
           {provider?.communityVerified && (
-            <span className="absolute top-[calc(env(safe-area-inset-top)+56px)] left-4 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white">
+            <span className="absolute top-[calc(var(--sat,0px)+56px)] left-4 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white">
               Community Verified
             </span>
           )}
@@ -230,6 +245,16 @@ export default function ProductDetailsPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
+          {product.isHero && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-200/60 dark:border-violet-800/40 text-violet-600 dark:text-violet-400 text-xs font-bold mb-2">
+              ✦ Featured Product
+            </span>
+          )}
+          {(product as any).productType === "service" && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border border-teal-200/60 dark:border-teal-800/40 text-teal-600 dark:text-teal-400 text-xs font-bold mb-2 ml-1">
+              🛠️ Service
+            </span>
+          )}
           <div className="flex items-center gap-3">
             {price !== null ? (
               <span className="text-2xl font-extrabold text-amber-600">
@@ -252,8 +277,8 @@ export default function ProductDetailsPage() {
             <span
               className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
                 product.isActive
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-red-50 text-red-500"
+                  ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                  : "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400"
               }`}
             >
               <IonIcon icon={checkmarkCircle} className="w-3 h-3" />
@@ -408,15 +433,17 @@ export default function ProductDetailsPage() {
       </div>
 
       <div
-        className="fixed bottom-0 inset-x-0 z-30 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 px-5"
+        className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
         style={{
-          background:
-            "linear-gradient(to top, var(--cta-bg-from, rgba(249,250,251,1)) 60%, var(--cta-bg-to, rgba(249,250,251,0)))",
+          paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
+          background: isDark
+            ? "linear-gradient(to top, rgba(15,23,42,1) 60%, rgba(15,23,42,0))"
+            : "linear-gradient(to top, rgba(249,250,251,1) 60%, rgba(249,250,251,0))",
         }}
       >
         {isOwnProduct ? (
-          <div className="rounded-2xl overflow-hidden border border-violet-200 bg-violet-50 shadow-md shadow-violet-100">
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100">
+          <div className="rounded-2xl overflow-hidden border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/30 shadow-md shadow-violet-100 dark:shadow-violet-900/20">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-violet-100 dark:border-violet-800">
               <div className="w-7 h-7 rounded-full bg-violet-600 grid place-content-center shrink-0">
                 <IonIcon
                   icon={storefrontOutline}
@@ -424,14 +451,14 @@ export default function ProductDetailsPage() {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+                <p className="text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wide">
                   Your Product
                 </p>
-                <p className="text-[10px] text-violet-500 truncate">
+                <p className="text-[10px] text-violet-500 dark:text-violet-400 truncate">
                   You&apos;re viewing your own listing
                 </p>
               </div>
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 dark:text-violet-300 bg-violet-100 dark:bg-violet-800/50 px-2 py-0.5 rounded-full">
                 <IonIcon icon={eyeOutline} className="text-xs" />
                 Preview mode
               </span>
@@ -442,7 +469,7 @@ export default function ProductDetailsPage() {
                   setUserMode("provider");
                   router.push("/");
                 }}
-                className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300"
+                className="flex w-full items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 text-white font-bold text-sm active:scale-[0.97] transition-all shadow-sm shadow-violet-300 dark:shadow-violet-900"
               >
                 <IonIcon icon={createOutline} className="text-base" />
                 Manage Business
@@ -454,6 +481,9 @@ export default function ProductDetailsPage() {
             onClick={() => {
               requireAuth(() => {
                 if (!provider?.id) return;
+                // Re-check after auth — user may have logged in as this provider
+                const currentUser = store.getState().auth.user;
+                if (currentUser && currentUser.id === provider.userId) return;
                 createConversation({
                   providerId: provider.id,
                   contextType: 'product',
@@ -482,12 +512,13 @@ export default function ProductDetailsPage() {
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? "Opening Chat..." : "Send Enquiry"}
+            {isCreatingChat ? "Opening Chat..." : (product as any)?.productType === "service" ? "Enquire About Service" : "Send Enquiry"}
           </button>
         )}
       </div>
 
       {/* Report Sheet */}
+      </div>{/* end scroll wrapper */}
       {id && (
         <ReportSheet
           entityType="product"

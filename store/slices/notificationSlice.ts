@@ -3,7 +3,8 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 type PermissionStatus = "default" | "granted" | "denied" | "unsupported";
 
 interface NotificationState {
-  unreadCount: number;
+  customerUnreadCount: number;
+  providerUnreadCount: number;
   permissionStatus: PermissionStatus;
   fcmToken: string | null;
   /** Whether the user has been shown the soft prompt this session */
@@ -11,7 +12,8 @@ interface NotificationState {
 }
 
 const initialState: NotificationState = {
-  unreadCount: 0,
+  customerUnreadCount: 0,
+  providerUnreadCount: 0,
   permissionStatus: "default",
   fcmToken: null,
   softPromptShown: false,
@@ -21,14 +23,17 @@ const notificationSlice = createSlice({
   name: "notification",
   initialState,
   reducers: {
-    setUnreadCount(state, action: PayloadAction<number>) {
-      state.unreadCount = action.payload;
+    setNotificationCounts(state, action: PayloadAction<{ customer: number; provider: number }>) {
+      state.customerUnreadCount = action.payload.customer;
+      state.providerUnreadCount = action.payload.provider;
     },
-    decrementUnread(state) {
-      if (state.unreadCount > 0) state.unreadCount -= 1;
+    decrementUnread(state, action: PayloadAction<"customer" | "provider">) {
+      const key = action.payload === "provider" ? "providerUnreadCount" : "customerUnreadCount";
+      if (state[key] > 0) state[key] -= 1;
     },
-    clearUnread(state) {
-      state.unreadCount = 0;
+    clearUnread(state, action: PayloadAction<"customer" | "provider">) {
+      const key = action.payload === "provider" ? "providerUnreadCount" : "customerUnreadCount";
+      state[key] = 0;
     },
     setPermissionStatus(state, action: PayloadAction<PermissionStatus>) {
       state.permissionStatus = action.payload;
@@ -43,7 +48,7 @@ const notificationSlice = createSlice({
 });
 
 export const {
-  setUnreadCount,
+  setNotificationCounts,
   decrementUnread,
   clearUnread,
   setPermissionStatus,

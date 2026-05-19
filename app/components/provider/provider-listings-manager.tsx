@@ -9,6 +9,8 @@ import {
   starOutline,
   pricetagsOutline,
   rocketOutline,
+  diamondOutline,
+  gridOutline,
 } from "ionicons/icons";
 import ProviderDetailsTab from "./provider-details-tab";
 import ProviderProductsTab from "./provider-products-tab";
@@ -16,17 +18,22 @@ import ProviderPhotosTab from "./provider-photos-tab";
 import ProviderReviewsTab from "./provider-reviews-tab";
 import ProviderDealsTab from "./provider-deals-tab";
 import ProviderSponsorTab from "./provider-sponsor-tab";
+import ProviderSubscriptionTab from "./provider-subscription-tab";
+import ProviderCategoriesTab from "./provider-categories-tab";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useProviderDetails } from "@/hooks/useProvider";
+import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 
-type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "boost";
+type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "categories" | "plans" | "boost";
 
-const tabs: { id: ManagerTab; label: string; icon: string }[] = [
+const allTabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "details", label: "Details", icon: storefrontOutline },
-  { id: "products", label: "Products", icon: cubeOutline },
+  { id: "products", label: "Catalogue", icon: cubeOutline },
   { id: "photos", label: "Photos", icon: imagesOutline },
   { id: "reviews", label: "Reviews", icon: starOutline },
   { id: "deals", label: "Deals", icon: pricetagsOutline },
+  { id: "categories", label: "Categories", icon: gridOutline },
+  { id: "plans", label: "Plans", icon: diamondOutline },
   { id: "boost", label: "Boost", icon: rocketOutline },
 ];
 
@@ -38,7 +45,16 @@ interface ProviderListingsManagerProps {
 const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderListingsManagerProps) => {
   const [activeTab, setActiveTab] = useState<ManagerTab>("details");
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
+  const { data: monetizationConfig } = useMonetizationConfig();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Filter tabs based on feature flags
+  const subscriptionsVisible = monetizationConfig?.flags.subscriptionsVisible ?? false;
+  const tabs = allTabs.filter((t) => {
+    if (t.id === "boost" && !subscriptionsVisible) return false;
+    if (t.id === "plans" && !subscriptionsVisible) return false;
+    return true;
+  });
 
   // Sync external sub-tab navigation requests
   useEffect(() => {
@@ -73,7 +89,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
       <div className="pb-24">
         <div
           className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100/60"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+          style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
         >
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="h-6 w-32 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse" />
@@ -81,11 +97,11 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
           </div>
         </div>
         <div className="px-4 py-3">
-          <div className="h-10 bg-slate-100 rounded-2xl animate-pulse" />
+          <div className="h-10 bg-slate-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
         </div>
         <div className="px-4 space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+            <div key={i} className="h-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse" />
           ))}
         </div>
       </div>
@@ -97,11 +113,11 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
       {/* Header + Tabs fused into sticky bar */}
       <div
         className="sticky top-0 z-40 bg-teal-600"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="px-4 py-3">
           <h1 className="text-base font-bold text-white">Manage Business</h1>
-          <p className="text-[11px] text-white/50">{provider?.brandName ?? ""}</p>
+          <p className="text-[11px] text-white/50">{provider?.brandName || "Your business"}</p>
         </div>
 
         {/* Scrollable tab bar */}
@@ -160,6 +176,17 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
 
       {activeTab === "deals" && (
         <ProviderDealsTab />
+      )}
+
+      {activeTab === "categories" && (
+        <ProviderCategoriesTab
+          providerId={providerId}
+          currentCategories={details?.categories ?? []}
+        />
+      )}
+
+      {activeTab === "plans" && (
+        <ProviderSubscriptionTab />
       )}
 
       {activeTab === "boost" && (

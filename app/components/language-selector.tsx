@@ -36,8 +36,8 @@ export const LanguageSelector = ({ onLanguageChange, inline }: LanguageSelectorP
   return (
     <div className="px-1">
       <div className="mb-4">
-        <h3 className="text-base font-bold text-slate-800">{t("selectLanguage")}</h3>
-        <p className="text-xs text-slate-500 mt-0.5">{t("subtitle")}</p>
+        <h3 className="text-base font-bold text-slate-800 dark:text-white">{t("selectLanguage")}</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t("subtitle")}</p>
       </div>
       <LanguageGrid currentLocale={locale} onSelect={handleSelect} t={t} />
     </div>
@@ -66,14 +66,14 @@ function LanguageGrid({
             className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all text-left ${
               isSelected
                 ? "border-amber-400 bg-amber-50 shadow-sm shadow-amber-100/50"
-                : "border-slate-100 bg-white hover:border-slate-200"
+                : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600"
             }`}
           >
             <span className="text-2xl">{lang.flag}</span>
             <div className="flex-1 min-w-0">
               <p
                 className={`text-sm font-semibold ${
-                  isSelected ? "text-amber-700" : "text-slate-800"
+                  isSelected ? "text-amber-700" : "text-slate-800 dark:text-white"
                 }`}
               >
                 {lang.nativeLabel}
@@ -109,13 +109,13 @@ export const LanguageMenuButton = ({
     <motion.div
       whileTap={{ scale: 0.98, backgroundColor: "#f8fafc" }}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 transition-colors"
+      className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
     >
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-violet-50">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-violet-50 dark:bg-violet-900/30">
         <IonIcon icon={globeOutline} className="text-lg text-violet-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-slate-800">Language</span>
+        <span className="text-sm font-medium text-slate-800 dark:text-white">Language</span>
         <p className="text-[11px] text-slate-400 mt-0.5">
           {currentLang?.flag} {currentLang?.nativeLabel ?? "English"}
         </p>

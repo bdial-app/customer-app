@@ -4,8 +4,8 @@ import { PROVIDER_URLS, REVIEW_URLS } from "@/utils/urls";
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface ProviderNearbyParams {
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   radius?: number;
   page?: number;
   limit?: number;
@@ -16,6 +16,7 @@ export interface ProviderNearbyParams {
   minRating?: number;
   verifiedOnly?: boolean;
   womenLedOnly?: boolean;
+  sinceDays?: number;
 }
 
 export interface NearbyProviderResponse {
@@ -50,9 +51,16 @@ export interface BecomeProviderPayload {
   latitude?: string;
   longitude?: string;
   aadhaarFile?: File;
+  isWomenLed?: boolean;
   categoryIds?: string[];
   products?: Array<{ name: string; description?: string; price?: number; currency?: string; imageCount?: number }>;
   productImages?: File[];
+  websiteUrl?: string;
+  instagramHandle?: string;
+  facebookHandle?: string;
+  youtubeHandle?: string;
+  whatsappNumber?: string;
+  linkedinHandle?: string;
 }
 
 export interface ProviderData {
@@ -77,10 +85,25 @@ export interface ProviderData {
   createdAt: string;
   updatedAt: string;
   user?: any;
+  websiteUrl?: string | null;
+  websiteLogoUrl?: string | null;
+  instagramHandle?: string | null;
+  facebookHandle?: string | null;
+  youtubeHandle?: string | null;
+  whatsappNumber?: string | null;
+  linkedinHandle?: string | null;
+  // Google Reviews integration
+  googlePlaceId?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
+  googleVerifiedAt?: string | null;
+  combinedRating?: number | null;
+  combinedReviewCount?: number | null;
+  trustLevel?: 'unverified' | 'basic' | 'verified' | 'trusted';
 }
 
 export interface ProviderStatusResponse {
-  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted" | "suspended";
+  providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted" | "suspended" | "unverified";
   verificationStatus: string | null;
   provider: ProviderData | null;
   verification: any | null;
@@ -94,14 +117,20 @@ export interface UpdateProviderPayload {
   city?: string;
   area?: string;
   pincode?: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: string;
+  longitude?: string;
   contactNumber?: string;
   openTime?: string;
   closeTime?: string;
   isAvailable?: boolean;
-  profilePhotoUrl?: string;
-  bannerImageUrl?: string;
+  profilePhotoUrl?: string | null;
+  bannerImageUrl?: string | null;
+  websiteUrl?: string | null;
+  instagramHandle?: string | null;
+  facebookHandle?: string | null;
+  youtubeHandle?: string | null;
+  whatsappNumber?: string | null;
+  linkedinHandle?: string | null;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────
@@ -110,6 +139,50 @@ export const getNearbyProviders = async (
   params: ProviderNearbyParams,
 ): Promise<NearbyProviderResponse> => {
   const { data } = await apiClient.get(PROVIDER_URLS.NEARBY, { params });
+  return data;
+};
+
+export interface WomenLedHubParams {
+  page?: number;
+  limit?: number;
+  city?: string;
+  categoryIds?: string;
+  sortBy?: 'rating' | 'newest' | 'reviews';
+  minRating?: number;
+  lat?: number;
+  lng?: number;
+  search?: string;
+}
+
+export interface WomenLedProvider {
+  id: string;
+  name: string;
+  image: string | null;
+  description: string | null;
+  city: string;
+  area: string;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  services: string | null;
+  verified: boolean;
+  isFeatured: boolean;
+  isAvailable: boolean;
+  isWomenLed: boolean;
+  isSponsored: boolean;
+  distance: number | null;
+}
+
+export interface WomenLedHubResponse {
+  providers: WomenLedProvider[];
+  stats: { total: number; categoriesCovered: number; avgRating: number };
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+export const getWomenLedHub = async (
+  params: WomenLedHubParams,
+): Promise<WomenLedHubResponse> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.WOMEN_LED, { params });
   return data;
 };
 
@@ -138,6 +211,10 @@ export interface ProviderDetailsProduct {
   photoUrls: string[];
   isActive: boolean;
   displayOrder: number;
+  isHero: boolean;
+  productType?: 'product' | 'service';
+  categoryId?: string | null;
+  subcategoryId?: string | null;
 }
 
 export interface ProviderDetailsReview {
@@ -191,6 +268,8 @@ export interface ProviderDetailsResponse {
   reviews: ProviderDetailsReview[];
   badges: ProviderDetailsBadge[];
   activeOffers: ProviderDetailsOffer[];
+  isSponsored: boolean;
+  sponsorEndsAt: string | null;
   stats: {
     rating: number;
     reviewCount: number;
@@ -211,6 +290,15 @@ export const getProviderDetails = async (
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
 ): Promise<{ provider: any; verification: any; products: any[] }> => {
+  const { compressImageFile, compressImageFiles, COMPRESS_PRESETS } = await import("@/utils/compress-image");
+
+  // Compress images before building FormData
+  const [compressedBanner, compressedProfile, compressedProductImages] = await Promise.all([
+    payload.bannerImage ? compressImageFile(payload.bannerImage, COMPRESS_PRESETS.profile) : Promise.resolve(undefined),
+    payload.profileImage ? compressImageFile(payload.profileImage, COMPRESS_PRESETS.profile) : Promise.resolve(undefined),
+    payload.productImages?.length ? compressImageFiles(payload.productImages, COMPRESS_PRESETS.product) : Promise.resolve([]),
+  ]);
+
   const formData = new FormData();
   formData.append("userId", payload.userId);
   formData.append("brandName", payload.brandName);
@@ -228,9 +316,10 @@ export const becomeProvider = async (
   if (payload.ijamatNumber) formData.append("ijamatNumber", payload.ijamatNumber);
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
+  if (payload.isWomenLed != null) formData.append("isWomenLed", String(payload.isWomenLed));
   if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
-  if (payload.bannerImage) formData.append("bannerImage", payload.bannerImage);
-  if (payload.profileImage) formData.append("profileImage", payload.profileImage);
+  if (compressedBanner) formData.append("bannerImage", compressedBanner);
+  if (compressedProfile) formData.append("profileImage", compressedProfile);
   if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
   if (payload.categoryIds?.length) {
     payload.categoryIds.forEach((id) => formData.append("categoryIds", id));
@@ -238,14 +327,19 @@ export const becomeProvider = async (
   // Products as JSON string + individual image files
   if (payload.products?.length) {
     formData.append("products", JSON.stringify(payload.products));
-    payload.productImages?.forEach((img) => {
+    compressedProductImages?.forEach((img) => {
       formData.append("productImages", img);
     });
   }
 
-  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  // Online presence / social links
+  if (payload.websiteUrl) formData.append("websiteUrl", payload.websiteUrl);
+  if (payload.instagramHandle) formData.append("instagramHandle", payload.instagramHandle);
+  if (payload.facebookHandle) formData.append("facebookHandle", payload.facebookHandle);
+  if (payload.youtubeHandle) formData.append("youtubeHandle", payload.youtubeHandle);
+  if (payload.whatsappNumber) formData.append("whatsappNumber", payload.whatsappNumber);
+
+  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData);
   return data;
 };
 
@@ -267,11 +361,38 @@ export const verifyProviderOtp = async (
   return data;
 };
 
+export const updateProviderContactNumber = async (
+  providerId: string,
+  contactNumber: string,
+  otp: string,
+): Promise<{ message: string; contactNumber: string }> => {
+  const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE_CONTACT_NUMBER(providerId), { contactNumber, otp });
+  return data;
+};
+
+export const fetchWebsiteMeta = async (
+  domain: string,
+): Promise<{ logoUrl: string | null; title: string | null }> => {
+  const { data } = await apiClient.post(PROVIDER_URLS.WEBSITE_META, { domain });
+  return data;
+};
+
 export const updateProvider = async (
   id: string,
   payload: UpdateProviderPayload,
 ): Promise<ProviderData> => {
   const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE(id), payload);
+  return data;
+};
+
+export const updateProviderCategories = async (
+  id: string,
+  categoryIds: string[],
+): Promise<{ id: string; name: string; slug: string }[]> => {
+  const { data } = await apiClient.patch(
+    PROVIDER_URLS.UPDATE_CATEGORIES(id),
+    { categoryIds },
+  );
   return data;
 };
 
@@ -483,5 +604,15 @@ export const enableMyProvider = async (): Promise<{ message: string; status: str
 
 export const deleteMyProvider = async (): Promise<{ message: string }> => {
   const { data } = await apiClient.delete(PROVIDER_URLS.DELETE_PROVIDER);
+  return data;
+};
+
+export const getProviderCooldownStatus = async (): Promise<{
+  canReEnable: boolean;
+  disableRemainingHours: number | null;
+  disabledAt: string | null;
+  cooldownHours: number;
+}> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.COOLDOWN_STATUS);
   return data;
 };

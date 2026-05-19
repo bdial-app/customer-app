@@ -12,6 +12,7 @@ import {
 } from "@/services/auth.service";
 import { useAppDispatch } from "./useAppStore";
 import { setUser, setProfile, setToken } from "@/store/slices/authSlice";
+import { setItemSync } from "@/utils/storage";
 
 export const useSendOtp = () =>
   useMutation({
@@ -25,7 +26,7 @@ export const useVerifyOtp = () => {
     onSuccess: (data: any) => {
       const jwt = data.accessToken ?? data.token;
       if (jwt && typeof window !== "undefined") {
-        localStorage.setItem("token", jwt);
+        setItemSync("token", jwt);
         dispatch(setToken(jwt));
       }
       if (data.user) {
@@ -39,7 +40,6 @@ export const useCreateAccountMutation = () => {
   return useMutation({
     mutationFn: (payload: CreateAccountPayload) => createAccount(payload),
     onSuccess: (user) => {
-      // Step 3 (PATCH /users/me) returns only the profile, the token stays in state/localStorage
       dispatch(setProfile(user));
     },
   });
@@ -52,7 +52,7 @@ export const useGoogleSignIn = () => {
     onSuccess: (data: any) => {
       const jwt = data.accessToken ?? data.token;
       if (jwt && typeof window !== "undefined") {
-        localStorage.setItem("token", jwt);
+        setItemSync("token", jwt);
         dispatch(setToken(jwt));
       }
       if (data.user) {

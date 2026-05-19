@@ -1,5 +1,6 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, checkmarkDoneOutline } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +15,8 @@ import NotificationItemCard from "./NotificationItem";
 import NotificationEmptyState from "./NotificationEmptyState";
 import { resolveDeepLink } from "@/utils/deep-link";
 import type { NotificationItem } from "@/services/notification.service";
+import { useAppContext } from "@/app/context/AppContext";
+import { useAppSelector } from "@/hooks/useAppStore";
 
 interface NotificationListProps {
   open: boolean;
@@ -24,6 +27,12 @@ export default function NotificationList({ open, onClose }: NotificationListProp
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const { userMode } = useAppContext();
+  const otherModeCount = useAppSelector((s) =>
+    userMode === "provider" ? s.notification.customerUnreadCount : s.notification.providerUnreadCount,
+  );
 
   const { data, isLoading } = useNotifications(page, undefined, filter);
   const markRead = useMarkAsRead();
@@ -52,7 +61,9 @@ export default function NotificationList({ open, onClose }: NotificationListProp
   const notifications = data?.data || [];
   const meta = data?.meta;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -66,7 +77,7 @@ export default function NotificationList({ open, onClose }: NotificationListProp
           {/* Header */}
           <div
             className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
-            style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+            style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
           >
             <div className="flex items-center justify-between px-4 py-3">
               <button
@@ -109,6 +120,17 @@ export default function NotificationList({ open, onClose }: NotificationListProp
               ))}
             </div>
           </div>
+
+          {/* Cross-context notification hint */}
+          {otherModeCount > 0 && (
+            <div className="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 border-b border-slate-100 dark:border-slate-800">
+              <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+                You have {otherModeCount} new notification{otherModeCount > 1 ? "s" : ""} in{" "}
+                <span className="font-bold">{userMode === "provider" ? "Customer" : "Provider"}</span> view.
+                Switch to see them.
+              </p>
+            </div>
+          )}
 
           {/* Content */}
           {isLoading ? (
@@ -154,6 +176,7 @@ export default function NotificationList({ open, onClose }: NotificationListProp
           )}
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

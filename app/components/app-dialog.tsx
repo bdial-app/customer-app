@@ -1,6 +1,9 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
+import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
   ssr: false,
@@ -14,6 +17,7 @@ export interface AppDialogProps {
   iconBg?: string;
   title: string;
   description?: string;
+  children?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm?: () => void;
@@ -40,6 +44,7 @@ export const AppDialog = ({
   iconBg = "bg-amber-50",
   title,
   description,
+  children,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   onConfirm,
@@ -47,7 +52,11 @@ export const AppDialog = ({
   isLoading = false,
   loadingLabel,
 }: AppDialogProps) => {
-  return (
+  const [mounted, setMounted] = useState(false);
+  const keyboardOffset = useKeyboardOffset();
+  useEffect(() => { setMounted(true); }, []);
+
+  const content = (
     <AnimatePresence>
       {open && (
         <>
@@ -67,12 +76,16 @@ export const AppDialog = ({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed bottom-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 inset-x-0 sm:inset-x-auto z-[9999] sm:max-w-sm sm:w-full"
+            className="fixed inset-x-0 sm:inset-x-auto z-[9999] sm:max-w-sm sm:w-full sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+            style={{
+              bottom: keyboardOffset > 0 ? keyboardOffset : 0,
+              transition: "bottom 0.15s ease-out",
+            }}
           >
             <div
               className="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-xl"
               style={{
-                paddingBottom: "max(env(safe-area-inset-bottom), 16px)",
+                paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 16px)",
               }}
             >
               {/* Handle bar (mobile) */}
@@ -105,6 +118,13 @@ export const AppDialog = ({
                   >
                     {description}
                   </p>
+                )}
+
+                {/* Custom Content */}
+                {children && (
+                  <div className={`mt-3 ${icon ? "ml-[56px]" : ""}`}>
+                    {children}
+                  </div>
                 )}
 
                 {/* Actions */}
@@ -142,4 +162,7 @@ export const AppDialog = ({
       )}
     </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 };

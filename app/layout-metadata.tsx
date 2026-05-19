@@ -67,3 +67,8 @@ export const verifyMetadata: Metadata = {
   title: "Verify Account - Tijarah",
   description: "Verify your provider account to go live on Tijarah",
 };
+
+export const privacyPolicyMetadata: Metadata = {
+  title: "Privacy Policy - Tijarah",
+  description: "Read Tijarah's privacy policy to understand how we collect, use, and protect your data",
+};

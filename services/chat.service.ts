@@ -127,8 +127,10 @@ export async function uploadChatMedia(
   conversationId: string,
   file: File
 ): Promise<{ url: string; storageKey: string }> {
+  const { compressImageFile, COMPRESS_PRESETS } = await import("@/utils/compress-image");
+  const compressed = await compressImageFile(file, COMPRESS_PRESETS.chat);
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", compressed);
   const res = await apiClient.post(CHAT_URLS.UPLOAD_MEDIA(conversationId), formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -161,5 +163,10 @@ export async function getPresence(userId: string): Promise<PresenceInfo> {
 
 export async function archiveConversation(conversationId: string): Promise<{ success: boolean }> {
   const res = await apiClient.patch(CHAT_URLS.ARCHIVE(conversationId));
+  return res.data;
+}
+
+export async function blockConversation(conversationId: string): Promise<{ success: boolean }> {
+  const res = await apiClient.patch(CHAT_URLS.BLOCK(conversationId));
   return res.data;
 }

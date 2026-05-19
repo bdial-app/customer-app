@@ -10,11 +10,8 @@ import {
   ListInput,
   Segmented,
   SegmentedButton,
-  Sheet,
-  Page,
-  Navbar,
-  Fab,
 } from "konsta/react";
+import { BottomSheet } from "./bottom-sheet";
 import { IonIcon } from "@ionic/react";
 import {
   personOutline,
@@ -37,18 +34,18 @@ import { FormikInput } from "./formik-input";
 import { AppDialog } from "./app-dialog";
 
 const overviewSchema = Yup.object({
-  name: Yup.string().required("Required"),
-  service: Yup.string().required("Required"),
-  description: Yup.string().required("Required"),
-  phone: Yup.string().required("Required"),
-  address: Yup.string().required("Required"),
-  experience: Yup.string().required("Required"),
+  name: Yup.string().trim().max(150, "Must be under 150 characters").required("Required"),
+  service: Yup.string().trim().max(100, "Must be under 100 characters").required("Required"),
+  description: Yup.string().trim().max(2000, "Must be under 2000 characters").required("Required"),
+  phone: Yup.string().trim().max(15, "Must be under 15 characters").required("Required"),
+  address: Yup.string().trim().max(300, "Must be under 300 characters").required("Required"),
+  experience: Yup.string().trim().max(50, "Must be under 50 characters").required("Required"),
 });
 
 const productSchema = Yup.object({
-  name: Yup.string().required("Required"),
+  name: Yup.string().trim().max(150, "Must be under 150 characters").required("Required"),
   price: Yup.string().required("Required"),
-  description: Yup.string(),
+  description: Yup.string().trim().max(2000, "Must be under 2000 characters"),
 });
 
 interface ProviderDetails {
@@ -243,7 +240,15 @@ const ProviderHome = () => {
                 initialValues={details}
                 validationSchema={overviewSchema}
                 onSubmit={(values) => {
-                  setDetails(values);
+                  setDetails({
+                    ...values,
+                    name: values.name.trim(),
+                    service: values.service.trim(),
+                    description: values.description.trim(),
+                    phone: values.phone.trim(),
+                    address: values.address.trim(),
+                    experience: values.experience.trim(),
+                  });
                   setIsEditing(false);
                 }}
               >
@@ -334,7 +339,7 @@ const ProviderHome = () => {
                   title="Service"
                   titleWrapClassName="text-sm"
                   after={
-                    <span className="text-slate-800">{details.service}</span>
+                    <span className="text-slate-800 dark:text-slate-200">{details.service}</span>
                   }
                   media={
                     <IonIcon
@@ -369,7 +374,7 @@ const ProviderHome = () => {
                   title="Phone"
                   titleWrapClassName="text-sm"
                   after={
-                    <span className="text-slate-800">{details.phone}</span>
+                    <span className="text-slate-800 dark:text-slate-200">{details.phone}</span>
                   }
                   media={
                     <IonIcon icon={callOutline} className="text-slate-400" />
@@ -401,7 +406,7 @@ const ProviderHome = () => {
                   title="Experience"
                   titleWrapClassName="text-sm"
                   after={
-                    <span className="text-slate-800">{details.experience}</span>
+                    <span className="text-slate-800 dark:text-slate-200">{details.experience}</span>
                   }
                   media={
                     <IonIcon icon={mapOutline} className="text-slate-400" />
@@ -411,26 +416,22 @@ const ProviderHome = () => {
             )}
           </List>
 
-          <Sheet
+          <BottomSheet
             opened={detailsSheetOpen}
-            onBackdropClick={() => setDetailsSheetOpen(false)}
-            className="pb-safe rounded-t-3xl h-fit min-h-[500px] max-h-[80vh]"
+            onClose={() => setDetailsSheetOpen(false)}
+            title={detailsSheetContent.title}
+            className="max-h-[80vh]"
+            headerLeft={
+              <button onClick={() => setDetailsSheetOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+              </button>
+            }
           >
-            <Page className="static bg-white">
-              <Navbar
-                title={detailsSheetContent.title}
-                leftClassName="w-11"
-                left={
-                  <Button clear onClick={() => setDetailsSheetOpen(false)}>
-                    <IonIcon icon={arrowBack} className="w-5 h-5" />
-                  </Button>
-                }
-              />
-              <Block className="overflow-y-auto mt-4 px-4 pb-8 space-y-4 text-slate-700 leading-relaxed whitespace-pre-wrap">
+            <div className="overflow-y-auto px-4 pb-8 pt-4 space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
                 {detailsSheetContent.content}
                 {detailsSheetContent.title === "Address" &&
                   detailsSheetContent.content && (
-                    <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative h-48 w-full bg-slate-100 flex items-center justify-center">
+                    <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm relative h-48 w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                       <iframe
                         width="100%"
                         height="100%"
@@ -443,9 +444,8 @@ const ProviderHome = () => {
                       ></iframe>
                     </div>
                   )}
-              </Block>
-            </Page>
-          </Sheet>
+            </div>
+          </BottomSheet>
         </div>
       )}
 
@@ -507,21 +507,17 @@ const ProviderHome = () => {
             ))}
           </Block>
 
-          <Sheet
+          <BottomSheet
             opened={replySheetOpen}
-            onBackdropClick={() => setReplySheetOpen(false)}
-            className="pb-safe rounded-t-3xl min-h-[500px]"
+            onClose={() => setReplySheetOpen(false)}
+            title="Reply to Review"
+            headerLeft={
+              <button onClick={() => setReplySheetOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+              </button>
+            }
           >
-            <Page className="flex flex-col">
-              <Navbar
-                title="Reply to Review"
-                leftClassName="w-11"
-                left={
-                  <Button clear onClick={() => setReplySheetOpen(false)}>
-                    <IonIcon icon={arrowBack} className="w-5 h-5" />
-                  </Button>
-                }
-              />
+            <div className="flex flex-col flex-1">
               <List strongIos insetIos>
                 <ListInput
                   label="Your Response"
@@ -532,18 +528,17 @@ const ProviderHome = () => {
                   inputClassName="!h-32 resize-none"
                 />
               </List>
-              <Block className="mt-auto">
-                <Button
-                  large
-                  rounded
+              <div className="px-4 pb-4 mt-auto">
+                <button
+                  className="w-full py-3.5 rounded-2xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 transition-all active:scale-[0.98]"
                   onClick={handleReplySubmit}
                   disabled={!replyText.trim()}
                 >
                   Submit Reply
-                </Button>
-              </Block>
-            </Page>
-          </Sheet>
+                </button>
+              </div>
+            </div>
+          </BottomSheet>
         </div>
       )}
 
@@ -586,41 +581,36 @@ const ProviderHome = () => {
 
           <div className="h-40"></div>
 
-          <Fab
-            className="fixed right-6 bottom-safe-28 z-20"
-            icon={<IonIcon icon={addOutline} />}
-            text="Add Product"
-            textPosition="after"
+          {/* Floating Add Product button */}
+          <button
             onClick={handleAddProduct}
-          />
-
-          <Sheet
-            opened={productSheetOpen}
-            onBackdropClick={() => setProductSheetOpen(false)}
-            className="pb-safe rounded-t-3xl h-fit min-h-[80vh] max-h-[90vh]"
+            className="fixed right-6 bottom-28 z-20 flex items-center gap-2 h-11 px-5 rounded-full bg-amber-500 text-white font-semibold text-sm shadow-lg shadow-amber-200/50 active:scale-95 transition-all"
           >
-            <Page className="flex flex-col">
-              <Navbar
-                title={editingProduct ? "Edit Product" : "Add Product"}
-                leftClassName="w-11"
-                rightClassName="w-11"
-                left={
-                  <Button clear onClick={() => setProductSheetOpen(false)}>
-                    <IonIcon icon={arrowBack} className="w-5 h-5" />
-                  </Button>
-                }
-                right={
-                  editingProduct && (
-                    <Button
-                      clear
-                      onClick={() => setDeleteActionSheetOpen(true)}
-                      className="text-red-500"
-                    >
-                      <IonIcon icon={trashOutline} className="w-5 h-5" />
-                    </Button>
-                  )
-                }
-              />
+            <IonIcon icon={addOutline} className="w-5 h-5" />
+            Add Product
+          </button>
+
+          <BottomSheet
+            opened={productSheetOpen}
+            onClose={() => setProductSheetOpen(false)}
+            title={editingProduct ? "Edit Product" : "Add Product"}
+            className="max-h-[90vh]"
+            headerLeft={
+              <button onClick={() => setProductSheetOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+              </button>
+            }
+            headerRight={
+              editingProduct ? (
+                <button
+                  onClick={() => setDeleteActionSheetOpen(true)}
+                  className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center"
+                >
+                  <IonIcon icon={trashOutline} className="w-5 h-5 text-red-500" />
+                </button>
+              ) : undefined
+            }
+          >
               <div className="overflow-y-auto pb-4">
                 <Formik
                   initialValues={
@@ -635,16 +625,21 @@ const ProviderHome = () => {
                   validationSchema={productSchema}
                   enableReinitialize
                   onSubmit={(values) => {
+                    const trimmedValues = {
+                      ...values,
+                      name: values.name.trim(),
+                      description: values.description?.trim() || "",
+                    };
                     if (editingProduct) {
                       setProducts((prev) =>
                         prev.map((p) =>
-                          p.id === editingProduct.id ? (values as Product) : p,
+                          p.id === editingProduct.id ? (trimmedValues as Product) : p,
                         ),
                       );
                     } else {
                       setProducts((prev) => [
                         ...prev,
-                        { ...(values as Product), id: Date.now().toString() },
+                        { ...(trimmedValues as Product), id: Date.now().toString() },
                       ]);
                     }
                     setProductSheetOpen(false);
@@ -738,8 +733,7 @@ const ProviderHome = () => {
                   )}
                 </Formik>
               </div>
-            </Page>
-          </Sheet>
+          </BottomSheet>
 
           <AppDialog
             open={deleteActionSheetOpen}
@@ -789,12 +783,13 @@ const ProviderHome = () => {
             </Block>
           )}
 
-          <Fab
-            className="fixed right-6 bottom-safe-28 z-20"
-            icon={<IonIcon icon={addOutline} />}
-            text="Add Photo"
-            textPosition="after"
-          />
+          {/* Floating Add Photo button */}
+          <button
+            className="fixed right-6 bottom-28 z-20 flex items-center gap-2 h-11 px-5 rounded-full bg-amber-500 text-white font-semibold text-sm shadow-lg shadow-amber-200/50 active:scale-95 transition-all"
+          >
+            <IonIcon icon={addOutline} className="w-5 h-5" />
+            Add Photo
+          </button>
         </div>
       )}
     </div>

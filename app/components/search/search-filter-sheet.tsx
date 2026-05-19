@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Sheet, Button } from "konsta/react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
   () => import("@ionic/react").then((m) => m.IonIcon),
@@ -24,6 +25,7 @@ import {
   setMaxDistance,
   setVerifiedOnly,
   setWomenLedOnly,
+  setListingType,
   resetFilters,
 } from "@/store/slices/searchSlice";
 
@@ -48,6 +50,12 @@ const DISTANCE_OPTIONS = [
   { value: 25, label: "25 km" },
 ];
 
+const LISTING_TYPE_OPTIONS: { value: 'all' | 'products' | 'services'; label: string; icon: string }[] = [
+  { value: "all", label: "All", icon: "✨" },
+  { value: "products", label: "Products", icon: "📦" },
+  { value: "services", label: "Services", icon: "🛠️" },
+];
+
 const SearchFilterSheet = ({ opened, onClose }: Props) => {
   const dispatch = useAppDispatch();
   const { filters } = useAppSelector((s) => s.search);
@@ -65,6 +73,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
   );
   const [tempVerified, setTempVerified] = useState(filters.verifiedOnly);
   const [tempWomenLed, setTempWomenLed] = useState(filters.womenLedOnly);
+  const [tempListingType, setTempListingType] = useState<'all' | 'products' | 'services'>(filters.listingType);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
 
   const handleOpen = useCallback(() => {
@@ -73,6 +82,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     setTempDistance(filters.maxDistance);
     setTempVerified(filters.verifiedOnly);
     setTempWomenLed(filters.womenLedOnly);
+    setTempListingType(filters.listingType);
   }, [filters]);
 
   const toggleCat = (id: string) => {
@@ -89,6 +99,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     dispatch(setMaxDistance(tempDistance));
     dispatch(setVerifiedOnly(tempVerified));
     dispatch(setWomenLedOnly(tempWomenLed));
+    dispatch(setListingType(tempListingType));
     onClose();
   };
 
@@ -98,6 +109,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     setTempDistance(null);
     setTempVerified(false);
     setTempWomenLed(false);
+    setTempListingType("all");
   };
 
   const tempFilterCount =
@@ -105,25 +117,45 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     (tempRating ? 1 : 0) +
     (tempDistance ? 1 : 0) +
     (tempVerified ? 1 : 0) +
-    (tempWomenLed ? 1 : 0);
+    (tempWomenLed ? 1 : 0) +
+    (tempListingType !== "all" ? 1 : 0);
 
-  return (
-    <Sheet
-      className="pb-safe"
-      opened={opened}
-      onBackdropClick={onClose}
-      style={{ maxHeight: "85vh" }}
-    >
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const content = (
+    <AnimatePresence>
+      {opened && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[9998] bg-black/40"
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-slate-800 rounded-t-3xl overflow-hidden"
+            style={{ maxHeight: "85vh", paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 0px)" }}
+          >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-slate-700">
         <div className="flex items-center gap-2.5">
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200 transition-colors"
+            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
           >
-            <IonIcon icon={close} className="w-4 h-4 text-gray-600" />
+            <IonIcon icon={close} className="w-4 h-4 text-gray-600 dark:text-slate-300" />
           </button>
-          <h2 className="text-[17px] font-bold text-gray-900">Filters</h2>
+          <h2 className="text-[17px] font-bold text-gray-900 dark:text-white">Filters</h2>
         </div>
         {tempFilterCount > 0 && (
           <button
@@ -138,10 +170,38 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       <div
         className="overflow-auto px-4 pt-4 pb-4"
         style={{ maxHeight: "calc(85vh - 140px)" }}
-      >
+      >        {/* ── Listing Type ─────────────────── */}
+        <section className="mb-6">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
+            Listing Type
+          </h3>
+          <div className="flex gap-2">
+            {LISTING_TYPE_OPTIONS.map((opt) => {
+              const isActive = tempListingType === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setTempListingType(opt.value)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
+                    isActive
+                      ? opt.value === "services"
+                        ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400 shadow-sm shadow-teal-100 dark:shadow-none"
+                        : opt.value === "products"
+                          ? "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400 shadow-sm shadow-amber-100 dark:shadow-none"
+                          : "bg-gray-50 dark:bg-slate-700 border-gray-400 dark:border-slate-500 text-gray-700 dark:text-slate-200 shadow-sm"
+                      : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 active:bg-gray-50 dark:active:bg-slate-700"
+                  }`}
+                >
+                  <span>{opt.icon}</span>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
         {/* ── Rating ─────────────────────────── */}
         <section className="mb-6">
-          <h3 className="text-[13px] font-bold text-gray-800 mb-3">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
             Minimum Rating
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -153,8 +213,8 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                   onClick={() => setTempRating(opt.value)}
                   className={`flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
                     isActive
-                      ? "bg-amber-50 border-amber-400 text-amber-700 shadow-sm shadow-amber-100"
-                      : "bg-white border-gray-200 text-gray-600 active:bg-gray-50"
+                      ? "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400 shadow-sm shadow-amber-100 dark:shadow-none"
+                      : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 active:bg-gray-50 dark:active:bg-slate-700"
                   }`}
                 >
                   {opt.value && (
@@ -169,7 +229,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
 
         {/* ── Distance ───────────────────────── */}
         <section className="mb-6">
-          <h3 className="text-[13px] font-bold text-gray-800 mb-3">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
             Maximum Distance
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -181,8 +241,8 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                   onClick={() => setTempDistance(opt.value)}
                   className={`h-10 px-4 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
                     isActive
-                      ? "bg-blue-50 border-blue-400 text-blue-700 shadow-sm shadow-blue-100"
-                      : "bg-white border-gray-200 text-gray-600 active:bg-gray-50"
+                      ? "bg-blue-50 dark:bg-blue-900/30 border-blue-400 text-blue-700 dark:text-blue-400 shadow-sm shadow-blue-100 dark:shadow-none"
+                      : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 active:bg-gray-50 dark:active:bg-slate-700"
                   }`}
                 >
                   {opt.label}
@@ -194,20 +254,20 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
 
         {/* ── Toggles ────────────────────────── */}
         <section className="mb-6 space-y-2">
-          <h3 className="text-[13px] font-bold text-gray-800 mb-2">
+          <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-2">
             Business Type
           </h3>
-          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 cursor-pointer active:bg-gray-100 transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 dark:bg-slate-800 cursor-pointer active:bg-gray-100 dark:active:bg-slate-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
               <IonIcon icon={shieldCheckmarkOutline} className="w-4 h-4 text-emerald-600" />
             </div>
-            <span className="text-[14px] font-semibold text-gray-700 flex-1">
+            <span className="text-[14px] font-semibold text-gray-700 dark:text-slate-200 flex-1">
               Verified Only
             </span>
             <div
               onClick={() => setTempVerified(!tempVerified)}
               className={`w-12 h-7 rounded-full flex items-center px-0.5 transition-colors cursor-pointer ${
-                tempVerified ? "bg-emerald-500" : "bg-gray-200"
+                tempVerified ? "bg-emerald-500" : "bg-gray-200 dark:bg-slate-600"
               }`}
             >
               <div
@@ -217,17 +277,17 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
               />
             </div>
           </label>
-          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 cursor-pointer active:bg-gray-100 transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <label className="flex items-center gap-3 py-3 px-3 rounded-xl bg-gray-50 dark:bg-slate-800 cursor-pointer active:bg-gray-100 dark:active:bg-slate-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
               <IonIcon icon={ribbonOutline} className="w-4 h-4 text-purple-600" />
             </div>
-            <span className="text-[14px] font-semibold text-gray-700 flex-1">
+            <span className="text-[14px] font-semibold text-gray-700 dark:text-slate-200 flex-1">
               Women-Led Only
             </span>
             <div
               onClick={() => setTempWomenLed(!tempWomenLed)}
               className={`w-12 h-7 rounded-full flex items-center px-0.5 transition-colors cursor-pointer ${
-                tempWomenLed ? "bg-purple-500" : "bg-gray-200"
+                tempWomenLed ? "bg-purple-500" : "bg-gray-200 dark:bg-slate-600"
               }`}
             >
               <div
@@ -242,7 +302,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
         {/* ── Categories ─────────────────────── */}
         {allCategories.length > 0 && (
           <section className="mb-2">
-            <h3 className="text-[13px] font-bold text-gray-800 mb-3">
+            <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
               Categories
             </h3>
             <div className="space-y-0.5">
@@ -269,9 +329,9 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                           toggleCat(cat.id);
                         }
                       }}
-                      className="w-full flex items-center gap-3 py-3 px-3 rounded-xl active:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 px-3 rounded-xl active:bg-gray-50 dark:active:bg-slate-700 transition-colors"
                     >
-                      <span className="text-[14px] font-semibold text-gray-700 flex-1 text-left">
+                      <span className="text-[14px] font-semibold text-gray-700 dark:text-slate-200 flex-1 text-left">
                         {cat.name}
                       </span>
                       {selectedCount > 0 && children.length > 0 && (
@@ -289,7 +349,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                           className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                             tempCats.has(cat.id)
                               ? "bg-amber-500 border-amber-500"
-                              : "border-gray-300 bg-white"
+                              : "border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-800"
                           }`}
                         >
                           {tempCats.has(cat.id) && (
@@ -300,21 +360,21 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                     </button>
 
                     {children.length > 0 && isExpanded && (
-                      <div className="ml-5 mb-2 space-y-0.5 border-l-2 border-gray-100 pl-3">
+                      <div className="ml-5 mb-2 space-y-0.5 border-l-2 border-gray-100 dark:border-slate-700 pl-3">
                         {children.map((child: any) => (
                           <button
                             key={child.id}
                             onClick={() => toggleCat(child.id)}
-                            className="w-full flex items-center gap-3 py-2.5 px-2 rounded-lg active:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-3 py-2.5 px-2 rounded-lg active:bg-gray-50 dark:active:bg-slate-700 transition-colors"
                           >
-                            <span className="text-[13px] text-gray-600 flex-1 text-left font-medium">
+                            <span className="text-[13px] text-gray-600 dark:text-slate-300 flex-1 text-left font-medium">
                               {child.name}
                             </span>
                             <div
                               className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                                 tempCats.has(child.id)
                                   ? "bg-amber-500 border-amber-500"
-                                  : "border-gray-300 bg-white"
+                                  : "border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-800"
                               }`}
                             >
                               {tempCats.has(child.id) && (
@@ -334,7 +394,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       </div>
 
       {/* Apply button */}
-      <div className="px-4 pb-4 pt-3 border-t border-gray-100 bg-white">
+      <div className="px-4 pb-4 pt-3 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <button
           onClick={handleApply}
           className="w-full h-12 rounded-2xl bg-amber-500 text-white text-[15px] font-bold active:bg-amber-600 transition-colors shadow-sm shadow-amber-200"
@@ -344,8 +404,14 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
             : "Show All Results"}
         </button>
       </div>
-    </Sheet>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 };
 
 export default SearchFilterSheet;

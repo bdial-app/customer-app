@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, star, call, location, chatbubble } from "ionicons/icons";
@@ -143,6 +144,7 @@ export default function ServiceProvidersPage() {
   });
 
   const router = useRouter();
+  const { goBack } = useBackNavigation();
 
   return (
     <Page
@@ -158,10 +160,10 @@ export default function ServiceProvidersPage() {
         leftClassName="w-11"
         left={
           <button
-            onClick={() => router.back()}
-            className="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full active:scale-90 transition-transform"
+            onClick={() => goBack("/")}
+            className="w-9 h-9 flex items-center justify-center bg-gray-100 dark:bg-slate-700 rounded-full active:scale-90 transition-transform"
           >
-            <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700" />
+            <IonIcon icon={arrowBack} className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
         }
       />
@@ -191,14 +193,14 @@ export default function ServiceProvidersPage() {
       </Block>
 
       <Block className="my-0">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-slate-400">
           {filteredProviders.length} providers found
         </p>
       </Block>
 
       <List strongIos outlineIos className="mt-4">
         {filteredProviders.map((provider) => (
-          <Link key={provider.id} href={ROUTE_PATH.PROVIDER_DETAILS}>
+          <Link key={provider.id} href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}>
             <ListItem
               className="material:border-b material:border-b-slate-300"
               link
@@ -223,7 +225,7 @@ export default function ServiceProvidersPage() {
                       ({provider.reviews})
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-600">
+                  <div className="flex items-center gap-1 text-gray-600 dark:text-slate-400">
                     <IonIcon icon={location} className="w-4 h-4" />
                     <span className="text-sm">{provider.location}</span>
                   </div>
@@ -247,12 +249,18 @@ export default function ServiceProvidersPage() {
                 </div>
               }
               media={
-                <img
-                  className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
-                  src={provider.image}
-                  width="80"
-                  alt={provider.name}
-                />
+                provider.image ? (
+                  <img
+                    className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
+                    src={provider.image}
+                    width="80"
+                    alt={provider.name}
+                  />
+                ) : (
+                  <div className="ios:rounded-lg material:rounded-lg w-20 h-20 bg-amber-100 dark:bg-slate-700 flex items-center justify-center">
+                    <span className="text-xl font-bold text-amber-600/40 dark:text-slate-400">{provider.name?.[0] || "?"}</span>
+                  </div>
+                )
               }
             />
           </Link>
@@ -261,7 +269,7 @@ export default function ServiceProvidersPage() {
 
       {filteredProviders.length === 0 && (
         <Block className="text-center py-8">
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-slate-400">
             No providers found matching your search.
           </p>
           <Button clear onClick={() => setSearchQuery("")}>

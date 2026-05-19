@@ -1,82 +1,74 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function useServiceWorker() {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const refreshingRef = useRef(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator)) return;
 
-    if ("serviceWorker" in navigator) {
-      // Register immediately — do NOT wait for "load" event.
-      // Waiting causes a race condition where usePushNotifications
-      // calls navigator.serviceWorker.ready before the SW is registered,
-      // which can hang indefinitely on iOS PWA.
-      (async () => {
-        try {
-          console.log("[PWA] Attempting to register service worker...");
+    let registration: ServiceWorkerRegistration | null = null;
 
-          const registration = await navigator.serviceWorker.register(
-            "/sw.js",
-            {
-              scope: "/",
-            },
-          );
+    const register = async () => {
+      try {
+        registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+          // Always check the server for a new SW on every page load
+          updateViaCache: "none",
+        });
 
-          console.log(
-            "✓ Service Worker registered successfully:",
-            registration,
-          );
+        // Check for updates every 60 seconds
+        intervalRef.current = setInterval(() => {
+          registration?.update();
+        }, 60000);
 
-          if (registration.waiting) {
-            console.log("✓ Service Worker already active");
-          }
-
-          if (registration.installing) {
-            console.log("⏳ Service Worker is installing...");
-          }
-
-          if (registration.active) {
-            console.log("✓ Service Worker is active");
-          }
-
-          // Check for updates periodically
-          const updateInterval = setInterval(() => {
-            registration.update();
-          }, 60000); // Check every minute
-
-          // Listen for updates
-          registration.addEventListener("updatefound", () => {
-            console.log("Update found for Service Worker");
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (
-                  newWorker.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  console.log(
-                    "New Service Worker available, prompt user to refresh",
-                  );
-                }
-              });
-            }
-          });
-
-          return () => clearInterval(updateInterval);
-        } catch (error) {
-          console.error("✗ Service Worker registration failed:", error);
-          if (error instanceof Error) {
-            console.error("Error details:", error.message);
-          }
+        // If there's already a waiting worker (e.g. installed while user was on the page), activate it
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
         }
-      })();
 
-      // Listen for controller changes
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        console.log("✓ Service Worker controller changed (updated)");
-      });
-    } else {
-      console.warn("⚠️ Service Worker not supported in this browser");
-    }
+        // Listen for new SW installations
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration?.installing;
+          if (newWorker) {
+            newWorker.addEventListener("statechange", () => {
+              if (
+                newWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
+                // New SW installed and old one exists — tell it to take over immediately
+                newWorker.postMessage({ type: "SKIP_WAITING" });
+              }
+            });
+          }
+        });
+      } catch (error) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("[SW] Registration failed:", error);
+        }
+      }
+    };
+
+    register();
+
+    // When the new SW activates and takes control, reload for fresh assets
+    const handleControllerChange = () => {
+      if (refreshingRef.current) return;
+      refreshingRef.current = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+    };
   }, []);
 }
+

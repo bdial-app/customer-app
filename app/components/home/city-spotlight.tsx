@@ -1,9 +1,10 @@
 "use client";
-import { motion } from "framer-motion";
+import { memo } from "react";
 import { IonIcon } from "@ionic/react";
 import { locationOutline, star, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
+import OptimizedImage from "@/app/components/ui/optimized-image";
 
 interface Provider {
   id: string | number;
@@ -46,13 +47,12 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
             </p>
           </div>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={() => router.push(viewAllLink || ROUTE_PATH.ALL_SERVICES)}
-          className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full"
+          className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full active:scale-95 transition-transform"
         >
           See All →
-        </motion.button>
+        </button>
       </div>
 
       {isLoading ? (
@@ -61,8 +61,8 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
             <div key={i} className="shrink-0 w-[200px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-50 dark:border-slate-700 animate-pulse">
               <div className="h-[110px] bg-slate-100 dark:bg-slate-700" />
               <div className="p-2.5 space-y-2">
-                <div className="h-3.5 bg-slate-100 rounded-full w-4/5" />
-                <div className="h-2.5 bg-slate-50 rounded-full w-3/5" />
+                <div className="h-3.5 bg-slate-100 dark:bg-slate-700 rounded-full w-4/5" />
+                <div className="h-2.5 bg-slate-200 dark:bg-slate-600 rounded-full w-3/5" />
               </div>
             </div>
           ))}
@@ -70,23 +70,21 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
       ) : (
         <div className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3">
           {providers.map((provider, idx) => (
-            <motion.div
+            <div
               key={provider.id}
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ type: "spring", stiffness: 200, damping: 20, delay: idx * 0.06 }}
-              whileTap={{ scale: 0.97 }}
               onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
-              className="shrink-0 w-[200px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
+              className="shrink-0 w-[200px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800 active:scale-[0.97] transition-transform"
             >
               <div className="relative h-[110px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800">
                 {provider.image ? (
-                  <img
+                  <OptimizedImage
                     src={provider.image}
                     alt={provider.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+                    className="w-full h-full"
+                    width={200}
+                    height={110}
+                    priority={idx < 2}
+                    preset="card"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
@@ -135,7 +133,7 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -143,4 +141,4 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
   );
 };
 
-export default CitySpotlight;
+export default memo(CitySpotlight);

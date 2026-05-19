@@ -61,7 +61,7 @@ const ServicesList = ({ className }: { className?: string }) => {
               return (
                 <div
                   key={i}
-                  className="rounded-xl bg-slate-100 animate-pulse"
+                  className="rounded-xl bg-slate-100 dark:bg-slate-700 animate-pulse"
                   style={{
                     gridColumn: `span ${colSpan}`,
                     gridRow: `span ${rowSpan}`,

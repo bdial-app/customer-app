@@ -1,59 +1,41 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
+import OptimizedImage from "@/app/components/ui/optimized-image";
 import {
   searchOutline,
   locationOutline,
-  starOutline,
   star,
   heartOutline,
   heart,
   flashOutline,
   trendingUpOutline,
-  timeOutline,
   ribbonOutline,
   sparklesOutline,
   checkmarkCircleOutline,
   navigateOutline,
-  shieldCheckmarkOutline,
-  femaleOutline,
   diamondOutline,
+  femaleOutline,
   megaphoneOutline,
   pricetagOutline,
-  peopleOutline,
   arrowForwardOutline,
   rocketOutline,
 } from "ionicons/icons";
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
-import { useNearbyProviders } from "@/hooks/useProvider";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useToggleSaved, useSavedItemIds } from "@/hooks/useSavedItems";
 import { useExploreFeed, useTrackAd } from "@/hooks/useExplore";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import CommunityReviews from "@/app/components/home/community-reviews";
+import CategoryIcon from "@/app/components/ui/category-icon";
 import type {
   ExploreProvider,
   SponsoredProvider,
   ProviderWithOffer,
 } from "@/services/explore.service";
-import ProviderBadgeList from "./explore/provider-badge";
-import InfiniteScroll from "./infinite-scroll";
-
-type SortKey = "nearest" | "top_rated" | "newest";
-
-const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
-  { key: "nearest", label: "Nearest", icon: locationOutline },
-  { key: "top_rated", label: "Top Rated", icon: starOutline },
-  { key: "newest", label: "Newest", icon: timeOutline },
-];
-
-const QUICK_ACTIONS = [
-  { label: "Women-Led", icon: femaleOutline, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100", query: "?womenLed=true" },
-  { label: "Verified", icon: shieldCheckmarkOutline, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", query: "?verified=true" },
-  { label: "Top Rated", icon: star, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", query: "?sortBy=rating" },
-  { label: "Featured", icon: diamondOutline, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", query: "?featured=true" },
-];
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
@@ -79,34 +61,16 @@ const formatDistance = (d: number) =>
 const formatOfferLabel = (type: string, value: number) =>
   type === "percentage" ? `${value}% OFF` : `₹${value} OFF`;
 
-/* ── Skeleton Loader ── */
-const SectionSkeleton = ({ rows = 3 }: { rows?: number }) => (
-  <div className="px-4 space-y-3">
-    {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 animate-pulse">
-        <div className="flex gap-3">
-          <div className="w-[90px] h-[90px] rounded-xl bg-slate-100 shrink-0" />
-          <div className="flex-1 space-y-2 py-1">
-            <div className="h-3.5 bg-slate-100 rounded-full w-3/4" />
-            <div className="h-2.5 bg-slate-50 rounded-full w-1/2" />
-            <div className="h-2.5 bg-slate-50 rounded-full w-2/3" />
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
 /* ── Horizontal Card Skeleton ── */
 const CardCarouselSkeleton = ({ cards = 3 }: { cards?: number }) => (
   <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
     {Array.from({ length: cards }).map((_, i) => (
       <div key={i} className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 animate-pulse">
-        <div className="h-[115px] bg-slate-100" />
+        <div className="h-[115px] bg-slate-100 dark:bg-slate-700" />
         <div className="p-2.5 space-y-2">
-          <div className="h-3 bg-slate-100 rounded-full w-4/5" />
-          <div className="h-2.5 bg-slate-50 rounded-full w-3/5" />
-          <div className="h-2.5 bg-slate-50 rounded-full w-2/5" />
+          <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full w-4/5" />
+          <div className="h-2.5 bg-slate-200 dark:bg-slate-600 rounded-full w-3/5" />
+          <div className="h-2.5 bg-slate-200 dark:bg-slate-600 rounded-full w-2/5" />
         </div>
       </div>
     ))}
@@ -281,7 +245,7 @@ function BannerCarousel({
               className={`rounded-full transition-all duration-300 ${
                 i === current
                   ? "w-5 h-1.5 bg-amber-500"
-                  : "w-1.5 h-1.5 bg-gray-300"
+                  : "w-1.5 h-1.5 bg-slate-300 dark:bg-slate-600"
               }`}
             />
           ))}
@@ -293,9 +257,13 @@ function BannerCarousel({
 
 /* ── Main Component ── */
 
-const ExploreContent = () => {
+const ExploreContent = memo(() => {
   const router = useRouter();
-  const [sort, setSort] = useState<SortKey>("nearest");
+
+  // Prefetch search route so navigation is instant
+  useEffect(() => {
+    router.prefetch(ROUTE_PATH.SEARCH);
+  }, [router]);
 
   const user = useAppSelector((state) => state.auth.user as any);
   const feedParams = {
@@ -304,23 +272,14 @@ const ExploreContent = () => {
     city: user?.city ?? undefined,
   };
 
-  const { data: feed, isLoading: feedLoading } = useExploreFeed(feedParams);
+  const { data: feed, isLoading: feedLoading, isError: feedError } = useExploreFeed(feedParams);
   const trackAd = useTrackAd();
-
-  const { data: nearbyData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: nearbyLoading } =
-    useNearbyProviders({
-      lat: user?.latitude || 18.5204,
-      lng: user?.longitude || 73.8567,
-      city: user?.city,
-      limit: 12,
-      radius: 25,
-    });
 
   const { data: savedIds = [] } = useSavedItemIds();
   const toggleSaved = useToggleSaved();
 
   const savedProviderIds = useMemo(
-    () => new Set(savedIds.filter((s) => s.itemType === "provider").map((s) => s.itemId)),
+    () => new Set((Array.isArray(savedIds) ? savedIds : []).filter((s) => s.itemType === "provider").map((s) => s.itemId)),
     [savedIds],
   );
 
@@ -343,30 +302,6 @@ const ExploreContent = () => {
     feed?.activeOffers ?? [],
     "provider_offer",
   );
-
-  // Nearby providers with sorting
-  const nearbyProviders = useMemo(() => {
-    if (!nearbyData) return [];
-    const mapped = nearbyData.pages.flatMap((page) =>
-      page.data.map((p: any) => ({
-        id: p.id,
-        name: p.brandName,
-        service: p.services || p.description?.split(",")[0] || "Services",
-        distance: p.distance,
-        rating: p.rating ?? 0,
-        reviews: p.reviewCount ?? 0,
-        image: p.profilePhotoUrl || p.bannerImageUrl || "",
-        verified: p.status === "active",
-        womenLed: p.isWomenLed || false,
-        isFeatured: p.isFeatured || false,
-        location: [p.area, p.city].filter(Boolean).join(", "),
-        badges: [],
-      })),
-    );
-    if (sort === "top_rated") return [...mapped].sort((a, b) => b.rating - a.rating);
-    if (sort === "nearest") return [...mapped].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999));
-    return mapped;
-  }, [nearbyData, sort]);
 
   // Collections from quick categories or static fallback
   const collections = useMemo(() => {
@@ -413,40 +348,38 @@ const ExploreContent = () => {
     [router],
   );
 
-  const isLoading = feedLoading || nearbyLoading;
+  const { isOnline } = useNetworkStatus();
+
+  // Show offline state when no data is available and we're offline
+  if (!isOnline && !feed) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 px-6">
+        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728M5.636 18.364a9 9 0 010-12.728M8.464 15.536a5 5 0 010-7.072M15.536 8.464a5 5 0 010 7.072M12 12h.01" />
+          </svg>
+        </div>
+        <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">You&apos;re offline</h3>
+        <p className="text-sm text-slate-400 dark:text-slate-500 text-center max-w-[260px]">
+          Connect to the internet to explore services and providers near you.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col pb-4">
+    <div className="flex flex-col pb-20">
 
       {/* ── 1. Search Bar ── */}
       <div className="px-4 pt-2 pb-1">
-        <motion.div
-          whileTap={{ scale: 0.98 }}
+        <div
           onClick={() => router.push(ROUTE_PATH.SEARCH)}
-          className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer"
+          className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
         >
           <IonIcon icon={searchOutline} className="text-base text-slate-400 shrink-0" />
           <span className="flex-1 text-sm text-slate-400">Search services, businesses...</span>
           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">Search</span>
-        </motion.div>
-      </div>
-
-      {/* ── 2. Quick Action Pills ── */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pt-3 pb-1">
-        {QUICK_ACTIONS.map((action, i) => (
-          <motion.button
-            key={action.label}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.04 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push(`${ROUTE_PATH.SEARCH}${action.query}`)}
-            className={`shrink-0 flex items-center gap-1.5 ${action.bg} border ${action.border} px-3 py-2 rounded-xl shadow-sm`}
-          >
-            <IonIcon icon={action.icon} className={`text-sm ${action.color}`} />
-            <span className={`text-[11px] font-bold ${action.color} whitespace-nowrap`}>{action.label}</span>
-          </motion.button>
-        ))}
+        </div>
       </div>
 
       {/* ── 3. Sponsored Carousel — revenue: CPC ads ── */}
@@ -456,7 +389,7 @@ const ExploreContent = () => {
             <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
             <div className="h-4 w-20 rounded bg-slate-100 dark:bg-slate-700 animate-pulse" />
           </div>
-          <CardCarouselSkeleton cards={3} />
+          <CardCarouselSkeleton cards={5} />
         </div>
       )}
       {!feedLoading && (feed?.sponsoredCarousel?.length ?? 0) > 0 && (
@@ -465,21 +398,20 @@ const ExploreContent = () => {
             <IonIcon icon={megaphoneOutline} className="text-sm text-amber-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Sponsored</h2>
           </div>
+          <div className="relative">
+          {/* Scroll hint gradient */}
+          <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.sponsoredCarousel.map((p, i) => (
-              <motion.div
+            {(Array.isArray(feed?.sponsoredCarousel) ? feed.sponsoredCarousel : []).map((p, i) => (
+              <div
                 key={p.id}
                 data-track-id={p.sponsoredListingId}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileTap={{ scale: 0.97 }}
                 onClick={() => handleSponsoredClick(p)}
-                className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border-2 border-amber-200/60 dark:border-amber-700/40"
+                className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border-2 border-amber-200/60 dark:border-amber-700/40 active:scale-[0.97] transition-transform"
               >
                 <div className="relative h-[115px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
                   {p.image ? (
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                    <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={170} height={115} priority={i < 3} preset="card" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-3xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
@@ -508,11 +440,11 @@ const ExploreContent = () => {
                     ) : (
                       <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">New</span>
                     )}
-                    <ProviderBadgeList badges={p.badges} />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
+          </div>
           </div>
         </div>
       )}
@@ -530,29 +462,29 @@ const ExploreContent = () => {
       {!feedLoading && (feed?.activeOffers?.length ?? 0) > 0 && (
         <div className="mt-5" ref={offersRef}>
           <div className="flex items-center gap-2 px-4 mb-2.5">
-            <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
-              <IonIcon icon={pricetagOutline} className="text-base text-rose-500" />
-            </motion.div>
+            <IonIcon icon={pricetagOutline} className="text-base text-rose-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Deals & Offers</h2>
-            <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full ml-auto">
+            <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
               Limited Time
             </span>
+            <button
+              onClick={() => router.push(ROUTE_PATH.DEALS)}
+              className="ml-auto flex items-center gap-0.5 text-[11px] font-semibold text-rose-500 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.activeOffers.map((p, i) => (
-              <motion.div
+            {(Array.isArray(feed?.activeOffers) ? feed.activeOffers : []).map((p, i) => (
+              <div
                 key={p.offerId}
                 data-track-id={p.offerId}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileTap={{ scale: 0.96 }}
                 onClick={() => handleOfferClick(p)}
-                className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-rose-100 dark:border-rose-900/40"
+                className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-rose-100 dark:border-rose-900/40 active:scale-[0.96] transition-transform"
               >
                 <div className="relative h-[100px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
                   {p.image ? (
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                    <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={170} height={100} priority={i < 3} preset="card" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-2xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
@@ -577,7 +509,7 @@ const ExploreContent = () => {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -585,21 +517,17 @@ const ExploreContent = () => {
 
       {/* ── 5. Quick Categories — discovery grid ── */}
       <div className="mt-5">
-        <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">Curated Collections</h2>
+        <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
         <div className="grid grid-cols-2 gap-2.5 px-4">
           {collections.slice(0, 4).map((col: any, i: number) => (
-            <motion.div
+            <div
               key={col.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.06 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() =>
                 col.categoryId
                   ? router.push(`${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(col.title)}&categoryIds=${col.categoryId}`)
                   : router.push(`${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(col.title)}`)
               }
-              className={`rounded-2xl bg-gradient-to-br ${col.gradient} p-3.5 cursor-pointer relative overflow-hidden`}
+              className={`rounded-2xl bg-gradient-to-br ${col.gradient} p-3.5 cursor-pointer relative overflow-hidden active:scale-[0.96] transition-transform`}
             >
               <div className="absolute right-2 top-2 opacity-20">
                 <IonIcon icon={col.icon} className="text-4xl text-white" />
@@ -608,7 +536,7 @@ const ExploreContent = () => {
                 <h3 className="text-[13px] font-bold text-white leading-tight">{col.title}</h3>
                 {col.count && <p className="text-[10px] text-white/60 mt-0.5">{col.count} providers</p>}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -616,24 +544,20 @@ const ExploreContent = () => {
       {/* ── 6. Trending Categories ── */}
       {(feed?.quickCategories?.length ?? 0) > 0 && (
         <div className="mt-5">
-          <h2 className="text-[15px] font-bold text-slate-800 px-4 mb-2.5">Trending Now</h2>
+          <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Trending Now</h2>
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.quickCategories.map((cat, i) => (
-              <motion.button
+            {(Array.isArray(feed?.quickCategories) ? feed.quickCategories : []).map((cat, i) => (
+              <button
                 key={cat.id}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => router.push(`${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(cat.name)}&categoryIds=${cat.id}`)}
-                className="shrink-0 flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm px-3 py-2 rounded-xl"
+                className="shrink-0 flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm px-3 py-2 rounded-xl active:scale-95 transition-transform"
               >
-                {cat.icon && <span className="text-base">{cat.icon}</span>}
+                <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} name={cat.name} size="xs" />
                 <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">{cat.name}</span>
                 {cat.providerCount > 0 && (
                   <span className="text-[9px] text-slate-400 bg-slate-50 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{cat.providerCount}</span>
                 )}
-              </motion.button>
+              </button>
             ))}
           </div>
         </div>
@@ -647,10 +571,16 @@ const ExploreContent = () => {
               <IonIcon icon={locationOutline} className="text-sm text-blue-500" />
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Popular Nearby</h2>
             </div>
+            <button
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=10`)}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.popularNearby.map((p, i) => (
-              <ProviderCard
+            {(Array.isArray(feed?.popularNearby) ? feed.popularNearby : []).map((p, i) => (
+              <ExploreCarouselCard
                 key={p.id}
                 provider={p}
                 index={i}
@@ -680,14 +610,22 @@ const ExploreContent = () => {
 
       {/* ── 9. Top Rated ── */}
       {(feed?.topRated?.length ?? 0) > 0 && (
-        <div className="mt-5">
-          <div className="flex items-center gap-2 px-4 mb-2.5">
-            <IonIcon icon={star} className="text-sm text-amber-500" />
-            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
+        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
+          <div className="flex items-center justify-between px-4 mb-2.5">
+            <div className="flex items-center gap-2">
+              <IonIcon icon={star} className="text-sm text-amber-500" />
+              <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Top Rated</h2>
+            </div>
+            <button
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=rating&minRating=4`)}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-amber-600 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.topRated.map((p, i) => (
-              <ProviderCard
+            {(Array.isArray(feed?.topRated) ? feed.topRated : []).map((p, i) => (
+              <ExploreCarouselCard
                 key={p.id}
                 provider={p}
                 index={i}
@@ -700,33 +638,43 @@ const ExploreContent = () => {
         </div>
       )}
 
+      {/* ── 9b. Community Reviews — social proof ── */}
+      <CommunityReviews
+        reviews={feed?.communityReviews?.map((r) => ({
+          id: r.id,
+          name: r.name,
+          providerName: r.providerName,
+          text: r.text,
+          rating: r.rating,
+          timeAgo: r.timeAgo,
+        }))}
+        isLoading={feedLoading}
+      />
+
       {/* ── 10. Category Spotlight ── */}
-      {feed?.categorySpotlight && (
-        <div className="mt-5">
+      {feed?.categorySpotlight && (feed.categorySpotlight.providers?.length ?? 0) > 0 && (
+        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
-              {feed.categorySpotlight.category.icon && (
-                <span className="text-base">{feed.categorySpotlight.category.icon}</span>
-              )}
+              <CategoryIcon icon={feed.categorySpotlight.category.icon} iconColor={feed.categorySpotlight.category.iconColor} name={feed.categorySpotlight.category.name} size="xs" />
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">
                 Explore {feed.categorySpotlight.category.name}
               </h2>
             </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
+            <button
               onClick={() =>
                 router.push(
                   `${ROUTE_PATH.SEARCH}?q=${encodeURIComponent(feed.categorySpotlight!.category.name)}&categoryIds=${feed.categorySpotlight!.category.id}`,
                 )
               }
-              className="flex items-center gap-0.5 text-[11px] font-semibold text-blue-600"
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 active:scale-95 transition-transform"
             >
               See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
-            </motion.button>
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed.categorySpotlight.providers.map((p, i) => (
-              <ProviderCard
+            {(Array.isArray(feed.categorySpotlight?.providers) ? feed.categorySpotlight.providers : []).map((p, i) => (
+              <ExploreCarouselCard
                 key={p.id}
                 provider={p}
                 index={i}
@@ -741,7 +689,7 @@ const ExploreContent = () => {
 
       {/* ── 11. New Arrivals ── */}
       {(feed?.newArrivals?.length ?? 0) > 0 && (
-        <div className="mt-5">
+        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={rocketOutline} className="text-sm text-indigo-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">New Arrivals</h2>
@@ -750,8 +698,8 @@ const ExploreContent = () => {
             </span>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {feed!.newArrivals.map((p, i) => (
-              <ProviderCard
+            {(Array.isArray(feed?.newArrivals) ? feed.newArrivals : []).map((p, i) => (
+              <ExploreCarouselCard
                 key={p.id}
                 provider={p}
                 index={i}
@@ -759,6 +707,36 @@ const ExploreContent = () => {
                 onToggleSave={handleToggle}
                 onClick={() => goToProvider(p.id)}
                 isNew
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── 11b. Women-Led Spotlight ── */}
+      {(feed?.womenLedProviders?.length ?? 0) > 0 && (
+        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
+          <div className="flex items-center justify-between px-4 mb-2.5">
+            <div className="flex items-center gap-2">
+              <IonIcon icon={femaleOutline} className="text-sm text-purple-500" />
+              <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Women-Led Businesses</h2>
+            </div>
+            <button
+              onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=10&womenLed=true`)}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-purple-600 active:scale-95 transition-transform"
+            >
+              See All <IonIcon icon={arrowForwardOutline} className="text-[10px]" />
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
+            {(Array.isArray(feed?.womenLedProviders) ? feed.womenLedProviders : []).map((p, i) => (
+              <ExploreCarouselCard
+                key={p.id}
+                provider={p}
+                index={i}
+                isSaved={savedProviderIds.has(p.id)}
+                onToggleSave={handleToggle}
+                onClick={() => goToProvider(p.id)}
               />
             ))}
           </div>
@@ -791,140 +769,13 @@ const ExploreContent = () => {
         </div>
       )}
 
-      <div className="h-2 bg-slate-50 dark:bg-slate-800 mx-0 mt-5" />
-
-      {/* ── 13. Discover Nearby — infinite scroll list ── */}
-      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-        <h2 className="text-[15px] font-bold text-slate-800 dark:text-white mr-auto">Discover Nearby</h2>
-        <div className="flex gap-1.5">
-          {SORT_OPTIONS.map((opt) => (
-            <motion.button
-              key={opt.key}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSort(opt.key)}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-colors ${
-                sort === opt.key ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-              }`}
-            >
-              <IonIcon icon={opt.icon} className="text-xs" />
-              {opt.label}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      {isLoading ? (
-        <SectionSkeleton rows={4} />
-      ) : (
-        <div className="flex flex-col px-4 gap-3 pb-2">
-          <AnimatePresence>
-            {nearbyProviders.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16">
-                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
-                  <IonIcon icon={searchOutline} className="text-2xl text-slate-300" />
-                </div>
-                <p className="text-sm font-medium text-slate-400">No providers found nearby</p>
-                <p className="text-[12px] text-slate-300 mt-1">Try expanding your search radius</p>
-              </motion.div>
-            ) : (
-              nearbyProviders.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(i * 0.03, 0.3) }}
-                  layout
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => goToProvider(p.id)}
-                  className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 cursor-pointer"
-                >
-                  <div className="flex gap-3 p-3">
-                    <div className="relative w-[90px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-slate-100 to-slate-50">
-                      {p.image ? (
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-2xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
-                        </div>
-                      )}
-                      {p.verified && (
-                        <div className="absolute top-1.5 left-1.5 bg-emerald-500 text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                          <IonIcon icon={checkmarkCircleOutline} className="text-[7px]" />
-                          Verified
-                        </div>
-                      )}
-                      <motion.button
-                        whileTap={{ scale: 0.8 }}
-                        onClick={(e) => handleToggle(e, p.id)}
-                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center"
-                      >
-                        <IonIcon
-                          icon={savedProviderIds.has(p.id) ? heart : heartOutline}
-                          className={`text-xs ${savedProviderIds.has(p.id) ? "text-red-400" : "text-white"}`}
-                        />
-                      </motion.button>
-                    </div>
-
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1 flex-1">{p.name}</h3>
-                        {p.distance != null && (
-                          <span className="shrink-0 flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-md">
-                            <IonIcon icon={navigateOutline} className="text-[9px]" />
-                            {formatDistance(p.distance)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{p.service}</p>
-
-                      <div className="flex items-center gap-2.5 mt-1.5">
-                        {p.rating > 0 ? (
-                          <div className="flex items-center gap-0.5 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-md">
-                            <IonIcon icon={star} className="text-[10px] text-amber-500" />
-                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">{p.rating.toFixed(1)}</span>
-                            {p.reviews > 0 && <span className="text-[9px] text-amber-600/60">({p.reviews})</span>}
-                          </div>
-                        ) : (
-                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">New</span>
-                        )}
-                        {p.womenLed && (
-                          <span className="text-[9px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md">♀ Women-Led</span>
-                        )}
-                      </div>
-
-                      {p.location && (
-                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">{p.location}</p>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
-
-          {hasNextPage && (
-            <InfiniteScroll onLoadMore={() => fetchNextPage()} isLoading={isFetchingNextPage} hasMore={hasNextPage}>
-              <div />
-            </InfiniteScroll>
-          )}
-
-          {!hasNextPage && nearbyProviders.length > 0 && !isLoading && (
-            <div className="flex flex-col items-center py-6 text-center">
-              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-2">
-                <IonIcon icon={checkmarkCircleOutline} className="text-sm text-slate-300" />
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium">You've seen all nearby providers</p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
-};
+});
 
-/* ── Reusable Provider Card (horizontal scroll card) ── */
+/* ── Horizontal Scroll Provider Card (for carousels) ── */
 
-function ProviderCard({
+function ExploreCarouselCard({
   provider: p,
   index,
   isSaved,
@@ -940,17 +791,13 @@ function ProviderCard({
   isNew?: boolean;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      whileTap={{ scale: 0.97 }}
+    <div
       onClick={onClick}
-      className="shrink-0 w-[160px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-100 dark:border-slate-700"
+      className="shrink-0 w-[160px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-100 dark:border-slate-700 active:scale-[0.97] transition-transform"
     >
       <div className="relative h-[110px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
         {p.image ? (
-          <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+          <OptimizedImage src={p.image} alt={p.name} className="w-full h-full" width={160} height={110} priority={index < 3} preset="card" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-3xl font-bold text-slate-200">{p.name?.charAt(0)?.toUpperCase()}</span>
@@ -967,16 +814,15 @@ function ProviderCard({
             NEW
           </div>
         )}
-        <motion.button
-          whileTap={{ scale: 0.8 }}
+        <button
           onClick={(e) => onToggleSave(e, p.id)}
-          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-[0.8] transition-transform"
         >
           <IonIcon
             icon={isSaved ? heart : heartOutline}
             className={`text-xs ${isSaved ? "text-red-400" : "text-white"}`}
           />
-        </motion.button>
+        </button>
         {p.distance != null && (
           <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
             <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
@@ -998,10 +844,11 @@ function ProviderCard({
             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">New</span>
           )}
         </div>
-        <ProviderBadgeList badges={p.badges} />
       </div>
-    </motion.div>
+    </div>
   );
 }
+
+ExploreContent.displayName = "ExploreContent";
 
 export default ExploreContent;

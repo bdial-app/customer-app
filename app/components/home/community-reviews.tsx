@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import type { CommunityReview } from "@/services/home.service";
 
 interface DisplayReview {
@@ -49,9 +49,11 @@ interface CommunityReviewsProps {
 const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  // Use a ref so position survives effect re-runs without jumping
+  const posRef = useRef(0);
 
   const displayReviews: DisplayReview[] = useMemo(() => {
-    if (!reviews || reviews.length === 0) return [];
+    if (!Array.isArray(reviews) || reviews.length === 0) return [];
     return reviews.map((r) => ({
       id: r.id,
       name: r.name,
@@ -69,25 +71,64 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
     return (sum / displayReviews.length).toFixed(1);
   }, [displayReviews]);
 
+  // Only run rAF auto-scroll when the section is visible on screen
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || !isVisible || isPaused) return;
 
     let animFrame: number;
-    let pos = 0;
 
     const scroll = () => {
-      if (!isPaused && el) {
-        pos += 0.5;
-        if (pos >= el.scrollWidth / 2) pos = 0;
-        el.scrollLeft = pos;
+      if (el) {
+        posRef.current += 0.5;
+        // Seamless modular wrap — subtract half instead of jumping to 0
+        const half = el.scrollWidth / 2;
+        if (half > 0 && posRef.current >= half) {
+          posRef.current -= half;
+        }
+        el.scrollLeft = posRef.current;
       }
       animFrame = requestAnimationFrame(scroll);
     };
 
     animFrame = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animFrame);
-  }, [isPaused]);
+  }, [isPaused, isVisible]);
+
+  // Sync posRef to actual scroll position after user swipes,
+  // then resume auto-scroll after a short inertia-settle delay
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleTouchStart = useCallback(() => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    setIsPaused(true);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    // Let momentum/inertia settle before syncing position and resuming
+    resumeTimerRef.current = setTimeout(() => {
+      if (scrollRef.current) {
+        posRef.current = scrollRef.current.scrollLeft;
+        // If user scrolled backward past 0, clamp to 0
+        if (posRef.current < 0) posRef.current = 0;
+      }
+      setIsPaused(false);
+    }, 400);
+  }, []);
 
   // Duplicate for infinite scroll
   const allReviews = [...displayReviews, ...displayReviews];
@@ -95,7 +136,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
   if (displayReviews.length === 0 && !isLoading) return null;
 
   return (
-    <div className="mb-2">
+    <div ref={containerRef} className="mb-2">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div>
           <h2 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
@@ -120,19 +161,19 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
               <div className="flex items-center gap-2.5 mb-2.5">
                 <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3 bg-slate-100 rounded-full w-24" />
-                  <div className="h-2 bg-slate-50 rounded-full w-32" />
+                  <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full w-24" />
+                  <div className="h-2 bg-slate-200 dark:bg-slate-600 rounded-full w-32" />
                 </div>
                 <div className="flex gap-px">
                   {[1, 2, 3, 4, 5].map((j) => (
-                    <div key={j} className="w-2.5 h-2.5 bg-slate-100 rounded-sm" />
+                    <div key={j} className="w-2.5 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-sm" />
                   ))}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <div className="h-2.5 bg-slate-100 rounded-full w-full" />
-                <div className="h-2.5 bg-slate-100 rounded-full w-5/6" />
-                <div className="h-2.5 bg-slate-50 rounded-full w-2/3" />
+                <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full w-full" />
+                <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full w-5/6" />
+                <div className="h-2.5 bg-slate-200 dark:bg-slate-600 rounded-full w-2/3" />
               </div>
             </div>
           ))}
@@ -140,16 +181,13 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
       ) : (
       <div
         ref={scrollRef}
-        onTouchStart={() => setIsPaused(true)}
-        onTouchEnd={() => setIsPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
       >
         {allReviews.map((review, i) => (
-          <motion.div
+          <div
             key={`${review.id}-${i}`}
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
             className="shrink-0 w-[260px] bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700 shadow-sm"
           >
             <div className="flex items-center gap-2.5 mb-2.5">
@@ -177,7 +215,7 @@ const CommunityReviews = ({ reviews, isLoading }: CommunityReviewsProps) => {
             <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
               &ldquo;{review.text}&rdquo;
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
       )}

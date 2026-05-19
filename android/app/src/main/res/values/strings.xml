@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tijarah</string>
+    <string name="title_activity_main">Tijarah</string>
+    <string name="package_name">com.tijarah.app</string>
+    <string name="custom_url_scheme">com.tijarah.app</string>
+</resources>

@@ -14,8 +14,12 @@ import {
   cubeOutline,
   chevronForward,
   arrowBack,
+  callOutline,
+  mailOutline,
+  locationOutline,
 } from "ionicons/icons";
 import { useLeads, useLeadDetail, useUnlockLead } from "@/hooks/useProviderAnalytics";
+import { InfoTip } from "../info-tip";
 import type { LeadItem } from "@/services/analytics.service";
 
 const TIERS = [
@@ -60,13 +64,13 @@ function LeadCard({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/60"
+      className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700"
     >
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0 relative">
           {lead.isUnlocked && lead.visitor.avatar ? (
-            <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+            <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <IonIcon icon={personOutline} className="text-xl text-gray-400" />
           )}
@@ -80,9 +84,16 @@ function LeadCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-sm font-bold ${lead.isUnlocked ? "text-gray-900" : "text-gray-500"}`}>
-              {lead.visitor.name}
-            </span>
+            {lead.isUnlocked ? (
+              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                {lead.visitor.name}
+              </span>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <div className="h-3 w-24 rounded-full bg-slate-600/60 dark:bg-slate-500/50 animate-pulse" />
+                <div className="h-3 w-14 rounded-full bg-slate-600/40 dark:bg-slate-500/30 animate-pulse" />
+              </div>
+            )}
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
               {lead.tier}
@@ -111,8 +122,8 @@ function LeadCard({
 
         {/* Score */}
         <div className="text-right shrink-0">
-          <span className="text-lg font-bold text-gray-800">{lead.score}</span>
-          <p className="text-[9px] text-gray-400 uppercase">Score</p>
+          <span className="text-lg font-bold text-gray-800 dark:text-white">{lead.score}</span>
+          <p className="text-[9px] text-gray-400 dark:text-slate-500 uppercase flex items-center gap-0.5 justify-end">Score <InfoTip text="Interest score based on time spent, products viewed, and actions taken. Higher = more likely to become a customer" size={9} /></p>
         </div>
       </div>
 
@@ -120,7 +131,7 @@ function LeadCard({
       <div className="flex gap-2 mt-3">
         {lead.isUnlocked ? (
           <>
-            <button onClick={onSelect} className="flex-1 py-2.5 bg-teal-50 text-teal-700 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
+            <button onClick={onSelect} className="flex-1 py-2.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
               View Details
             </button>
             {lead.visitor.userId && (
@@ -154,7 +165,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
     return (
       <div className="p-4 space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />
+          <div key={i} className="h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -170,7 +181,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
           <IonIcon icon={arrowBack} className="text-lg text-gray-600" />
         </button>
         <div className="flex-1">
-          <h3 className="text-base font-bold text-gray-900">{detail.visitor.name}</h3>
+          <h3 className="text-base font-bold text-gray-900 dark:text-white">{detail.visitor.name}</h3>
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
             {detail.tier} · Score {detail.score}
@@ -178,26 +189,68 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
         </div>
       </div>
 
+      {/* Contact info — shown for unlocked non-anonymous leads */}
+      {detail.isUnlocked && !detail.isAnonymous && (detail.visitor.phone || detail.visitor.email || detail.visitor.city) && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4">
+          <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2.5">Contact Information</h4>
+          <div className="space-y-2">
+            {detail.visitor.phone && (
+              <a href={`tel:${detail.visitor.phone}`} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-800/50 flex items-center justify-center">
+                  <IonIcon icon={callOutline} className="text-emerald-600 dark:text-emerald-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.phone}</p>
+                  <p className="text-[9px] text-slate-400">Tap to call</p>
+                </div>
+              </a>
+            )}
+            {detail.visitor.email && (
+              <a href={`mailto:${detail.visitor.email}`} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">
+                  <IonIcon icon={mailOutline} className="text-blue-600 dark:text-blue-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.email}</p>
+                  <p className="text-[9px] text-slate-400">Tap to email</p>
+                </div>
+              </a>
+            )}
+            {detail.visitor.city && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-800/50 flex items-center justify-center">
+                  <IonIcon icon={locationOutline} className="text-violet-600 dark:text-violet-400 text-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-white">{detail.visitor.city}</p>
+                  <p className="text-[9px] text-slate-400">Location</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-gray-900">{detail.productsViewed.length}</p>
-          <p className="text-[10px] text-gray-400">Products</p>
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{detail.productsViewed.length}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">Products</p>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-gray-900">{Math.round(detail.totalDuration / 60)}</p>
-          <p className="text-[10px] text-gray-400">Minutes</p>
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{Math.round(detail.totalDuration / 60)}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">Minutes</p>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-gray-900">{detail.actionsPerformed.length}</p>
-          <p className="text-[10px] text-gray-400">Actions</p>
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{detail.actionsPerformed.length}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">Actions</p>
         </div>
       </div>
 
       {/* Products Viewed */}
       {detail.products.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/60">
-          <h4 className="text-sm font-bold text-gray-900 mb-2">Products Viewed</h4>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700">
+          <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Products Viewed</h4>
           <div className="space-y-2">
             {detail.products.map((p) => (
               <div key={p.id} className="flex items-center gap-2">
@@ -210,8 +263,8 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
       )}
 
       {/* Timeline */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/60">
-        <h4 className="text-sm font-bold text-gray-900 mb-3">Activity Timeline</h4>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700">
+        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Activity Timeline</h4>
         <div className="space-y-3">
           {detail.timeline.slice(0, 20).map((ev, i) => (
             <div key={i} className="flex items-start gap-3">
@@ -237,7 +290,7 @@ export default function ProviderLeadsTab() {
   const [tier, setTier] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const { data, isLoading } = useLeads(tier, page);
+  const { data, isLoading } = useLeads({ tier, page });
   const unlockMutation = useUnlockLead();
 
   if (selectedLeadId) {
@@ -247,7 +300,7 @@ export default function ProviderLeadsTab() {
   return (
     <div className="p-4 space-y-4 pb-24">
       {/* Tier Filter */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
         {TIERS.map((t) => (
           <button
             key={t.label}
@@ -255,12 +308,13 @@ export default function ProviderLeadsTab() {
             className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               tier === t.key
                 ? "bg-teal-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-500 active:bg-gray-200"
+                : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 active:bg-gray-200"
             }`}
           >
             {t.label}
           </button>
         ))}
+        <InfoTip text="Hot = ready to buy, Warm = interested, Soft = browsing, Cold = just looked" size={13} />
       </div>
 
       {/* Hot Leads CTA */}
@@ -286,7 +340,7 @@ export default function ProviderLeadsTab() {
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-32 bg-gray-100 dark:bg-slate-700 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : !data?.data.length ? (
@@ -302,7 +356,7 @@ export default function ProviderLeadsTab() {
               key={lead.id}
               lead={lead}
               onSelect={() => setSelectedLeadId(lead.id)}
-              onUnlock={() => unlockMutation.mutate(lead.id)}
+              onUnlock={() => unlockMutation.mutate({ leadId: lead.id })}
               isUnlocking={unlockMutation.isPending}
             />
           ))}
@@ -315,7 +369,7 @@ export default function ProviderLeadsTab() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+            className="px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-xl text-xs font-semibold dark:text-slate-300 disabled:opacity-40"
           >
             Previous
           </button>
@@ -325,7 +379,7 @@ export default function ProviderLeadsTab() {
           <button
             disabled={page >= data.meta.totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-semibold disabled:opacity-40"
+            className="px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-xl text-xs font-semibold dark:text-slate-300 disabled:opacity-40"
           >
             Next
           </button>

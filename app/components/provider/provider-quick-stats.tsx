@@ -21,10 +21,10 @@ const ProviderQuickStats = ({ stats: { photos, products, reviews } }: ProviderQu
   const totalProducts = products.length;
 
   const statItems = [
-    { icon: eyeOutline, label: "Photos", value: photos.length.toString(), color: "text-blue-500", bg: "bg-blue-50" },
-    { icon: starOutline, label: "Rating", value: avgRating, color: "text-amber-500", bg: "bg-amber-50" },
-    { icon: chatbubblesOutline, label: "Reviews", value: totalReviews.toString(), color: "text-purple-500", bg: "bg-purple-50" },
-    { icon: trendingUpOutline, label: "Products", value: totalProducts.toString(), color: "text-emerald-500", bg: "bg-emerald-50" },
+    { icon: eyeOutline, label: "Photos", value: photos.length.toString(), color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" },
+    { icon: starOutline, label: "Rating", value: avgRating, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30" },
+    { icon: chatbubblesOutline, label: "Reviews", value: totalReviews.toString(), color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/30" },
+    { icon: trendingUpOutline, label: "Products", value: totalProducts.toString(), color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
   ];
 
   return (
@@ -36,13 +36,13 @@ const ProviderQuickStats = ({ stats: { photos, products, reviews } }: ProviderQu
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-white rounded-2xl p-3 border border-slate-100 text-center shadow-sm"
+            className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center shadow-sm dark:shadow-none"
           >
             <div className={`w-8 h-8 rounded-xl ${stat.bg} flex items-center justify-center mx-auto mb-1.5`}>
               <IonIcon icon={stat.icon} className={`text-base ${stat.color}`} />
             </div>
-            <p className="text-base font-bold text-slate-800">{stat.value}</p>
-            <p className="text-[10px] text-slate-500 font-medium">{stat.label}</p>
+            <p className="text-base font-bold text-slate-800 dark:text-white">{stat.value}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{stat.label}</p>
           </motion.div>
         ))}
       </div>

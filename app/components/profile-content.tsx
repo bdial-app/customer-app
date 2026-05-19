@@ -1,13 +1,8 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
+import { createPortal } from "react-dom";
 import {
-  List,
-  ListItem,
-  ListInput,
   Toggle,
-  BlockTitle,
-  Block,
-  Button,
 } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -43,7 +38,6 @@ import {
   arrowBack,
   pauseCircleOutline,
   downloadOutline,
-  folderOpenOutline,
   eyeOffOutline,
   eyeOutline,
   powerOutline,
@@ -55,23 +49,22 @@ import { useTheme } from "../context/ThemeContext";
 import { LanguageSelector, LanguageMenuButton } from "./language-selector";
 import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
-import { Formik, Form } from "formik";
-import * as Yup from "yup";
-import { FormikInput } from "./formik-input";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import {
   setProfile as setReduxProfile,
   clearUser,
 } from "@/store/slices/authSlice";
+import { resetChat } from "@/store/slices/chatSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getMyProviderStatus,
   disableMyProvider,
   enableMyProvider,
-  deleteMyProvider,
+  getProviderCooldownStatus,
 } from "@/services/provider.service";
 import { AppDialog } from "./app-dialog";
 import {
@@ -86,32 +79,10 @@ import {
 } from "@/services/bug-report.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { removeItemSync, removeItem } from "@/utils/storage";
+import { checkContent } from "@/utils/content-sanitizer";
 
-interface UserProfile {
-  mobileNumber: string;
-  name: string;
-  gender: "male" | "female" | "other";
-  role: "customer" | "provider";
-  city: string;
-  area: string;
-  pincode: string;
-}
-
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .min(3, "Must be at least 3 characters")
-    .required("Required"),
-  gender: Yup.string()
-    .oneOf(["male", "female", "other"], "Invalid Gender")
-    .required("Required"),
-  city: Yup.string().required("Required"),
-  area: Yup.string(),
-  pincode: Yup.string()
-    .matches(/^\d{6}$/, "Must be 6 digits")
-    .required("Required"),
-});
-
-const APP_VERSION = "1.0.0";
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
 // ─── Reusable Menu Row ──────────────────────────────────────────────
 const MenuRow = ({
@@ -145,7 +116,9 @@ const MenuRow = ({
     </div>
     <div className="flex-1 min-w-0">
       <span
-        className={`text-sm font-medium ${danger ? "text-red-500" : "text-slate-800 dark:text-white"}`}
+        className={`text-sm font-medium ${
+          danger ? "text-red-500" : "text-slate-800 dark:text-white"
+        }`}
       >
         {label}
       </span>
@@ -192,43 +165,51 @@ const SlidePage = ({
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-}) => (
-  <AnimatePresence>
-    {open && (
-      <motion.div
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <div
-          className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+}) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed inset-0 z-[100] bg-white dark:bg-slate-900 overflow-y-auto overscroll-contain"
+          style={{ paddingBottom: "var(--sab, env(safe-area-inset-bottom))" }}
         >
-          <div className="flex items-center justify-between px-4 py-3">
-            <button
-              onClick={onClose}
-              className="text-blue-500 font-semibold text-sm active:opacity-50 flex items-center gap-1"
-            >
-              <IonIcon icon={arrowBack} className="text-lg" />
-              Back
-            </button>
-            <h2 className="text-base font-bold text-slate-800 dark:text-white">
-              {title}
-            </h2>
-            <div className="w-12" />
+          <div
+            className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
+            style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
+          >
+            <div className="flex items-center justify-between px-4 py-3">
+              <button
+                onClick={onClose}
+                className="text-blue-500 font-semibold text-sm active:opacity-50 flex items-center gap-1"
+              >
+                <IonIcon icon={arrowBack} className="text-lg" />
+                Back
+              </button>
+              <h2 className="text-base font-bold text-slate-800 dark:text-white">
+                {title}
+              </h2>
+              <div className="w-12" />
+            </div>
           </div>
-        </div>
-        <div className="px-5 py-5">{children}</div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+          <div className="px-5 py-5">{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
+  );
+};
 
 // ─── Main Profile Content ───────────────────────────────────────────
-const ProfileContent = () => {
+const ProfileContent = memo(() => {
   const {
     providerStatus,
     userMode,
@@ -242,6 +223,7 @@ const ProfileContent = () => {
   const user = useAppSelector((state) => state.auth.user as any);
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
+  const queryClient = useQueryClient();
   const { isDark, toggleTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
@@ -252,17 +234,15 @@ const ProfileContent = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [disableProviderSheetOpen, setDisableProviderSheetOpen] =
     useState(false);
-  const [deleteProviderSheetOpen, setDeleteProviderSheetOpen] = useState(false);
   const [isDisablingProvider, setIsDisablingProvider] = useState(false);
-  const [isDeletingProvider, setIsDeletingProvider] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
+  const canReEnable = cooldownRemaining === null || cooldownRemaining <= 0;
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
     | "about"
     | "terms"
-    | "privacy"
     | "help"
-    | "editProfile"
     | "language"
     | "notificationSettings"
     | "contactUs"
@@ -271,6 +251,10 @@ const ProfileContent = () => {
   >(null);
 
   const [profile, setProfile] = useState<any>(user || {});
+
+  // Inline name editing
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(profile.name || "");
 
   // Sync state if user changes externally
   if (user && user.id !== profile.id) {
@@ -291,8 +275,22 @@ const ProfileContent = () => {
               brandName: result.provider.brandName,
             });
           }
-          if (result.preferredMode) {
+          if (result.preferredMode && result.providerStatus !== 'disabled' && result.providerStatus !== 'deleted') {
             setUserMode(result.preferredMode);
+          } else if (result.providerStatus === 'disabled' || result.providerStatus === 'deleted') {
+            setUserMode('customer');
+          }
+          // Fetch cooldown status when provider is disabled
+          if (result.providerStatus === "disabled") {
+            getProviderCooldownStatus()
+              .then((cd) => {
+                if (!cancelled) {
+                  setCooldownRemaining(cd.canReEnable ? 0 : (cd.disableRemainingHours ?? 0));
+                }
+              })
+              .catch(() => {
+                if (!cancelled) setCooldownRemaining(0);
+              });
           }
         }
       })
@@ -304,23 +302,55 @@ const ProfileContent = () => {
 
   const dispatch = useDispatch();
 
-  const handleSave = async (values: any) => {
-    try {
-      await updateUserMutation.mutateAsync({
-        name: values.name,
-        gender: values.gender,
-        city: values.city,
-        area: values.area,
-        pincode: values.pincode,
-      });
-      dispatch(setReduxProfile({ ...user, ...values }));
-      setProfile({ ...user, ...values });
+  const handleSaveName = async () => {
+    const trimmed = editedName.trim();
+    if (!trimmed || trimmed.length < 3) {
       notify({
-        title: "Profile Updated",
-        subtitle: "Your information was successfully updated.",
+        title: "Invalid Name",
+        subtitle: "Name must be at least 3 characters.",
+        variant: "error",
+      });
+      return;
+    }
+    if (trimmed.length > 100) {
+      notify({
+        title: "Invalid Name",
+        subtitle: "Name must be under 100 characters.",
+        variant: "error",
+      });
+      return;
+    }
+    if (!/[a-zA-Z]/.test(trimmed)) {
+      notify({
+        title: "Invalid Name",
+        subtitle: "Name must contain at least one letter.",
+        variant: "error",
+      });
+      return;
+    }
+    const nameCheck = checkContent(trimmed);
+    if (nameCheck.flagged) {
+      notify({
+        title: "Inappropriate Name",
+        subtitle: "Your name contains inappropriate language. Please choose a different name.",
+        variant: "error",
+      });
+      return;
+    }
+    if (trimmed === profile.name) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      await updateUserMutation.mutateAsync({ name: trimmed });
+      dispatch(setReduxProfile({ ...user, name: trimmed }));
+      setProfile({ ...user, name: trimmed });
+      notify({
+        title: "Name Updated",
+        subtitle: "Your name was successfully updated.",
         variant: "success",
       });
-      setActivePage(null);
+      setIsEditingName(false);
     } catch (err: any) {
       notify({
         title: "Update Failed",
@@ -335,22 +365,34 @@ const ProfileContent = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    removeItemSync("user");
+    removeItemSync("token");
     dispatch(clearUser());
+    dispatch(resetChat());
     resetProviderState();
+    // Clear all React Query in-memory + persisted cache to prevent stale data on next login
+    queryClient.clear();
+    removeItem("tijarah-query-cache");
     setLogoutActionSheetOpen(false);
     router.push("/");
+    notify({
+      title: "Logged out",
+      subtitle: "You have been successfully logged out.",
+      variant: "success",
+    });
   };
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
       await deleteMyAccount();
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      removeItemSync("user");
+      removeItemSync("token");
       dispatch(clearUser());
+      dispatch(resetChat());
       resetProviderState();
+      queryClient.clear();
+      removeItem("tijarah-query-cache");
       setDeleteSheetOpen(false);
       router.push("/");
       notify({
@@ -373,10 +415,13 @@ const ProfileContent = () => {
     setIsPausing(true);
     try {
       await pauseMyAccount();
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      removeItemSync("user");
+      removeItemSync("token");
       dispatch(clearUser());
+      dispatch(resetChat());
       resetProviderState();
+      queryClient.clear();
+      removeItem("tijarah-query-cache");
       setPauseSheetOpen(false);
       router.push("/");
       notify({
@@ -405,7 +450,9 @@ const ProfileContent = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `my-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `my-data-export-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -464,38 +511,17 @@ const ProfileContent = () => {
         subtitle: "Your provider profile is now visible again.",
         variant: "success",
       });
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        "Failed to enable provider. Please try again.";
       notify({
-        title: "Error",
-        subtitle: "Failed to enable provider. Please try again.",
+        title: "Cannot Re-enable Yet",
+        subtitle: message,
         variant: "error",
       });
     } finally {
       setIsDisablingProvider(false);
-    }
-  };
-
-  const handleDeleteProvider = async () => {
-    setIsDeletingProvider(true);
-    try {
-      await deleteMyProvider();
-      setProviderStatus("deleted");
-      setUserMode("customer");
-      resetProviderState();
-      setDeleteProviderSheetOpen(false);
-      notify({
-        title: "Provider Deleted",
-        subtitle: "Your provider profile has been removed.",
-        variant: "success",
-      });
-    } catch {
-      notify({
-        title: "Error",
-        subtitle: "Failed to delete provider. Please try again.",
-        variant: "error",
-      });
-    } finally {
-      setIsDeletingProvider(false);
     }
   };
 
@@ -517,7 +543,7 @@ const ProfileContent = () => {
   // so that all SlidePage components at the bottom are shared.
 
   return (
-    <>
+    <div className="pb-20">
       {!user ? (
         <>
           {/* Guest Header */}
@@ -550,14 +576,6 @@ const ProfileContent = () => {
 
           {/* Account Section — all gated */}
           <MenuSection title="Account">
-            <MenuRow
-              icon={personOutline}
-              iconColor="text-blue-500"
-              iconBg="bg-blue-50"
-              label="Edit Profile"
-              sublabel="Name, gender, location"
-              onClick={guestAction}
-            />
             <MenuRow
               icon={locationOutline}
               iconColor="text-green-500"
@@ -598,16 +616,20 @@ const ProfileContent = () => {
                     e.stopPropagation();
                     toggleTheme();
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
+                    isDark ? "bg-amber-500" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`}
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                      isDark ? "translate-x-[22px]" : "translate-x-0.5"
+                    }`}
                   />
                 </div>
               }
               onClick={toggleTheme}
             />
-            <LanguageMenuButton onClick={() => setActivePage("language")} />
+            {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
           {/* Support */}
@@ -624,7 +646,7 @@ const ProfileContent = () => {
               iconColor="text-cyan-500"
               iconBg="bg-cyan-50"
               label="Contact Us"
-              sublabel="support@tijarah.app"
+              sublabel="support@tijarahapp.in"
               onClick={() => setActivePage("contactUs")}
             />
             <MenuRow
@@ -632,7 +654,7 @@ const ProfileContent = () => {
               iconColor="text-orange-500"
               iconBg="bg-orange-50"
               label="Report a Bug"
-              onClick={() => setActivePage("reportBug")}
+              onClick={() => requireAuth()}
             />
           </MenuSection>
 
@@ -657,7 +679,7 @@ const ProfileContent = () => {
               iconColor="text-green-500"
               iconBg="bg-green-50"
               label="Privacy Policy"
-              onClick={() => setActivePage("privacy")}
+              onClick={() => router.push("/privacy-policy")}
             />
           </MenuSection>
 
@@ -685,11 +707,57 @@ const ProfileContent = () => {
                 <span className="text-lg font-bold text-white">{initials}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
-                  {profile.name || "User"}
-                </h2>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      autoFocus
+                      maxLength={50}
+                      className="text-base font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1 outline-none focus:border-amber-400 w-full"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveName();
+                        if (e.key === "Escape") {
+                          setEditedName(profile.name || "");
+                          setIsEditingName(false);
+                        }
+                      }}
+                    />
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleSaveName}
+                      disabled={updateUserMutation.isPending}
+                      className="w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center shrink-0"
+                    >
+                      <IonIcon
+                        icon={saveOutline}
+                        className="text-green-600 text-base"
+                      />
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => {
+                        setEditedName(profile.name || "");
+                        setIsEditingName(false);
+                      }}
+                      className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0"
+                    >
+                      <IonIcon
+                        icon={closeOutline}
+                        className="text-slate-500 text-base"
+                      />
+                    </motion.button>
+                  </div>
+                ) : (
+                  <h2 className="text-base font-bold text-slate-800 dark:text-white truncate">
+                    {profile.name || "User"}
+                  </h2>
+                )}
                 <p className="text-xs text-slate-500 truncate">
-                  {profile.mobileNumber || "No phone"}
+                  {profile.mobileNumber
+                    ? `+91 ${profile.mobileNumber}`
+                    : "No phone"}
                 </p>
                 {profile.city && (
                   <p className="text-[11px] text-slate-400 mt-0.5">
@@ -698,16 +766,21 @@ const ProfileContent = () => {
                   </p>
                 )}
               </div>
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setActivePage("editProfile")}
-                className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"
-              >
-                <IonIcon
-                  icon={createOutline}
-                  className="text-amber-600 text-lg"
-                />
-              </motion.button>
+              {!isEditingName && (
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    setEditedName(profile.name || "");
+                    setIsEditingName(true);
+                  }}
+                  className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"
+                >
+                  <IonIcon
+                    icon={createOutline}
+                    className="text-amber-600 text-lg"
+                  />
+                </motion.button>
+              )}
             </div>
           </motion.div>
 
@@ -715,14 +788,15 @@ const ProfileContent = () => {
           {(providerStatus === "approved" ||
             providerStatus === "pending" ||
             providerStatus === "in_review" ||
-            providerStatus === "suspended") && (
+            providerStatus === "suspended" ||
+            providerStatus === "unverified") && (
             <div className="mx-4 mb-3">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
                 <div>
                   <div className="text-sm font-bold text-slate-800 dark:text-white">
                     Provider Mode
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     {userMode === "provider"
                       ? "Managing your business"
                       : "Switch to manage your business"}
@@ -820,53 +894,6 @@ const ProfileContent = () => {
           )}
 
           {/* Provider Business Card - shown when in provider mode */}
-          {(providerStatus === "approved" ||
-            providerStatus === "pending" ||
-            providerStatus === "in_review") &&
-            userMode === "provider" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mx-4 mb-3"
-              >
-                <div className="bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-4 text-white">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
-                      <IonIcon
-                        icon={businessOutline}
-                        className="text-xl text-white"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm truncate">
-                        {profile.name || "Your Business"}
-                      </p>
-                      <p className="text-white/70 text-[11px]">
-                        Business Profile
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        // Navigate back to home/dashboard tab to manage business
-                      }}
-                      className="flex-1 py-2 rounded-xl bg-white/20 text-white text-xs font-semibold text-center border border-white/20"
-                    >
-                      Manage Business
-                    </motion.button>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={toggleMode}
-                      className="px-4 py-2 rounded-xl bg-white text-teal-600 text-xs font-bold"
-                    >
-                      Switch to Customer
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
 
           {/* Provider Suspended Card */}
           {providerStatus === "suspended" && (
@@ -915,18 +942,21 @@ const ProfileContent = () => {
                       Provider Disabled
                     </div>
                     <div className="text-slate-500 text-xs mt-0.5">
-                      Your provider profile is hidden from all listings.
-                      Re-enable it anytime.
+                      {canReEnable
+                        ? "Your provider profile is hidden from all listings. Re-enable it anytime."
+                        : `Your provider profile is hidden. You can re-enable in ${cooldownRemaining}h.`}
                     </div>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleEnableProvider}
-                      disabled={isDisablingProvider}
+                      disabled={isDisablingProvider || !canReEnable}
                       className="mt-3 px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl disabled:opacity-50"
                     >
                       {isDisablingProvider
                         ? "Enabling..."
-                        : "Re-enable Provider"}
+                        : canReEnable
+                          ? "Re-enable Provider"
+                          : `Cooldown: ${cooldownRemaining}h remaining`}
                     </motion.button>
                   </div>
                 </div>
@@ -959,64 +989,45 @@ const ProfileContent = () => {
             </div>
           )}
 
-          {/* ── Provider Management Section (when provider mode is active) ── */}
-          {(providerStatus === "approved" ||
-            providerStatus === "pending" ||
-            providerStatus === "in_review" ||
-            providerStatus === "disabled" ||
-            providerStatus === "suspended") && (
-            <MenuSection title="Provider Management">
-              {providerStatus === "disabled" ? (
-                <MenuRow
-                  icon={eyeOutline}
-                  iconColor="text-teal-500"
-                  iconBg="bg-teal-50"
-                  label="Re-enable Provider"
-                  sublabel="Make your profile visible again"
-                  onClick={handleEnableProvider}
-                  trailing={
-                    isDisablingProvider ? (
-                      <Preloader className="w-5 h-5" />
-                    ) : (
-                      <IonIcon
-                        icon={chevronForward}
-                        className="text-slate-300 text-sm"
-                      />
-                    )
-                  }
-                />
-              ) : (
-                <MenuRow
-                  icon={eyeOffOutline}
-                  iconColor="text-amber-500"
-                  iconBg="bg-amber-50"
-                  label="Disable Provider"
-                  sublabel="Hide your profile from listings"
-                  onClick={() => setDisableProviderSheetOpen(true)}
-                />
-              )}
-              <MenuRow
-                icon={trashOutline}
-                iconColor="text-red-500"
-                iconBg="bg-red-50"
-                label="Delete Provider"
-                sublabel="Permanently remove your provider profile"
-                danger
-                onClick={() => setDeleteProviderSheetOpen(true)}
-              />
-            </MenuSection>
-          )}
+          {/* ── Provider Management Section (only in provider view) ── */}
+          {userMode === "provider" &&
+            (providerStatus === "approved" ||
+              providerStatus === "disabled") && (
+              <MenuSection title="Provider Management">
+                {providerStatus === "disabled" ? (
+                  <MenuRow
+                    icon={eyeOutline}
+                    iconColor="text-teal-500"
+                    iconBg="bg-teal-50"
+                    label={canReEnable ? "Re-enable Provider" : `Re-enable in ${cooldownRemaining}h`}
+                    sublabel={canReEnable ? "Make your profile visible again" : "Cooldown period active"}
+                    onClick={canReEnable ? handleEnableProvider : undefined}
+                    trailing={
+                      isDisablingProvider ? (
+                        <Preloader className="w-5 h-5" />
+                      ) : (
+                        <IonIcon
+                          icon={chevronForward}
+                          className="text-slate-300 text-sm"
+                        />
+                      )
+                    }
+                  />
+                ) : (
+                  <MenuRow
+                    icon={eyeOffOutline}
+                    iconColor="text-amber-500"
+                    iconBg="bg-amber-50"
+                    label="Disable Provider"
+                    sublabel="Hide your profile from listings"
+                    onClick={() => setDisableProviderSheetOpen(true)}
+                  />
+                )}
+              </MenuSection>
+            )}
 
           {/* ── Account Section ──────────────────────────────────── */}
           <MenuSection title="Account">
-            <MenuRow
-              icon={personOutline}
-              iconColor="text-blue-500"
-              iconBg="bg-blue-50"
-              label="Edit Profile"
-              sublabel="Name, gender, location"
-              onClick={() => setActivePage("editProfile")}
-            />
             <MenuRow
               icon={locationOutline}
               iconColor="text-green-500"
@@ -1025,13 +1036,13 @@ const ProfileContent = () => {
               sublabel="Home, office, and more"
               onClick={() => router.push("/add-location")}
             />
-            <MenuRow
+            {/* <MenuRow
               icon={heartOutline}
               iconColor="text-pink-500"
               iconBg="bg-pink-50"
               label="Saved Providers"
               sublabel="Your favourites"
-            />
+            /> */}
           </MenuSection>
 
           {/* ── Preferences Section ──────────────────────────────── */}
@@ -1056,16 +1067,20 @@ const ProfileContent = () => {
                     e.stopPropagation();
                     toggleTheme();
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${isDark ? "bg-amber-500" : "bg-slate-200"}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
+                    isDark ? "bg-amber-500" : "bg-slate-200"
+                  }`}
                 >
                   <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isDark ? "translate-x-[22px]" : "translate-x-0.5"}`}
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                      isDark ? "translate-x-[22px]" : "translate-x-0.5"
+                    }`}
                   />
                 </div>
               }
               onClick={toggleTheme}
             />
-            <LanguageMenuButton onClick={() => setActivePage("language")} />
+            {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
           {/* ── Support Section ──────────────────────────────────── */}
@@ -1082,7 +1097,7 @@ const ProfileContent = () => {
               iconColor="text-cyan-500"
               iconBg="bg-cyan-50"
               label="Contact Us"
-              sublabel="support@tijarah.app"
+              sublabel="support@tijarahapp.in"
               onClick={() => setActivePage("contactUs")}
             />
             <MenuRow
@@ -1115,7 +1130,7 @@ const ProfileContent = () => {
               iconColor="text-green-500"
               iconBg="bg-green-50"
               label="Privacy Policy"
-              onClick={() => setActivePage("privacy")}
+              onClick={() => router.push("/privacy-policy")}
             />
           </MenuSection>
 
@@ -1138,14 +1153,6 @@ const ProfileContent = () => {
                   />
                 )
               }
-            />
-            <MenuRow
-              icon={folderOpenOutline}
-              iconColor="text-teal-500"
-              iconBg="bg-teal-50"
-              label="Manage Saved Data"
-              sublabel="Locations, favourites, history"
-              onClick={() => router.push("/add-location")}
             />
           </MenuSection>
 
@@ -1222,158 +1229,172 @@ const ProfileContent = () => {
         onClose={() => setActivePage(null)}
       />
 
-      {/* Edit Profile Page */}
-      <SlidePage
-        open={activePage === "editProfile"}
-        onClose={() => setActivePage(null)}
-        title="Edit Profile"
-      >
-        <Formik
-          enableReinitialize={true}
-          initialValues={{
-            name: profile.name || "",
-            gender: profile.gender || "male",
-            city: profile.city || "",
-            area: profile.area || "",
-            pincode: profile.pincode || "",
-          }}
-          validationSchema={validationSchema}
-          onSubmit={handleSave}
-        >
-          {({ isValid, dirty }) => (
-            <Form className="contents">
-              <List strongIos insetIos>
-                <FormikInput
-                  name="name"
-                  label="Name"
-                  type="text"
-                  placeholder="Your name"
-                  media={<IonIcon icon={personOutline} />}
-                />
-                <FormikInput
-                  name="gender"
-                  label="Gender"
-                  type="select"
-                  media={<IonIcon icon={maleOutline} />}
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </FormikInput>
-                <FormikInput
-                  name="city"
-                  label="City"
-                  type="text"
-                  placeholder="City name"
-                  media={<IonIcon icon={businessOutline} />}
-                />
-                <FormikInput
-                  name="area"
-                  label="Area"
-                  type="text"
-                  placeholder="Locality area"
-                  media={<IonIcon icon={locationOutline} />}
-                />
-                <FormikInput
-                  name="pincode"
-                  label="Pincode"
-                  type="text"
-                  placeholder="Area pincode"
-                  media={<IonIcon icon={mapOutline} />}
-                  formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
-                />
-              </List>
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setActivePage(null)}
-                  className="py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-sm active:bg-slate-200 dark:active:bg-slate-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!isValid || !dirty || updateUserMutation.isPending}
-                  className="py-3 rounded-xl bg-amber-500 text-white font-bold text-sm active:bg-amber-600 disabled:opacity-50"
-                >
-                  {updateUserMutation.isPending ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
-      </SlidePage>
-
       {/* About Us Page */}
       <SlidePage
         open={activePage === "about"}
         onClose={() => setActivePage(null)}
         title="About Us"
       >
-        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-3 shadow-sm">
-              <span className="text-2xl font-bold text-white">BC</span>
+        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          {/* Hero */}
+          <div className="text-center pb-2">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/40 dark:shadow-amber-900/30">
+              <span className="text-3xl font-black text-white tracking-tight">T</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white">
               Tijarah
             </h3>
-            <p className="text-xs text-slate-400">Version {APP_VERSION}</p>
+            <p className="text-xs text-slate-400 mt-0.5">BohriConnect</p>
+            <p className="text-[11px] text-slate-400 mt-1">Version {APP_VERSION}</p>
           </div>
-          <p>
-            Tijarah is a community-driven marketplace that connects customers
-            with trusted local service providers. Our mission is to empower
-            small businesses and make quality services accessible to everyone.
-          </p>
-          <p>
-            Founded with the vision of strengthening community bonds, we provide
-            a platform where skilled professionals can showcase their talents
-            and customers can find reliable services — from tailoring and beauty
-            to home repairs and catering.
-          </p>
-          <h4 className="font-bold text-slate-800 dark:text-white pt-2">
-            Our Values
-          </h4>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Trust:</strong> Every provider is verified to ensure
-                quality and safety.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Community:</strong> Built by the community, for the
-                community.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Empowerment:</strong> Supporting women-led businesses
-                and local entrepreneurs.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-0.5">●</span>
-              <span>
-                <strong>Transparency:</strong> Clear pricing and honest reviews.
-              </span>
-            </li>
-          </ul>
-          <h4 className="font-bold text-slate-800 dark:text-white pt-2">
-            Contact
-          </h4>
-          <p>
-            Email: support@bohriconnect.com
-            <br />
-            Website: www.bohriconnect.com
-          </p>
-          <p className="text-xs text-slate-400 pt-4 text-center">
-            © {new Date().getFullYear()} Tijarah. All rights reserved.
-          </p>
+
+          {/* Tagline */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/15 dark:to-orange-900/15 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl px-4 py-3.5 text-center">
+            <p className="text-[13px] font-semibold text-amber-800 dark:text-amber-300 italic leading-relaxed">
+              Making the Dawoodi Bohra community&apos;s entrepreneurial spirit visible, connected, and celebrated.
+            </p>
+          </div>
+
+          {/* Our Story */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Our Story</h4>
+            <p className="text-[13px]">
+              The Dawoodi Bohra community has always been a community of traders, creators, and entrepreneurs. For centuries, commerce has been woven into our identity &mdash; guided by values of honesty, hard work, and mutual support.
+            </p>
+            <p className="text-[13px] mt-2">
+              But finding Bohra businesses meant relying on WhatsApp forwards, word-of-mouth chains, and personal phone directories. There was no single place to search, browse, and connect with Bohra businesses in your city.
+            </p>
+            <p className="text-[13px] mt-2 font-medium text-slate-700 dark:text-slate-200">
+              Tijarah was built to change that.
+            </p>
+          </div>
+
+          {/* What We Do */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">What Tijarah Does</h4>
+            <p className="text-[13px] mb-3">
+              Tijarah is a community directory app &mdash; a connector between community members who need something and the Bohra business owners who provide it.
+            </p>
+            <div className="space-y-2">
+              {[
+                "Browse Bohra-owned businesses across categories: food, rida & fashion, home services, retail, tutoring, events & more",
+                "View detailed business profiles with photos, descriptions, contact details & operating hours",
+                "Connect directly via a single tap — call or WhatsApp instantly",
+                "Read community reviews from fellow Bohra users",
+                "Discover verified businesses with confirmed community membership",
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                  <span className="text-[13px]">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Values */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Our Values</h4>
+            <div className="grid grid-cols-1 gap-2.5">
+              {[
+                { icon: "🤝", title: "Trust Above All", desc: "Every feature is filtered through one question: does this make the community trust us more?" },
+                { icon: "🕌", title: "Community First", desc: "Built specifically for the Bohra community, shaped by its culture, values, and way of doing business." },
+                { icon: "✨", title: "Simplicity", desc: "Simple enough for anyone in the community to use — no training or tutorials needed." },
+                { icon: "🔒", title: "Privacy & Respect", desc: "We collect only what is necessary and protect what we hold with the utmost care." },
+                { icon: "💛", title: "Free for Community", desc: "Basic listings and discovery will always be free. Built for the community, not to extract value from it." },
+              ].map((v, i) => (
+                <div key={i} className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-3.5 py-3">
+                  <span className="text-lg mt-0.5">{v.icon}</span>
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-white">{v.title}</p>
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{v.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* How It Works */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">How It Works</h4>
+            <div className="space-y-2.5">
+              <div className="bg-blue-50 dark:bg-blue-900/15 border border-blue-100 dark:border-blue-800/30 rounded-xl px-3.5 py-3">
+                <p className="text-[12px] font-bold text-blue-700 dark:text-blue-300">For Community Members</p>
+                <p className="text-[12px] text-blue-600/80 dark:text-blue-400/80 mt-0.5">Browse or search for what you need and connect directly with a Bohra-owned business in one tap. No account required to explore.</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/15 border border-green-100 dark:border-green-800/30 rounded-xl px-3.5 py-3">
+                <p className="text-[12px] font-bold text-green-700 dark:text-green-300">For Business Owners</p>
+                <p className="text-[12px] text-green-600/80 dark:text-green-400/80 mt-0.5">Create a free listing in minutes — or let us do it for you. Optionally get a &apos;Verified&apos; badge by confirming your community membership.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Where We Are */}
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-4">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Where We Are</h4>
+            <p className="text-[13px]">
+              Launched in <strong>Pune</strong> in 2026 — home to one of Maharashtra&apos;s most active Bohra communities.
+            </p>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1.5">
+              Next: Mumbai · Surat · Hyderabad · Nagpur · Indore
+            </p>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Get in Touch</h4>
+            <div className="space-y-2.5">
+              <a
+                href="mailto:support@tijarahapp.in"
+                className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-2xl px-4 py-3 active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                  <IonIcon icon={mailOutline} className="text-white text-base" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Email Support</p>
+                  <p className="text-[13px] font-semibold text-blue-600 dark:text-blue-400">support@tijarahapp.in</p>
+                </div>
+              </a>
+
+              <a
+                href="https://wa.me/919834174885"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded-2xl px-4 py-3 active:bg-green-100 dark:active:bg-green-900/30 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.616l4.534-1.468A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.312-.727-5.994-1.96l-.42-.307-2.69.87.894-2.637-.336-.435A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">WhatsApp</p>
+                  <p className="text-[13px] font-semibold text-green-600 dark:text-green-400">+91 98341 74885</p>
+                </div>
+              </a>
+
+              <a
+                href="tel:+919834174885"
+                className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 rounded-2xl px-4 py-3 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+                  <IonIcon icon={callOutline} className="text-white text-base" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Call Us</p>
+                  <p className="text-[13px] font-semibold text-amber-600 dark:text-amber-400">+91 98341 74885</p>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center pt-2 space-y-1">
+            <p className="text-[11px] text-slate-400">
+              Tijarah (BohriConnect) · Pune, Maharashtra, India
+            </p>
+            <p className="text-[11px] text-slate-400">
+              © {new Date().getFullYear()} Tijarah. All rights reserved.
+            </p>
+          </div>
         </div>
       </SlidePage>
 
@@ -1527,197 +1548,7 @@ const ProfileContent = () => {
           </h4>
           <p>
             Legal enquiries:{" "}
-            <span className="text-blue-600 font-medium">legal@tijarah.app</span>
-          </p>
-
-          <p className="text-xs text-slate-400 pt-2 text-center">
-            © 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May
-            2026
-          </p>
-        </div>
-      </SlidePage>
-
-      {/* Privacy Policy Page */}
-      <SlidePage
-        open={activePage === "privacy"}
-        onClose={() => setActivePage(null)}
-        title="Privacy Policy"
-      >
-        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-              Effective Date: 1 May 2026 · Last Updated: April 2026
-            </p>
-          </div>
-
-          <p>
-            Tijarah (BohriConnect) connects users with Bohra-owned businesses
-            across food, fashion, retail, and local services. This Privacy
-            Policy explains what personal information we collect, how we use it,
-            and your rights over it.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            1. Information We Collect
-          </h4>
-          <p className="font-medium text-slate-700">
-            A. Information You Provide
-          </p>
-          <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li>
-              <strong>Name</strong> — optional, to personalise your experience
-            </li>
-            <li>
-              <strong>Phone number</strong> — for account login and in-app
-              contact
-            </li>
-            <li>
-              <strong>Email</strong> — optional, for account recovery
-            </li>
-            <li>
-              <strong>Profile photo</strong> — optional, displayed on reviews
-            </li>
-            <li>
-              <strong>Business details</strong> — if you register a listing
-            </li>
-            <li>
-              <strong>Reviews & ratings</strong> — content you write
-            </li>
-            <li>
-              <strong>Reports</strong> — details you submit when reporting
-              content
-            </li>
-          </ul>
-          <p className="font-medium text-slate-700 mt-2">
-            B. Identity Documents (Optional — Business Owners Only)
-          </p>
-          <p className="text-xs">
-            To receive the 'Verified' badge, business owners may voluntarily
-            submit an Aadhaar Card, PAN Card, or Ejmaat Card. Submission is
-            entirely optional. These documents are stored in an encrypted,
-            access-controlled Supabase Storage bucket separate from all other
-            app data, accessible only to authorised Tijarah administrators, and
-            are never shared with other users or third parties.
-          </p>
-          <p className="font-medium text-slate-700 mt-2">
-            C. Automatically Collected
-          </p>
-          <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li>
-              <strong>Location</strong> — only if you grant permission
-            </li>
-            <li>
-              <strong>Device info</strong> — type, OS version, app version
-            </li>
-            <li>
-              <strong>Usage data</strong> — features used, search terms,
-              interactions
-            </li>
-            <li>
-              <strong>Crash reports</strong> — anonymous technical data
-            </li>
-          </ul>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            2. How We Use Your Information
-          </h4>
-          <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li>Create and manage your account</li>
-            <li>Display and operate Bohra business listings</li>
-            <li>Enable search, filtering, and nearby discovery</li>
-            <li>Power in-app chat and call features</li>
-            <li>Display community reviews and business posts</li>
-            <li>Review identity documents for the Verified badge</li>
-            <li>Send app notifications (with your permission)</li>
-            <li>Detect and respond to reports of inappropriate content</li>
-            <li>Fix technical bugs and improve performance</li>
-          </ul>
-          <p className="text-xs italic">
-            We do not use your information for advertising targeting or sale to
-            any third party.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            3. Data Storage — Supabase
-          </h4>
-          <p className="text-xs">
-            All data in transit is encrypted via HTTPS/TLS. Data at rest —
-            including identity documents — is encrypted by Supabase. Identity
-            documents are stored in a restricted, separately scoped Supabase
-            Storage bucket. Supabase is hosted on AWS infrastructure and is
-            GDPR-compliant.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            4. How We Share Your Information
-          </h4>
-          <p className="text-xs">
-            We do not sell, rent, or trade your personal data. Information is
-            shared only in these limited circumstances: when you initiate
-            contact with a business through the app, with trusted third-party
-            service providers (Supabase, Apple, Google) under confidentiality
-            obligations, and where required by law.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            5. Your Rights
-          </h4>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {[
-              ["Access", "Request a summary of your data"],
-              ["Correction", "Update your info in the app"],
-              ["Deletion", "Delete account + data within 30 days"],
-              ["Document Withdrawal", "Remove identity docs anytime"],
-              ["Location Withdrawal", "Revoke via device Settings"],
-              ["Data Portability", "Request a copy of your data"],
-            ].map(([right, desc]) => (
-              <div
-                key={right}
-                className="bg-slate-50 dark:bg-slate-800 rounded-xl p-2.5"
-              >
-                <p className="font-semibold text-slate-800 dark:text-white">
-                  {right}
-                </p>
-                <p className="text-slate-500 mt-0.5">{desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            6. Children's Privacy
-          </h4>
-          <p className="text-xs">
-            Tijarah is not intended for users under 13. We do not knowingly
-            collect data from children. If you believe a child under 13 has
-            submitted information, contact us immediately.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            7. Data Retention
-          </h4>
-          <p className="text-xs">
-            Account data is retained while your account is active. Identity
-            documents are deleted within 30 days of a written request. You may
-            request full account and data deletion at any time.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            8. Changes to This Policy
-          </h4>
-          <p className="text-xs">
-            We will notify you of material changes via in-app notification and
-            update the 'Last Updated' date. Continued use after changes
-            constitutes acceptance.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            9. Contact
-          </h4>
-          <p>
-            Privacy enquiries:{" "}
-            <span className="text-blue-600 font-medium">
-              privacy@tijarah.app
-            </span>
+            <span className="text-blue-600 font-medium">support@tijarahapp.in</span>
           </p>
 
           <p className="text-xs text-slate-400 pt-2 text-center">
@@ -1735,9 +1566,9 @@ const ProfileContent = () => {
       >
         <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <p className="text-xs text-slate-400 pb-1">
-            Can't find your answer? Contact us at{" "}
+            Can&apos;t find your answer? Contact us at{" "}
             <span className="text-blue-500 font-medium">
-              support@tijarah.app
+              support@tijarahapp.in
             </span>
           </p>
 
@@ -1802,7 +1633,7 @@ const ProfileContent = () => {
           />
           <FAQItem
             q="How do I get the 'Verified' badge?"
-            a="Contact us at support@tijarah.app and we'll guide you through submitting a document (Aadhaar, PAN, or Ejmaat Card). Verification is optional — your listing works fully without it."
+            a="Contact us at support@tijarahapp.in and we'll guide you through submitting a document (Aadhaar, PAN, or Ejmaat Card). Verification is optional — your listing works fully without it."
           />
           <FAQItem
             q="My business was already listed. Why?"
@@ -1822,7 +1653,7 @@ const ProfileContent = () => {
           />
           <FAQItem
             q="Can I delete my account and all my data?"
-            a="Yes. Contact us at privacy@tijarah.app to request full account and data deletion. We process requests within 30 days."
+            a="Yes. Contact us at support@tijarahapp.in to request full account and data deletion. We process requests within 30 days."
           />
           <FAQItem
             q="Does Tijarah sell my data?"
@@ -1848,10 +1679,10 @@ const ProfileContent = () => {
           <div className="pt-4 text-center border-t border-slate-100 dark:border-slate-700 mt-2">
             <p className="text-xs text-slate-400">Still need help?</p>
             <p className="text-sm font-semibold text-blue-500 mt-1">
-              support@tijarah.app
+              support@tijarahapp.in
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              WhatsApp: +91 XXXXXXXXXX
+              WhatsApp: +91 98341 74885
             </p>
           </div>
         </div>
@@ -1923,7 +1754,7 @@ const ProfileContent = () => {
         iconColor="text-amber-500"
         iconBg="bg-amber-50"
         title="Disable Provider?"
-        description="Your provider profile will be hidden from all listings and search results. Customers won't be able to find you. You can re-enable it anytime from your profile."
+        description="Your provider profile will be hidden from all listings and search results. Once disabled, you must wait a minimum of 2 days before you can re-enable it. This is to prevent profile spamming and ensure platform quality."
         confirmLabel="Yes, Disable Provider"
         cancelLabel="Cancel"
         onConfirm={handleDisableProvider}
@@ -1931,25 +1762,9 @@ const ProfileContent = () => {
         isLoading={isDisablingProvider}
         loadingLabel="Disabling..."
       />
-
-      <AppDialog
-        open={deleteProviderSheetOpen}
-        onClose={() => setDeleteProviderSheetOpen(false)}
-        icon={trashOutline}
-        iconColor="text-red-500"
-        iconBg="bg-red-50"
-        title="Delete Provider Profile?"
-        description="This will permanently remove your provider profile, including all your products, photos, and reviews. You will switch back to customer mode. This action cannot be undone."
-        confirmLabel="Yes, Delete Provider"
-        cancelLabel="Cancel"
-        onConfirm={handleDeleteProvider}
-        confirmColor="red"
-        isLoading={isDeletingProvider}
-        loadingLabel="Deleting..."
-      />
-    </>
+    </div>
   );
-};
+});
 
 // ─── Contact Us Slide ───────────────────────────────────────────────
 const ContactUsSlide = ({
@@ -1977,7 +1792,7 @@ const ContactUsSlide = ({
       {/* Contact Cards */}
       <div className="space-y-3">
         <a
-          href="mailto:support@tijarah.app"
+          href="mailto:support@tijarahapp.in"
           className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-2xl px-4 py-3.5 active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
@@ -1988,14 +1803,52 @@ const ContactUsSlide = ({
               General Support
             </p>
             <p className="text-sm font-semibold text-blue-600">
-              support@tijarah.app
+              support@tijarahapp.in
             </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
 
         <a
-          href="mailto:privacy@tijarah.app"
+          href="https://wa.me/919834174885"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/40 rounded-2xl px-4 py-3.5 active:bg-emerald-100 dark:active:bg-emerald-900/30 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.616l4.534-1.468A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.312-.727-5.994-1.96l-.42-.307-2.69.87.894-2.637-.336-.435A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              WhatsApp Support
+            </p>
+            <p className="text-sm font-semibold text-emerald-600">
+              +91 98341 74885
+            </p>
+          </div>
+          <IonIcon icon={chevronForward} className="text-slate-300" />
+        </a>
+
+        <a
+          href="tel:+919834174885"
+          className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 rounded-2xl px-4 py-3.5 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+            <IonIcon icon={callOutline} className="text-white text-lg" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Call Us
+            </p>
+            <p className="text-sm font-semibold text-amber-600">
+              +91 98341 74885
+            </p>
+          </div>
+          <IonIcon icon={chevronForward} className="text-slate-300" />
+        </a>
+
+        <a
+          href="mailto:support@tijarahapp.in"
           className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded-2xl px-4 py-3.5 active:bg-green-100 dark:active:bg-green-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
@@ -2009,14 +1862,14 @@ const ContactUsSlide = ({
               Privacy & Data Requests
             </p>
             <p className="text-sm font-semibold text-green-600">
-              privacy@tijarah.app
+              support@tijarahapp.in
             </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
         </a>
 
         <a
-          href="mailto:legal@tijarah.app"
+          href="mailto:support@tijarahapp.in"
           className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/40 rounded-2xl px-4 py-3.5 active:bg-purple-100 dark:active:bg-purple-900/30 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center shrink-0">
@@ -2030,7 +1883,7 @@ const ContactUsSlide = ({
               Legal & Terms
             </p>
             <p className="text-sm font-semibold text-purple-600">
-              legal@tijarah.app
+              support@tijarahapp.in
             </p>
           </div>
           <IonIcon icon={chevronForward} className="text-slate-300" />
@@ -2070,6 +1923,15 @@ const ReportBugSlide = ({
 
   const handleSubmit = async () => {
     if (description.trim().length < 10) return;
+    const descCheck = checkContent(description.trim());
+    if (descCheck.flagged) {
+      notify({
+        title: "Inappropriate Content",
+        subtitle: "Your report contains inappropriate language. Please revise.",
+        variant: "error",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       await submitBugReport({
@@ -2245,5 +2107,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
     </div>
   );
 };
+
+ProfileContent.displayName = "ProfileContent";
 
 export default ProfileContent;

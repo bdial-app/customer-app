@@ -27,15 +27,20 @@ import InfiniteScroll from "../components/infinite-scroll";
 import { useReverseGeocode } from "@/hooks/useGeocode";
 import { useNearbyProviders } from "@/hooks/useProvider";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { getItemSync, setItemSync } from "@/utils/storage";
+import { setGuestCoords } from "@/store/slices/locationSlice";
 
-type SortOption = "relevance" | "rating" | "distance" | "reviews";
+type SortOption = "relevance" | "rating" | "distance" | "reviews" | "newest";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "relevance", label: "Relevance" },
   { value: "rating", label: "Highest Rated" },
   { value: "distance", label: "Nearest First" },
   { value: "reviews", label: "Most Reviewed" },
+  { value: "newest", label: "Recently Added" },
 ];
 
 const EMPTY_FILTERS: AllServicesFilters = {
@@ -48,6 +53,8 @@ const EMPTY_FILTERS: AllServicesFilters = {
 
 const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const router = useRouter();
+  const { goBack } = useBackNavigation();
+  const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,28 +67,36 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   // Read URL params for pre-selected filters from home page "See All" buttons
   const [sortBy, setSortBy] = useState<SortOption>(() => {
     const urlSort = searchParams.get("sort");
-    if (urlSort && ["relevance", "rating", "distance", "reviews"].includes(urlSort)) {
+    if (urlSort && ["relevance", "rating", "distance", "reviews", "newest"].includes(urlSort)) {
       return urlSort as SortOption;
     }
     return "relevance";
   });
 
+  // sinceDays param for "Recently Added" filtering (stateful so user can clear it)
+  const [sinceDays, setSinceDays] = useState<number | undefined>(() => {
+    const val = searchParams.get("sinceDays");
+    return val ? parseInt(val, 10) : undefined;
+  });
+
   const [filters, setFilters] = useState<AllServicesFilters>(() => {
+    const catIds = searchParams.get("categoryIds");
     const minRating = searchParams.get("minRating");
     const maxDistance = searchParams.get("maxDistance");
     const verified = searchParams.get("verified");
+    const womenLed = searchParams.get("womenLed");
     return {
-      categoryIds: new Set(),
+      categoryIds: catIds ? new Set(catIds.split(",").filter(Boolean)) : new Set(),
       minRating: minRating ? parseFloat(minRating) : null,
       maxDistance: maxDistance ? parseFloat(maxDistance) : null,
       verifiedOnly: verified === "true",
-      womenLedOnly: false,
+      womenLedOnly: womenLed === "true",
     };
   });
 
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("allServicesView") as "grid" | "list") || "grid";
+      return (getItemSync("allServicesView") as "grid" | "list") || "grid";
     }
     return "grid";
   });
@@ -106,17 +121,42 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   // Persist view mode
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("allServicesView", viewMode);
+      setItemSync("allServicesView", viewMode);
     }
   }, [viewMode]);
 
   const user = useAppSelector((state) => state.auth.user as any);
+  const guestCoords = useAppSelector((state) => state.location.guestCoords);
+  const selectedCity = useAppSelector((state) => state.location.selectedCity);
+
+  // Effective location: user profile coords > guest coords from location picker
+  const effectiveLat = user?.latitude ?? guestCoords?.lat;
+  const effectiveLng = user?.longitude ?? guestCoords?.lng;
+
+  // Auto-request geolocation when page opens without coordinates (fire-and-forget)
+  useEffect(() => {
+    if (effectiveLat || effectiveLng) return; // already have coordinates
+    let cancelled = false;
+    import("@/utils/geolocation").then(({ getCurrentPosition }) => {
+      getCurrentPosition({ timeout: 10000 }).then((pos) => {
+        if (!cancelled) {
+          dispatch(setGuestCoords({ lat: pos.latitude, lng: pos.longitude }));
+        }
+      }).catch(() => {
+        // Silently continue — page loads city-only or all providers
+      });
+    });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: addressData } = useReverseGeocode(
-    user?.latitude && user?.longitude
-      ? { lat: user.latitude, lng: user.longitude }
+    !selectedCity && effectiveLat && effectiveLng
+      ? { lat: effectiveLat, lng: effectiveLng }
       : null,
   );
+
+  // Effective city: selected city > reverse-geocoded city > user profile city
+  const effectiveCity = selectedCity ?? addressData?.city ?? user?.city;
 
   const {
     data,
@@ -126,10 +166,10 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     isLoading: isProvidersLoading,
     isFetching,
   } = useNearbyProviders({
-    lat: user?.latitude || 18.5204,
-    lng: user?.longitude || 73.8567,
+    lat: effectiveLat,
+    lng: effectiveLng,
     search: debouncedSearch,
-    city: addressData?.city,
+    city: effectiveCity,
     categoryIds: Array.from(filters.categoryIds),
     limit: 12,
     radius: filters.maxDistance || 15,
@@ -137,12 +177,13 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     minRating: filters.minRating ?? undefined,
     verifiedOnly: filters.verifiedOnly || undefined,
     womenLedOnly: filters.womenLedOnly || undefined,
+    sinceDays,
   });
 
   const providers = useMemo(() => {
     if (!data) return [];
     const mapped = data.pages.flatMap((page) =>
-      page.data.map((p: any) => ({
+      (Array.isArray(page?.data) ? page.data : []).map((p: any) => ({
         id: p.id,
         name: p.brandName,
         image: p.profilePhotoUrl || p.bannerImageUrl || "",
@@ -165,7 +206,8 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     (filters.minRating ? 1 : 0) +
     (filters.maxDistance ? 1 : 0) +
     (filters.verifiedOnly ? 1 : 0) +
-    (filters.womenLedOnly ? 1 : 0);
+    (filters.womenLedOnly ? 1 : 0) +
+    (sinceDays ? 1 : 0);
   const totalCount = data?.pages?.[0]?.meta?.total ?? providers.length;
   const isSearching = isFetching && !isFetchingNextPage && !isProvidersLoading;
 
@@ -202,6 +244,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
 
   const handleClearAllFilters = useCallback(() => {
     setFilters({ ...EMPTY_FILTERS, categoryIds: new Set() });
+    setSinceDays(undefined);
   }, []);
 
   const handleApplyFilters = useCallback((f: AllServicesFilters) => {
@@ -219,13 +262,13 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
       {/* ── Header ── */}
       <div
         className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800"
-        style={{ paddingTop: isSheet ? "0px" : "env(safe-area-inset-top)" }}
+        style={{ paddingTop: isSheet ? "0px" : "var(--sat,0px)" }}
       >
         {/* Title row */}
         {!isSheet && (
           <div className="flex items-center gap-3 px-4 pt-3 pb-1">
             <button
-              onClick={() => router.back()}
+              onClick={() => goBack("/")}
               className="w-9 h-9 -ml-1 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full active:scale-90 transition-transform"
               aria-label="Back"
             >
@@ -233,7 +276,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
             </button>
             <div className="flex-1">
               <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-                {initialSearch || "All Services"}
+                {initialSearch || (sinceDays ? "New Arrivals" : "All Services")}
               </h1>
               {!isProvidersLoading && (
                 <p className="text-[11px] text-gray-400 dark:text-slate-500 -mt-0.5">
@@ -259,7 +302,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
               placeholder="Search services, providers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-10 pr-10 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-[14px] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-amber-400/30 focus:border-amber-300 dark:focus:border-amber-500 transition-all"
+              className="w-full h-11 pl-10 pr-10 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-amber-400/30 focus:border-amber-300 dark:focus:border-amber-500 transition-all"
             />
             {searchQuery.length > 0 && (
               <button
@@ -296,6 +339,22 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
         <div className="px-4 pb-2">
           <QuickFilterPills filters={quickFilters} onToggle={handleQuickToggle} />
         </div>
+
+        {/* New Arrivals active filter banner */}
+        {sinceDays && (
+          <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex-1">
+              🆕 Showing new arrivals (last {sinceDays} days)
+            </span>
+            <button
+              onClick={() => setSinceDays(undefined)}
+              className="text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-200 transition-colors"
+              aria-label="Remove new arrivals filter"
+            >
+              <IonIcon icon={closeCircle} className="w-4.5 h-4.5" />
+            </button>
+          </div>
+        )}
 
         {/* Filter chips + sort + view toggle */}
         {(activeFilterCount > 0 || providers.length > 0) && (

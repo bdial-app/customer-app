@@ -2,17 +2,26 @@ import { ROUTE_PATH } from "./contants";
 
 export interface DeepLinkData {
   route?: string;
-  params?: Record<string, string>;
+  params?: Record<string, string> | string;
 }
 
 /**
  * Parse deep link data from a notification payload and return the target URL.
+ * Handles params as either an object or a JSON string (FCM data payloads are always strings).
  */
 export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
   if (!data?.route) return ROUTE_PATH.HOME;
 
   const route = data.route;
-  const params = data.params || {};
+  let params: Record<string, string> = {};
+
+  if (data.params) {
+    if (typeof data.params === "string") {
+      try { params = JSON.parse(data.params); } catch { params = {}; }
+    } else {
+      params = data.params;
+    }
+  }
 
   switch (route) {
     case "/provider-details":
@@ -42,6 +51,18 @@ export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
 
     case "/provider-onboarding/verify":
       return "/provider-onboarding/verify";
+
+    case "/provider/subscription":
+      return "/provider/subscription";
+
+    case "/provider/deals":
+      return "/provider/deals";
+
+    case "/provider/sponsorships":
+      return "/provider/sponsorships";
+
+    case "/provider/leads":
+      return "/provider/leads";
 
     case "/":
       if (params.tab) {

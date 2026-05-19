@@ -24,6 +24,7 @@ import {
   chevronDownOutline,
 } from "ionicons/icons";
 import { CITY_NAMES } from "@/app/data/locations";
+import FeatureGate from "@/app/components/feature-gate";
 
 // ─── Validation ─────────────────────────────────────────────────
 const validationSchemas = {
@@ -39,14 +40,16 @@ const validationSchemas = {
   }),
   details: Yup.object({
     name: Yup.string()
+      .trim()
       .min(3, "Must be at least 3 characters")
       .max(100, "Must be under 100 characters")
+      .matches(/^[a-zA-Z\s.'-]+$/, "Name should only contain letters")
       .required("Full name is required"),
     gender: Yup.string()
       .oneOf(["male", "female", "other"])
       .required("Gender is required"),
-    city: Yup.string().required("City is required"),
-    area: Yup.string(),
+    city: Yup.string().max(100, "Must be under 100 characters").required("City is required"),
+    area: Yup.string().max(100, "Must be under 100 characters"),
     pincode: Yup.string()
       .matches(/^\d{6}$/, "Must be 6 digits")
       .required("Pincode is required"),
@@ -719,8 +722,10 @@ function CreateAccountContent() {
 
 export default function CreateAccountPage() {
   return (
-    <Suspense>
-      <CreateAccountContent />
-    </Suspense>
+    <FeatureGate flag="registration_enabled">
+      <Suspense>
+        <CreateAccountContent />
+      </Suspense>
+    </FeatureGate>
   );
 }

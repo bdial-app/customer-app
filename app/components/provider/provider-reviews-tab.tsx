@@ -9,9 +9,12 @@ import {
   sendOutline,
   personCircleOutline,
 } from "ionicons/icons";
-import { Sheet, Page, Navbar, Button, Block, List, ListInput } from "konsta/react";
+import { List, ListInput } from "konsta/react";
+import { BottomSheet } from "../bottom-sheet";
 import { ProviderDetailsReview } from "@/services/provider.service";
 import { useReplyToReview } from "@/hooks/useMyProvider";
+import { checkContent } from "@/utils/content-sanitizer";
+import { useNotification } from "@/app/context/NotificationContext";
 
 interface ProviderReviewsTabProps {
   reviews: ProviderDetailsReview[];
@@ -22,6 +25,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
   const [selectedReview, setSelectedReview] = useState<ProviderDetailsReview | null>(null);
   const [replyText, setReplyText] = useState("");
   const replyMutation = useReplyToReview();
+  const { notify } = useNotification();
 
   const handleOpenReply = (review: ProviderDetailsReview) => {
     setSelectedReview(review);
@@ -31,6 +35,11 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
 
   const handleSubmitReply = () => {
     if (selectedReview && replyText.trim()) {
+      const contentCheck = checkContent(replyText.trim());
+      if (contentCheck.flagged) {
+        notify({ title: "Inappropriate language", subtitle: "Please remove inappropriate language from your reply.", variant: "error" });
+        return;
+      }
       replyMutation.mutate(
         { reviewId: selectedReview.id, replyText: replyText.trim() },
         { onSuccess: () => setReplySheet(false) },
@@ -53,10 +62,10 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
     <div className="animate-in fade-in duration-300">
       {/* Rating Summary */}
       {totalReviews > 0 && (
-        <div className="mx-4 mt-4 bg-white rounded-2xl border border-slate-100 p-4">
+        <div className="mx-4 mt-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-3xl font-bold text-slate-800">{avgRating}</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{avgRating}</p>
               <div className="flex items-center gap-0.5 mt-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <IonIcon
@@ -72,7 +81,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               {ratingCounts.map((r) => (
                 <div key={r.stars} className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-500 w-3">{r.stars}</span>
-                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: totalReviews > 0 ? `${(r.count / totalReviews) * 100}%` : "0%" }}
@@ -90,7 +99,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
 
       {/* Reviews List */}
       <div className="px-4 pt-4 pb-2">
-        <h3 className="text-sm font-bold text-slate-800">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
           Customer Reviews ({totalReviews})
         </h3>
       </div>
@@ -103,16 +112,16 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+              className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm dark:shadow-none"
             >
               {/* Reviewer info */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                     <IonIcon icon={personCircleOutline} className="text-xl text-slate-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
                       {review.reviewer?.name || "Customer"}
                     </p>
                     <p className="text-[10px] text-slate-400">
@@ -137,17 +146,17 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
 
               {/* Review text */}
               {review.reviewText && (
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
                   {review.reviewText}
                 </p>
               )}
 
               {/* Reply action */}
-              <div className="flex justify-end border-t border-slate-50 pt-2">
+              <div className="flex justify-end border-t border-slate-50 dark:border-slate-700 pt-2">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleOpenReply(review)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 active:bg-teal-100"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100 dark:active:bg-teal-900/50"
                 >
                   <IonIcon icon={chatbubbleOutline} className="text-teal-600 text-sm" />
                   <span className="text-xs font-semibold text-teal-600">Reply</span>
@@ -159,13 +168,13 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
       ) : (
         /* Empty State */
         <div className="px-4 py-12 text-center">
-          <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <IonIcon icon={star} className="text-4xl text-amber-300" />
           </div>
-          <h4 className="text-base font-bold text-slate-800 mb-1">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
             No reviews yet
           </h4>
-          <p className="text-sm text-slate-500 max-w-[250px] mx-auto">
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px] mx-auto">
             Reviews from customers will appear here once you start getting bookings
           </p>
         </div>
@@ -174,22 +183,19 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
       <div className="h-20" />
 
       {/* Reply Sheet */}
-      <Sheet
+      <BottomSheet
         opened={replySheet}
-        onBackdropClick={() => setReplySheet(false)}
-        className="pb-safe rounded-t-3xl min-h-[400px]"
+        onClose={() => setReplySheet(false)}
+        title="Reply to Review"
+        headerLeft={
+          <button onClick={() => setReplySheet(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+            <IonIcon icon={closeOutline} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+          </button>
+        }
       >
-        <Page className="flex flex-col">
-          <Navbar
-            title="Reply to Review"
-            left={
-              <Button clear onClick={() => setReplySheet(false)}>
-                <IonIcon icon={closeOutline} className="w-5 h-5" />
-              </Button>
-            }
-          />
+        <div className="flex flex-col flex-1 overflow-y-auto">
           {selectedReview && (
-            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-1 mb-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <IonIcon
@@ -199,7 +205,7 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
                   />
                 ))}
               </div>
-              <p className="text-sm text-slate-600 line-clamp-2">
+              <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
                 {selectedReview.reviewText || "No comment"}
               </p>
             </div>
@@ -210,11 +216,11 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               type="textarea"
               placeholder="Thank the customer for their feedback..."
               value={replyText}
-              onChange={(e: any) => setReplyText(e.target.value)}
+              onChange={(e: any) => setReplyText(e.target.value.slice(0, 2000))}
               inputClassName="!h-32 resize-none"
             />
           </List>
-          <Block className="mt-auto px-4">
+          <div className="px-4 pb-4 mt-auto">
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSubmitReply}
@@ -224,9 +230,9 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
               <IonIcon icon={sendOutline} className="text-lg" />
               Send Reply
             </motion.button>
-          </Block>
-        </Page>
-      </Sheet>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 };

@@ -19,6 +19,7 @@ import {
   volumeMuteOutline,
 } from "ionicons/icons";
 import { checkContent } from "@/utils/content-sanitizer";
+import { isNetworkError } from "@/utils/axios";
 import {
   useMessages,
   useSendMessage,
@@ -29,12 +30,14 @@ import {
   useUploadMedia,
   usePresence,
   useArchiveConversation,
+  useBlockConversation,
 } from "@/hooks/useChat";
 import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 import ReportSheet from "./report-sheet";
+import type { ReportEntityType } from "@/services/report.service";
 
 interface MessagesPageProps {
   onBack: () => void;
@@ -95,6 +98,7 @@ export default function MessagesPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initiallyScrolled = useRef(false);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+  const lastMarkedMessageRef = useRef<string | null>(null);
 
   const { user } = useAppSelector((state) => state.auth);
   const typingUsers = useAppSelector((state) => state.chat.typingUsers);
@@ -103,6 +107,8 @@ export default function MessagesPage({
   const [showMenu, setShowMenu] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -117,6 +123,7 @@ export default function MessagesPage({
   const markReadMutation = useMarkAsRead(conversationId || null);
   const uploadMutation = useUploadMedia(conversationId || null);
   const archiveMutation = useArchiveConversation();
+  const blockMutation = useBlockConversation();
   const { startTyping, stopTyping } = useTypingIndicator(conversationId || null);
 
   // Realtime subscription
@@ -146,6 +153,25 @@ export default function MessagesPage({
     return messagesData.pages.flatMap((page) => page.messages);
   }, [messagesData]);
 
+  // Compute report entity info — report the provider if other is a provider,
+  // report the customer if reporter is a provider,
+  // otherwise report the most recent message from the other user
+  const reportEntity = useMemo((): { type: ReportEntityType; id: string } | null => {
+    if (otherProviderId) {
+      return { type: "provider", id: otherProviderId };
+    }
+    // If the current user is a provider, allow reporting the other user as a customer
+    if (convDetail?.myRole === "provider" && otherUserId) {
+      return { type: "customer", id: otherUserId };
+    }
+    // Find the last message from the other user
+    const otherMessages = allMessages.filter((m) => m.senderId !== user?.id);
+    if (otherMessages.length > 0) {
+      return { type: "message", id: otherMessages[otherMessages.length - 1].id };
+    }
+    return null;
+  }, [otherProviderId, allMessages, user?.id, convDetail?.myRole, otherUserId]);
+
   // Display name from conversation detail or fallback
   const displayName = convDetail?.otherParticipant?.name || chatName;
   const avatarUrl = convDetail?.otherParticipant?.avatarUrl;
@@ -165,11 +191,12 @@ export default function MessagesPage({
   const isOtherTyping = typingEntries.length > 0;
   const typingName = isOtherTyping ? typingEntries[0][1].userName : "";
 
-  // Mark as read on open and when new messages arrive
+  // Mark as read on open and when new messages arrive (debounced — skip if already marked)
   useEffect(() => {
     if (conversationId && allMessages.length > 0) {
       const lastMsg = allMessages[allMessages.length - 1];
-      if (lastMsg.senderId !== user?.id) {
+      if (lastMsg.senderId !== user?.id && lastMsg.id !== lastMarkedMessageRef.current) {
+        lastMarkedMessageRef.current = lastMsg.id;
         markReadMutation.mutate(lastMsg.id);
       }
     }
@@ -185,12 +212,15 @@ export default function MessagesPage({
     }
   }, []);
 
+  // Track last message id so scroll fires even when page count stays the same
+  const lastMessageId = allMessages.length > 0 ? allMessages[allMessages.length - 1].id : null;
+
   useEffect(() => {
     if (allMessages.length > 0) {
       scrollToBottom();
       initiallyScrolled.current = true;
     }
-  }, [allMessages.length, scrollToBottom]);
+  }, [allMessages.length, lastMessageId, scrollToBottom]);
 
   // Infinite scroll — load older messages on scroll to top
   useEffect(() => {
@@ -241,8 +271,11 @@ export default function MessagesPage({
           messageType: "image",
           metadata: { url, storageKey },
         });
-      } catch {
-        // Upload failed — could show toast
+      } catch (err) {
+        if (isNetworkError(err)) {
+          setSendError("You're offline. Try again when connected.");
+          return; // keep text and attachment
+        }
       }
       setAttachedFile(null);
       setAttachedPreview(null);
@@ -251,6 +284,11 @@ export default function MessagesPage({
         { content: text, messageType: "text" },
         {
           onError: (err: any) => {
+            if (isNetworkError(err)) {
+              setSendError("You're offline. Try again when connected.");
+              setMessageText(text); // restore text
+              return;
+            }
             const msg = err?.response?.data?.message || err?.message || "Failed to send";
             setSendError(Array.isArray(msg) ? msg.join(", ") : msg);
           },
@@ -332,31 +370,32 @@ export default function MessagesPage({
   });
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F5F5F0]">
+    <div className="flex flex-col h-[100dvh] bg-[#F5F5F0] dark:bg-slate-900">
       {/* Header */}
       <div
-        className="shrink-0 bg-white border-b border-slate-100 z-30"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 8px)" }}
+        className="shrink-0 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-30"
+        style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="flex items-center gap-2 px-3 py-2.5">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={onBack}
-            className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 transition-colors"
+            aria-label="Go back"
+            className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
           >
-            <IonIcon icon={arrowBack} className="text-xl text-slate-700" />
+            <IonIcon icon={arrowBack} className="text-xl text-slate-700 dark:text-slate-300" />
           </motion.button>
 
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover shrink-0" />
+              <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" decoding="async" />
             ) : (
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0">
                 <span className="text-xs font-bold text-white">{initials}</span>
               </div>
             )}
             <div className="min-w-0">
-              <h3 className="text-[14px] font-bold text-slate-800 truncate leading-tight">
+              <h3 className="text-[14px] font-bold text-slate-800 dark:text-white truncate leading-tight">
                 {displayName}
               </h3>
               <p className="text-[11px] font-medium">
@@ -365,7 +404,7 @@ export default function MessagesPage({
                 ) : presenceData?.isOnline ? (
                   <span className="text-emerald-500">Online</span>
                 ) : (
-                  <span className="text-slate-400">{formatLastSeen(presenceData?.lastSeenAt ?? null)}</span>
+                  <span className="text-slate-400 dark:text-slate-500">{formatLastSeen(presenceData?.lastSeenAt ?? null)}</span>
                 )}
               </p>
             </div>
@@ -386,9 +425,10 @@ export default function MessagesPage({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowMenu(!showMenu)}
-                className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100"
+                aria-label="More options"
+                className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700"
               >
-                <IonIcon icon={ellipsisVertical} className="text-lg text-slate-600" />
+                <IonIcon icon={ellipsisVertical} className="text-lg text-slate-600 dark:text-slate-400" />
               </motion.button>
               {/* Dropdown menu */}
               <AnimatePresence>
@@ -400,21 +440,22 @@ export default function MessagesPage({
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9, y: -4 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 overflow-hidden"
+                      className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1.5 z-50 overflow-hidden"
                     >
                       {[
                         { icon: trashOutline, label: "Delete Chat", color: "text-red-500", action: () => {
-                          if (conversationId) {
-                            archiveMutation.mutate(conversationId, { onSuccess: onBack });
-                          }
+                          setShowMenu(false);
+                          setShowDeleteConfirm(true);
                         }},
                         { icon: alertCircleOutline, label: "Report", color: "text-amber-600", action: () => {
                           setShowMenu(false);
-                          setReportSheetOpen(true);
+                          if (reportEntity) {
+                            setReportSheetOpen(true);
+                          }
                         }},
                         { icon: banOutline, label: "Block User", color: "text-red-500", action: () => {
                           setShowMenu(false);
-                          alert("User blocked. You won't receive messages from them.");
+                          setShowBlockConfirm(true);
                         }},
                         { icon: volumeMuteOutline, label: "Mute Notifications", color: "text-slate-600", action: () => {
                           setShowMenu(false);
@@ -424,10 +465,10 @@ export default function MessagesPage({
                         <button
                           key={idx}
                           onClick={() => { setShowMenu(false); item.action(); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600 transition-colors"
                         >
                           <IonIcon icon={item.icon} className={`text-base ${item.color}`} />
-                          <span className={`text-[13px] font-medium ${item.color === "text-red-500" ? "text-red-500" : "text-slate-700"}`}>
+                          <span className={`text-[13px] font-medium ${item.color === "text-red-500" ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
                             {item.label}
                           </span>
                         </button>
@@ -440,29 +481,6 @@ export default function MessagesPage({
           </div>
         </div>
       </div>
-
-      {/* Enquiry context card */}
-      {convDetail?.type === "enquiry" && convDetail.contextTitle && (
-        <div className="shrink-0 bg-white/80 backdrop-blur-sm border-b border-slate-100 px-4 py-2">
-          <div className="flex items-center gap-2.5">
-            {convDetail.contextImageUrl && (
-              <img
-                src={convDetail.contextImageUrl}
-                alt={convDetail.contextTitle}
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wider">
-                {convDetail.contextType === "product" ? "Product Enquiry" : "Service Enquiry"}
-              </p>
-              <p className="text-[13px] font-medium text-slate-700 truncate">
-                {convDetail.contextTitle}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Messages area */}
       <div
@@ -487,11 +505,11 @@ export default function MessagesPage({
         {/* Empty state */}
         {!messagesLoading && allMessages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-3">
+            <div className="w-14 h-14 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center mb-3">
               <span className="text-2xl">👋</span>
             </div>
-            <p className="text-sm font-medium text-slate-500">Say hello!</p>
-            <p className="text-xs text-slate-400 mt-1">Start a conversation with {displayName}</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Say hello!</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Start a conversation with {displayName}</p>
           </div>
         )}
 
@@ -499,7 +517,7 @@ export default function MessagesPage({
           if (entry.type === "date") {
             return (
               <div key={`date-${i}`} className="flex justify-center mb-3 mt-2">
-                <span className="text-[10px] font-medium text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+                <span className="text-[10px] font-medium text-slate-400 bg-white/80 dark:bg-slate-800/80 dark:text-slate-500 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
                   {formatDateHeader(entry.date)}
                 </span>
               </div>
@@ -528,7 +546,7 @@ export default function MessagesPage({
                     transition={{ duration: 0.2 }}
                     className={`max-w-[78%] px-3 py-2 ${
                       isSent
-                        ? `bg-[#1a1a2e] text-white ${
+                        ? `bg-slate-800 dark:bg-slate-700 text-white ${
                             isFirst && isLast
                               ? "rounded-2xl rounded-br-md"
                               : isFirst
@@ -537,7 +555,7 @@ export default function MessagesPage({
                               ? "rounded-2xl rounded-tr-md"
                               : "rounded-2xl rounded-r-md"
                           }`
-                        : `bg-white text-slate-800 shadow-sm ${
+                        : `bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm ${
                             isFirst && isLast
                               ? "rounded-2xl rounded-bl-md"
                               : isFirst
@@ -562,17 +580,17 @@ export default function MessagesPage({
 
                     {/* Enquiry card */}
                     {msg.messageType === "enquiry" && msg.metadata && (
-                      <div className={`rounded-xl p-2.5 mb-1.5 -mx-0.5 ${isSent ? "bg-white/10" : "bg-amber-50"}`}>
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-amber-600 mb-1">
+                      <div className={`rounded-xl p-2.5 mb-1.5 -mx-0.5 ${isSent ? "bg-white/10" : "bg-amber-50 dark:bg-amber-900/30"}`}>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">
                           📋 Product Enquiry
                         </p>
                         {msg.metadata.productName && (
-                          <p className={`text-[12px] font-semibold ${isSent ? "text-white" : "text-slate-700"}`}>
+                          <p className={`text-[12px] font-semibold ${isSent ? "text-white" : "text-slate-700 dark:text-slate-200"}`}>
                             {msg.metadata.productName}
                           </p>
                         )}
                         {msg.metadata.productPrice && (
-                          <p className={`text-[11px] ${isSent ? "text-white/60" : "text-slate-500"}`}>
+                          <p className={`text-[11px] ${isSent ? "text-white/60" : "text-slate-500 dark:text-slate-400"}`}>
                             {msg.metadata.currency || "₹"}{msg.metadata.productPrice}
                           </p>
                         )}
@@ -612,7 +630,7 @@ export default function MessagesPage({
         {/* Typing indicator */}
         {isOtherTyping && (
           <div className="flex items-start mb-2">
-            <div className="bg-white shadow-sm rounded-2xl rounded-bl-md px-4 py-2.5">
+            <div className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl rounded-bl-md px-4 py-2.5">
               <div className="flex gap-1">
                 <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                 <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -625,17 +643,17 @@ export default function MessagesPage({
 
       {/* Attachment preview */}
       {attachedFile && (
-        <div className="shrink-0 bg-white border-t border-slate-100 px-3 py-2">
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2">
+        <div className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2">
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl p-2">
             {attachedPreview ? (
-              <img src={attachedPreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover" />
+              <img src={attachedPreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover" loading="lazy" decoding="async" />
             ) : (
-              <div className="w-14 h-14 rounded-lg bg-slate-200 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
                 <IonIcon icon={imageOutline} className="text-xl text-slate-400" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-700 truncate">{attachedFile.name}</p>
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{attachedFile.name}</p>
               <p className="text-[10px] text-slate-400">{(attachedFile.size / 1024).toFixed(0)} KB</p>
             </div>
             <motion.button
@@ -649,23 +667,23 @@ export default function MessagesPage({
       )}
       {/* Send error banner */}
       {sendError && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-100 flex items-center justify-between gap-2">
+        <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 border-t border-red-100 dark:border-red-800 flex items-center justify-between gap-2">
           <p className="text-xs text-red-600 flex-1">{sendError}</p>
           <button onClick={() => setSendError("")} className="text-xs text-red-400 font-medium shrink-0">Dismiss</button>
         </div>
       )}
       {/* Input bar */}
       <div
-        className="shrink-0 bg-white border-t border-slate-100 px-3 py-2"
+        className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
       >
         <div className="flex items-end gap-2">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleAttachClick}
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-slate-100"
+            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-slate-100 dark:active:bg-slate-700"
           >
-            <IonIcon icon={attachOutline} className="text-xl text-slate-500" />
+            <IonIcon icon={attachOutline} className="text-xl text-slate-500 dark:text-slate-400" />
           </motion.button>
           <input
             ref={fileInputRef}
@@ -675,7 +693,7 @@ export default function MessagesPage({
             onChange={handleFileChange}
           />
 
-          <div className="flex-1 bg-slate-100 rounded-2xl px-3.5 py-2 flex items-end gap-2">
+          <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3.5 py-2 flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={messageText}
@@ -683,7 +701,7 @@ export default function MessagesPage({
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none max-h-[120px] leading-5"
+              className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-5"
               style={{ height: "auto" }}
             />
             <motion.button
@@ -700,8 +718,8 @@ export default function MessagesPage({
             disabled={sendMutation.isPending || uploadMutation.isPending}
             className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 transition-colors ${
               messageText.trim() || attachedFile
-                ? "bg-[#1a1a2e] shadow-lg"
-                : "bg-slate-200"
+                ? "bg-slate-800 dark:bg-slate-600 shadow-lg"
+                : "bg-slate-200 dark:bg-slate-700"
             }`}
           >
             {sendMutation.isPending || uploadMutation.isPending ? (
@@ -720,14 +738,106 @@ export default function MessagesPage({
       </div>
 
       {/* Report Sheet */}
-      {conversationId && (
+      {reportEntity && (
         <ReportSheet
-          entityType="message"
-          entityId={conversationId}
+          entityType={reportEntity.type}
+          entityId={reportEntity.id}
           isOpen={reportSheetOpen}
           onClose={() => setReportSheetOpen(false)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-[100]"
+              onClick={() => setShowDeleteConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[101] bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-sm mx-auto"
+            >
+              <h3 className="text-[16px] font-bold text-slate-800 dark:text-white mb-1">Delete Chat</h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-5">
+                This chat will be removed from your list. If {displayName} sends you a new message, it will appear again.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 active:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    if (conversationId) {
+                      archiveMutation.mutate(conversationId, { onSuccess: onBack });
+                    }
+                  }}
+                  disabled={archiveMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-red-500 text-white active:bg-red-600"
+                >
+                  {archiveMutation.isPending ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Block Confirmation Dialog */}
+      <AnimatePresence>
+        {showBlockConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-[100]"
+              onClick={() => setShowBlockConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[101] bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-2xl max-w-sm mx-auto"
+            >
+              <h3 className="text-[16px] font-bold text-slate-800 dark:text-white mb-1">Block {displayName}?</h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-5">
+                You won&apos;t receive messages from this user anymore. The chat will be removed from your list.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowBlockConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 active:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBlockConfirm(false);
+                    if (conversationId) {
+                      blockMutation.mutate(conversationId, { onSuccess: onBack });
+                    }
+                  }}
+                  disabled={blockMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold bg-red-500 text-white active:bg-red-600"
+                >
+                  {blockMutation.isPending ? "Blocking..." : "Block"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
