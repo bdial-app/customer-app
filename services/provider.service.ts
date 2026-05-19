@@ -361,6 +361,15 @@ export const verifyProviderOtp = async (
   return data;
 };
 
+export const updateProviderContactNumber = async (
+  providerId: string,
+  contactNumber: string,
+  otp: string,
+): Promise<{ message: string; contactNumber: string }> => {
+  const { data } = await apiClient.patch(PROVIDER_URLS.UPDATE_CONTACT_NUMBER(providerId), { contactNumber, otp });
+  return data;
+};
+
 export const fetchWebsiteMeta = async (
   domain: string,
 ): Promise<{ logoUrl: string | null; title: string | null }> => {

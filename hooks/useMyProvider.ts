@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getMyProviderStatus,
   updateProvider,
+  updateProviderContactNumber,
+  sendProviderOtp,
   getMyAnalytics,
   replyToReview,
   getMyOffers,
@@ -45,6 +47,24 @@ export const useUpdateProvider = () => {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateProviderPayload }) =>
       updateProvider(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
+    },
+  });
+};
+
+export const useSendProviderOtp = () => {
+  return useMutation({
+    mutationFn: (mobileNumber: string) => sendProviderOtp(mobileNumber),
+  });
+};
+
+export const useUpdateContactNumber = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, contactNumber, otp }: { id: string; contactNumber: string; otp: string }) =>
+      updateProviderContactNumber(id, contactNumber, otp),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
     },

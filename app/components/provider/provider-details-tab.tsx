@@ -26,6 +26,7 @@ import {
   logoYoutube,
   logoWhatsapp,
   globeOutline,
+  shieldCheckmarkOutline,
 } from "ionicons/icons";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -33,7 +34,7 @@ import { List, Button } from "konsta/react";
 import { BottomSheet } from "../bottom-sheet";
 import { FormikInput } from "../formik-input";
 import { ProviderData } from "@/services/provider.service";
-import { useUpdateProvider } from "@/hooks/useMyProvider";
+import { useUpdateProvider, useUpdateContactNumber } from "@/hooks/useMyProvider";
 import { useUploadProfileImage } from "@/hooks/usePhotos";
 import { AppDialog } from "../app-dialog";
 import TimePicker from "../time-picker";
@@ -42,6 +43,7 @@ import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import { reverseGeocode, searchGeocode } from "@/services/geocode.service";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useNotification } from "@/app/context/NotificationContext";
+import { PhoneOtpVerifier } from "./phone-otp-verifier";
 
 interface ProviderDetailsTabProps {
   provider: ProviderData;
@@ -50,7 +52,6 @@ interface ProviderDetailsTabProps {
 const detailsSchema = Yup.object({
   brandName: Yup.string().trim().max(150, "Must be under 150 characters").required("Brand name is required"),
   description: Yup.string().max(2000, "Must be under 2000 characters").nullable(),
-  contactNumber: Yup.string().max(15, "Must be under 15 characters").required("Phone number is required"),
   address: Yup.string().max(300, "Must be under 300 characters").nullable(),
   city: Yup.string().max(100, "Must be under 100 characters").required("City is required"),
   area: Yup.string().max(100, "Must be under 100 characters").nullable(),
@@ -105,7 +106,10 @@ const InfoRow = ({
 const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [detailSheet, setDetailSheet] = useState<{ title: string; content: string } | null>(null);
+  const [showPhoneChange, setShowPhoneChange] = useState(false);
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
   const updateMutation = useUpdateProvider();
+  const updateContactMutation = useUpdateContactNumber();
   const uploadImageMutation = useUploadProfileImage();
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
@@ -205,7 +209,6 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
         payload: {
           brandName: values.brandName?.trim(),
           description: values.description?.trim() || undefined,
-          contactNumber: values.contactNumber?.trim(),
           address: values.address?.trim() || undefined,
           city: values.city?.trim(),
           area: values.area?.trim() || undefined,
@@ -223,6 +226,22 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       setIsEditing(false);
     } catch {
       // Error handled by mutation state
+    }
+  };
+
+  const handleContactNumberVerified = async (otp: string) => {
+    try {
+      await updateContactMutation.mutateAsync({
+        id: provider.id,
+        contactNumber: newPhoneNumber,
+        otp,
+      });
+      notify({ title: "Number Updated", subtitle: "Your contact number has been changed successfully.", variant: "success" });
+      setShowPhoneChange(false);
+      setNewPhoneNumber("");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to update contact number";
+      notify({ title: "Error", subtitle: msg, variant: "error" });
     }
   };
 
@@ -507,7 +526,6 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                 initialValues={{
                   brandName: provider.brandName || "",
                   description: provider.description || "",
-                  contactNumber: provider.contactNumber || "",
                   address: provider.address || "",
                   city: provider.city || "",
                   area: provider.area || "",
@@ -541,14 +559,85 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         inputClassName="!h-24 resize-none"
                         media={<IonIcon icon={documentTextOutline} />}
                       />
-                      <FormikInput
-                        name="contactNumber"
-                        label="Contact"
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        media={<IonIcon icon={callOutline} />}
-                      />
                     </List>
+
+                    {/* ── Contact Number (OTP-protected) ── */}
+                    <div className="px-4 pt-3 pb-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
+                          <IonIcon icon={callOutline} className="text-teal-600 text-sm" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700 dark:text-white">Contact Number</p>
+                        <IonIcon icon={shieldCheckmarkOutline} className="text-teal-500 text-sm ml-auto" />
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 border border-slate-100 dark:border-slate-600">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                              {provider.contactNumber || "Not set"}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              Protected • OTP verification required to change
+                            </p>
+                          </div>
+                          {!showPhoneChange && (
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              type="button"
+                              onClick={() => {
+                                setShowPhoneChange(true);
+                                setNewPhoneNumber(provider.contactNumber || "");
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/30 text-teal-600 text-xs font-semibold"
+                            >
+                              Change
+                            </motion.button>
+                          )}
+                        </div>
+
+                        <AnimatePresence>
+                          {showPhoneChange && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
+                                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                  New Number
+                                </label>
+                                <input
+                                  type="tel"
+                                  value={newPhoneNumber}
+                                  onChange={(e) => setNewPhoneNumber(e.target.value.replace(/[^\d+\s-]/g, "").slice(0, 15))}
+                                  placeholder="+91 98765 43210"
+                                  className="w-full mt-1 px-3 py-2.5 text-sm rounded-xl bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-700 focus:border-teal-400 transition-all"
+                                />
+
+                                {newPhoneNumber.replace(/\D/g, "").slice(-10) !== (provider.contactNumber || "").replace(/\D/g, "").slice(-10) &&
+                                  newPhoneNumber.replace(/\D/g, "").length >= 10 && (
+                                  <PhoneOtpVerifier
+                                    phoneNumber={newPhoneNumber}
+                                    onVerified={handleContactNumberVerified}
+                                    isPending={updateContactMutation.isPending}
+                                  />
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => { setShowPhoneChange(false); setNewPhoneNumber(""); }}
+                                  className="mt-3 text-xs text-slate-500 dark:text-slate-400 underline"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
 
                     {/* ── Location Section with Map ── */}
                     <div className="px-4 pt-3 pb-2">

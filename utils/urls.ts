@@ -64,6 +64,7 @@ export const PROVIDER_URLS = {
   DELETE_PROVIDER: "/providers/my-provider",
   COOLDOWN_STATUS: "/providers/my-provider/cooldown-status",
   UPDATE_CATEGORIES: (id: string) => `/providers/${id}/categories`,
+  UPDATE_CONTACT_NUMBER: (id: string) => `/providers/${id}/contact-number`,
 };
 
 export const PHOTO_URLS = {
