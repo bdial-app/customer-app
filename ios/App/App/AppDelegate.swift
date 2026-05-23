@@ -1,18 +1,16 @@
 import UIKit
 import Capacitor
-import FirebaseCore
-import FirebaseMessaging
 import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Register for remote notifications (required for push on iOS).
-        // @capacitor-firebase/app auto-calls FirebaseApp.configure() on plugin load,
-        // so GoogleService-Info.plist is picked up without any manual init here.
+        // @capacitor-firebase/messaging plugin handles FirebaseApp.configure() and FCM token internally.
+        UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
         print("[Push Debug] 📡 Called registerForRemoteNotifications")
         return true
@@ -32,25 +30,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         completionHandler()
     }
 
-    // MARK: - Firebase Messaging Delegate
-    
-    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        if let token = fcmToken {
-            print("[Push Debug] ✅ FCM token received: \(token.prefix(30))...")
-        } else {
-            print("[Push Debug] ⚠️ FCM token is nil!")
-        }
-    }
+    // MARK: - Remote Notification Registration
 
-    // Forward APNs token to both Firebase and Capacitor push plugin
+    // Forward APNs token to Capacitor (Firebase plugin will pick it up internally)
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("[Push Debug] ✅ APNs device token received: \(tokenString.prefix(20))...")
-        
-        // Give Firebase the APNs token so it can generate an FCM token
-        Messaging.messaging().apnsToken = deviceToken
-        
-        // Forward to Capacitor (Capacitor push plugin will use FCM token via Firebase)
         NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
     }
 
