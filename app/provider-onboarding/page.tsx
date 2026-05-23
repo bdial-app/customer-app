@@ -38,8 +38,6 @@ import {
   logoInstagram,
   logoFacebook,
   logoYoutube,
-  logoWhatsapp,
-  logoLinkedin,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -50,6 +48,8 @@ import TimePicker from "../components/time-picker";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "../components/formik-input";
+import WhatsAppPhoneInput from "../components/whatsapp-phone-input";
+import LinkedInInput from "../components/linkedin-input";
 import { useAppSelector } from "@/hooks/useAppStore";
 import {
   becomeProvider,
@@ -114,8 +114,8 @@ const step1Schema = Yup.object({
   instagram_handle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid Instagram handle").max(30).optional(),
   facebook_handle: Yup.string().max(128).optional(),
   youtube_handle: Yup.string().max(128).optional(),
-  whatsapp_number: Yup.string().matches(/^\+?\d{7,15}$/, "Enter a valid phone number (e.g. +966XXXXXXXXX)").optional(),
-  linkedin_handle: Yup.string().max(128).optional(),
+  whatsapp_number: Yup.string().matches(/^\+\d{7,15}$/, "Enter a valid WhatsApp number").optional(),
+  linkedin_handle: Yup.string().max(128, "Too long").optional(),
 });
 
 const step2Schema = Yup.object({
@@ -2152,40 +2152,20 @@ const ProviderOnboardingPage = () => {
                       </div>
 
                       {/* WhatsApp */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-green-300 dark:focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100 dark:focus-within:ring-green-900/30 transition-all">
-                        <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                          <IonIcon icon={logoWhatsapp} className="text-[#25D366] text-lg" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">WhatsApp</label>
-                          <input
-                            type="tel"
-                            name="whatsapp_number"
-                            value={values.whatsapp_number}
-                            onChange={(e) => setFieldValue("whatsapp_number", e.target.value)}
-                            placeholder="+91 98765 43210"
-                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                          />
-                        </div>
-                      </div>
+                      <WhatsAppPhoneInput
+                        value={values.whatsapp_number}
+                        onChange={(val) => setFieldValue("whatsapp_number", val)}
+                        error={errors.whatsapp_number}
+                        touched={!!values.whatsapp_number}
+                      />
 
                       {/* LinkedIn */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                          <IonIcon icon={logoLinkedin} className="text-[#0A66C2] text-lg" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">LinkedIn</label>
-                          <input
-                            type="text"
-                            name="linkedin_handle"
-                            value={values.linkedin_handle}
-                            onChange={(e) => setFieldValue("linkedin_handle", e.target.value)}
-                            placeholder="Profile or company page URL"
-                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                          />
-                        </div>
-                      </div>
+                      <LinkedInInput
+                        value={values.linkedin_handle}
+                        onChange={(val) => setFieldValue("linkedin_handle", val)}
+                        error={errors.linkedin_handle}
+                        touched={!!values.linkedin_handle}
+                      />
 
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-1">All fields are optional — fill what applies to your business</p>
                     </div>

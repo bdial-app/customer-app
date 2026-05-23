@@ -33,6 +33,8 @@ import * as Yup from "yup";
 import { List, Button } from "konsta/react";
 import { BottomSheet } from "../bottom-sheet";
 import { FormikInput } from "../formik-input";
+import WhatsAppPhoneInput from "../whatsapp-phone-input";
+import LinkedInInput from "../linkedin-input";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider, useUpdateContactNumber } from "@/hooks/useMyProvider";
 import { useUploadProfileImage } from "@/hooks/usePhotos";
@@ -70,7 +72,8 @@ const detailsSchema = Yup.object({
   instagramHandle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid handle").max(30).nullable(),
   facebookHandle: Yup.string().max(128).nullable(),
   youtubeHandle: Yup.string().max(128).nullable(),
-  whatsappNumber: Yup.string().matches(/^\+?\d{7,15}$/, "Invalid phone number").nullable(),
+  whatsappNumber: Yup.string().matches(/^\+\d{7,15}$/, "Enter a valid WhatsApp number").nullable(),
+  linkedinHandle: Yup.string().max(128, "Too long").nullable(),
 });
 
 const InfoRow = ({
@@ -220,6 +223,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           facebookHandle: values.facebookHandle?.trim() || null,
           youtubeHandle: values.youtubeHandle?.trim() || null,
           whatsappNumber: values.whatsappNumber?.trim() || null,
+          linkedinHandle: values.linkedinHandle?.trim() || null,
           ...(mapCoords ? { latitude: String(mapCoords.lat), longitude: String(mapCoords.lng) } : {}),
         },
       });
@@ -537,6 +541,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   facebookHandle: (provider as any).facebookHandle || "",
                   youtubeHandle: (provider as any).youtubeHandle || "",
                   whatsappNumber: (provider as any).whatsappNumber || "",
+                  linkedinHandle: (provider as any).linkedinHandle || "",
                 }}
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}
@@ -819,14 +824,23 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         placeholder="@channel or URL"
                         media={<IonIcon icon={logoYoutube} />}
                       />
-                      <FormikInput
-                        name="whatsappNumber"
-                        label="WhatsApp"
-                        type="tel"
-                        placeholder="+966XXXXXXXXX"
-                        media={<IonIcon icon={logoWhatsapp} />}
-                      />
                     </List>
+
+                    {/* WhatsApp with country code picker */}
+                    <WhatsAppPhoneInput
+                      value={values.whatsappNumber}
+                      onChange={(val) => setFieldValue("whatsappNumber", val)}
+                      error={errors.whatsappNumber}
+                      touched={touched.whatsappNumber as boolean}
+                    />
+
+                    {/* LinkedIn with URL normalization */}
+                    <LinkedInInput
+                      value={values.linkedinHandle}
+                      onChange={(val) => setFieldValue("linkedinHandle", val)}
+                      error={errors.linkedinHandle}
+                      touched={touched.linkedinHandle as boolean}
+                    />
 
                     <div className="grid grid-cols-2 gap-3 p-4">
                       <motion.button
