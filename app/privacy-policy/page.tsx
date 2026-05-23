@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
       <div className="px-5 py-5 space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed pb-20">
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
           <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-            Effective Date: 1 May 2026 · Last Updated: April 2026
+            Effective Date: 1 May 2026 · Last Updated: May 2026
           </p>
         </div>
 
@@ -118,6 +118,27 @@ export default function PrivacyPolicyPage() {
         </p>
 
         <h4 className="font-bold text-slate-800 dark:text-white">
+          4a. Third-Party Services & SDKs
+        </h4>
+        <p className="text-xs">
+          Tijarah uses the following third-party services that may collect
+          limited data in accordance with their own privacy policies:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 text-xs">
+          <li><strong>Firebase Cloud Messaging</strong> — push notification delivery (device token)</li>
+          <li><strong>Sentry</strong> — crash reporting and error monitoring (anonymous device/OS info)</li>
+          <li><strong>Google Maps</strong> — location services and map display (location coordinates when permitted)</li>
+          <li><strong>Supabase</strong> — authentication, database, and file storage</li>
+          <li><strong>Razorpay</strong> (Android/Web only) — payment processing for business features</li>
+          <li><strong>Apple In-App Purchase</strong> (iOS only) — subscription management</li>
+          <li><strong>MSG91</strong> — OTP delivery via SMS</li>
+        </ul>
+        <p className="text-xs">
+          We do not use any advertising SDKs, tracking pixels, or cross-app
+          tracking identifiers. We do not collect the Apple IDFA.
+        </p>
+
+        <h4 className="font-bold text-slate-800 dark:text-white">
           5. Your Rights
         </h4>
         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -195,7 +216,7 @@ export default function PrivacyPolicyPage() {
         <h4 className="font-bold text-slate-800 dark:text-white">10. Contact</h4>
         <p>
           Privacy enquiries:{" "}
-          <span className="text-blue-600 font-medium">privacy@tijarah.app</span>
+          <span className="text-blue-600 font-medium">support@tijarahapp.in</span>
         </p>
 
         <p className="text-xs text-slate-400 pt-2 text-center">

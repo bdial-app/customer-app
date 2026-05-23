@@ -1407,7 +1407,7 @@ const ProfileContent = memo(() => {
         <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
             <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-              Effective Date: 1 May 2026 · Last Updated: April 2026
+              Effective Date: 1 May 2026 · Last Updated: May 2026
             </p>
           </div>
 
@@ -1541,6 +1541,37 @@ const ProfileContent = memo(() => {
             These Terms are governed by the laws of India. Disputes shall be
             subject to the exclusive jurisdiction of the courts in Pune,
             Maharashtra.
+          </p>
+
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            11a. Subscriptions & In-App Purchases
+          </h4>
+          <p className="text-xs">
+            Tijarah offers optional paid subscriptions (e.g. Provider
+            Sponsorship) to business owners. By subscribing:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-xs">
+            <li>Payment is charged to your Apple ID or Google Play account at confirmation of purchase.</li>
+            <li>Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current billing period.</li>
+            <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the same rate.</li>
+            <li>You can manage and cancel subscriptions in your device’s Settings → Subscriptions.</li>
+            <li>Any unused portion of a free trial period is forfeited upon purchasing a subscription.</li>
+            <li>Prices are displayed in your local currency and may vary by region.</li>
+          </ul>
+          <p className="text-xs mt-2">
+            Refunds are subject to Apple’s or Google’s refund policies. Tijarah
+            does not process refunds directly for in-app purchases.
+          </p>
+
+          <h4 className="font-bold text-slate-800 dark:text-white">
+            11b. End User Licence Agreement (EULA)
+          </h4>
+          <p className="text-xs">
+            Use of the Tijarah iOS app is also subject to Apple’s Standard
+            End User Licence Agreement (EULA) available at{" "}
+            <span className="text-blue-600">https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</span>.
+            In the event of a conflict between these Terms and Apple’s EULA,
+            Apple’s EULA shall prevail for iOS users.
           </p>
 
           <h4 className="font-bold text-slate-800 dark:text-white">
