@@ -1313,10 +1313,14 @@ const ProviderDashboard = ({
           onDismiss={dismissWarningBanner}
         />
       )}
+      {verificationStatus === "rejected" && (
+        <VerificationStatusCard status="rejected" />
+      )}
       {needsVerification && <VerificationPrompt onVerify={handleVerify} />}
       {!isApproved &&
         verificationStatus &&
         verificationStatus !== "approved" &&
+        verificationStatus !== "rejected" &&
         !needsVerification && (
           <VerificationStatusCard status={verificationStatus} />
         )}
