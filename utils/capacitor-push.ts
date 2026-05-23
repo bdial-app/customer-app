@@ -50,11 +50,9 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
       }
     }
 
-    // Register with FCM/APNs — this triggers the 'registration' event
-    await PushNotifications.register();
-
-    // Wait for the registration event to fire with the token
-    const token = await new Promise<string>((resolve, reject) => {
+    // Set up listeners BEFORE calling register() to avoid race condition on iOS
+    // (iOS can fire the registration callback synchronously)
+    const tokenPromise = new Promise<string>((resolve, reject) => {
       let regListener: { remove: () => void } | null = null;
       let errListener: { remove: () => void } | null = null;
 
@@ -80,6 +78,12 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
         reject(new Error(err.error || 'Push registration failed'));
       }).then((l) => { errListener = l; });
     });
+
+    // Now trigger registration — listeners are already waiting
+    await PushNotifications.register();
+
+    // Wait for the token
+    const token = await tokenPromise;
 
     return { token, error: null };
   } catch (error: any) {
