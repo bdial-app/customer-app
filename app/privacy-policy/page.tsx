@@ -151,7 +151,7 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <h4 className="font-bold text-slate-800 dark:text-white">
-          6. Children's Privacy
+          6. Children&apos;s Privacy
         </h4>
         <p className="text-xs">
           Tijarah is not intended for users under 13. We do not knowingly
@@ -160,7 +160,22 @@ export default function PrivacyPolicyPage() {
         </p>
 
         <h4 className="font-bold text-slate-800 dark:text-white">
-          7. Data Retention
+          7. Age Suitability
+        </h4>
+        <p className="text-xs">
+          Tijarah is rated for users aged 13 and above. The app does not
+          contain any of the following: gambling, adult content, violent or
+          graphic material, alcohol or drug references, or user-generated
+          content that is unmoderated. All community reviews and business
+          posts are subject to moderation and our Community Guidelines. Users
+          must be at least 13 years of age to create an account. Business
+          owners who register listings must be 18 years or older. We reserve
+          the right to terminate accounts where the user is found to be below
+          the minimum required age.
+        </p>
+
+        <h4 className="font-bold text-slate-800 dark:text-white">
+          8. Data Retention
         </h4>
         <p className="text-xs">
           Account data is retained while your account is active. Identity
@@ -169,7 +184,7 @@ export default function PrivacyPolicyPage() {
         </p>
 
         <h4 className="font-bold text-slate-800 dark:text-white">
-          8. Changes to This Policy
+          9. Changes to This Policy
         </h4>
         <p className="text-xs">
           We will notify you of material changes via in-app notification and
@@ -177,7 +192,7 @@ export default function PrivacyPolicyPage() {
           constitutes acceptance.
         </p>
 
-        <h4 className="font-bold text-slate-800 dark:text-white">9. Contact</h4>
+        <h4 className="font-bold text-slate-800 dark:text-white">10. Contact</h4>
         <p>
           Privacy enquiries:{" "}
           <span className="text-blue-600 font-medium">privacy@tijarah.app</span>
