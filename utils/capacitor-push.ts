@@ -56,14 +56,8 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
 
     console.log('[NativePush] Setting up registration listeners...');
 
-<<<<<<< HEAD
-    // Set up listeners BEFORE calling register() to avoid race condition on iOS
-    // (iOS can fire the registration callback synchronously)
-    const tokenPromise = new Promise<string>((resolve, reject) => {
-=======
     // Wait for the registration event to fire with the token
     const nativeToken = await new Promise<string>((resolve, reject) => {
->>>>>>> befff7fc630fc59c4c087348441651c762035d83
       let regListener: { remove: () => void } | null = null;
       let errListener: { remove: () => void } | null = null;
 
@@ -93,15 +87,6 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
       }).then((l) => { errListener = l; });
     });
 
-<<<<<<< HEAD
-    // Now trigger registration — listeners are already waiting
-    console.log('[NativePush] Calling PushNotifications.register()...');
-    await PushNotifications.register();
-    console.log('[NativePush] register() returned, waiting for token...');
-
-    // Wait for the token
-    const token = await tokenPromise;
-=======
     // On iOS, the Capacitor 'registration' event returns the raw APNs device
     // token. We want an FCM registration token so the backend can send via
     // Firebase Cloud Messaging — fetch it from the FirebaseMessaging plugin
@@ -116,7 +101,6 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
         return { token: null, error: 'Failed to obtain FCM token from Firebase.' };
       }
     }
->>>>>>> befff7fc630fc59c4c087348441651c762035d83
 
     return { token, error: null };
   } catch (error: any) {
