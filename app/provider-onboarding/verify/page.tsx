@@ -283,7 +283,7 @@ function VerifyContent() {
           title="Identity Verification"
           leftClassName="w-11"
           left={
-            <Button clear onClick={() => goBack("/")}>
+            <Button clear onClick={() => { queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY }); router.replace("/"); }}>
               <IonIcon icon={arrowBack} className="w-5 h-5" />
             </Button>
           }
@@ -304,7 +304,7 @@ function VerifyContent() {
               Once verified, you&apos;ll receive a verified badge and improved search ranking.
             </p>
           </div>
-          <button className="w-full mt-2 flex items-center justify-center h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900" onClick={() => { queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY }); goBack("/"); }}>
+          <button className="w-full mt-2 flex items-center justify-center h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900" onClick={() => { queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY }); router.replace("/"); }}>
             Done — Verification in Review
           </button>
         </div>
