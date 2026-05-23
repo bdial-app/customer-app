@@ -878,14 +878,14 @@ const ProductFormCard = ({
         {/* Name */}
         <div>
           <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Product Name *</label>
-          <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehndi Package" maxLength={150}
+          <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehendi, Custom Rida Stitching" maxLength={150}
             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
         {/* Description */}
         <div>
           <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Description</label>
-          <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="Brief description of this product or service..." rows={2} maxLength={2000}
+          <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="What's included, pricing details, turnaround time..." rows={2} maxLength={2000}
             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
@@ -894,7 +894,7 @@ const ProductFormCard = ({
           <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Price (₹) <span className="normal-case font-normal text-slate-400">— optional</span></label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
-            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="Leave blank if not applicable"
+            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="e.g. 500 (leave blank if price varies)"
               className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
           </div>
         </div>
@@ -1898,7 +1898,7 @@ const ProviderOnboardingPage = () => {
                         name="brand_name"
                         label="Brand Name"
                         type="text"
-                        placeholder="e.g. Babji's Catering"
+                        placeholder="e.g. Fatema's Tailoring, Husain Electronics"
                       />
                       <FormikInput
                         name="description"
@@ -1911,7 +1911,7 @@ const ProviderOnboardingPage = () => {
                         name="contact_number"
                         label="Contact Number"
                         type="tel"
-                        placeholder="10-digit mobile number"
+                        placeholder="e.g. 98765 43210"
                         formatValue={(val) =>
                           val.replace(/\D/g, "").slice(0, 10)
                         }
@@ -1993,7 +1993,7 @@ const ProviderOnboardingPage = () => {
                           <div className="flex gap-2">
                             <input type="text" inputMode="numeric" value={otpCode} maxLength={6}
                               onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }}
-                              placeholder="6-digit OTP"
+                              placeholder="Enter 6-digit code"
                               className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all" />
                             <button type="button" disabled={otpCode.length !== 6 || otpVerifying}
                               onClick={() => handleVerifyOtp(otpSentPhone)}
@@ -2095,7 +2095,7 @@ const ProviderOnboardingPage = () => {
                             name="website_url"
                             value={values.website_url}
                             onChange={(e) => setFieldValue("website_url", e.target.value)}
-                            placeholder="https://yourbusiness.com"
+                            placeholder="e.g. www.mybusiness.com"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>
@@ -2115,7 +2115,7 @@ const ProviderOnboardingPage = () => {
                               name="instagram_handle"
                               value={values.instagram_handle}
                               onChange={(e) => setFieldValue("instagram_handle", e.target.value.replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, "").slice(0, 30))}
-                              placeholder="yourhandle"
+                              placeholder="e.g. fatemas_tailoring"
                               className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                             />
                           </div>
@@ -2134,7 +2134,7 @@ const ProviderOnboardingPage = () => {
                             name="facebook_handle"
                             value={values.facebook_handle}
                             onChange={(e) => setFieldValue("facebook_handle", e.target.value)}
-                            placeholder="Page name or URL"
+                            placeholder="e.g. facebook.com/mybusiness"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>
@@ -2152,7 +2152,7 @@ const ProviderOnboardingPage = () => {
                             name="youtube_handle"
                             value={values.youtube_handle}
                             onChange={(e) => setFieldValue("youtube_handle", e.target.value)}
-                            placeholder="@channel or channel URL"
+                            placeholder="e.g. youtube.com/@mybusiness"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>

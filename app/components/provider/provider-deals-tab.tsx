@@ -566,7 +566,7 @@ const ProviderDealsTab = () => {
                         <DealFormField
                           name="description"
                           label="Description"
-                          placeholder="Optional details about this deal"
+                          placeholder="e.g. Valid on weekends only, for orders above ₹500…"
                         />
 
                         {/* Discount Type Toggle */}
@@ -617,14 +617,14 @@ const ProviderDealsTab = () => {
                           <DealFormField
                             name="minOrderAmount"
                             label="Min Order (₹)"
-                            placeholder="Optional"
+                            placeholder="e.g. 500"
                             type="number"
                           />
                           {values.discountType === "percentage" ? (
                             <DealFormField
                               name="maxDiscount"
                               label="Max Discount (₹)"
-                              placeholder="Optional cap"
+                              placeholder="e.g. 200"
                               type="number"
                             />
                           ) : (
@@ -650,7 +650,7 @@ const ProviderDealsTab = () => {
                         <DealFormField
                           name="usageLimit"
                           label="Usage Limit"
-                          placeholder="Unlimited if blank"
+                          placeholder="e.g. 50 (unlimited if blank)"
                           type="number"
                         />
 

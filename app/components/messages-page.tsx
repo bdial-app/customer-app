@@ -699,7 +699,7 @@ export default function MessagesPage({
               value={messageText}
               onChange={handleInput}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
+              placeholder="Write your message…"
               rows={1}
               className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-5"
               style={{ height: "auto" }}

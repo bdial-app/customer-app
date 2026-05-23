@@ -211,7 +211,7 @@ export default function ReportSheet({
                     onChange={(e) =>
                       setDescription(e.target.value.slice(0, 500))
                     }
-                    placeholder="Please describe the issue (max 500 characters)"
+                    placeholder="e.g. Misleading photos, incorrect contact info, spam listing…"
                     rows={3}
                     maxLength={500}
                     className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] text-slate-700 dark:text-white bg-transparent dark:bg-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 resize-none"

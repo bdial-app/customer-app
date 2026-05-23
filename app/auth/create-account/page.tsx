@@ -506,7 +506,7 @@ function CreateAccountContent() {
                     name="otp"
                     label="Verification Code"
                     type="tel"
-                    placeholder="••••••"
+                    placeholder="Enter 6-digit code"
                     formatValue={(val) => val.replace(/\D/g, "").slice(0, 6)}
                     inputClassName="text-center text-2xl tracking-[0.4em] font-mono font-bold"
                   />
@@ -589,7 +589,7 @@ function CreateAccountContent() {
                         value={values.name}
                         onChange={(e) => setFieldValue("name", e.target.value)}
                         onBlur={() => setFieldTouched("name", true)}
-                        placeholder="e.g. Adeeb Shah"
+                      placeholder="Your full name"
                         className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 dark:text-white"
                       />
                     </div>

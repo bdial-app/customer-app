@@ -258,21 +258,21 @@ const ProviderHome = () => {
                       name="name"
                       label="Name"
                       type="text"
-                      placeholder="Business Name"
+                      placeholder="e.g. Fatema's Tailoring"
                       media={<IonIcon icon={personOutline} />}
                     />
                     <FormikInput
                       name="service"
                       label="Service"
                       type="text"
-                      placeholder="e.g. Tailoring"
+                      placeholder="e.g. Tailoring, Catering, Mehendi"
                       media={<IonIcon icon={businessOutline} />}
                     />
                     <FormikInput
                       name="description"
                       label="Description"
                       type="textarea"
-                      placeholder="Brief description..."
+                      placeholder="What you offer, specialties, experience..."
                       inputClassName="!h-24 resize-none"
                       media={<IonIcon icon={documentTextOutline} />}
                     />
@@ -280,21 +280,21 @@ const ProviderHome = () => {
                       name="phone"
                       label="Phone"
                       type="tel"
-                      placeholder="Phone Number"
+                      placeholder="e.g. 98765 43210"
                       media={<IonIcon icon={callOutline} />}
                     />
                     <FormikInput
                       name="address"
                       label="Address"
                       type="text"
-                      placeholder="Your Address"
+                      placeholder="e.g. Shop 12, Saifee Park, Mumbai"
                       media={<IonIcon icon={locationOutline} />}
                     />
                     <FormikInput
                       name="experience"
                       label="Experience"
                       type="text"
-                      placeholder="e.g. 5 Years"
+                      placeholder="e.g. 3 years"
                       media={<IonIcon icon={mapOutline} />}
                     />
                     <Block className="grid grid-cols-2 gap-4 mt-4">
@@ -701,20 +701,20 @@ const ProviderHome = () => {
                           name="name"
                           label="Name"
                           type="text"
-                          placeholder="Product/Service Name"
+                          placeholder="e.g. Custom Rida Stitching"
                         />
                         <FormikInput
                           name="price"
                           label="Price"
                           type="text"
-                          placeholder="e.g. $100"
+                          placeholder="e.g. ₹1500"
                         />
 
                         <FormikInput
                           name="description"
                           label="Description"
                           type="textarea"
-                          placeholder="Detailed description..."
+                          placeholder="What's included, materials, delivery time..."
                           inputClassName="!h-32 min-h-[6rem] py-2 resize-none"
                           media={<IonIcon icon={documentTextOutline} />}
                         />

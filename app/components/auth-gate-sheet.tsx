@@ -543,7 +543,7 @@ function AuthGateSheetContent() {
                     <span className="text-[12px] text-slate-300 font-medium">+91 {values.mobile}</span>
                     {step === "register-otp" && <span className="ml-auto text-[10px] text-violet-400 font-semibold bg-violet-500/10 px-2 py-0.5 rounded-full">New account</span>}
                   </div>
-                  <InlineInput name="otp" placeholder="000 000" format={(v) => v.replace(/\D/g, "").slice(0, 6)} autoFocus />
+                  <InlineInput name="otp" placeholder="Enter 6-digit code" format={(v) => v.replace(/\D/g, "").slice(0, 6)} autoFocus />
                   <div className="flex items-center justify-between mt-2 ml-1">
                     <button type="button" onClick={() => { setStep("mobile"); setFieldValue("otp", ""); }} className="text-[12px] text-amber-400 font-medium">
                       Change number
@@ -573,7 +573,7 @@ function AuthGateSheetContent() {
                   {/* Full Name */}
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Full Name</label>
-                    <InlineInput name="name" placeholder="e.g. Adeeb Shah" type="text" inputMode="text" autoFocus />
+                    <InlineInput name="name" placeholder="Your full name" type="text" inputMode="text" autoFocus />
                     <p className="text-[10px] text-slate-600 mt-0.5 ml-1">As it appears on your ID</p>
                   </div>
 

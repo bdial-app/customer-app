@@ -170,7 +170,7 @@ export default function ServiceProvidersPage() {
 
       <Block className="mt-4">
         <Searchbar
-          placeholder="Search providers..."
+          placeholder="Search by name, category, or area…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           clearButton

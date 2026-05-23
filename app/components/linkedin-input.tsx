@@ -107,7 +107,7 @@ export default function LinkedInInput({ value, onChange, error, touched }: Linke
           type="text"
           value={displayValue}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="in/your-profile"
+          placeholder="e.g. in/fatema-shah"
           className="flex-1 min-w-0 px-1.5 py-3 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
         />
 

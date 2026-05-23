@@ -554,14 +554,14 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         name="brandName"
                         label="Brand Name"
                         type="text"
-                        placeholder="Your business name"
+                        placeholder="e.g. Fatema's Kitchen, Husain Motors"
                         media={<IonIcon icon={storefrontOutline} />}
                       />
                       <FormikInput
                         name="description"
                         label="Description"
                         type="textarea"
-                        placeholder="Tell customers about your business..."
+                        placeholder="What you offer, your experience, why customers love you..."
                         inputClassName="!h-24 resize-none"
                         media={<IonIcon icon={documentTextOutline} />}
                       />
@@ -618,7 +618,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                                   type="tel"
                                   value={newPhoneNumber}
                                   onChange={(e) => setNewPhoneNumber(e.target.value.replace(/[^\d+\s-]/g, "").slice(0, 15))}
-                                  placeholder="+91 98765 43210"
+                                  placeholder="New 10-digit mobile number"
                                   className="w-full mt-1 px-3 py-2.5 text-sm rounded-xl bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-700 focus:border-teal-400 transition-all"
                                 />
 
@@ -804,28 +804,28 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         name="websiteUrl"
                         label="Website"
                         type="url"
-                        placeholder="https://yourbusiness.com"
+                        placeholder="e.g. www.mybusiness.com"
                         media={<IonIcon icon={globeOutline} />}
                       />
                       <FormikInput
                         name="instagramHandle"
                         label="Instagram"
                         type="text"
-                        placeholder="yourhandle"
+                        placeholder="e.g. fatemas_tailoring"
                         media={<IonIcon icon={logoInstagram} />}
                       />
                       <FormikInput
                         name="facebookHandle"
                         label="Facebook"
                         type="text"
-                        placeholder="Page name or URL"
+                        placeholder="e.g. facebook.com/mybusiness"
                         media={<IonIcon icon={logoFacebook} />}
                       />
                       <FormikInput
                         name="youtubeHandle"
                         label="YouTube"
                         type="text"
-                        placeholder="@channel or URL"
+                        placeholder="e.g. youtube.com/@mybusiness"
                         media={<IonIcon icon={logoYoutube} />}
                       />
                     </List>
