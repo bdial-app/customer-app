@@ -1,24 +1,50 @@
 import UIKit
 import Capacitor
+import FirebaseCore
+import FirebaseMessaging
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Initialize Firebase (required for FCM token generation on iOS)
+        FirebaseApp.configure()
+        
+        // Set messaging delegate to receive FCM token
+        Messaging.messaging().delegate = self
+        
         // Register for remote notifications (required for push on iOS)
         application.registerForRemoteNotifications()
         return true
     }
 
-    // Forward APNs token to Capacitor push plugin
+    // MARK: - Firebase Messaging Delegate
+    
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        // FCM token refreshed — Capacitor push plugin will pick this up via its own listener
+        if let token = fcmToken {
+            print("[Firebase] FCM token: \(token.prefix(20))...")
+        }
+    }
+
+    // Forward APNs token to both Firebase and Capacitor push plugin
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        // Give Firebase the APNs token so it can generate an FCM token
+        Messaging.messaging().apnsToken = deviceToken
+        
+        // Forward to Capacitor (Capacitor push plugin will use FCM token via Firebase)
         NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+    
+    // Handle background/silent push notifications
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        completionHandler(.newData)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
