@@ -27,9 +27,17 @@ function getStoredTheme(): ThemeMode {
   }
 }
 
+function isNightTime(): boolean {
+  const hour = new Date().getHours();
+  return hour >= 19 || hour < 7; // 7 PM – 7 AM
+}
+
 function getSystemTheme(): ResolvedTheme {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Prefer OS preference, but fall back to time-based if OS doesn't report dark
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  // If the OS has no opinion (or says light), use time of day
+  return isNightTime() ? "dark" : "light";
 }
 
 function resolveTheme(mode: ThemeMode): ResolvedTheme {
@@ -60,7 +68,36 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       applyTheme(r);
     };
     mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+
+    // Re-check on app resume (native: user returns from background)
+    const onResume = () => {
+      const r = resolveTheme("auto");
+      setResolved((prev) => {
+        if (prev !== r) applyTheme(r);
+        return r;
+      });
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") onResume();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    // Capacitor App plugin fires 'resume' on native
+    let appUnsub: (() => void) | undefined;
+    import("@capacitor/app").then(({ App }) => {
+      App.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) onResume();
+      }).then((h) => { appUnsub = () => h.remove(); });
+    }).catch(() => {});
+
+    // Also re-check every minute for time-based transitions (7 PM / 7 AM)
+    const interval = setInterval(onResume, 60_000);
+
+    return () => {
+      mq.removeEventListener("change", handler);
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      appUnsub?.();
+    };
   }, [mode]);
 
   const applyTheme = (t: ResolvedTheme) => {

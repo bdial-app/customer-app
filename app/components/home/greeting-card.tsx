@@ -2,14 +2,49 @@
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { IonIcon } from "@ionic/react";
-import { sunnyOutline, cloudOutline, moonOutline } from "ionicons/icons";
+import { sunnyOutline, cloudOutline, moonOutline, partlySunnyOutline } from "ionicons/icons";
+
+// Warm, engaging subtitles per time block — rotated daily
+const morningSubtitles = [
+  "Start your day — find the perfect service nearby",
+  "Fresh morning, fresh finds! What can we help with?",
+  "Rise and shine! Explore trusted businesses around you",
+  "A new day to discover something great — let's go!",
+  "Morning vibes — top-rated providers are ready for you",
+];
+
+const afternoonSubtitles = [
+  "Need something done? The best providers are a tap away",
+  "Afternoon hustle — find exactly what you're looking for",
+  "Great businesses around you are ready to serve",
+  "Your neighbourhood's finest — just a search away",
+  "Getting things done? Let's find you the right match",
+];
+
+const eveningSubtitles = [
+  "Winding down? Plan ahead with top local services",
+  "Evening calls — discover deals before the day ends",
+  "Relax and browse — tomorrow's appointments start here",
+  "Good finds don't wait — explore what's near you",
+  "End the day right — book a service for tomorrow",
+];
+
+const nightSubtitles = [
+  "Burning the midnight oil? We've got you covered",
+  "Late-night planning — your favourites are saved here",
+  "Night owl? Browse and bookmark for tomorrow",
+  "Quiet hours — perfect time to discover new providers",
+  "Plan ahead — find what you need for the morning",
+];
 
 const getGreeting = () => {
   const h = new Date().getHours();
-  if (h < 12) return { text: "Good morning", icon: sunnyOutline };
-  if (h < 17) return { text: "Good afternoon", icon: cloudOutline };
-  if (h < 21) return { text: "Good evening", icon: sunnyOutline };
-  return { text: "Good night", icon: moonOutline };
+  const dayIndex = new Date().getDate() % 5; // rotate subtitles daily
+
+  if (h < 12) return { text: "Good morning", subtitle: morningSubtitles[dayIndex], icon: sunnyOutline };
+  if (h < 17) return { text: "Good afternoon", subtitle: afternoonSubtitles[dayIndex], icon: partlySunnyOutline };
+  if (h < 21) return { text: "Good evening", subtitle: eveningSubtitles[dayIndex], icon: cloudOutline };
+  return { text: "Good night", subtitle: nightSubtitles[dayIndex], icon: moonOutline };
 };
 
 const GreetingCard = () => {
@@ -33,7 +68,7 @@ const GreetingCard = () => {
             </span>
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            What service do you need today?
+            {greeting.subtitle}
           </p>
         </div>
         <motion.span

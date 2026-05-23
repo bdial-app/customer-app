@@ -432,24 +432,28 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             )}
 
             {/* Top Rated Providers */}
-            <div
-              style={{
-                contentVisibility: "auto",
-                containIntrinsicSize: "auto 280px",
-              }}
-            >
-              <ProviderCardSlider
-                title="Top Rated"
-                subtitle="Highest rated by our community"
-                providers={topRatedProviders}
-                viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=rating&minRating=4`}
-                accentColor="#9C27B0"
-                isLoading={isLoading}
-              />
-            </div>
+            {(isLoading || topRatedProviders.length > 0) && (
+              <>
+                <div
+                  style={{
+                    contentVisibility: "auto",
+                    containIntrinsicSize: "auto 280px",
+                  }}
+                >
+                  <ProviderCardSlider
+                    title="Top Rated"
+                    subtitle="Highest rated by our community"
+                    providers={topRatedProviders}
+                    viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=rating&minRating=4`}
+                    accentColor="#9C27B0"
+                    isLoading={isLoading}
+                  />
+                </div>
 
-            {/* Divider */}
-            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
+                {/* Divider */}
+                <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
+              </>
+            )}
 
             {/* Recently Added — new arrivals */}
             <div

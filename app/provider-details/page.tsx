@@ -212,6 +212,7 @@ export default function ProviderDetailsPage() {
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
+  const [selectedDeal, setSelectedDeal] = useState<typeof activeOffers[number] | null>(null);
 
   // Reset local UI state when navigating to a different provider
   useEffect(() => {
@@ -224,6 +225,7 @@ export default function ProviderDetailsPage() {
     setReviewError("");
     setReviewSuccess(false);
     setReportSheetOpen(false);
+    setSelectedDeal(null);
     scrollContainerRef.current?.scrollTo({ top: 0 });
   }, [id]);
 
@@ -859,9 +861,11 @@ export default function ProviderDetailsPage() {
                 </div>
                 <div className="space-y-2.5">
                   {activeOffers.map((offer) => (
-                    <div
+                    <button
                       key={offer.id}
-                      className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none"
+                      type="button"
+                      onClick={() => setSelectedDeal(offer)}
+                      className="w-full flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none text-left active:scale-[0.98] transition-transform"
                     >
                       {offer.discountValue && (
                         <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shrink-0">
@@ -876,22 +880,83 @@ export default function ProviderDetailsPage() {
                         <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
                           {offer.title}
                         </p>
-                        <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 line-clamp-1">
                           {offer.description}
                         </p>
                       </div>
-                      <span className="text-[10px] text-amber-600 font-semibold whitespace-nowrap">
-                        Ends{" "}
-                        {new Date(offer.endsAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </div>
+                      <IonIcon icon={chevronForwardOutline} className="text-gray-400 dark:text-slate-500 text-sm shrink-0" />
+                    </button>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Deal Detail Bottom Sheet */}
+            <AnimatePresence>
+              {selectedDeal && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 backdrop-blur-sm"
+                  onClick={() => setSelectedDeal(null)}
+                >
+                  <motion.div
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "100%" }}
+                    transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl overflow-hidden max-h-[80vh]"
+                  >
+                    {/* Handle */}
+                    <div className="flex justify-center pt-3 pb-1">
+                      <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
+                    </div>
+
+                    <div className="px-5 pb-6 pt-2 overflow-y-auto max-h-[70vh]">
+                      {/* Discount badge */}
+                      {selectedDeal.discountValue && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 mb-3">
+                          <IonIcon icon={pricetag} className="text-red-500 text-sm" />
+                          <span className="text-sm font-bold text-red-600 dark:text-red-400">
+                            {selectedDeal.discountType === "percentage"
+                              ? `${Number(selectedDeal.discountValue)}% OFF`
+                              : `₹${Number(selectedDeal.discountValue)} OFF`}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Title */}
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        {selectedDeal.title}
+                      </h3>
+
+                      {/* Description */}
+                      {selectedDeal.description && (
+                        <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-4 whitespace-pre-line">
+                          {selectedDeal.description}
+                        </p>
+                      )}
+
+                      {/* Validity */}
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 px-3 py-2.5 rounded-xl">
+                        <IonIcon icon={time} className="text-amber-500 text-sm" />
+                        <span>
+                          Valid until{" "}
+                          {new Date(selectedDeal.endsAt).toLocaleDateString(undefined, {
+                            weekday: "short",
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* About */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
