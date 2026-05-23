@@ -2,9 +2,10 @@ import UIKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
+import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
 
@@ -15,9 +16,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // Set messaging delegate to receive FCM token
         Messaging.messaging().delegate = self
         
+        // Set notification center delegate (required for foreground notification display on iOS 10+)
+        UNUserNotificationCenter.current().delegate = self
+        
         // Register for remote notifications (required for push on iOS)
         application.registerForRemoteNotifications()
         return true
+    }
+
+    // MARK: - UNUserNotificationCenter Delegate
+    
+    // Show notifications even when app is in foreground
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .badge, .sound])
+    }
+    
+    // Handle notification tap
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        // Let Capacitor handle the tap
+        NotificationCenter.default.post(name: NSNotification.Name("CAPNotificationDidReceiveAction"), object: response)
+        completionHandler()
     }
 
     // MARK: - Firebase Messaging Delegate
