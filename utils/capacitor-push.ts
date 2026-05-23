@@ -2,7 +2,9 @@
  * Native push notification utilities using @capacitor/push-notifications.
  * Used only when running inside a Capacitor native shell (Android/iOS).
  */
+import { Capacitor } from '@capacitor/core';
 import { PushNotifications, type Token, type ActionPerformed, type PushNotificationSchema } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 
 export type NativePushTokenResult =
   | { token: string; error: null }
@@ -54,9 +56,14 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
 
     console.log('[NativePush] Setting up registration listeners...');
 
+<<<<<<< HEAD
     // Set up listeners BEFORE calling register() to avoid race condition on iOS
     // (iOS can fire the registration callback synchronously)
     const tokenPromise = new Promise<string>((resolve, reject) => {
+=======
+    // Wait for the registration event to fire with the token
+    const nativeToken = await new Promise<string>((resolve, reject) => {
+>>>>>>> befff7fc630fc59c4c087348441651c762035d83
       let regListener: { remove: () => void } | null = null;
       let errListener: { remove: () => void } | null = null;
 
@@ -86,6 +93,7 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
       }).then((l) => { errListener = l; });
     });
 
+<<<<<<< HEAD
     // Now trigger registration — listeners are already waiting
     console.log('[NativePush] Calling PushNotifications.register()...');
     await PushNotifications.register();
@@ -93,6 +101,22 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
 
     // Wait for the token
     const token = await tokenPromise;
+=======
+    // On iOS, the Capacitor 'registration' event returns the raw APNs device
+    // token. We want an FCM registration token so the backend can send via
+    // Firebase Cloud Messaging — fetch it from the FirebaseMessaging plugin
+    // (Firebase iOS SDK swizzles APNs delivery and maps to an FCM token).
+    let token = nativeToken;
+    if (Capacitor.getPlatform() === 'ios') {
+      try {
+        const { token: fcmToken } = await FirebaseMessaging.getToken();
+        if (fcmToken) token = fcmToken;
+      } catch (err) {
+        console.error('[NativePush] FirebaseMessaging.getToken failed:', err);
+        return { token: null, error: 'Failed to obtain FCM token from Firebase.' };
+      }
+    }
+>>>>>>> befff7fc630fc59c4c087348441651c762035d83
 
     return { token, error: null };
   } catch (error: any) {

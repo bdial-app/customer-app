@@ -146,6 +146,16 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
+"@capacitor-firebase/app@^8.2.0":
+  version "8.2.0"
+  resolved "https://registry.npmjs.org/@capacitor-firebase/app/-/app-8.2.0.tgz"
+  integrity sha512-DnMNGV9zmmRppe+34h395Y/ihFvizQWIulppyxzGsaQwmcgLnny9T8abGAQFpoZaodEv5ETvae5j6luJYhF5kw==
+
+"@capacitor-firebase/messaging@^8.2.0":
+  version "8.2.0"
+  resolved "https://registry.npmjs.org/@capacitor-firebase/messaging/-/messaging-8.2.0.tgz"
+  integrity sha512-zjgvBuJSFfaLVL1sU2zwg68J1nCl+wLvjCNUo5tQJyO8XilUXA0z99BKJx6S6/iSB3+zznxNeoX1Kx54bVpCtg==
+
 "@capacitor/android@^8.3.1":
   version "8.3.1"
   resolved "https://registry.npmjs.org/@capacitor/android/-/android-8.3.1.tgz"
@@ -3632,7 +3642,7 @@ find-up@^5.0.0:
     locate-path "^6.0.0"
     path-exists "^4.0.0"
 
-firebase@^12.12.1:
+firebase@^12.12.1, firebase@^12.6.0:
   version "12.12.1"
   resolved "https://registry.npmjs.org/firebase/-/firebase-12.12.1.tgz"
   integrity sha512-ee7xA+bTJLfjB9BP/8FQr3EkxmpAAGc1lNc5QkWgTDpUw24HYXFPm7FEWRdLtGnygxIdYpFmepSc5VjkI6NHhw==

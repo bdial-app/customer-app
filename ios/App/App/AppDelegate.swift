@@ -10,6 +10,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+<<<<<<< HEAD
         // Initialize Firebase (required for FCM token generation on iOS)
         FirebaseApp.configure()
         print("[Push Debug] ✅ Firebase configured. App bundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")")
@@ -21,6 +22,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         UNUserNotificationCenter.current().delegate = self
         
         // Register for remote notifications (required for push on iOS)
+=======
+        // Register for remote notifications (required for push on iOS).
+        // @capacitor-firebase/app auto-calls FirebaseApp.configure() on plugin load,
+        // so GoogleService-Info.plist is picked up without any manual init here.
+>>>>>>> befff7fc630fc59c4c087348441651c762035d83
         application.registerForRemoteNotifications()
         print("[Push Debug] 📡 Called registerForRemoteNotifications")
         return true
