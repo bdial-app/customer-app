@@ -339,7 +339,10 @@ export const becomeProvider = async (
   if (payload.youtubeHandle) formData.append("youtubeHandle", payload.youtubeHandle);
   if (payload.whatsappNumber) formData.append("whatsappNumber", payload.whatsappNumber);
 
-  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData);
+  const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
+    timeout: 120_000, // 2min — multiple image uploads on mobile networks
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };
 
