@@ -758,10 +758,12 @@ const ProfileCompleteness = ({
   provider,
   stats,
   onNavigate,
+  verificationStatus,
 }: {
   provider: any;
   stats: ProviderStats;
   onNavigate: (subTab: string) => void;
+  verificationStatus: string | null;
 }) => {
   const checks = [
     { label: "Brand name", done: !!provider?.brandName, target: "details" },
@@ -781,6 +783,11 @@ const ProfileCompleteness = ({
       label: "Profile photo",
       done: !!provider?.profilePhotoUrl,
       target: "details",
+    },
+    {
+      label: "Identity verification",
+      done: verificationStatus === "approved",
+      target: "verify",
     },
     {
       label: "At least 1 product",
@@ -1233,6 +1240,10 @@ const ProviderDashboard = ({
     !isApproved && !verificationStatus;
 
   const handleNavigate = (subTab: string) => {
+    if (subTab === "verify") {
+      router.push("/provider-onboarding/verify");
+      return;
+    }
     onNavigateToListings?.(subTab);
   };
 
@@ -1339,6 +1350,7 @@ const ProviderDashboard = ({
         provider={provider}
         stats={providerStats}
         onNavigate={handleNavigate}
+        verificationStatus={verificationStatus}
       />
       <TodayActivity stats={providerStats} />
       {hasActivePlan ? (
