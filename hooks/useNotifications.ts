@@ -23,9 +23,11 @@ const notificationKeys = {
 
 export function useNotifications(page = 1, type?: string, status?: "all" | "read" | "unread") {
   const { userMode } = useAppContext();
+  const user = useAppSelector((state) => state.auth.user);
   return useQuery({
     queryKey: notificationKeys.list(page, type, status, userMode),
     queryFn: () => getNotifications(page, 20, type, status, userMode),
+    enabled: !!user,
   });
 }
 

@@ -30,6 +30,7 @@ import {
   trashOutline,
   moonOutline,
   sunnyOutline,
+  contrastOutline,
   notificationsOutline,
   lockClosedOutline,
   heartOutline,
@@ -224,7 +225,7 @@ const ProfileContent = memo(() => {
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
   const queryClient = useQueryClient();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, mode: themeMode, setTheme: setThemeMode } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
@@ -605,26 +606,30 @@ const ProfileContent = memo(() => {
               onClick={guestAction}
             />
             <MenuRow
-              icon={isDark ? sunnyOutline : moonOutline}
-              iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
-              iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
-              label="Dark Mode"
-              sublabel={isDark ? "On" : "Off"}
+              icon={themeMode === "dark" ? moonOutline : themeMode === "light" ? sunnyOutline : contrastOutline}
+              iconColor={themeMode === "dark" ? "text-indigo-400" : themeMode === "light" ? "text-amber-500" : "text-violet-500"}
+              iconBg={themeMode === "dark" ? "bg-indigo-50" : themeMode === "light" ? "bg-amber-50" : "bg-violet-50"}
+              label="Appearance"
+              sublabel={themeMode === "dark" ? "Dark" : themeMode === "light" ? "Light" : "Auto"}
               trailing={
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTheme();
-                  }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
-                    isDark ? "bg-amber-500" : "bg-slate-200"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                      isDark ? "translate-x-[22px]" : "translate-x-0.5"
-                    }`}
-                  />
+                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-full p-0.5 gap-0.5">
+                  {([
+                    { key: "light" as const, icon: sunnyOutline },
+                    { key: "dark" as const, icon: moonOutline },
+                    { key: "auto" as const, icon: contrastOutline },
+                  ]).map(({ key, icon }) => (
+                    <button
+                      key={key}
+                      onClick={(e) => { e.stopPropagation(); setThemeMode(key); }}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                        themeMode === key
+                          ? "bg-white dark:bg-slate-600 shadow-sm"
+                          : "opacity-50"
+                      }`}
+                    >
+                      <IonIcon icon={icon} className="text-sm" />
+                    </button>
+                  ))}
                 </div>
               }
               onClick={toggleTheme}
@@ -1056,26 +1061,30 @@ const ProfileContent = memo(() => {
               onClick={() => setActivePage("notificationSettings")}
             />
             <MenuRow
-              icon={isDark ? sunnyOutline : moonOutline}
-              iconColor={isDark ? "text-amber-400" : "text-indigo-500"}
-              iconBg={isDark ? "bg-amber-50" : "bg-indigo-50"}
-              label="Dark Mode"
-              sublabel={isDark ? "On" : "Off"}
+              icon={themeMode === "dark" ? moonOutline : themeMode === "light" ? sunnyOutline : contrastOutline}
+              iconColor={themeMode === "dark" ? "text-indigo-400" : themeMode === "light" ? "text-amber-500" : "text-violet-500"}
+              iconBg={themeMode === "dark" ? "bg-indigo-50" : themeMode === "light" ? "bg-amber-50" : "bg-violet-50"}
+              label="Appearance"
+              sublabel={themeMode === "dark" ? "Dark" : themeMode === "light" ? "Light" : "Auto"}
               trailing={
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTheme();
-                  }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
-                    isDark ? "bg-amber-500" : "bg-slate-200"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                      isDark ? "translate-x-[22px]" : "translate-x-0.5"
-                    }`}
-                  />
+                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-full p-0.5 gap-0.5">
+                  {([
+                    { key: "light" as const, icon: sunnyOutline },
+                    { key: "dark" as const, icon: moonOutline },
+                    { key: "auto" as const, icon: contrastOutline },
+                  ]).map(({ key, icon }) => (
+                    <button
+                      key={key}
+                      onClick={(e) => { e.stopPropagation(); setThemeMode(key); }}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                        themeMode === key
+                          ? "bg-white dark:bg-slate-600 shadow-sm"
+                          : "opacity-50"
+                      }`}
+                    >
+                      <IonIcon icon={icon} className="text-sm" />
+                    </button>
+                  ))}
                 </div>
               }
               onClick={toggleTheme}
