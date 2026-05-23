@@ -411,7 +411,7 @@ export default function ProviderDetailsPage() {
     );
   }
 
-  const rating = stats?.rating ?? 0;
+  const rating = Number(stats?.rating) || 0;
   const reviewCount = stats?.reviewCount ?? 0;
   const ratingDist = stats?.ratingDist ?? [0, 0, 0, 0, 0];
   const owner = (provider as any)?.user;
@@ -1287,9 +1287,9 @@ export default function ProviderDetailsPage() {
                 <div className="flex gap-5">
                   <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100 dark:border-slate-700">
                     <span className="text-4xl font-extrabold text-gray-900 dark:text-white leading-none">
-                      {(combinedData?.aggregates?.combinedRating ?? rating).toFixed(1)}
+                      {Number(combinedData?.aggregates?.combinedRating ?? rating).toFixed(1)}
                     </span>
-                    <StarRow rating={Math.round(combinedData?.aggregates?.combinedRating ?? rating)} size={13} />
+                    <StarRow rating={Math.round(Number(combinedData?.aggregates?.combinedRating ?? rating))} size={13} />
                     <span className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">
                       {combinedData?.aggregates?.combinedReviewCount ?? reviewCount} reviews
                     </span>
