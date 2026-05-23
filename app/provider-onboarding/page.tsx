@@ -2065,8 +2065,11 @@ const ProviderOnboardingPage = () => {
                         onChange={(val) => setFieldValue("close_time", val)}
                       />
                     </List>
-                    {touched.close_time && errors.close_time && (
-                      <p className="text-xs text-red-500 font-medium px-5 -mt-1 mb-2">{errors.close_time}</p>
+                    {values.open_time && values.close_time && values.close_time <= values.open_time && (
+                      <div className="flex items-center gap-2 mx-4 mt-1.5 mb-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <IonIcon icon={alertCircleOutline} className="text-red-500 text-base shrink-0" />
+                        <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">Close time must be after open time — business hours cannot overlap</p>
+                      </div>
                     )}
 
                     {/* Online Presence (Optional) */}

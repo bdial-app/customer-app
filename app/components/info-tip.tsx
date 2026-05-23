@@ -18,7 +18,7 @@ interface InfoTipProps {
  */
 export const InfoTip = ({ text, size = 13, className = "" }: InfoTipProps) => {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [pos, setPos] = useState({ top: 0, left: 0, arrowLeft: "50%", placement: "above" as "above" | "below" });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -26,11 +26,31 @@ export const InfoTip = ({ text, size = 13, className = "" }: InfoTipProps) => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const tooltipWidth = 220;
-    let left = rect.left + rect.width / 2 - tooltipWidth / 2;
-    // Keep within viewport
+    const tooltipHeight = 60; // approximate
+    const gap = 8;
+
+    // Center horizontally on the trigger
+    const triggerCenterX = rect.left + rect.width / 2;
+    let left = triggerCenterX - tooltipWidth / 2;
+
+    // Keep within viewport horizontally
     if (left < 8) left = 8;
     if (left + tooltipWidth > window.innerWidth - 8) left = window.innerWidth - tooltipWidth - 8;
-    setPos({ top: rect.top - 6, left });
+
+    // Arrow position relative to tooltip (track where trigger center is)
+    const arrowLeft = `${Math.max(12, Math.min(tooltipWidth - 12, triggerCenterX - left))}px`;
+
+    // Decide above or below based on available space
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    if (spaceAbove >= tooltipHeight + gap) {
+      // Position above the trigger
+      setPos({ top: rect.top - gap, left, arrowLeft, placement: "above" });
+    } else {
+      // Position below the trigger
+      setPos({ top: rect.bottom + gap, left, arrowLeft, placement: "below" });
+    }
   }, []);
 
   const handleToggle = (e: React.MouseEvent | React.TouchEvent) => {
@@ -87,16 +107,26 @@ export const InfoTip = ({ text, size = 13, className = "" }: InfoTipProps) => {
             {open && (
               <motion.div
                 ref={tooltipRef}
-                initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                initial={{ opacity: 0, y: pos.placement === "above" ? 6 : -6, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                exit={{ opacity: 0, y: pos.placement === "above" ? 4 : -4, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
                 className="fixed z-[9999] pointer-events-auto"
-                style={{ top: pos.top, left: pos.left, transform: "translateY(-100%)" }}
+                style={{
+                  top: pos.top,
+                  left: pos.left,
+                  ...(pos.placement === "above" ? { transform: "translateY(-100%)" } : {}),
+                }}
               >
-                <div className="bg-slate-800 dark:bg-slate-700 text-white text-[11.5px] leading-snug px-3 py-2.5 rounded-xl shadow-lg max-w-[220px]">
+                <div className="relative bg-slate-800 dark:bg-slate-700 text-white text-[11.5px] leading-snug px-3 py-2.5 rounded-xl shadow-lg max-w-[220px]">
                   {text}
-                  <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2.5 h-2.5 bg-slate-800 dark:bg-slate-700 rotate-45 rounded-[2px]" />
+                  {/* Arrow pointing to trigger */}
+                  <div
+                    className={`absolute w-2.5 h-2.5 bg-slate-800 dark:bg-slate-700 rotate-45 rounded-[2px] ${
+                      pos.placement === "above" ? "-bottom-1" : "-top-1"
+                    }`}
+                    style={{ left: pos.arrowLeft, transform: "translateX(-50%) rotate(45deg)" }}
+                  />
                 </div>
               </motion.div>
             )}

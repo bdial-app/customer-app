@@ -20,6 +20,7 @@ import {
   navigateOutline,
   searchOutline,
   checkmarkCircle,
+  alertCircleOutline,
   linkOutline,
   logoInstagram,
   logoFacebook,
@@ -781,8 +782,11 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         onChange={(val) => setFieldValue("closeTime", val)}
                       />
                     </List>
-                    {touched.closeTime && errors.closeTime && (
-                      <p className="text-xs text-red-500 font-medium px-5 mt-1">{errors.closeTime}</p>
+                    {values.openTime && values.closeTime && values.closeTime <= values.openTime && (
+                      <div className="flex items-center gap-2 mx-4 mt-1.5 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <IonIcon icon={alertCircleOutline} className="text-red-500 text-base shrink-0" />
+                        <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">Close time must be after open time — business hours cannot overlap</p>
+                      </div>
                     )}
 
                     {/* ── Online Presence ── */}
