@@ -834,7 +834,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                     <WhatsAppPhoneInput
                       value={values.whatsappNumber}
                       onChange={(val) => setFieldValue("whatsappNumber", val)}
-                      error={errors.whatsappNumber}
+                      error={errors.whatsappNumber as string | undefined}
                       touched={touched.whatsappNumber as boolean}
                     />
 
@@ -842,7 +842,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                     <LinkedInInput
                       value={values.linkedinHandle}
                       onChange={(val) => setFieldValue("linkedinHandle", val)}
-                      error={errors.linkedinHandle}
+                      error={errors.linkedinHandle as string | undefined}
                       touched={touched.linkedinHandle as boolean}
                     />
 
