@@ -352,7 +352,7 @@ function LoginContent() {
                   >
                     <PhoneInput
                       name="otp"
-                      placeholder="000 000"
+                      placeholder="Enter 6-digit code"
                       format={(v) => v.replace(/\D/g, "").slice(0, 6)}
                       autoFocus
                     />

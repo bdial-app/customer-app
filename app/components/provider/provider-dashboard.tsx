@@ -429,9 +429,6 @@ const GrowthTips = ({
   const totalPhotos = stats.photos.length;
   const totalProducts = stats.products.length;
   const totalOffers = stats.activeOffers.length;
-  const unrepliedReviews = stats.reviews.filter(
-    (r) => r.status === "active" && !r.replyText,
-  ).length;
   const needsVerification =
     !verificationStatus || verificationStatus === "rejected";
 
@@ -477,15 +474,6 @@ const GrowthTips = ({
       desc: "Attract more customers with special offers",
       priority: "medium" as const,
       action: () => onNavigate("deals"),
-    },
-    unrepliedReviews > 0 && {
-      icon: chatbubbleOutline,
-      title: `Reply to ${unrepliedReviews} review${
-        unrepliedReviews > 1 ? "s" : ""
-      }`,
-      desc: "Responding boosts trust & search ranking",
-      priority: "medium" as const,
-      action: () => onNavigate("reviews"),
     },
     needsVerification && {
       icon: shieldCheckmarkOutline,

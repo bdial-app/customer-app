@@ -790,7 +790,7 @@ const ProviderProductsTab = ({
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Product Name</label>
                       <Field
                         name="name"
-                        placeholder="e.g. Bridal Mehendi Package"
+                        placeholder="e.g. Custom Rida, Bridal Mehendi, AC Repair"
                         className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
                       />
                       <ErrorMessage name="name" component="p" className="text-[10px] text-red-500 mt-1" />
@@ -805,7 +805,7 @@ const ProviderProductsTab = ({
                       <Field
                         name="price"
                         type="number"
-                        placeholder="Leave blank if price varies or not applicable"
+                        placeholder="e.g. 1500 (leave blank if price varies)"
                         className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
                       />
                     </div>
@@ -817,7 +817,7 @@ const ProviderProductsTab = ({
                         as="textarea"
                         name="description"
                         rows={3}
-                        placeholder="What's included, duration, special features..."
+                        placeholder="Describe what's included, delivery time, materials used..."
                         className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors resize-none"
                       />
                     </div>

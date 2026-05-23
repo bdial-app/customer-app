@@ -33,6 +33,7 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
   try {
     // Check current permission status
     const permStatus = await PushNotifications.checkPermissions();
+    console.log('[NativePush] Permission status:', permStatus.receive);
 
     if (permStatus.receive === 'denied') {
       return {
@@ -44,6 +45,7 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
     // Request permission if not yet granted
     if (permStatus.receive !== 'granted') {
       const requestResult = await PushNotifications.requestPermissions();
+      console.log('[NativePush] Permission request result:', requestResult.receive);
       if (requestResult.receive !== 'granted') {
         return {
           token: null,
@@ -52,8 +54,7 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
       }
     }
 
-    // Register with FCM/APNs — this triggers the 'registration' event
-    await PushNotifications.register();
+    console.log('[NativePush] Setting up registration listeners...');
 
     // Wait for the registration event to fire with the token
     const nativeToken = await new Promise<string>((resolve, reject) => {
@@ -67,18 +68,21 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
 
       const timeout = setTimeout(() => {
         cleanup();
+        console.error('[NativePush] ❌ Registration TIMED OUT after 15s - no token received from native');
         reject(new Error('Push registration timed out'));
       }, 15000);
 
       PushNotifications.addListener('registration', (t: Token) => {
         clearTimeout(timeout);
         cleanup();
+        console.log('[NativePush] ✅ Token received:', t.value?.substring(0, 30) + '...');
         resolve(t.value);
       }).then((l) => { regListener = l; });
 
       PushNotifications.addListener('registrationError', (err) => {
         clearTimeout(timeout);
         cleanup();
+        console.error('[NativePush] ❌ Registration ERROR:', JSON.stringify(err));
         reject(new Error(err.error || 'Push registration failed'));
       }).then((l) => { errListener = l; });
     });
@@ -100,7 +104,7 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
 
     return { token, error: null };
   } catch (error: any) {
-    console.error('[NativePush] requestNativePushToken error:', error);
+    console.error('[NativePush] requestNativePushToken FAILED:', error?.message || error);
     return { token: null, error: error?.message || 'Native push setup failed' };
   }
 }

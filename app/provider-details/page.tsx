@@ -976,7 +976,7 @@ export default function ProviderDetailsPage() {
                     )}
                     {provider.linkedinHandle && (
                       <a
-                        href={provider.linkedinHandle.startsWith("http") ? provider.linkedinHandle : `https://linkedin.com/in/${provider.linkedinHandle}`}
+                        href={provider.linkedinHandle.startsWith("http") ? provider.linkedinHandle : `https://linkedin.com/${provider.linkedinHandle}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-1.5"

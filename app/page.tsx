@@ -58,7 +58,16 @@ export default function Home() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const { notify } = useNotification();
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, _setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "home";
+    try {
+      return sessionStorage.getItem("__active_tab") || "home";
+    } catch { return "home"; }
+  });
+  const setActiveTab = useCallback((tab: string) => {
+    _setActiveTab(tab);
+    try { sessionStorage.setItem("__active_tab", tab); } catch {}
+  }, []);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const [analyticsView, setAnalyticsView] = useState<string | null>(null);

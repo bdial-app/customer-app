@@ -283,7 +283,7 @@ const ProviderSponsorTab = () => {
                     <IonIcon icon={ticketOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                     <input
                       type="text"
-                      placeholder="Voucher code"
+                      placeholder="Enter voucher or promo code"
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherResult(null); }}
                       className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-300"

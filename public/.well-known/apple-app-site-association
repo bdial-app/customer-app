@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID.com.tijarah.app",
+        "appID": "L4RFNR4BM8.com.tijarah.app",
         "paths": [
           "/provider-details*",
           "/product-details*",
@@ -19,7 +19,7 @@
   },
   "webcredentials": {
     "apps": [
-      "TEAM_ID.com.tijarah.app"
+      "L4RFNR4BM8.com.tijarah.app"
     ]
   }
 }

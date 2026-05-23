@@ -38,8 +38,6 @@ import {
   logoInstagram,
   logoFacebook,
   logoYoutube,
-  logoWhatsapp,
-  logoLinkedin,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -50,6 +48,8 @@ import TimePicker from "../components/time-picker";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "../components/formik-input";
+import WhatsAppPhoneInput from "../components/whatsapp-phone-input";
+import LinkedInInput from "../components/linkedin-input";
 import { useAppSelector } from "@/hooks/useAppStore";
 import {
   becomeProvider,
@@ -114,8 +114,8 @@ const step1Schema = Yup.object({
   instagram_handle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid Instagram handle").max(30).optional(),
   facebook_handle: Yup.string().max(128).optional(),
   youtube_handle: Yup.string().max(128).optional(),
-  whatsapp_number: Yup.string().matches(/^\+?\d{7,15}$/, "Enter a valid phone number (e.g. +966XXXXXXXXX)").optional(),
-  linkedin_handle: Yup.string().max(128).optional(),
+  whatsapp_number: Yup.string().matches(/^\+\d{7,15}$/, "Enter a valid WhatsApp number").optional(),
+  linkedin_handle: Yup.string().max(128, "Too long").optional(),
 });
 
 const step2Schema = Yup.object({
@@ -878,14 +878,14 @@ const ProductFormCard = ({
         {/* Name */}
         <div>
           <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Product Name *</label>
-          <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehndi Package" maxLength={150}
+          <input type="text" value={product.name} onChange={(e) => onUpdate({ ...product, name: e.target.value })} placeholder="e.g. Bridal Mehendi, Custom Rida Stitching" maxLength={150}
             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
         {/* Description */}
         <div>
           <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Description</label>
-          <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="Brief description of this product or service..." rows={2} maxLength={2000}
+          <textarea value={product.description} onChange={(e) => onUpdate({ ...product, description: e.target.value })} placeholder="What's included, pricing details, turnaround time..." rows={2} maxLength={2000}
             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all resize-none dark:text-white dark:placeholder:text-slate-400" />
         </div>
 
@@ -894,7 +894,7 @@ const ProductFormCard = ({
           <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Price (₹) <span className="normal-case font-normal text-slate-400">— optional</span></label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
-            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="Leave blank if not applicable"
+            <input type="text" inputMode="decimal" value={product.price} onChange={(e) => onUpdate({ ...product, price: e.target.value.replace(/[^\d.]/g, "") })} placeholder="e.g. 500 (leave blank if price varies)"
               className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all dark:text-white dark:placeholder:text-slate-400" />
           </div>
         </div>
@@ -1857,8 +1857,12 @@ const ProviderOnboardingPage = () => {
           );
           const isStep5HasDoc = values.identity_doc instanceof File;
 
+          const hasTimeOverlap = Boolean(
+            values.open_time && values.close_time && values.close_time <= values.open_time
+          );
+
           const canAdvance: Record<StepId, boolean> = {
-            1: isStep1Valid,
+            1: isStep1Valid && !hasTimeOverlap,
             2: isStep2Valid,
             3: true,
             4: true,
@@ -1894,7 +1898,7 @@ const ProviderOnboardingPage = () => {
                         name="brand_name"
                         label="Brand Name"
                         type="text"
-                        placeholder="e.g. Babji's Catering"
+                        placeholder="e.g. Fatema's Tailoring, Husain Electronics"
                       />
                       <FormikInput
                         name="description"
@@ -1907,7 +1911,7 @@ const ProviderOnboardingPage = () => {
                         name="contact_number"
                         label="Contact Number"
                         type="tel"
-                        placeholder="10-digit mobile number"
+                        placeholder="e.g. 98765 43210"
                         formatValue={(val) =>
                           val.replace(/\D/g, "").slice(0, 10)
                         }
@@ -1989,7 +1993,7 @@ const ProviderOnboardingPage = () => {
                           <div className="flex gap-2">
                             <input type="text" inputMode="numeric" value={otpCode} maxLength={6}
                               onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null); }}
-                              placeholder="6-digit OTP"
+                              placeholder="Enter 6-digit code"
                               className="flex-1 px-3 py-2.5 text-sm text-center font-mono tracking-[0.3em] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-all" />
                             <button type="button" disabled={otpCode.length !== 6 || otpVerifying}
                               onClick={() => handleVerifyOtp(otpSentPhone)}
@@ -2065,8 +2069,11 @@ const ProviderOnboardingPage = () => {
                         onChange={(val) => setFieldValue("close_time", val)}
                       />
                     </List>
-                    {touched.close_time && errors.close_time && (
-                      <p className="text-xs text-red-500 font-medium px-5 -mt-1 mb-2">{errors.close_time}</p>
+                    {values.open_time && values.close_time && values.close_time <= values.open_time && (
+                      <div className="flex items-center gap-2 mx-4 mt-1.5 mb-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <IonIcon icon={alertCircleOutline} className="text-red-500 text-base shrink-0" />
+                        <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">Close time must be after open time — business hours cannot overlap</p>
+                      </div>
                     )}
 
                     {/* Online Presence (Optional) */}
@@ -2088,7 +2095,7 @@ const ProviderOnboardingPage = () => {
                             name="website_url"
                             value={values.website_url}
                             onChange={(e) => setFieldValue("website_url", e.target.value)}
-                            placeholder="https://yourbusiness.com"
+                            placeholder="e.g. www.mybusiness.com"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>
@@ -2108,7 +2115,7 @@ const ProviderOnboardingPage = () => {
                               name="instagram_handle"
                               value={values.instagram_handle}
                               onChange={(e) => setFieldValue("instagram_handle", e.target.value.replace(/^@/, "").replace(/[^a-zA-Z0-9._]/g, "").slice(0, 30))}
-                              placeholder="yourhandle"
+                              placeholder="e.g. fatemas_tailoring"
                               className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                             />
                           </div>
@@ -2127,7 +2134,7 @@ const ProviderOnboardingPage = () => {
                             name="facebook_handle"
                             value={values.facebook_handle}
                             onChange={(e) => setFieldValue("facebook_handle", e.target.value)}
-                            placeholder="Page name or URL"
+                            placeholder="e.g. facebook.com/mybusiness"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>
@@ -2145,47 +2152,27 @@ const ProviderOnboardingPage = () => {
                             name="youtube_handle"
                             value={values.youtube_handle}
                             onChange={(e) => setFieldValue("youtube_handle", e.target.value)}
-                            placeholder="@channel or channel URL"
+                            placeholder="e.g. youtube.com/@mybusiness"
                             className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                         </div>
                       </div>
 
                       {/* WhatsApp */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-green-300 dark:focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100 dark:focus-within:ring-green-900/30 transition-all">
-                        <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                          <IonIcon icon={logoWhatsapp} className="text-[#25D366] text-lg" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">WhatsApp</label>
-                          <input
-                            type="tel"
-                            name="whatsapp_number"
-                            value={values.whatsapp_number}
-                            onChange={(e) => setFieldValue("whatsapp_number", e.target.value)}
-                            placeholder="+91 98765 43210"
-                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                          />
-                        </div>
-                      </div>
+                      <WhatsAppPhoneInput
+                        value={values.whatsapp_number}
+                        onChange={(val) => setFieldValue("whatsapp_number", val)}
+                        error={errors.whatsapp_number}
+                        touched={!!values.whatsapp_number}
+                      />
 
                       {/* LinkedIn */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-3 border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                          <IonIcon icon={logoLinkedin} className="text-[#0A66C2] text-lg" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">LinkedIn</label>
-                          <input
-                            type="text"
-                            name="linkedin_handle"
-                            value={values.linkedin_handle}
-                            onChange={(e) => setFieldValue("linkedin_handle", e.target.value)}
-                            placeholder="Profile or company page URL"
-                            className="w-full text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                          />
-                        </div>
-                      </div>
+                      <LinkedInInput
+                        value={values.linkedin_handle}
+                        onChange={(val) => setFieldValue("linkedin_handle", val)}
+                        error={errors.linkedin_handle}
+                        touched={!!values.linkedin_handle}
+                      />
 
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-1">All fields are optional — fill what applies to your business</p>
                     </div>

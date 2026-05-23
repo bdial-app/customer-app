@@ -20,6 +20,7 @@ import {
   navigateOutline,
   searchOutline,
   checkmarkCircle,
+  alertCircleOutline,
   linkOutline,
   logoInstagram,
   logoFacebook,
@@ -33,6 +34,8 @@ import * as Yup from "yup";
 import { List, Button } from "konsta/react";
 import { BottomSheet } from "../bottom-sheet";
 import { FormikInput } from "../formik-input";
+import WhatsAppPhoneInput from "../whatsapp-phone-input";
+import LinkedInInput from "../linkedin-input";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider, useUpdateContactNumber } from "@/hooks/useMyProvider";
 import { useUploadProfileImage } from "@/hooks/usePhotos";
@@ -70,7 +73,8 @@ const detailsSchema = Yup.object({
   instagramHandle: Yup.string().matches(/^[a-zA-Z0-9._]{0,30}$/, "Invalid handle").max(30).nullable(),
   facebookHandle: Yup.string().max(128).nullable(),
   youtubeHandle: Yup.string().max(128).nullable(),
-  whatsappNumber: Yup.string().matches(/^\+?\d{7,15}$/, "Invalid phone number").nullable(),
+  whatsappNumber: Yup.string().matches(/^\+\d{7,15}$/, "Enter a valid WhatsApp number").nullable(),
+  linkedinHandle: Yup.string().max(128, "Too long").nullable(),
 });
 
 const InfoRow = ({
@@ -220,6 +224,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
           facebookHandle: values.facebookHandle?.trim() || null,
           youtubeHandle: values.youtubeHandle?.trim() || null,
           whatsappNumber: values.whatsappNumber?.trim() || null,
+          linkedinHandle: values.linkedinHandle?.trim() || null,
           ...(mapCoords ? { latitude: String(mapCoords.lat), longitude: String(mapCoords.lng) } : {}),
         },
       });
@@ -537,6 +542,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   facebookHandle: (provider as any).facebookHandle || "",
                   youtubeHandle: (provider as any).youtubeHandle || "",
                   whatsappNumber: (provider as any).whatsappNumber || "",
+                  linkedinHandle: (provider as any).linkedinHandle || "",
                 }}
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}
@@ -548,14 +554,14 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         name="brandName"
                         label="Brand Name"
                         type="text"
-                        placeholder="Your business name"
+                        placeholder="e.g. Fatema's Kitchen, Husain Motors"
                         media={<IonIcon icon={storefrontOutline} />}
                       />
                       <FormikInput
                         name="description"
                         label="Description"
                         type="textarea"
-                        placeholder="Tell customers about your business..."
+                        placeholder="What you offer, your experience, why customers love you..."
                         inputClassName="!h-24 resize-none"
                         media={<IonIcon icon={documentTextOutline} />}
                       />
@@ -612,7 +618,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                                   type="tel"
                                   value={newPhoneNumber}
                                   onChange={(e) => setNewPhoneNumber(e.target.value.replace(/[^\d+\s-]/g, "").slice(0, 15))}
-                                  placeholder="+91 98765 43210"
+                                  placeholder="New 10-digit mobile number"
                                   className="w-full mt-1 px-3 py-2.5 text-sm rounded-xl bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-700 focus:border-teal-400 transition-all"
                                 />
 
@@ -776,8 +782,11 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         onChange={(val) => setFieldValue("closeTime", val)}
                       />
                     </List>
-                    {touched.closeTime && errors.closeTime && (
-                      <p className="text-xs text-red-500 font-medium px-5 mt-1">{errors.closeTime}</p>
+                    {values.openTime && values.closeTime && values.closeTime <= values.openTime && (
+                      <div className="flex items-center gap-2 mx-4 mt-1.5 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <IonIcon icon={alertCircleOutline} className="text-red-500 text-base shrink-0" />
+                        <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">Close time must be after open time — business hours cannot overlap</p>
+                      </div>
                     )}
 
                     {/* ── Online Presence ── */}
@@ -795,38 +804,47 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         name="websiteUrl"
                         label="Website"
                         type="url"
-                        placeholder="https://yourbusiness.com"
+                        placeholder="e.g. www.mybusiness.com"
                         media={<IonIcon icon={globeOutline} />}
                       />
                       <FormikInput
                         name="instagramHandle"
                         label="Instagram"
                         type="text"
-                        placeholder="yourhandle"
+                        placeholder="e.g. fatemas_tailoring"
                         media={<IonIcon icon={logoInstagram} />}
                       />
                       <FormikInput
                         name="facebookHandle"
                         label="Facebook"
                         type="text"
-                        placeholder="Page name or URL"
+                        placeholder="e.g. facebook.com/mybusiness"
                         media={<IonIcon icon={logoFacebook} />}
                       />
                       <FormikInput
                         name="youtubeHandle"
                         label="YouTube"
                         type="text"
-                        placeholder="@channel or URL"
+                        placeholder="e.g. youtube.com/@mybusiness"
                         media={<IonIcon icon={logoYoutube} />}
                       />
-                      <FormikInput
-                        name="whatsappNumber"
-                        label="WhatsApp"
-                        type="tel"
-                        placeholder="+966XXXXXXXXX"
-                        media={<IonIcon icon={logoWhatsapp} />}
-                      />
                     </List>
+
+                    {/* WhatsApp with country code picker */}
+                    <WhatsAppPhoneInput
+                      value={values.whatsappNumber}
+                      onChange={(val) => setFieldValue("whatsappNumber", val)}
+                      error={errors.whatsappNumber as string | undefined}
+                      touched={touched.whatsappNumber as boolean}
+                    />
+
+                    {/* LinkedIn with URL normalization */}
+                    <LinkedInInput
+                      value={values.linkedinHandle}
+                      onChange={(val) => setFieldValue("linkedinHandle", val)}
+                      error={errors.linkedinHandle as string | undefined}
+                      touched={touched.linkedinHandle as boolean}
+                    />
 
                     <div className="grid grid-cols-2 gap-3 p-4">
                       <motion.button

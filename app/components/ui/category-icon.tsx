@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { DynamicIcon } from "lucide-react/dynamic";
 import Image from "next/image";
 
@@ -129,12 +130,13 @@ export default function CategoryIcon({
   size = "md",
   className = "",
 }: CategoryIconProps) {
+  const [imgError, setImgError] = useState(false);
   const s = SIZES[size];
   const colorKey = iconColor || colorFromName(name);
   const palette = GRADIENT_PALETTE[colorKey] || GRADIENT_PALETTE.amber;
 
-  // Priority 1: imageUrl — show full image
-  if (imageUrl) {
+  // Priority 1: imageUrl — show full image (with error fallback)
+  if (imageUrl && !imgError) {
     return (
       <div
         className={`${s.container} ${s.rounded} overflow-hidden flex-shrink-0 ${className}`}
@@ -145,13 +147,14 @@ export default function CategoryIcon({
           width={80}
           height={80}
           className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
         />
       </div>
     );
   }
 
-  // Priority 2: icon is a URL
-  if (icon && isUrl(icon)) {
+  // Priority 2: icon is a URL (with error fallback)
+  if (icon && isUrl(icon) && !imgError) {
     return (
       <div
         className={`${s.container} ${s.rounded} overflow-hidden flex-shrink-0 ${className}`}
@@ -162,6 +165,7 @@ export default function CategoryIcon({
           width={80}
           height={80}
           className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
         />
       </div>
     );

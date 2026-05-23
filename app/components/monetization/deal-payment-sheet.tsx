@@ -197,7 +197,7 @@ export function DealPaymentSheet({
                       type="text"
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value); setVoucherResult(null); }}
-                      placeholder="Voucher code"
+                      placeholder="Enter voucher or promo code"
                       className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                     />
                   </div>
