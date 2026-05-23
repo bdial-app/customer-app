@@ -7,7 +7,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Register for remote notifications (required for push on iOS)
+        // Register for remote notifications (required for push on iOS).
+        // @capacitor-firebase/app auto-calls FirebaseApp.configure() on plugin load,
+        // so GoogleService-Info.plist is picked up without any manual init here.
         application.registerForRemoteNotifications()
         return true
     }
