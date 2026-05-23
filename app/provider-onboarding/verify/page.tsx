@@ -54,12 +54,17 @@ function VerifyContent() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [showResubmitForm, setShowResubmitForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getMyProviderStatus()
       .then((res) => {
         setCurrentStatus(res.verificationStatus);
+        if (res.verification?.adminNotes) {
+          setRejectionReason(res.verification.adminNotes);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -187,6 +192,89 @@ function VerifyContent() {
     );
   }
 
+  // Rejected — show reason + resubmit option
+  if (currentStatus === "rejected" && !submitted && !showResubmitForm) {
+    return (
+      <Page>
+        <Navbar
+          title="Identity Verification"
+          leftClassName="w-11"
+          left={
+            <Button clear onClick={() => goBack("/")}>
+              <IonIcon icon={arrowBack} className="w-5 h-5" />
+            </Button>
+          }
+        />
+        <div className="flex flex-col items-center px-6 pt-10 gap-5">
+          {/* Rejection icon */}
+          <div className="p-5 rounded-full bg-red-50 border-2 border-red-200">
+            <IonIcon icon={closeCircle} className="text-5xl text-red-500" />
+          </div>
+
+          {/* Status message */}
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Verification Rejected</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
+              Your submitted document could not be verified. Please review the reason below and resubmit.
+            </p>
+          </div>
+
+          {/* Rejection reason card */}
+          {rejectionReason && (
+            <div className="w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4">
+              <div className="flex items-start gap-2.5">
+                <IonIcon icon={alertCircleOutline} className="text-red-500 text-lg shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-[11px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider mb-1">
+                    Reason for Rejection
+                  </p>
+                  <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
+                    {rejectionReason}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tips for resubmission */}
+          <div className="w-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
+            <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 mb-2">Tips for a successful resubmission:</p>
+            <ul className="space-y-1.5">
+              {[
+                "Make sure the document is clearly readable",
+                "All four corners must be visible in the photo",
+                "Avoid glare, shadows, or blurring",
+                "Name on document should match your profile",
+              ].map((tip, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-amber-500 text-xs mt-0.5">•</span>
+                  <span className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Action buttons */}
+          <div className="w-full space-y-3 mt-2">
+            <button
+              className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm transition-all active:scale-[0.97] shadow-md shadow-violet-200 dark:shadow-violet-900"
+              onClick={() => setShowResubmitForm(true)}
+            >
+              <IonIcon icon={cloudUploadOutline} className="text-lg" />
+              Resubmit Document
+            </button>
+            <button
+              className="w-full flex items-center justify-center h-11 rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-sm transition-all active:scale-[0.97]"
+              onClick={() => goBack("/")}
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </Page>
+    );
+  }
+
   // Success state
   if (submitted) {
     return (
@@ -240,6 +328,19 @@ function VerifyContent() {
       />
 
       <div className="overflow-y-auto max-h-[calc(100vh-120px)] pb-36">
+        {/* Resubmission banner */}
+        {showResubmitForm && (
+          <div className="mx-4 mt-4 mb-1 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-2.5">
+            <IonIcon icon={alertCircleOutline} className="text-amber-500 text-lg shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs text-amber-800 dark:text-amber-300 font-semibold">Resubmitting verification</p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed mt-0.5">
+                Please upload a clear, valid document to complete your verification.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Intro */}
         <div className="mx-4 mt-4 mb-3 p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-2.5">
           <IonIcon icon={shieldCheckmarkOutline} className="text-indigo-500 text-lg shrink-0 mt-0.5" />
