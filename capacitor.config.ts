@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
-  appId: 'com.tijarah.app',
+  appId: 'com.tijarah.appstore',
   appName: 'Tijarah',
   webDir: 'out',
   server: {
