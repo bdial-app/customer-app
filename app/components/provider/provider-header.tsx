@@ -40,14 +40,13 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
 
   if (!provider) return null;
 
-  // If verified but status still says "unverified", treat as active to avoid
-  // showing both "Unverified" and "Verified" badges simultaneously
+  // Verification status takes priority over provider.status for the badge
   let effectiveStatus: string;
-  if (provider.status === "unverified" && verificationStatus === "approved") {
+  if (verificationStatus === "approved") {
     effectiveStatus = "active";
-  } else if (provider.status === "unverified" && verificationStatus === "pending") {
+  } else if (verificationStatus === "pending") {
     effectiveStatus = "verification_in_review";
-  } else if (provider.status === "unverified" && verificationStatus === "rejected") {
+  } else if (verificationStatus === "rejected") {
     effectiveStatus = "rejected";
   } else {
     effectiveStatus = provider.status;
