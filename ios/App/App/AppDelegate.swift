@@ -12,6 +12,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Initialize Firebase (required for FCM token generation on iOS)
         FirebaseApp.configure()
+        print("[Push Debug] ✅ Firebase configured. App bundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")")
         
         // Set messaging delegate to receive FCM token
         Messaging.messaging().delegate = self
@@ -21,6 +22,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
         
         // Register for remote notifications (required for push on iOS)
         application.registerForRemoteNotifications()
+        print("[Push Debug] 📡 Called registerForRemoteNotifications")
         return true
     }
 
@@ -41,14 +43,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     // MARK: - Firebase Messaging Delegate
     
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        // FCM token refreshed — Capacitor push plugin will pick this up via its own listener
         if let token = fcmToken {
-            print("[Firebase] FCM token: \(token.prefix(20))...")
+            print("[Push Debug] ✅ FCM token received: \(token.prefix(30))...")
+        } else {
+            print("[Push Debug] ⚠️ FCM token is nil!")
         }
     }
 
     // Forward APNs token to both Firebase and Capacitor push plugin
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        print("[Push Debug] ✅ APNs device token received: \(tokenString.prefix(20))...")
+        
         // Give Firebase the APNs token so it can generate an FCM token
         Messaging.messaging().apnsToken = deviceToken
         
@@ -57,6 +63,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("[Push Debug] ❌ FAILED to register for remote notifications: \(error.localizedDescription)")
         NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
     }
     
