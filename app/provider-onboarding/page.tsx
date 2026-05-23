@@ -1857,8 +1857,12 @@ const ProviderOnboardingPage = () => {
           );
           const isStep5HasDoc = values.identity_doc instanceof File;
 
+          const hasTimeOverlap = Boolean(
+            values.open_time && values.close_time && values.close_time <= values.open_time
+          );
+
           const canAdvance: Record<StepId, boolean> = {
-            1: isStep1Valid,
+            1: isStep1Valid && !hasTimeOverlap,
             2: isStep2Valid,
             3: true,
             4: true,
