@@ -1,6 +1,6 @@
 import { getTokenSync } from "@/utils/storage";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 const EVENTS_URL = `${API_BASE}/analytics/events`;
 const FLUSH_INTERVAL = 10_000; // 10 seconds
 const MAX_BUFFER = 20;
