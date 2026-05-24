@@ -353,7 +353,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
             {/* Top Products */}
-            {feed?.bestProducts && feed.bestProducts.length > 0 && (
+            {Array.isArray(feed?.bestProducts) && feed.bestProducts.length > 0 && (
               <>
                 <div className="px-5 pt-4 pb-2">
                   <div className="flex items-center justify-between">

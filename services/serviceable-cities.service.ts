@@ -17,7 +17,7 @@ export interface ServiceabilityResult {
 
 export const getServiceableCities = async (): Promise<ServiceableCity[]> => {
   const { data } = await apiClient.get(CONFIG_URLS.SERVICEABLE_CITIES);
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const checkServiceability = async (params: {

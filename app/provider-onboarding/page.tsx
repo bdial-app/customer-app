@@ -1533,7 +1533,6 @@ const ProviderOnboardingPage = () => {
   }, [setProviderStatus]);
 
   const alreadyApplied =
-    providerStatus === "pending" ||
     providerStatus === "in_review" ||
     providerStatus === "approved";
 
@@ -1758,7 +1757,7 @@ const ProviderOnboardingPage = () => {
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
-      setProviderStatus(values.identity_doc ? "pending" : "approved");
+      setProviderStatus(values.identity_doc ? "in_review" : "unverified");
     } catch (err: any) {
       const message =
         err?.response?.data?.message ??
@@ -1789,7 +1788,7 @@ const ProviderOnboardingPage = () => {
   if (alreadyApplied) {
     return (
       <UnderReviewBanner
-        status={providerStatus as "pending" | "in_review" | "approved"}
+        status={providerStatus as "in_review" | "approved"}
         onGoBack={() => goBack("/")}
       />
     );

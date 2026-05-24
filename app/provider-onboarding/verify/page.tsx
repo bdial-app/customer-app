@@ -162,7 +162,7 @@ function VerifyContent() {
   }
 
   // Pending verification
-  if (currentStatus === "pending" && !submitted) {
+  if ((currentStatus === "pending" || currentStatus === "in_review") && !submitted) {
     return (
       <Page>
         <Navbar

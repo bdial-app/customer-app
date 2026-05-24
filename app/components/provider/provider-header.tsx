@@ -44,7 +44,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
   let effectiveStatus: string;
   if (verificationStatus === "approved") {
     effectiveStatus = "active";
-  } else if (verificationStatus === "pending") {
+  } else if (verificationStatus === "in_review") {
     effectiveStatus = "verification_in_review";
   } else if (verificationStatus === "rejected") {
     effectiveStatus = "rejected";
@@ -160,7 +160,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
                   Verified
                 </span>
               )}
-              {verificationStatus === "pending" && (
+              {verificationStatus === "in_review" && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-200 border border-amber-400/20">
                   Pending Verification
                 </span>

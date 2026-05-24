@@ -19,7 +19,7 @@ const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: strin
   const router = useRouter();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
-  const placeholderTexts = prompts && prompts.length > 0
+  const placeholderTexts = Array.isArray(prompts) && prompts.length > 0
     ? prompts.map((p) => `Search "${p}"`)
     : FALLBACK_TEXTS;
 
