@@ -88,7 +88,7 @@ const ProviderCardSlider = ({
           className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {providers.map((provider, idx) => (
+          {(Array.isArray(providers) ? providers : []).map((provider, idx) => (
             <div
               key={provider.id}
               onClick={() =>
