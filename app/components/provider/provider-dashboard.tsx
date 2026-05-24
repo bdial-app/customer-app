@@ -307,6 +307,15 @@ const VerificationStatusCard = ({ status, onResubmit }: { status: string | null;
       text: "text-amber-800 dark:text-amber-300",
       iconColor: "text-amber-500",
     },
+    in_review: {
+      label: "Verification in Review",
+      desc: "Your documents are being reviewed. This usually takes 1-2 business days.",
+      icon: hourglassOutline,
+      bg: "bg-amber-50 dark:bg-amber-900/30",
+      border: "border-amber-200 dark:border-amber-800",
+      text: "text-amber-800 dark:text-amber-300",
+      iconColor: "text-amber-500",
+    },
     approved: {
       label: "Verified Provider",
       desc: "Your identity has been verified. You have a verified badge on your profile.",

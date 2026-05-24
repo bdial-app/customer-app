@@ -791,7 +791,6 @@ const ProfileContent = memo(() => {
 
           {/* Provider Status Cards */}
           {(providerStatus === "approved" ||
-            providerStatus === "pending" ||
             providerStatus === "in_review" ||
             providerStatus === "suspended" ||
             providerStatus === "unverified" ||
@@ -846,7 +845,7 @@ const ProfileContent = memo(() => {
             </motion.div>
           )}
 
-          {providerStatus === "pending" && userMode === "customer" && (
+          {providerStatus === "in_review" && userMode === "customer" && (
             <div className="mx-4 mb-3">
               <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 p-4">
                 <div className="flex items-start gap-3">
