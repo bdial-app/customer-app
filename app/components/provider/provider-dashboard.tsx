@@ -1340,7 +1340,9 @@ const ProviderDashboard = ({
           onDismiss={dismissWarningBanner}
         />
       )}
-
+      {verificationStatus === "rejected" && (
+        <VerificationStatusCard status="rejected" onResubmit={handleVerify} />
+      )}
       {needsVerification && <VerificationPrompt onVerify={handleVerify} />}
       {!isApproved &&
         verificationStatus &&
