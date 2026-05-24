@@ -52,6 +52,7 @@ import { getWarningsUnreadCount, getMyWarnings } from "@/services/report.service
 import ProviderWarningsSheet from "./provider-warnings-sheet";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
+import PullToRefresh from "../pull-to-refresh";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -1247,6 +1248,10 @@ const ProviderDashboard = ({
     onNavigateToListings?.(subTab);
   };
 
+  const handlePullRefresh = async () => {
+    await Promise.all([refetchProvider(), refetchDetails(), refetchWarnings()]);
+  };
+
   const handleVerify = () => router.push("/provider-onboarding/verify");
 
   if (!isOnline && !providerData) {
@@ -1320,6 +1325,7 @@ const ProviderDashboard = ({
   }
 
   return (
+    <PullToRefresh onRefresh={handlePullRefresh}>
     <div className="pb-24">
       <ProviderHeader
         provider={provider}
@@ -1410,6 +1416,7 @@ const ProviderDashboard = ({
         />
       )}
     </div>
+    </PullToRefresh>
   );
 };
 
