@@ -89,7 +89,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const now = Date.now();
     if (now - lastToggleRef.current < 400) return;
     lastToggleRef.current = now;
-    if (providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review" || providerStatus === "suspended" || providerStatus === "unverified") {
+    if (providerStatus === "approved" || providerStatus === "pending" || providerStatus === "in_review" || providerStatus === "suspended" || providerStatus === "unverified" || providerStatus === "rejected") {
       _setUserMode((prev) => {
         const next = prev === "customer" ? "provider" : "customer";
         try { setItemSync(USER_MODE_KEY, next); } catch {}
