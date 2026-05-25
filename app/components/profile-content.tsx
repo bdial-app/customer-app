@@ -1370,8 +1370,9 @@ const ProfileContent = memo(() => {
           {/* Powered by Pronttera */}
           <div className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/80 dark:to-blue-900/20 border border-blue-200/60 dark:border-blue-800/40 rounded-2xl p-5">
             <div className="text-center mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mx-auto mb-2 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/40">
-                <span className="text-lg font-black text-white">P</span>
+              <div className="w-12 h-12 rounded-2xl overflow-hidden mx-auto mb-2 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/40">
+                <img src="/pronttera-dark.png" alt="Pronttera" width={48} height={48} className="block dark:hidden w-full h-full object-contain" />
+                <img src="/pronttera-light.png" alt="Pronttera" width={48} height={48} className="hidden dark:block w-full h-full object-contain" />
               </div>
               <h4 className="text-sm font-black text-slate-800 dark:text-white">
                 Powered by Pronttera

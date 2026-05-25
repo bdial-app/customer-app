@@ -4,6 +4,9 @@ import { Page } from "konsta/react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, globeOutline, mailOutline, callOutline, logoWhatsapp } from "ionicons/icons";
+import Image from "next/image";
+import prontteraDark from "@/assets/pronttera-dark.png";
+import prontteraLight from "@/assets/pronttera-light.png";
 
 export default function AboutUsPage() {
   const { goBack } = useBackNavigation();
@@ -135,8 +138,9 @@ export default function AboutUsPage() {
           {/* Powered by Pronttera */}
           <div className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/80 dark:to-blue-900/20 border border-blue-200/60 dark:border-blue-800/40 rounded-2xl p-5">
             <div className="text-center mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/40">
-                <span className="text-xl font-black text-white">P</span>
+              <div className="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/40">
+                <Image src={prontteraDark} alt="Pronttera" width={56} height={56} className="block dark:hidden w-full h-full object-contain" />
+                <Image src={prontteraLight} alt="Pronttera" width={56} height={56} className="hidden dark:block w-full h-full object-contain" />
               </div>
               <h4 className="text-base font-black text-slate-800 dark:text-white">
                 Powered by Pronttera
