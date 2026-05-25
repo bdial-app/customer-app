@@ -12,7 +12,6 @@ import {
   arrowBack,
   close,
   searchOutline,
-  micOutline,
 } from "ionicons/icons";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -179,11 +178,11 @@ const SearchPageContent = () => {
 
           {/* Search input container */}
           <div className="flex-1 relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center w-5 h-5">
               <IonIcon
                 icon={searchOutline}
                 className={`w-[18px] h-[18px] transition-colors duration-200 ${
-                  isFocused && !committedQuery ? "text-amber-500" : "text-gray-400"
+                  isFocused && !committedQuery ? "text-amber-500" : "text-gray-400 dark:text-slate-500"
                 }`}
               />
             </div>
@@ -206,32 +205,24 @@ const SearchPageContent = () => {
                   handleSubmit();
                 }
               }}
-              className="w-full h-11 pl-10 pr-20 rounded-xl bg-gray-100 dark:bg-slate-700 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
+              className="w-full h-11 pl-10 pr-10 rounded-xl bg-gray-100 dark:bg-slate-700/60 text-[15px] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-amber-400/40 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.08)] transition-all duration-200"
             />
 
-            {/* Right-side icons inside the input */}
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-              {query.length > 0 && phase !== "results" && (
+            {/* Clear button inside input */}
+            {query.length > 0 && phase !== "results" && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
                 <motion.button
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   onClick={handleClear}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 active:bg-gray-300 dark:active:bg-slate-500 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors"
                   aria-label="Clear search"
                 >
-                  <IonIcon icon={close} className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                  <IonIcon icon={close} className="w-3.5 h-3.5 text-gray-500 dark:text-slate-300" />
                 </motion.button>
-              )}
-              {query.length === 0 && (
-                <div className="flex items-center gap-1">
-                  <div className="w-px h-5 bg-gray-200 dark:bg-slate-600" />
-                  <button className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-200 dark:active:bg-slate-600 transition-colors">
-                    <IonIcon icon={micOutline} className="w-[18px] h-[18px] text-gray-400 dark:text-slate-500" />
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Search / Cancel button */}
