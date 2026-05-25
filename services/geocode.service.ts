@@ -31,11 +31,29 @@ export const reverseGeocode = async (
   return data;
 };
 
+// Session token for bundling autocomplete + place details into one billing charge
+let currentSessionToken: string | null = null;
+
+/** Generate a new session token (call when user starts a new search interaction) */
+export const newSearchSession = (): string => {
+  currentSessionToken = crypto.randomUUID();
+  return currentSessionToken;
+};
+
 export const searchGeocode = async (
   query: string,
 ): Promise<SearchGeocodeResult[]> => {
+  // Auto-create session token if none exists
+  if (!currentSessionToken) {
+    newSearchSession();
+  }
   const { data } = await apiClient.get(GEOCODE_URLS.SEARCH, {
-    params: { query: query },
+    params: { query, sessionToken: currentSessionToken },
   });
   return data;
+};
+
+/** Reset session token after user selects a place (session ends) */
+export const endSearchSession = (): void => {
+  currentSessionToken = null;
 };
