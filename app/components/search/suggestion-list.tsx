@@ -14,6 +14,7 @@ import {
   searchOutline,
 } from "ionicons/icons";
 import type { SearchSuggestion } from "@/services/search.service";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 interface Props {
   suggestions: SearchSuggestion[];
@@ -166,7 +167,15 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                 className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-gray-50 dark:active:bg-slate-800 transition-colors"
               >
                 {/* Thumbnail or Icon */}
-                {suggestion.imageUrl ? (
+                {suggestion.type === "category" ? (
+                  <CategoryIcon
+                    icon={suggestion.icon}
+                    iconColor={suggestion.iconColor}
+                    imageUrl={suggestion.imageUrl}
+                    name={suggestion.text}
+                    size="sm"
+                  />
+                ) : suggestion.imageUrl ? (
                   <div className="relative w-10 h-10 flex-shrink-0">
                     <img
                       src={suggestion.imageUrl}
