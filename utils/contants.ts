@@ -10,4 +10,5 @@ export const ROUTE_PATH = {
     SEARCH: "/search",
     DEALS: "/deals",
     CATEGORIES: "/categories",
+    ABOUT_US: "/about-us",
 };
