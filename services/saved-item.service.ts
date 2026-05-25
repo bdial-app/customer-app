@@ -40,7 +40,7 @@ export const toggleSavedItem = async (
 
 export const getSavedItems = async (): Promise<SavedItemData[]> => {
   const { data } = await apiClient.get(SAVED_ITEM_URLS.LIST);
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const getSavedItemIds = async (
@@ -49,7 +49,7 @@ export const getSavedItemIds = async (
   const { data } = await apiClient.get(SAVED_ITEM_URLS.IDS, {
     params: itemType ? { itemType } : undefined,
   });
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const checkSavedItem = async (

@@ -23,12 +23,14 @@ interface ProviderHeaderProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  active: { label: "Active", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800", icon: checkmarkCircle },
-  pending: { label: "Pending", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800", icon: timeOutline },
-  in_review: { label: "In Review", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800", icon: timeOutline },
-  suspended: { label: "Suspended", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800", icon: alertCircleOutline },
-  unverified: { label: "Unverified", color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600", icon: alertCircleOutline },
-  disabled: { label: "Disabled", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800", icon: alertCircleOutline },
+  active: { label: "Active", color: "text-emerald-700 dark:text-white", bg: "bg-emerald-50 dark:bg-emerald-500/30 border-emerald-200 dark:border-emerald-400/40", icon: checkmarkCircle },
+  pending: { label: "In Review", color: "text-amber-700 dark:text-white", bg: "bg-amber-50 dark:bg-amber-500/25 border-amber-200 dark:border-amber-400/40", icon: timeOutline },
+  in_review: { label: "In Review", color: "text-blue-700 dark:text-white", bg: "bg-blue-50 dark:bg-blue-500/25 border-blue-200 dark:border-blue-400/40", icon: timeOutline },
+  suspended: { label: "Suspended", color: "text-red-700 dark:text-white", bg: "bg-red-50 dark:bg-red-500/25 border-red-200 dark:border-red-400/40", icon: alertCircleOutline },
+  unverified: { label: "Unverified", color: "text-slate-600 dark:text-white/80", bg: "bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/20", icon: alertCircleOutline },
+  verification_in_review: { label: "Verification In Review", color: "text-blue-700 dark:text-white", bg: "bg-blue-50 dark:bg-blue-500/25 border-blue-200 dark:border-blue-400/40", icon: timeOutline },
+  rejected: { label: "Verification Rejected", color: "text-red-700 dark:text-white", bg: "bg-red-50 dark:bg-red-500/25 border-red-200 dark:border-red-400/40", icon: alertCircleOutline },
+  disabled: { label: "Disabled", color: "text-red-700 dark:text-white", bg: "bg-red-50 dark:bg-red-500/25 border-red-200 dark:border-red-400/40", icon: alertCircleOutline },
 };
 
 const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: ProviderHeaderProps) => {
@@ -38,12 +40,17 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
 
   if (!provider) return null;
 
-  // If verified but status still says "unverified", treat as active to avoid
-  // showing both "Unverified" and "Verified" badges simultaneously
-  const effectiveStatus =
-    provider.status === "unverified" && verificationStatus === "approved"
-      ? "active"
-      : provider.status;
+  // Verification status takes priority over provider.status for the badge
+  let effectiveStatus: string;
+  if (verificationStatus === "approved") {
+    effectiveStatus = "active";
+  } else if (verificationStatus === "in_review") {
+    effectiveStatus = "verification_in_review";
+  } else if (verificationStatus === "rejected") {
+    effectiveStatus = "rejected";
+  } else {
+    effectiveStatus = provider.status;
+  }
   const status = statusConfig[effectiveStatus] || statusConfig.unverified;
   const initials = (provider.brandName || "?")
     .split(" ")
@@ -153,7 +160,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
                   Verified
                 </span>
               )}
-              {verificationStatus === "pending" && (
+              {verificationStatus === "in_review" && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-200 border border-amber-400/20">
                   Pending Verification
                 </span>

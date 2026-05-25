@@ -791,10 +791,10 @@ const ProfileContent = memo(() => {
 
           {/* Provider Status Cards */}
           {(providerStatus === "approved" ||
-            providerStatus === "pending" ||
             providerStatus === "in_review" ||
             providerStatus === "suspended" ||
-            providerStatus === "unverified") && (
+            providerStatus === "unverified" ||
+            providerStatus === "rejected") && (
             <div className="mx-4 mb-3">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
                 <div>
@@ -845,7 +845,7 @@ const ProfileContent = memo(() => {
             </motion.div>
           )}
 
-          {providerStatus === "pending" && userMode === "customer" && (
+          {providerStatus === "in_review" && userMode === "customer" && (
             <div className="mx-4 mb-3">
               <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 p-4">
                 <div className="flex items-start gap-3">
@@ -868,35 +868,7 @@ const ProfileContent = memo(() => {
             </div>
           )}
 
-          {providerStatus === "rejected" && (
-            <div className="mx-4 mb-3">
-              <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-xl">
-                    <IonIcon
-                      icon={alertCircleOutline}
-                      className="text-xl text-red-600"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-sm text-red-900 dark:text-red-300">
-                      Application Rejected
-                    </div>
-                    <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
-                      Please review your documents and try again.
-                    </div>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setProviderStatus("not_applied")}
-                      className="mt-2 text-xs font-bold text-red-600 underline"
-                    >
-                      Retry Application
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Provider Business Card - shown when in provider mode */}
 

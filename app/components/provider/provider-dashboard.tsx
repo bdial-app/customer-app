@@ -29,6 +29,7 @@ import {
   brushOutline,
   diamondOutline,
   logoGoogle,
+  cloudUploadOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import ProviderHeader from "./provider-header";
@@ -51,6 +52,7 @@ import { getWarningsUnreadCount, getMyWarnings } from "@/services/report.service
 import ProviderWarningsSheet from "./provider-warnings-sheet";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
+import PullToRefresh from "../pull-to-refresh";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -281,7 +283,7 @@ const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
 );
 
 // ─── Verification Status Card ───────────────────────────────────────
-const VerificationStatusCard = ({ status }: { status: string | null }) => {
+const VerificationStatusCard = ({ status, onResubmit }: { status: string | null; onResubmit?: () => void }) => {
   if (!status) return null;
 
   const config: Record<
@@ -305,6 +307,15 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
       text: "text-amber-800 dark:text-amber-300",
       iconColor: "text-amber-500",
     },
+    in_review: {
+      label: "Verification in Review",
+      desc: "Your documents are being reviewed. This usually takes 1-2 business days.",
+      icon: hourglassOutline,
+      bg: "bg-amber-50 dark:bg-amber-900/30",
+      border: "border-amber-200 dark:border-amber-800",
+      text: "text-amber-800 dark:text-amber-300",
+      iconColor: "text-amber-500",
+    },
     approved: {
       label: "Verified Provider",
       desc: "Your identity has been verified. You have a verified badge on your profile.",
@@ -316,7 +327,7 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
     },
     rejected: {
       label: "Verification Rejected",
-      desc: "Your documents were not accepted. Please resubmit with valid documents.",
+      desc: "Your documents were not accepted. Tap below to resubmit.",
       icon: closeCircleOutline,
       bg: "bg-red-50 dark:bg-red-900/30",
       border: "border-red-200 dark:border-red-800",
@@ -344,6 +355,15 @@ const VerificationStatusCard = ({ status }: { status: string | null }) => {
             >
               {cfg.desc}
             </p>
+            {status === "rejected" && onResubmit && (
+              <button
+                onClick={onResubmit}
+                className="mt-2.5 flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 text-white text-[11px] font-bold rounded-lg active:scale-95 transition-transform shadow-sm"
+              >
+                <IonIcon icon={cloudUploadOutline} className="text-sm" />
+                Resubmit Document
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -748,10 +768,12 @@ const ProfileCompleteness = ({
   provider,
   stats,
   onNavigate,
+  verificationStatus,
 }: {
   provider: any;
   stats: ProviderStats;
   onNavigate: (subTab: string) => void;
+  verificationStatus: string | null;
 }) => {
   const checks = [
     { label: "Brand name", done: !!provider?.brandName, target: "details" },
@@ -771,6 +793,11 @@ const ProfileCompleteness = ({
       label: "Profile photo",
       done: !!provider?.profilePhotoUrl,
       target: "details",
+    },
+    {
+      label: "Identity verification",
+      done: verificationStatus === "approved",
+      target: "verify",
     },
     {
       label: "At least 1 product",
@@ -1218,12 +1245,20 @@ const ProviderDashboard = ({
     activeOffers: details?.activeOffers ?? [],
   };
 
-  // Only show "Get Verified" prompt if NOT already approved and no verification submitted
+  // Only show "Get Verified" prompt if NOT already approved and no verification submitted at all
   const needsVerification =
-    !isApproved && (!verificationStatus || verificationStatus === "rejected");
+    !isApproved && !verificationStatus;
 
   const handleNavigate = (subTab: string) => {
+    if (subTab === "verify") {
+      router.push("/provider-onboarding/verify");
+      return;
+    }
     onNavigateToListings?.(subTab);
+  };
+
+  const handlePullRefresh = async () => {
+    await Promise.all([refetchProvider(), refetchDetails(), refetchWarnings()]);
   };
 
   const handleVerify = () => router.push("/provider-onboarding/verify");
@@ -1299,6 +1334,7 @@ const ProviderDashboard = ({
   }
 
   return (
+    <PullToRefresh onRefresh={handlePullRefresh}>
     <div className="pb-24">
       <ProviderHeader
         provider={provider}
@@ -1313,10 +1349,14 @@ const ProviderDashboard = ({
           onDismiss={dismissWarningBanner}
         />
       )}
+      {verificationStatus === "rejected" && (
+        <VerificationStatusCard status="rejected" onResubmit={handleVerify} />
+      )}
       {needsVerification && <VerificationPrompt onVerify={handleVerify} />}
       {!isApproved &&
         verificationStatus &&
         verificationStatus !== "approved" &&
+        verificationStatus !== "rejected" &&
         !needsVerification && (
           <VerificationStatusCard status={verificationStatus} />
         )}
@@ -1325,6 +1365,7 @@ const ProviderDashboard = ({
         provider={provider}
         stats={providerStats}
         onNavigate={handleNavigate}
+        verificationStatus={verificationStatus}
       />
       <TodayActivity stats={providerStats} />
       {hasActivePlan ? (
@@ -1384,6 +1425,7 @@ const ProviderDashboard = ({
         />
       )}
     </div>
+    </PullToRefresh>
   );
 };
 

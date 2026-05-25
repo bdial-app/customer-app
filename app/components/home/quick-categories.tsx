@@ -55,7 +55,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
   const maxDisplay = isWide ? 9 : 4;
 
   let displayCategories: any[];
-  if (personalizedCategories?.length) {
+  if (Array.isArray(personalizedCategories) && personalizedCategories.length > 0) {
     const catMap = new Map(categories.map((c: any) => [c.id, c]));
     const personalized = personalizedCategories
       .map((pc) => catMap.get(pc.id))
