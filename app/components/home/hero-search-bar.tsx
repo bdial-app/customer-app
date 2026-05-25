@@ -1,6 +1,6 @@
 "use client";
 import { IonIcon } from "@ionic/react";
-import { search, micOutline } from "ionicons/icons";
+import { search } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -67,8 +67,6 @@ const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: strin
             </motion.span>
           </AnimatePresence>
         </div>
-        <div className="w-px h-4 bg-white/10" />
-        <IonIcon icon={micOutline} className="text-lg text-white/30" />
       </div>
     </motion.div>
   );
