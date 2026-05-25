@@ -1367,13 +1367,36 @@ const ProfileContent = memo(() => {
             </div>
           </div>
 
+          {/* Powered by Pronttera */}
+          <div className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/80 dark:to-blue-900/20 border border-blue-200/60 dark:border-blue-800/40 rounded-2xl p-5">
+            <div className="text-center mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mx-auto mb-2 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/40">
+                <span className="text-lg font-black text-white">P</span>
+              </div>
+              <h4 className="text-sm font-black text-slate-800 dark:text-white">
+                Powered by Pronttera
+              </h4>
+            </div>
+            <p className="text-[12px] text-center text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+              Tijarah is a digital product owned, designed, and developed by <strong className="text-blue-700 dark:text-blue-400">Pronttera</strong>.
+            </p>
+            <a
+              href="https://www.pronttera.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-[12px] font-semibold text-blue-600 dark:text-blue-400"
+            >
+              www.pronttera.com
+            </a>
+          </div>
+
           {/* Footer */}
           <div className="text-center pt-2 space-y-1">
             <p className="text-[11px] text-slate-400">
-              Tijarah (BohriConnect) · Pune, Maharashtra, India
+              Tijarah (BohriConnect) · A Pronttera Digital Product
             </p>
             <p className="text-[11px] text-slate-400">
-              © {new Date().getFullYear()} Tijarah. All rights reserved.
+              © {new Date().getFullYear()} Pronttera. All rights reserved.
             </p>
           </div>
         </div>
@@ -1393,7 +1416,7 @@ const ProfileContent = memo(() => {
           </div>
 
           <p>
-            Welcome to Tijarah (BohriConnect). These Terms govern your use of
+            Welcome to Tijarah. These Terms govern your use of
             the Tijarah app and all related services. By using Tijarah, you
             confirm you have read, understood, and agreed to these Terms.
           </p>
