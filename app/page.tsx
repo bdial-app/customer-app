@@ -238,9 +238,6 @@ export default function Home() {
     >
       {/* Tab panels — absolute inset-0, each is its own scroll container */}
       <TabPanel id="home" activeTab={activeTab}>
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-999 bg-black text-white text-xs font-bold px-3 py-1 rounded-full">
-          {process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ? `ENV is here: ${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}` : "ENV is not here"}
-        </div>
         {userMode === "customer" && <GeoLocation />}
         {userMode === "customer" ? (
           <UserHome isServiceable={isServiceable} selectedCity={selectedCity} />
