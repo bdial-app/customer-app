@@ -11,6 +11,9 @@ const config: CapacitorConfig = {
     iosScheme: 'https',
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
     PushNotifications: {
       // Show push notifications when app is in foreground
       presentationOptions: ['badge', 'sound', 'alert'],

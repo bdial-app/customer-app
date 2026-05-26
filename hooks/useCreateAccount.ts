@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
-import { useSendOtp, useRegistrationSendOtp, useVerifyOtp, useCreateAccountMutation } from "./useAuth";
+import {
+  useSendOtp,
+  useRegistrationSendOtp,
+  useVerifyOtp,
+  useCreateAccountMutation,
+} from "./useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
 import { getCurrentPosition } from "@/utils/geolocation";
 
@@ -35,7 +40,10 @@ export const useCreateAccount = (initialMobile?: string) => {
 
   const requestLocation = useCallback(async () => {
     try {
-      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const pos = await getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
       setLocation({ lat: pos.latitude, lng: pos.longitude });
       notify({
         title: "Location Secured",
@@ -62,7 +70,6 @@ export const useCreateAccount = (initialMobile?: string) => {
     [],
   );
 
-
   const sendOtpMutation = useSendOtp();
   const registrationSendOtpMutation = useRegistrationSendOtp();
   const verifyOtpMutation = useVerifyOtp();
@@ -80,23 +87,28 @@ export const useCreateAccount = (initialMobile?: string) => {
   useEffect(() => {
     if (!initialMobile || autoSentRef.current) return;
     autoSentRef.current = true;
-    registrationSendOtpMutation.mutateAsync({ mobileNumber: initialMobile }).then((res) => {
-      const otp: string | undefined = res?.data?.otp;
-      notify({
-        title: "OTP Sent",
-        subtitle: otp ? `Your code: ${otp}` : "Check your messages",
-        variant: "success",
-        duration: 10000,
+    registrationSendOtpMutation
+      .mutateAsync({ mobileNumber: initialMobile })
+      .then((res) => {
+        const otp: string | undefined = res?.data?.otp;
+        notify({
+          title: "OTP Sent",
+          subtitle: otp ? `Your code: ${otp}` : "Check your messages",
+          variant: "success",
+          duration: 10000,
+        });
+        startCooldown();
+      })
+      .catch((err: any) => {
+        notify({
+          title: "Error",
+          subtitle:
+            err?.response?.data?.message ??
+            "Failed to send OTP. Please try again.",
+          variant: "error",
+        });
       });
-      startCooldown();
-    }).catch((err: any) => {
-      notify({
-        title: "Error",
-        subtitle: err?.response?.data?.message ?? "Failed to send OTP. Please try again.",
-        variant: "error",
-      });
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMobile]);
 
   const handleBack = (setFieldValue: (field: string, value: any) => void) => {
@@ -126,11 +138,15 @@ export const useCreateAccount = (initialMobile?: string) => {
 
     try {
       if (currentStep === "mobile") {
-        const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: values.mobile });
+        const res = await registrationSendOtpMutation.mutateAsync({
+          mobileNumber: values.mobile,
+        });
         const otp: string | undefined = res?.data?.otp;
         notify({
           title: "OTP Sent",
-          subtitle: otp ? `Your code: ${otp}` : "OTP sent to your mobile number!",
+          subtitle: otp
+            ? `Your code: ${otp}`
+            : "OTP sent to your mobile number!",
           variant: "success",
           duration: 10000,
         });
@@ -155,10 +171,11 @@ export const useCreateAccount = (initialMobile?: string) => {
         }
       }
     } catch (err: any) {
+      console.log("Error in handleNext:", err.response);
       notify({
         title: "Error",
-        subtitle:
-          err?.response?.data?.message ?? "Something went wrong. Please retry.",
+        subtitle: JSON.stringify(err?.response || err) || "Error",
+
         variant: "error",
       });
     }
@@ -203,7 +220,9 @@ export const useCreateAccount = (initialMobile?: string) => {
   ) => {
     if (resendCooldown > 0) return;
     try {
-      const res = await registrationSendOtpMutation.mutateAsync({ mobileNumber: mobile });
+      const res = await registrationSendOtpMutation.mutateAsync({
+        mobileNumber: mobile,
+      });
       const otp: string | undefined = res?.data?.otp;
       setFieldValue("otp", "");
       notify({

@@ -114,6 +114,7 @@ function LoginContent() {
   const googleMutation = useGoogleSignIn();
 
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [debugError, setDebugError] = useState<string | null>(null);
 
   // Resend countdown timer
   useEffect(() => {
@@ -195,9 +196,10 @@ function LoginContent() {
           variant: "warning",
         });
       } else {
+        setDebugError(JSON.stringify(err?.response || err, null, 2));
         notify({
           title: "Error",
-          subtitle: data?.message ?? "Something went wrong",
+          subtitle: err?.response?.data?.message || "Something went wrong",
           variant: "error",
         });
       }
@@ -433,6 +435,13 @@ function LoginContent() {
                 {busy ? <Spinner /> : step === "mobile" ? "Continue" : "Verify"}
               </button>
 
+              {/* ── Debug error ── */}
+              {debugError && (
+                <pre className="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-2xs leading-relaxed overflow-auto max-h-48 whitespace-pre-wrap break-all">
+                  {debugError}
+                </pre>
+              )}
+
               {/* ── Divider ── */}
               {SHOW_SSO_BUTTONS && step === "mobile" && (
                 <div className="flex items-center gap-3 my-6">
@@ -504,7 +513,7 @@ function LoginContent() {
                     Sign up
                   </Link>
                 </p>
-                <p className="text-[10px] text-gray-300 dark:text-slate-600 mt-3 leading-relaxed">
+                <p className="text-2xs text-gray-300 dark:text-slate-600 mt-3 leading-relaxed">
                   By continuing you agree to our Terms & Privacy Policy
                 </p>
               </div>
