@@ -85,6 +85,9 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
         console.error('[NativePush] ❌ Registration ERROR:', JSON.stringify(err));
         reject(new Error(err.error || 'Push registration failed'));
       }).then((l) => { errListener = l; });
+
+      // Trigger FCM registration — fires 'registration' or 'registrationError' event
+      PushNotifications.register().catch(reject);
     });
 
     // On iOS, the Capacitor 'registration' event returns the raw APNs device
