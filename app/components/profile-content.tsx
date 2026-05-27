@@ -73,6 +73,8 @@ import {
   pauseMyAccount,
   exportMyData,
 } from "@/services/user.service";
+import { unregisterDevice } from "@/services/notification.service";
+import { setFcmToken } from "@/store/slices/notificationSlice";
 import {
   submitBugReport,
   BUG_CATEGORY_LABELS,
@@ -222,6 +224,7 @@ const ProfileContent = memo(() => {
   } = useAppContext();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user as any);
+  const fcmToken = useAppSelector((state) => state.notification.fcmToken);
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
   const queryClient = useQueryClient();
@@ -366,6 +369,10 @@ const ProfileContent = memo(() => {
   };
 
   const handleLogout = () => {
+    if (fcmToken) {
+      unregisterDevice(fcmToken).catch(() => {});
+      dispatch(setFcmToken(null));
+    }
     removeItemSync("user");
     removeItemSync("token");
     dispatch(clearUser());
@@ -386,6 +393,10 @@ const ProfileContent = memo(() => {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
+      if (fcmToken) {
+        unregisterDevice(fcmToken).catch(() => {});
+        dispatch(setFcmToken(null));
+      }
       await deleteMyAccount();
       removeItemSync("user");
       removeItemSync("token");
@@ -415,6 +426,10 @@ const ProfileContent = memo(() => {
   const handlePauseAccount = async () => {
     setIsPausing(true);
     try {
+      if (fcmToken) {
+        unregisterDevice(fcmToken).catch(() => {});
+        dispatch(setFcmToken(null));
+      }
       await pauseMyAccount();
       removeItemSync("user");
       removeItemSync("token");
