@@ -11,6 +11,8 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AppToast } from "./components/app-toast";
 import { hydrateAuth, clearUser, setProfile } from "@/store/slices/authSlice";
+import { setFcmToken } from "@/store/slices/notificationSlice";
+import { unregisterDevice } from "@/services/notification.service";
 import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent, isNetworkError } from "@/utils/axios";
@@ -283,6 +285,11 @@ function AccountPausedHandler() {
   }, [setProviderStatus, setUserMode]);
 
   const handleDismiss = useCallback(() => {
+    const fcmToken = store.getState().notification.fcmToken;
+    if (fcmToken) {
+      unregisterDevice(fcmToken).catch(() => {});
+      store.dispatch(setFcmToken(null));
+    }
     removeItemSync("user");
     removeItemSync("token");
     store.dispatch(clearUser());

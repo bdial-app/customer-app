@@ -1757,7 +1757,12 @@ const ProviderOnboardingPage = () => {
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
-      setProviderStatus(values.identity_doc ? "in_review" : "unverified");
+      if (values.identity_doc) {
+        setProviderStatus("in_review");
+      } else {
+        setProviderStatus("unverified");
+        router.replace("/provider-onboarding/verify");
+      }
     } catch (err: any) {
       const message =
         err?.response?.data?.message ??
@@ -1779,6 +1784,57 @@ const ProviderOnboardingPage = () => {
         <div className="flex flex-col items-center justify-center min-h-[70vh] gap-3">
           <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
           <p className="text-sm text-slate-400">Checking your status...</p>
+        </div>
+      </Page>
+    );
+  }
+
+  // Already registered but skipped verification — send them to the verify page
+  if (providerStatus === "unverified") {
+    return (
+      <Page>
+        <Navbar
+          title="Become a Provider"
+          leftClassName="w-11"
+          left={
+            <Button clear onClick={() => goBack("/")}>
+              <IonIcon icon={arrowBack} className="w-5 h-5" />
+            </Button>
+          }
+        />
+        <div className="flex flex-col items-center px-6 pt-10 gap-6">
+          <div className="p-5 rounded-full border-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+            <IonIcon icon={shieldCheckmarkOutline} className="text-5xl text-amber-500" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">You&apos;re Already Registered!</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
+              Your provider account has been created. Complete your identity verification to get better visibility and earn customer trust.
+            </p>
+          </div>
+          <div className="w-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-2xl p-3 flex items-start gap-2">
+            <IonIcon icon={informationCircleOutline} className="text-amber-500 text-lg shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+              Verified providers appear higher in search results and earn more customer trust.
+            </p>
+          </div>
+          <div className="w-full flex flex-col gap-3 mt-2">
+            <button
+              type="button"
+              onClick={() => router.push("/provider-onboarding/verify")}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-violet-600 active:bg-violet-700 transition-colors shadow-md shadow-violet-200/30 text-white font-semibold text-[15px]"
+            >
+              <IonIcon icon={shieldCheckmarkOutline} className="text-white text-xl" />
+              Complete Verification
+            </button>
+            <button
+              type="button"
+              onClick={() => goBack("/")}
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-medium text-sm active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
+            >
+              Skip for Now
+            </button>
+          </div>
         </div>
       </Page>
     );
