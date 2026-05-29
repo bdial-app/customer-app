@@ -11,6 +11,8 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AppToast } from "./components/app-toast";
 import { hydrateAuth, clearUser, setProfile } from "@/store/slices/authSlice";
+import { setFcmToken } from "@/store/slices/notificationSlice";
+import { unregisterDevice } from "@/services/notification.service";
 import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent, isNetworkError } from "@/utils/axios";
@@ -34,6 +36,7 @@ import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
+import LocationDeniedSheet from "./components/location-denied-sheet";
 import SmartAppBanner from "./components/smart-app-banner";
 import { initSentry } from "@/utils/sentry";
 import { hydrateStorageCache, removeItemSync } from "@/utils/storage";
@@ -283,6 +286,11 @@ function AccountPausedHandler() {
   }, [setProviderStatus, setUserMode]);
 
   const handleDismiss = useCallback(() => {
+    const fcmToken = store.getState().notification.fcmToken;
+    if (fcmToken) {
+      unregisterDevice(fcmToken).catch(() => {});
+      store.dispatch(setFcmToken(null));
+    }
     removeItemSync("user");
     removeItemSync("token");
     store.dispatch(clearUser());
@@ -393,6 +401,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <InappropriateContentHandler />
                   <AccountPausedHandler />
                   <AuthGateSheet />
+                  <LocationDeniedSheet />
                   {children}
                   <SmartAppBanner />
                   </MaintenanceGate>

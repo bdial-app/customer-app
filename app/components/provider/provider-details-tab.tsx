@@ -187,11 +187,14 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const handleDetectGPS = useCallback(async () => {
     setIsDetectingLocation(true);
     try {
-      const { getCurrentPosition } = await import("@/utils/geolocation");
-      const pos = await getCurrentPosition({ timeout: 10000, enableHighAccuracy: true });
+      const { requestLocationOrPrompt } = await import("@/utils/geolocation");
+      const pos = await requestLocationOrPrompt("Detecting your location", { timeout: 10000, enableHighAccuracy: true });
       handleMapSelect(pos.latitude, pos.longitude);
-    } catch {
-      alert("Could not detect location. Please allow location access and try again.");
+    } catch (err: any) {
+      const { LOCATION_PERMISSION_DENIED } = await import("@/utils/geolocation");
+      if (err?.code !== LOCATION_PERMISSION_DENIED) {
+        alert("Could not detect location. Please try again in an open area.");
+      }
     } finally {
       setIsDetectingLocation(false);
     }
@@ -547,25 +550,65 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}
               >
-                {({ isValid, dirty, isSubmitting, setFieldValue, values, touched, errors }) => (
+                {({ isValid, dirty, isSubmitting, setFieldValue, setFieldTouched, values, touched, errors }) => (
                   <Form>
-                    <List strongIos insetIos className="!my-0">
-                      <FormikInput
-                        name="brandName"
-                        label="Brand Name"
-                        type="text"
-                        placeholder="e.g. Fatema's Kitchen, Husain Motors"
-                        media={<IonIcon icon={storefrontOutline} />}
-                      />
-                      <FormikInput
-                        name="description"
-                        label="Description"
-                        type="textarea"
-                        placeholder="What you offer, your experience, why customers love you..."
-                        inputClassName="!h-24 resize-none"
-                        media={<IonIcon icon={documentTextOutline} />}
-                      />
-                    </List>
+                    {/* ── Brand Name ── */}
+                    <div className="px-4 pt-4 mb-3">
+                      <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                        Brand Name
+                      </label>
+                      <div className={`flex items-center gap-0 bg-white dark:bg-slate-800 rounded-2xl border shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all overflow-hidden ${
+                        touched.brandName && errors.brandName
+                          ? "border-red-300 dark:border-red-600 ring-2 ring-red-100 dark:ring-red-900/30"
+                          : "border-slate-100 dark:border-slate-700 focus-within:border-teal-300 dark:focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100 dark:focus-within:ring-teal-900/30"
+                      }`}>
+                        <div className="pl-3 pr-2 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
+                            <IonIcon icon={storefrontOutline} className="text-teal-600 text-base" />
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={values.brandName}
+                          onChange={(e) => setFieldValue("brandName", e.target.value)}
+                          onBlur={() => setFieldTouched("brandName", true)}
+                          placeholder="e.g. Fatema's Kitchen, Husain Motors"
+                          className="flex-1 min-w-0 px-1.5 py-3.5 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                        />
+                      </div>
+                      {touched.brandName && errors.brandName && (
+                        <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 ml-1 font-medium">{errors.brandName as string}</p>
+                      )}
+                    </div>
+
+                    {/* ── Description ── */}
+                    <div className="px-4 mb-3">
+                      <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                        Description
+                      </label>
+                      <div className={`flex items-start gap-0 bg-white dark:bg-slate-800 rounded-2xl border shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all overflow-hidden ${
+                        touched.description && errors.description
+                          ? "border-red-300 dark:border-red-600 ring-2 ring-red-100 dark:ring-red-900/30"
+                          : "border-slate-100 dark:border-slate-700 focus-within:border-teal-300 dark:focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100 dark:focus-within:ring-teal-900/30"
+                      }`}>
+                        <div className="pl-3 pr-2 pt-3.5 flex items-start justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
+                            <IonIcon icon={documentTextOutline} className="text-teal-600 text-base" />
+                          </div>
+                        </div>
+                        <textarea
+                          value={values.description}
+                          onChange={(e) => setFieldValue("description", e.target.value)}
+                          onBlur={() => setFieldTouched("description", true)}
+                          placeholder="What you offer, your experience, why customers love you..."
+                          rows={3}
+                          className="flex-1 min-w-0 px-1.5 py-3.5 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none"
+                        />
+                      </div>
+                      {touched.description && errors.description && (
+                        <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 ml-1 font-medium">{errors.description as string}</p>
+                      )}
+                    </div>
 
                     {/* ── Contact Number (OTP-protected) ── */}
                     <div className="px-4 pt-3 pb-2">
@@ -727,39 +770,36 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                       </p>
                     </div>
 
-                    {/* Address fields (readonly, auto-filled from map) */}
-                    <List strongIos insetIos className="!my-0">
-                      <FormikInput
-                        name="address"
-                        label="Address"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
-                        media={<IonIcon icon={locationOutline} />}
-                      />
-                      <FormikInput
-                        name="city"
-                        label="City"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
-                        media={<IonIcon icon={mapOutline} />}
-                      />
-                      <FormikInput
-                        name="area"
-                        label="Area"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
-                      />
-                      <FormikInput
-                        name="pincode"
-                        label="Pincode"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
-                      />
-                    </List>
+                    {/* Address fields — auto-filled from map, display-only */}
+                    <div className="px-4 mb-3">
+                      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+                        {[
+                          { label: "Address", value: values.address, icon: locationOutline },
+                          { label: "City", value: values.city, icon: mapOutline },
+                          { label: "Area", value: values.area, icon: mapOutline },
+                          { label: "Pincode", value: values.pincode, icon: null },
+                        ].map((row, i, arr) => (
+                          <div
+                            key={row.label}
+                            className={`flex items-start gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b border-slate-50 dark:border-slate-700/60" : ""}`}
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                              <IonIcon icon={row.icon ?? mapOutline} className="text-slate-400 text-xs" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">{row.label}</p>
+                              <p className={`text-[13px] font-medium leading-snug ${row.value ? "text-slate-800 dark:text-white" : "text-slate-300 dark:text-slate-600 italic"}`}>
+                                {row.value || "Auto-filled from map"}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1.5 ml-1 flex items-center gap-1">
+                        <IonIcon icon={mapOutline} className="text-[10px]" />
+                        Move the map pin above to update your location
+                      </p>
+                    </div>
 
                     {/* ── Operating Hours with TimePicker ── */}
                     <div className="px-4 pt-2 pb-1">
@@ -799,36 +839,116 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                         <span className="text-[9px] text-slate-400 ml-auto">Optional</span>
                       </div>
                     </div>
-                    <List strongIos insetIos className="!my-0">
-                      <FormikInput
-                        name="websiteUrl"
-                        label="Website"
-                        type="url"
-                        placeholder="e.g. www.mybusiness.com"
-                        media={<IonIcon icon={globeOutline} />}
-                      />
-                      <FormikInput
-                        name="instagramHandle"
-                        label="Instagram"
-                        type="text"
-                        placeholder="e.g. fatemas_tailoring"
-                        media={<IonIcon icon={logoInstagram} />}
-                      />
-                      <FormikInput
-                        name="facebookHandle"
-                        label="Facebook"
-                        type="text"
-                        placeholder="e.g. facebook.com/mybusiness"
-                        media={<IonIcon icon={logoFacebook} />}
-                      />
-                      <FormikInput
-                        name="youtubeHandle"
-                        label="YouTube"
-                        type="text"
-                        placeholder="e.g. youtube.com/@mybusiness"
-                        media={<IonIcon icon={logoYoutube} />}
-                      />
-                    </List>
+                    {/* Website */}
+                    <div className="px-4 mb-3">
+                      <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                        Website
+                      </label>
+                      <div className="flex items-center gap-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-violet-300 dark:focus-within:border-violet-600 focus-within:ring-2 focus-within:ring-violet-100 dark:focus-within:ring-violet-900/30 transition-all overflow-hidden">
+                        <div className="pl-3 pr-1.5 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
+                            <IonIcon icon={globeOutline} className="text-violet-600 text-base" />
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0 select-none">https://</span>
+                        <input
+                          type="text"
+                          value={values.websiteUrl.replace(/^https?:\/\//i, "")}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/^https?:\/\//i, "");
+                            setFieldValue("websiteUrl", raw ? `https://${raw}` : "");
+                          }}
+                          placeholder="www.mybusiness.com"
+                          className="flex-1 min-w-0 px-1.5 py-3 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                        />
+                        {values.websiteUrl && (
+                          <button type="button" onClick={() => setFieldValue("websiteUrl", "")} className="pr-3 shrink-0">
+                            <IonIcon icon={closeOutline} className="text-slate-300 dark:text-slate-600 text-lg" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Instagram */}
+                    <div className="px-4 mb-3">
+                      <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                        Instagram
+                      </label>
+                      <div className="flex items-center gap-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-pink-300 dark:focus-within:border-pink-600 focus-within:ring-2 focus-within:ring-pink-100 dark:focus-within:ring-pink-900/30 transition-all overflow-hidden">
+                        <div className="pl-3 pr-1.5 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-pink-50 dark:bg-pink-900/30 flex items-center justify-center">
+                            <IonIcon icon={logoInstagram} className="text-pink-600 text-base" />
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0 select-none">instagram.com/</span>
+                        <input
+                          type="text"
+                          value={values.instagramHandle.replace(/^@/, "")}
+                          onChange={(e) => setFieldValue("instagramHandle", e.target.value.replace(/^@/, ""))}
+                          placeholder="yourbusiness"
+                          className="flex-1 min-w-0 px-1.5 py-3 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                        />
+                        {values.instagramHandle && (
+                          <button type="button" onClick={() => setFieldValue("instagramHandle", "")} className="pr-3 shrink-0">
+                            <IonIcon icon={closeOutline} className="text-slate-300 dark:text-slate-600 text-lg" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Facebook */}
+                    <div className="px-4 mb-3">
+                      <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                        Facebook
+                      </label>
+                      <div className="flex items-center gap-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-blue-300 dark:focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 transition-all overflow-hidden">
+                        <div className="pl-3 pr-1.5 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                            <IonIcon icon={logoFacebook} className="text-[#1877F2] text-base" />
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0 select-none">facebook.com/</span>
+                        <input
+                          type="text"
+                          value={values.facebookHandle.replace(/^(https?:\/\/)?(www\.)?facebook\.com\//i, "")}
+                          onChange={(e) => setFieldValue("facebookHandle", e.target.value.replace(/^(https?:\/\/)?(www\.)?facebook\.com\//i, ""))}
+                          placeholder="yourbusiness"
+                          className="flex-1 min-w-0 px-1.5 py-3 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                        />
+                        {values.facebookHandle && (
+                          <button type="button" onClick={() => setFieldValue("facebookHandle", "")} className="pr-3 shrink-0">
+                            <IonIcon icon={closeOutline} className="text-slate-300 dark:text-slate-600 text-lg" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* YouTube */}
+                    <div className="px-4 mb-3">
+                      <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                        YouTube
+                      </label>
+                      <div className="flex items-center gap-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] focus-within:border-red-300 dark:focus-within:border-red-600 focus-within:ring-2 focus-within:ring-red-100 dark:focus-within:ring-red-900/30 transition-all overflow-hidden">
+                        <div className="pl-3 pr-1.5 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                            <IonIcon icon={logoYoutube} className="text-[#FF0000] text-base" />
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0 select-none">youtube.com/</span>
+                        <input
+                          type="text"
+                          value={values.youtubeHandle.replace(/^(https?:\/\/)?(www\.)?youtube\.com\//i, "")}
+                          onChange={(e) => setFieldValue("youtubeHandle", e.target.value.replace(/^(https?:\/\/)?(www\.)?youtube\.com\//i, ""))}
+                          placeholder="@yourbusiness"
+                          className="flex-1 min-w-0 px-1.5 py-3 text-[13px] font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                        />
+                        {values.youtubeHandle && (
+                          <button type="button" onClick={() => setFieldValue("youtubeHandle", "")} className="pr-3 shrink-0">
+                            <IonIcon icon={closeOutline} className="text-slate-300 dark:text-slate-600 text-lg" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
                     {/* WhatsApp with country code picker */}
                     <WhatsAppPhoneInput

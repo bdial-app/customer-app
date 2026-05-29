@@ -5,9 +5,9 @@ import { useLiveActivity } from "@/hooks/useHomeFeed";
 import { inflateIfLow } from "@/utils/inflate-stats";
 
 const FALLBACK_ACTIVITIES = [
-  { count: 0, text: "providers available in your area" },
+  { count: 0, text: "businesses available in your area" },
   { count: 0, text: "services completed this week" },
-  { count: 0, text: "businesses with active deals" },
+  { count: 0, text: "businesses with active offers" },
   { count: 0, text: "new reviews this week" },
   { count: 4.5, text: "average rating", format: "rating" as const },
   { count: 0, text: "service categories available" },

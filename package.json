@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "cap:sync": "npx cap sync && ./scripts/patch-ios-spm.sh",
-    "cap:build": "next build && npx cap sync && ./scripts/patch-ios-spm.sh",
+    "cap:build": "next build && npx cap sync",
     "cap:open": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "cap:run": "npx cap run android",

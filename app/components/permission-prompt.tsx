@@ -39,11 +39,6 @@ export default function PermissionPrompt() {
     setStep("done");
   };
 
-  const handleDismiss = () => {
-    dismissPermissionPrompt();
-    setVisible(false);
-  };
-
   const handleDone = () => {
     dismissPermissionPrompt();
     setVisible(false);
@@ -67,18 +62,7 @@ export default function PermissionPrompt() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col flex-1 px-6"
           >
-            {/* Header */}
-            <div className="relative z-10 flex justify-end">
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="text-sm text-slate-400 active:text-slate-600 py-2 px-3"
-              >
-                Skip
-              </button>
-            </div>
-
-            <div className="flex-1 flex flex-col items-center justify-center -mt-10">
+            <div className="flex-1 flex flex-col items-center justify-center">
               {/* App icon area */}
               <img
                 src="/icons/512.png"
@@ -98,7 +82,7 @@ export default function PermissionPrompt() {
                 <PermissionCard
                   icon={locationOutline}
                   title="Location Access"
-                  description="Find nearby services and providers in your area"
+                  description="Find nearby services and businesses in your area"
                   iconColor="text-blue-500"
                   iconBg="bg-blue-50 dark:bg-blue-900/30"
                 />

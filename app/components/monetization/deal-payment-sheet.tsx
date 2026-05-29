@@ -123,10 +123,10 @@ export function DealPaymentSheet({
                   </div>
                   <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
                     {!monetizationEnabled
-                      ? "Deal creation is free during our launch period"
+                      ? "Offer creation is free during our launch period"
                       : isProSubscriber
-                      ? "Unlimited deals with Pro plan"
-                      : `Free deal (${freeRemaining} of ${freeTotal} remaining)`}
+                      ? "Unlimited offers with Pro plan"
+                      : `Free offer (${freeRemaining} of ${freeTotal} remaining)`}
                   </span>
                 </div>
               </div>
@@ -136,10 +136,10 @@ export function DealPaymentSheet({
             <div className="bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-600 rounded-xl p-3 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <IonIcon icon={informationCircleOutline} className="text-slate-400 text-sm" />
-                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Deal Slots</span>
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Offer Slots</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 dark:text-slate-400">Active deals</span>
+                <span className="text-slate-500 dark:text-slate-400">Active offers</span>
                 <span className="font-bold text-slate-700 dark:text-slate-200">
                   {activeDeals} / {maxActiveDeals === -1 ? "∞" : maxActiveDeals}
                 </span>
@@ -240,9 +240,9 @@ export function DealPaymentSheet({
                   Processing...
                 </span>
               ) : isFree ? (
-                "Create Deal"
+                "Create Offer"
               ) : (
-                `Pay ₹${finalPrice} & Create Deal`
+                `Pay ₹${finalPrice} & Create Offer`
               )}
             </motion.button>
           </motion.div>

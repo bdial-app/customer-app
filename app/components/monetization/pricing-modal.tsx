@@ -98,7 +98,7 @@ export function PricingModal({
                 {highlightFeature === "leads"
                   ? "Get more lead unlocks with a subscription"
                   : highlightFeature === "deals"
-                  ? "Create unlimited deals with a paid plan"
+                  ? "Create unlimited offers with a paid plan"
                   : highlightFeature === "boost"
                   ? "Boost your visibility with sponsorships"
                   : "Grow your business faster"}
@@ -181,7 +181,7 @@ export function PricingModal({
                         highlight={highlightFeature === "leads"}
                       />
                       <FeatureChip
-                        label={plan.maxActiveDeals === -1 ? "Unlimited deals" : `${plan.maxActiveDeals} active deals`}
+                        label={plan.maxActiveDeals === -1 ? "Unlimited offers" : `${plan.maxActiveDeals} active offers`}
                         highlight={highlightFeature === "deals"}
                       />
                       <FeatureChip

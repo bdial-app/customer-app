@@ -31,11 +31,15 @@ export const reverseGeocode = async (
   return data;
 };
 
+export const newSearchSession = (): string => "";
+
 export const searchGeocode = async (
   query: string,
 ): Promise<SearchGeocodeResult[]> => {
   const { data } = await apiClient.get(GEOCODE_URLS.SEARCH, {
-    params: { query: query },
+    params: { query },
   });
   return data;
 };
+
+export const endSearchSession = (): void => {};

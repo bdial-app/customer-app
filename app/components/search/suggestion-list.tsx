@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
@@ -14,6 +15,7 @@ import {
   searchOutline,
 } from "ionicons/icons";
 import type { SearchSuggestion } from "@/services/search.service";
+import CategoryIcon from "@/app/components/ui/category-icon";
 
 interface Props {
   suggestions: SearchSuggestion[];
@@ -79,6 +81,49 @@ const HighlightedText = ({
       </span>
       {text.slice(idx + query.length)}
     </>
+  );
+};
+
+const SuggestionThumbnail = ({
+  imageUrl,
+  itemConfig,
+  name,
+}: {
+  imageUrl?: string;
+  itemConfig: (typeof TYPE_CONFIG)[keyof typeof TYPE_CONFIG];
+  name: string;
+}) => {
+  const [imgError, setImgError] = useState(false);
+
+  if (imageUrl && !imgError) {
+    return (
+      <div className="relative w-10 h-10 flex-shrink-0">
+        <img
+          src={imageUrl}
+          alt=""
+          className="w-10 h-10 rounded-xl object-cover ring-1 ring-gray-100 dark:ring-slate-700"
+          onError={() => setImgError(true)}
+        />
+        <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${itemConfig.bg} flex items-center justify-center ring-2 ring-white dark:ring-slate-900`}>
+          <IonIcon icon={itemConfig.icon} className={`w-2.5 h-2.5 ${itemConfig.color}`} />
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback: colored placeholder with first letter initial
+  return (
+    <div
+      className={`w-10 h-10 rounded-xl ${itemConfig.bg} flex items-center justify-center flex-shrink-0`}
+    >
+      {imgError ? (
+        <span className={`text-sm font-bold ${itemConfig.color}`}>
+          {name.charAt(0).toUpperCase()}
+        </span>
+      ) : (
+        <IonIcon icon={itemConfig.icon} className={`w-5 h-5 ${itemConfig.color}`} />
+      )}
+    </div>
   );
 };
 
@@ -166,26 +211,20 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
                 className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-gray-50 dark:active:bg-slate-800 transition-colors"
               >
                 {/* Thumbnail or Icon */}
-                {suggestion.imageUrl ? (
-                  <div className="relative w-10 h-10 flex-shrink-0">
-                    <img
-                      src={suggestion.imageUrl}
-                      alt=""
-                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-gray-100 dark:ring-slate-700"
-                    />
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${itemConfig.bg} flex items-center justify-center ring-2 ring-white dark:ring-slate-900`}>
-                      <IonIcon icon={itemConfig.icon} className={`w-2.5 h-2.5 ${itemConfig.color}`} />
-                    </div>
-                  </div>
+                {suggestion.type === "category" ? (
+                  <CategoryIcon
+                    icon={suggestion.icon}
+                    iconColor={suggestion.iconColor}
+                    imageUrl={suggestion.imageUrl}
+                    name={suggestion.text}
+                    size="sm"
+                  />
                 ) : (
-                  <div
-                    className={`w-10 h-10 rounded-xl ${itemConfig.bg} flex items-center justify-center flex-shrink-0`}
-                  >
-                    <IonIcon
-                      icon={itemConfig.icon}
-                      className={`w-5 h-5 ${itemConfig.color}`}
-                    />
-                  </div>
+                  <SuggestionThumbnail
+                    imageUrl={suggestion.imageUrl}
+                    itemConfig={itemConfig}
+                    name={suggestion.text}
+                  />
                 )}
 
                 {/* Text */}

@@ -534,7 +534,7 @@ const ExploreContent = memo(() => {
               </div>
               <div className="relative z-10">
                 <h3 className="text-[13px] font-bold text-white leading-tight">{col.title}</h3>
-                {col.count && <p className="text-[10px] text-white/60 mt-0.5">{col.count} providers</p>}
+                {col.count && <p className="text-[10px] text-white/60 mt-0.5">{col.count} businesses</p>}
               </div>
             </div>
           ))}
@@ -749,7 +749,7 @@ const ExploreContent = memo(() => {
           <div className="grid grid-cols-4 gap-2 text-center">
             <div>
               <p className="text-lg font-extrabold text-white">{feed.platformStats.verifiedProviders}</p>
-              <p className="text-[9px] text-slate-400">Providers</p>
+              <p className="text-[9px] text-slate-400">Businesses</p>
             </div>
             <div>
               <p className="text-lg font-extrabold text-white">{feed.platformStats.totalReviews}</p>

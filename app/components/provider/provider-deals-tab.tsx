@@ -288,10 +288,10 @@ const ProviderDealsTab = () => {
               >
                 <IonIcon icon={diamondOutline} className="text-sm" />
                 {dealInfo?.freeRemaining === 0
-                  ? `Create Deal ₹${
+                  ? `Create Offer ₹${
                       monetizationConfig?.dealPricing.price ?? 149
                     }`
-                  : "Upgrade to Add More Deals"}
+                  : "Upgrade to Add More Offers"}
               </button>
             )}
             {/* Monetization disabled but total limit reached */}
@@ -305,9 +305,9 @@ const ProviderDealsTab = () => {
                   <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
                     You&apos;ve reached the maximum of{" "}
                     <span className="font-bold">
-                      {limits.maxTotalDeals} total deals
+                      {limits.maxTotalDeals} total offers
                     </span>
-                    . Delete an expired or inactive deal to free up a slot.
+                    . Delete an expired or inactive offer to free up a slot.
                   </p>
                 </div>
               )}
@@ -321,9 +321,9 @@ const ProviderDealsTab = () => {
                 <p className="text-[11px] text-red-600 dark:text-red-300 leading-relaxed">
                   All{" "}
                   <span className="font-bold">
-                    {limits.maxActiveDeals} active deal slots
+                    {limits.maxActiveDeals} active offer slots
                   </span>{" "}
-                  are in use. Deactivate or delete an active deal, or wait for
+                  are in use. Deactivate or delete an active offer, or wait for
                   one to expire.
                 </p>
               </div>
@@ -342,10 +342,10 @@ const ProviderDealsTab = () => {
               />
             </div>
             <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
-              No deals yet
+              No offers yet
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Create your first deal to attract more customers
+              Create your first offer to attract more customers
             </p>
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -353,7 +353,7 @@ const ProviderDealsTab = () => {
               className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-semibold"
             >
               <IonIcon icon={addOutline} className="text-sm" />
-              Create Deal
+              Create Offer
             </motion.button>
           </div>
         </div>
@@ -464,7 +464,7 @@ const ProviderDealsTab = () => {
                   {/* Modal Header */}
                   <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
                     <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                      {editing ? "Edit Deal" : "New Deal"}
+                      {editing ? "Edit Offer" : "New Offer"}
                     </h3>
                     <button
                       onClick={() => !isSaving && setSheetOpen(false)}
@@ -547,9 +547,9 @@ const ProviderDealsTab = () => {
                                 Active limit reached
                               </p>
                               <p className="text-[10px] text-red-500 mt-0.5">
-                                You already have 3 active deals. Your new deal
+                                You already have 3 active offers. Your new offer
                                 will be created but it will only go live when
-                                another deal expires or is deactivated.
+                                another offer expires or is deactivated.
                               </p>
                             </div>
                           </div>
@@ -558,7 +558,7 @@ const ProviderDealsTab = () => {
                         {/* Title */}
                         <DealFormField
                           name="title"
-                          label="Deal Title"
+                          label="Offer Title"
                           placeholder="e.g. 20% off all services"
                         />
 
@@ -664,9 +664,9 @@ const ProviderDealsTab = () => {
                             {isSaving ? (
                               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : editing ? (
-                              "Update Deal"
+                              "Update Offer"
                             ) : (
-                              "Create Deal"
+                              "Create Offer"
                             )}
                           </button>
 
@@ -680,7 +680,7 @@ const ProviderDealsTab = () => {
                                 icon={trashOutline}
                                 className="text-sm"
                               />
-                              Delete Deal
+                              Delete Offer
                             </button>
                           )}
 
@@ -709,8 +709,8 @@ const ProviderDealsTab = () => {
       <AppDialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Delete Deal"
-        description="Are you sure you want to delete this deal? This action cannot be undone."
+        title="Delete Offer"
+        description="Are you sure you want to delete this offer? This action cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
         confirmColor="red"

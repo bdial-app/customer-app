@@ -133,7 +133,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
       {isProvider && (
         <div className="flex justify-center mb-1">
           <span className="px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-teal-500 text-white rounded-full shadow-sm">
-            Provider Mode
+            Business Mode
           </span>
         </div>
       )}

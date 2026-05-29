@@ -353,12 +353,12 @@ const DealsPageContent = () => {
                 className="text-lg text-rose-500"
               />
               <h1 className="text-[17px] font-bold text-slate-800 dark:text-white">
-                Deals & Offers
+                Offers
               </h1>
             </div>
             {total > 0 && (
               <p className="text-[11px] text-slate-400 mt-0.5 ml-7">
-                {total} active deal{total !== 1 ? "s" : ""}
+                {total} active offer{total !== 1 ? "s" : ""}
                 {areaMode === "nearby" ? " nearby" : areaMode === "city" ? ` in ${user?.city || "your city"}` : " everywhere"}
               </p>
             )}

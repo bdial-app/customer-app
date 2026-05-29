@@ -43,6 +43,8 @@ export interface SearchSuggestion {
   id: string;
   subtitle?: string;
   imageUrl?: string;
+  icon?: string;
+  iconColor?: string;
   isSponsored?: boolean;
   hasActiveOffer?: boolean;
   productType?: "product" | "service";

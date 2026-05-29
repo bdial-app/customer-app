@@ -75,7 +75,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white rounded-full backdrop-blur-sm border border-white/20">
-              Provider Dashboard
+              Business Dashboard
             </span>
           </div>
           <div className="flex items-center gap-2">

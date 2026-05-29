@@ -231,8 +231,8 @@ function AuthGateSheetContent() {
   const requestLocation = useCallback(async () => {
     setIsLocating(true);
     try {
-      const { getCurrentPosition } = await import("@/utils/geolocation");
-      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const { requestLocationOrPrompt } = await import("@/utils/geolocation");
+      const pos = await requestLocationOrPrompt("Pinning your location", { enableHighAccuracy: true, timeout: 10000 });
       const coords = { lat: pos.latitude, lng: pos.longitude };
       setGeoLocation(coords);
       notify({ title: "Location Pinned", subtitle: "GPS location captured", variant: "success" });
@@ -249,8 +249,13 @@ function AuthGateSheetContent() {
       } catch {
         // Reverse geocode failed silently — user can fill manually
       }
-    } catch {
-      notify({ title: "Location Required", subtitle: "Please enable location access", variant: "warning" });
+    } catch (err: any) {
+      // Denied flow surfaces the global LocationDeniedSheet with a Settings link;
+      // only toast for other geolocation failures (timeout, services off, etc).
+      const { LOCATION_PERMISSION_DENIED } = await import("@/utils/geolocation");
+      if (err?.code !== LOCATION_PERMISSION_DENIED) {
+        notify({ title: "Location Required", subtitle: "Could not determine your location. Please try again.", variant: "warning" });
+      }
     } finally {
       setIsLocating(false);
     }

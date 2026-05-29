@@ -270,7 +270,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             {/* Near You - Horizontal Scroll */}
             <ProviderCardSlider
               title="Near You"
-              subtitle="Top-rated providers nearby"
+              subtitle="Top-rated businesses nearby"
               providers={nearbyProviders}
               viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=5`}
               accentColor="#F8CB45"
@@ -503,7 +503,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                     {inflateIfLow(dealsAroundYou.length, "deals_today", 8, 18)}
                   </p>
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Deals Today
+                    Offers Today
                   </p>
                 </div>
                 <div>

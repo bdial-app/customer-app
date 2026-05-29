@@ -540,7 +540,7 @@ function VerifyContent() {
       </div>
 
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-0 w-full pb-safe z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-t border-slate-100 dark:border-slate-700 px-4 pt-3 pb-5">
+      <div className="fixed bottom-0 left-0 w-full z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-t border-slate-100 dark:border-slate-700 px-4 pt-3" style={{ paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)" }}>
         <div className="flex gap-3">
           <button
             className="flex items-center justify-center gap-1.5 h-12 px-5 rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-sm disabled:opacity-40 transition-all active:scale-[0.97]"
@@ -574,8 +574,8 @@ function VerifyContent() {
 export default function VerifyPage() {
   return (
     <PrivateRoute
-      title="Provider Verification"
-      description="Sign in to verify your identity and complete your provider application."
+      title="Business Verification"
+      description="Sign in to verify your identity and complete your business application."
     >
       <VerifyContent />
     </PrivateRoute>

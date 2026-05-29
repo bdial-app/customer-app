@@ -170,7 +170,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                   disabled={!masterEnabled}
                 />
                 <SettingRow
-                  label="Provider Updates"
+                  label="Business Updates"
                   sublabel="Approval, suspension, and status changes"
                   checked={prefs?.providerStatusUpdates ?? true}
                   onChange={(val) => handleToggle("providerStatusUpdates", val)}
@@ -192,7 +192,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                 />
                 <SettingRow
                   label="Promotions"
-                  sublabel="Deals, offers, and marketing"
+                  sublabel="Offers and marketing"
                   checked={prefs?.promotional ?? true}
                   onChange={(val) => handleToggle("promotional", val)}
                   disabled={!masterEnabled}
