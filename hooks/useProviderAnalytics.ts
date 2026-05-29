@@ -35,7 +35,7 @@ export const useLeads = (filters: LeadFilters = {}) => {
   return useQuery<LeadsResponse>({
     queryKey: [...ANALYTICS_LEADS_KEY, filters],
     queryFn: () => getLeads(filters),
-    staleTime: 1000 * 60 * 2,
+    staleTime: 0,
     retry: 2,
   });
 };

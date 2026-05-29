@@ -11,6 +11,7 @@ export interface FeatureFlags {
   search_enabled: boolean;
   offers_require_approval: boolean;
   sponsorship_requires_approval: boolean;
+  sponsorships_enabled: boolean;
   leads_monetization_enabled: boolean;
   deals_monetization_enabled: boolean;
   subscriptions_visible: boolean;
