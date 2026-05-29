@@ -220,7 +220,7 @@ const ProviderHome = () => {
       {activeTab === "details" && (
         <div className="animate-in fade-in duration-300">
           <BlockTitle className="flex items-center justify-between">
-            <span>Provider Information</span>
+            <span>Business Information</span>
             {!isEditing && (
               <Button
                 clear
@@ -481,7 +481,7 @@ const ProviderHome = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <IonIcon icon={chatbubble} className="text-indigo-500" />
                       <span className="font-semibold text-xs text-indigo-600">
-                        Provider Reply
+                        Business Reply
                       </span>
                     </div>
                     <p className="text-sm text-slate-700">{r.reply}</p>

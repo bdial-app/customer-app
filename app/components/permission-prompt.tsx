@@ -98,7 +98,7 @@ export default function PermissionPrompt() {
                 <PermissionCard
                   icon={locationOutline}
                   title="Location Access"
-                  description="Find nearby services and providers in your area"
+                  description="Find nearby services and businesses in your area"
                   iconColor="text-blue-500"
                   iconBg="bg-blue-50 dark:bg-blue-900/30"
                 />

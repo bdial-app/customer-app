@@ -42,10 +42,10 @@ const BecomeProviderCTA = () => {
                 </span>
               </div>
               <h3 className="text-[15px] font-extrabold text-slate-800 dark:text-slate-900 leading-snug">
-                Become a service provider
+                Become a Business
               </h3>
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                Join 500+ providers earning from home. List your skills, get bookings.
+                Join 500+ businesses earning from home. List your skills, get bookings.
               </p>
             </div>
             <motion.button

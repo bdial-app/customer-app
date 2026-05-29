@@ -1379,7 +1379,7 @@ export default function ProviderDetailsPage() {
             ) : (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 text-center">
                 <p className="text-lg font-bold text-indigo-600 mb-1">
-                  New Provider
+                  New Business
                 </p>
                 <p className="text-xs text-gray-400 dark:text-slate-500">
                   No ratings yet — be the first to review!
@@ -1406,7 +1406,7 @@ export default function ProviderDetailsPage() {
             {!isOwnProvider && hasAlreadyReviewed && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-3 border border-green-100 dark:border-green-800/40 text-center">
                 <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  You&apos;ve reviewed this provider
+                  You&apos;ve reviewed this business
                 </p>
               </div>
             )}
@@ -1544,7 +1544,7 @@ export default function ProviderDetailsPage() {
             {!isOwnProvider && hasAlreadyReviewed && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
                 <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  You&apos;ve reviewed this provider
+                  You&apos;ve reviewed this business
                 </p>
               </div>
             )}
@@ -1562,7 +1562,7 @@ export default function ProviderDetailsPage() {
             {products.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
                 <p className="text-sm text-gray-500 dark:text-slate-400">
-                  This provider hasn&apos;t added any products or services yet.
+                  This business hasn&apos;t added any products or services yet.
                 </p>
               </div>
             ) : (
@@ -1750,7 +1750,7 @@ export default function ProviderDetailsPage() {
                     Your Business
                   </p>
                   <p className="text-[10px] text-violet-500 truncate">
-                    You&apos;re viewing your own provider profile
+                    You&apos;re viewing your own business profile
                   </p>
                 </div>
                 <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">
@@ -1954,7 +1954,7 @@ export default function ProviderDetailsPage() {
             </div>
             <textarea
               className="w-full h-28 px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
-              placeholder="Share your experience with this provider..."
+              placeholder="Share your experience with this business..."
               value={reviewComment}
               onChange={(e) => {
                 setReviewComment(e.target.value);

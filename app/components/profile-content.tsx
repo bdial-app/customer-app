@@ -501,15 +501,15 @@ const ProfileContent = memo(() => {
       setUserMode("customer");
       setDisableProviderSheetOpen(false);
       notify({
-        title: "Provider Disabled",
+        title: "Business Disabled",
         subtitle:
-          "Your provider profile is hidden from all listings. You can re-enable it anytime.",
+          "Your business profile is hidden from all listings. You can re-enable it anytime.",
         variant: "success",
       });
     } catch {
       notify({
         title: "Error",
-        subtitle: "Failed to disable provider. Please try again.",
+        subtitle: "Failed to disable business. Please try again.",
         variant: "error",
       });
     } finally {
@@ -523,14 +523,14 @@ const ProfileContent = memo(() => {
       const result = await enableMyProvider();
       setProviderStatus("approved");
       notify({
-        title: "Provider Enabled",
-        subtitle: "Your provider profile is now visible again.",
+        title: "Business Enabled",
+        subtitle: "Your business profile is now visible again.",
         variant: "success",
       });
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||
-        "Failed to enable provider. Please try again.";
+        "Failed to enable business. Please try again.";
       notify({
         title: "Cannot Re-enable Yet",
         subtitle: message,
@@ -604,7 +604,7 @@ const ProfileContent = memo(() => {
               icon={heartOutline}
               iconColor="text-pink-500"
               iconBg="bg-pink-50"
-              label="Saved Providers"
+              label="Saved Businesses"
               sublabel="Your favourites"
               onClick={guestAction}
             />
@@ -814,7 +814,7 @@ const ProfileContent = memo(() => {
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
                 <div>
                   <div className="text-sm font-bold text-slate-800 dark:text-white">
-                    Provider Mode
+                    Business Mode
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     {userMode === "provider"
@@ -841,7 +841,7 @@ const ProfileContent = memo(() => {
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
                 <div className="relative z-10">
                   <h3 className="text-white font-bold text-sm">
-                    Become a Provider
+                    Become a Business
                   </h3>
                   <p className="text-white/70 text-xs mt-0.5 mb-3">
                     Start offering your services on Tijarah
@@ -900,14 +900,14 @@ const ProfileContent = memo(() => {
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-sm text-red-900 dark:text-red-300">
-                      Provider Suspended
+                      Business Suspended
                     </div>
                     <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
-                      Your provider profile has been suspended by our moderation
+                      Your business profile has been suspended by our moderation
                       team. Please contact support to request a review.
                     </div>
                     <a
-                      href="mailto:support@tijarahconnect.com?subject=Provider%20Suspension%20Review%20Request"
+                      href="mailto:support@tijarahconnect.com?subject=Business%20Suspension%20Review%20Request"
                       className="inline-block mt-3 px-4 py-2 bg-red-500 text-white text-xs font-bold rounded-xl"
                     >
                       Contact Support
@@ -931,12 +931,12 @@ const ProfileContent = memo(() => {
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-sm text-slate-800 dark:text-white">
-                      Provider Disabled
+                      Business Disabled
                     </div>
                     <div className="text-slate-500 text-xs mt-0.5">
                       {canReEnable
-                        ? "Your provider profile is hidden from all listings. Re-enable it anytime."
-                        : `Your provider profile is hidden. You can re-enable in ${cooldownRemaining}h.`}
+                        ? "Your business profile is hidden from all listings. Re-enable it anytime."
+                        : `Your business profile is hidden. You can re-enable in ${cooldownRemaining}h.`}
                     </div>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
@@ -947,7 +947,7 @@ const ProfileContent = memo(() => {
                       {isDisablingProvider
                         ? "Enabling..."
                         : canReEnable
-                          ? "Re-enable Provider"
+                          ? "Re-enable Business"
                           : `Cooldown: ${cooldownRemaining}h remaining`}
                     </motion.button>
                   </div>
@@ -969,11 +969,11 @@ const ProfileContent = memo(() => {
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-sm text-red-900 dark:text-red-300">
-                      Provider Deleted
+                      Business Deleted
                     </div>
                     <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
-                      Your provider profile has been removed. You can apply
-                      again as a new provider.
+                      Your business profile has been removed. You can apply
+                      again as a new business.
                     </div>
                   </div>
                 </div>
@@ -985,13 +985,13 @@ const ProfileContent = memo(() => {
           {userMode === "provider" &&
             (providerStatus === "approved" ||
               providerStatus === "disabled") && (
-              <MenuSection title="Provider Management">
+              <MenuSection title="Business Management">
                 {providerStatus === "disabled" ? (
                   <MenuRow
                     icon={eyeOutline}
                     iconColor="text-teal-500"
                     iconBg="bg-teal-50"
-                    label={canReEnable ? "Re-enable Provider" : `Re-enable in ${cooldownRemaining}h`}
+                    label={canReEnable ? "Re-enable Business" : `Re-enable in ${cooldownRemaining}h`}
                     sublabel={canReEnable ? "Make your profile visible again" : "Cooldown period active"}
                     onClick={canReEnable ? handleEnableProvider : undefined}
                     trailing={
@@ -1010,7 +1010,7 @@ const ProfileContent = memo(() => {
                     icon={eyeOffOutline}
                     iconColor="text-amber-500"
                     iconBg="bg-amber-50"
-                    label="Disable Provider"
+                    label="Disable Business"
                     sublabel="Hide your profile from listings"
                     onClick={() => setDisableProviderSheetOpen(true)}
                   />
@@ -1032,7 +1032,7 @@ const ProfileContent = memo(() => {
               icon={heartOutline}
               iconColor="text-pink-500"
               iconBg="bg-pink-50"
-              label="Saved Providers"
+              label="Saved Businesses"
               sublabel="Your favourites"
             /> */}
           </MenuSection>
@@ -1791,7 +1791,7 @@ const ProfileContent = memo(() => {
         iconColor="text-amber-500"
         iconBg="bg-amber-50"
         title="Pause Account?"
-        description="Your profile won't be visible, you won't receive messages, and your provider listing (if any) will be hidden. You can reactivate anytime by logging in again."
+        description="Your profile won't be visible, you won't receive messages, and your business listing (if any) will be hidden. You can reactivate anytime by logging in again."
         confirmLabel="Yes, Pause My Account"
         cancelLabel="Cancel"
         onConfirm={handlePauseAccount}
@@ -1806,9 +1806,9 @@ const ProfileContent = memo(() => {
         icon={eyeOffOutline}
         iconColor="text-amber-500"
         iconBg="bg-amber-50"
-        title="Disable Provider?"
-        description="Your provider profile will be hidden from all listings and search results. Once disabled, you must wait a minimum of 2 days before you can re-enable it. This is to prevent profile spamming and ensure platform quality."
-        confirmLabel="Yes, Disable Provider"
+        title="Disable Business?"
+        description="Your business profile will be hidden from all listings and search results. Once disabled, you must wait a minimum of 2 days before you can re-enable it. This is to prevent profile spamming and ensure platform quality."
+        confirmLabel="Yes, Disable Business"
         cancelLabel="Cancel"
         onConfirm={handleDisableProvider}
         confirmColor="red"

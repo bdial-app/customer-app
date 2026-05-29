@@ -51,7 +51,7 @@ const TABS: { key: FilterTab; label: string; icon: string }[] = [
 ];
 
 const RATING_OPTIONS: { value: number | null; label: string; desc: string }[] = [
-  { value: null, label: "Any Rating", desc: "Show all providers" },
+  { value: null, label: "Any Rating", desc: "Show all businesses" },
   { value: 3, label: "3.0+ Stars", desc: "Good and above" },
   { value: 3.5, label: "3.5+ Stars", desc: "Very good and above" },
   { value: 4, label: "4.0+ Stars", desc: "Excellent and above" },

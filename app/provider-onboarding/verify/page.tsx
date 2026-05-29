@@ -574,8 +574,8 @@ function VerifyContent() {
 export default function VerifyPage() {
   return (
     <PrivateRoute
-      title="Provider Verification"
-      description="Sign in to verify your identity and complete your provider application."
+      title="Business Verification"
+      description="Sign in to verify your identity and complete your business application."
     >
       <VerifyContent />
     </PrivateRoute>

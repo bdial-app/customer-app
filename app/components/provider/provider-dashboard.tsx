@@ -253,7 +253,7 @@ const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
           </div>
         </div>
         <p className="text-white/70 text-xs leading-relaxed mb-3">
-          Verified providers get higher search rankings and build more customer
+          Verified businesses get higher search rankings and build more customer
           trust. Complete verification to stand out.
         </p>
         <div className="flex items-center gap-3 mb-4">
@@ -317,7 +317,7 @@ const VerificationStatusCard = ({ status, onResubmit }: { status: string | null;
       iconColor: "text-amber-500",
     },
     approved: {
-      label: "Verified Provider",
+      label: "Verified Business",
       desc: "Your identity has been verified. You have a verified badge on your profile.",
       icon: checkmarkCircleOutline,
       bg: "bg-emerald-50 dark:bg-emerald-900/30",
@@ -490,7 +490,7 @@ const GrowthTips = ({
     },
     totalOffers === 0 && {
       icon: pricetagOutline,
-      title: "Create a deal",
+      title: "Create an offer",
       desc: "Attract more customers with special offers",
       priority: "medium" as const,
       action: () => onNavigate("deals"),
@@ -498,7 +498,7 @@ const GrowthTips = ({
     needsVerification && {
       icon: shieldCheckmarkOutline,
       title: "Get verified",
-      desc: "Verified providers rank higher & build more trust",
+      desc: "Verified businesses rank higher & build more trust",
       priority: "medium" as const,
       action: onVerify,
     },
@@ -977,14 +977,14 @@ const RevenueBoosters = ({
   const boosters = [
     {
       id: "deals",
-      title: "Create a Deal",
+      title: "Create an Offer",
       subtitle: "Attract new customers with limited-time offers",
       icon: pricetagOutline,
       gradient: "from-rose-500 to-pink-600",
       iconBg: "bg-rose-50 dark:bg-rose-900/30",
       iconColor: "text-rose-500",
       action: () => onNavigate("deals"),
-      cta: "Create Deal",
+      cta: "Create Offer",
     },
     {
       id: "boost",

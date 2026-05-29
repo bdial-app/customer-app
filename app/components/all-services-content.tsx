@@ -299,7 +299,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
               ref={inputRef}
               type="search"
               inputMode="search"
-              placeholder="Search services, providers..."
+              placeholder="Search services, businesses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-11 pl-10 pr-10 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-amber-400/30 focus:border-amber-300 dark:focus:border-amber-500 transition-all"
