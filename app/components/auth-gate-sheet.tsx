@@ -54,7 +54,7 @@ const schemas: Record<Step, Yup.ObjectSchema<any>> = {
       .max(100, "Under 100 characters")
       .matches(/^[a-zA-Z\s.'-]+$/, "Name should only contain letters")
       .required("Full name is required"),
-    gender: Yup.string().oneOf(["male", "female", "other"]).required("Gender is required"),
+    gender: Yup.string().oneOf(["male", "female"]).required("Gender is required"),
     city: Yup.string().max(100, "Under 100 characters"),
     area: Yup.string().max(100, "Under 100 characters"),
     pincode: Yup.string().test("pincode", "Must be 6 digits", (v) => !v || /^\d{6}$/.test(v)),
@@ -101,19 +101,18 @@ function InlineInput({
 function GenderSelector() {
   const { values, setFieldValue, touched, errors } = useFormikContext<any>();
   const genders = [
-    { value: "male", label: "Male", emoji: "👨" },
-    { value: "female", label: "Female", emoji: "👩" },
-    { value: "other", label: "Other", emoji: "🧑" },
+    { value: "male", label: "Male", icon: "/icons/gender-male.png" },
+    { value: "female", label: "Female", icon: "/icons/gender-female.png" },
   ];
   return (
     <div className="mt-3">
       <label className="block text-[11px] font-semibold text-slate-500 mb-2 uppercase tracking-wider">Gender</label>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {genders.map((g) => {
           const selected = values.gender === g.value;
           return (
             <button key={g.value} type="button" onClick={() => setFieldValue("gender", g.value)}
-              className={`relative flex flex-col items-center gap-1 py-3 rounded-2xl border-2 transition-all active:scale-95 ${
+              className={`relative flex flex-col items-center gap-1.5 py-3.5 rounded-2xl border-2 transition-all active:scale-95 ${
                 selected
                   ? "border-amber-400/60 bg-amber-500/10"
                   : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.12]"
@@ -123,8 +122,8 @@ function GenderSelector() {
                   <IonIcon icon={checkmarkCircle} className="text-white text-[10px]" />
                 </div>
               )}
-              <span className="text-xl">{g.emoji}</span>
-              <span className={`text-[11px] font-bold ${selected ? "text-amber-400" : "text-slate-400"}`}>{g.label}</span>
+              <img src={g.icon} alt={g.label} className="w-11 h-11 object-contain" draggable={false} />
+              <span className={`text-xs font-bold ${selected ? "text-amber-400" : "text-slate-400"}`}>{g.label}</span>
             </button>
           );
         })}
