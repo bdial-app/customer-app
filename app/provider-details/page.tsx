@@ -47,6 +47,7 @@ import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { shareProvider } from "@/utils/sharing";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
+import { triggerHaptic } from "@/utils/haptics";
 import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -244,6 +245,7 @@ export default function ProviderDetailsPage() {
   const handleToggleSaved = () => {
     requireAuth(() => {
       if (!liked) trackSave();
+      triggerHaptic(liked ? "light" : "medium");
       toggleSaved.mutate({ itemId: id, itemType: "provider" });
     });
   };

@@ -23,6 +23,7 @@ import ProviderCategoriesTab from "./provider-categories-tab";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useProviderDetails } from "@/hooks/useProvider";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "categories" | "plans" | "boost";
 
@@ -46,12 +47,14 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
   const [activeTab, setActiveTab] = useState<ManagerTab>("details");
   const { data: providerData, isLoading: providerLoading } = useMyProvider();
   const { data: monetizationConfig } = useMonetizationConfig();
+  const { data: featureFlags } = useFeatureFlags();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Filter tabs based on feature flags
+  // Each tab gated by its own flag independently
   const subscriptionsVisible = monetizationConfig?.flags.subscriptionsVisible ?? false;
+  const sponsorshipsEnabled = featureFlags?.sponsorships_enabled ?? false;
   const tabs = allTabs.filter((t) => {
-    if (t.id === "boost" && !subscriptionsVisible) return false;
+    if (t.id === "boost" && !sponsorshipsEnabled) return false;
     if (t.id === "plans" && !subscriptionsVisible) return false;
     return true;
   });

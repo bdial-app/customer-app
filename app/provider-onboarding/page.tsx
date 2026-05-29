@@ -45,7 +45,7 @@ import { useRouter } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useQueryClient } from "@tanstack/react-query";
 import TimePicker from "../components/time-picker";
-import { Formik, Form } from "formik";
+import { Formik, Form, useField } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "../components/formik-input";
 import WhatsAppPhoneInput from "../components/whatsapp-phone-input";
@@ -299,6 +299,139 @@ const TipBanner = ({
         className={`text-lg shrink-0 mt-0.5 ${iconColors[color]}`}
       />
       <p className="text-xs leading-relaxed">{text}</p>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Onboarding editable field
+// ---------------------------------------------------------------------------
+const OnboardingField = ({
+  name,
+  label,
+  icon,
+  type = "text",
+  placeholder,
+  maxLength,
+  formatValue,
+  prefix,
+}: {
+  name: string;
+  label: string;
+  icon: string;
+  type?: "text" | "textarea" | "tel";
+  placeholder?: string;
+  maxLength?: number;
+  formatValue?: (val: string) => string;
+  prefix?: string;
+}) => {
+  const [field, meta, helpers] = useField(name);
+  const showError = meta.touched && !!meta.error;
+  const isTextarea = type === "textarea";
+  const charCount = typeof field.value === "string" ? field.value.length : 0;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    helpers.setValue(formatValue ? formatValue(val) : val);
+  };
+
+  const baseInput =
+    "w-full py-3.5 pr-4 rounded-2xl bg-white dark:bg-slate-800 border text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all";
+  const errorRing = "border-red-400 dark:border-red-500 focus:ring-red-400/30 focus:border-red-400";
+  const normalRing = "border-slate-200 dark:border-slate-700 focus:ring-indigo-400/40 focus:border-indigo-400 dark:focus:border-indigo-500";
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <IonIcon icon={icon} className="text-indigo-500 dark:text-indigo-400 text-sm" />
+          {label}
+        </label>
+        {isTextarea && maxLength && (
+          <span className={`text-[10px] font-medium tabular-nums ${charCount > maxLength * 0.85 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+            {charCount}/{maxLength}
+          </span>
+        )}
+      </div>
+      {isTextarea ? (
+        <textarea
+          name={field.name}
+          value={field.value}
+          onChange={handleChange}
+          onBlur={field.onBlur}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          rows={4}
+          className={`${baseInput} px-4 resize-none leading-relaxed ${showError ? errorRing : normalRing}`}
+        />
+      ) : (
+        <div className="relative">
+          {prefix && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{prefix}</span>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-600" />
+            </div>
+          )}
+          <input
+            name={field.name}
+            value={field.value}
+            onChange={handleChange}
+            onBlur={field.onBlur}
+            type={type}
+            inputMode={type === "tel" ? "numeric" : undefined}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            className={`${baseInput} ${prefix ? "pl-16" : "pl-4"} ${showError ? errorRing : normalRing}`}
+          />
+        </div>
+      )}
+      {showError && (
+        <p className="flex items-center gap-1 text-xs text-red-500 dark:text-red-400 font-medium pl-1">
+          <IonIcon icon={alertCircleOutline} className="text-xs shrink-0" />
+          {meta.error}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Onboarding readonly field — auto-filled from map
+// ---------------------------------------------------------------------------
+const OnboardingReadonlyField = ({
+  name,
+  label,
+  icon,
+}: {
+  name: string;
+  label: string;
+  icon: string;
+}) => {
+  const [field] = useField(name);
+  const isEmpty = !field.value;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <IonIcon icon={icon} className="text-emerald-500 dark:text-emerald-400 text-sm" />
+        {label}
+      </label>
+      <div
+        className={`w-full px-4 py-3.5 rounded-2xl border min-h-[52px] flex items-center gap-2.5 transition-all ${
+          isEmpty
+            ? "bg-slate-50 dark:bg-slate-800/60 border-dashed border-slate-300 dark:border-slate-600"
+            : "bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50"
+        }`}
+      >
+        {isEmpty ? (
+          <p className="text-sm text-slate-400 dark:text-slate-500">Auto-filled from map</p>
+        ) : (
+          <>
+            <p className="text-sm font-medium text-slate-800 dark:text-slate-100 leading-snug flex-1">{field.value}</p>
+            <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-lg shrink-0" />
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -1954,30 +2087,32 @@ const ProviderOnboardingPage = () => {
                       title="Business Information"
                       subtitle="Tell customers about your brand"
                     />
-                    <List strongIos insetIos>
-                      <FormikInput
+                    <div className="px-4 space-y-4 mb-1">
+                      <OnboardingField
                         name="brand_name"
                         label="Brand Name"
-                        type="text"
+                        icon={storefrontOutline}
                         placeholder="e.g. Fatema's Tailoring, Husain Electronics"
+                        maxLength={150}
                       />
-                      <FormikInput
+                      <OnboardingField
                         name="description"
                         label="Description"
+                        icon={documentTextOutline}
                         type="textarea"
-                        placeholder="Describe your services, specialties, experience..."
-                        inputClassName="!min-h-[110px]"
+                        placeholder="Describe your services, specialties, experience, and what makes you unique..."
+                        maxLength={2000}
                       />
-                      <FormikInput
+                      <OnboardingField
                         name="contact_number"
                         label="Contact Number"
+                        icon={callOutline}
                         type="tel"
-                        placeholder="e.g. 98765 43210"
-                        formatValue={(val) =>
-                          val.replace(/\D/g, "").slice(0, 10)
-                        }
+                        placeholder="98765 43210"
+                        formatValue={(val) => val.replace(/\D/g, "").slice(0, 10)}
+                        prefix="+91"
                       />
-                    </List>
+                    </div>
 
                     {/* Use My Number shortcut */}
                     {userPhone10.length === 10 && values.contact_number !== userPhone10 && !phoneVerified && (
@@ -2261,38 +2396,32 @@ const ProviderOnboardingPage = () => {
                     <SectionHeader
                       icon={locationOutline}
                       title="Address Details"
-                      subtitle="Auto-filled from map pin — cannot be edited manually"
+                      subtitle="Pin your location on the map above to auto-fill"
                     />
-                    <List strongIos insetIos>
-                      <FormikInput
+                    <div className="px-4 space-y-3 mb-2">
+                      <OnboardingReadonlyField
                         name="address"
                         label="Full Address"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
+                        icon={locationOutline}
                       />
-                      <FormikInput
-                        name="city"
-                        label="City"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
-                      />
-                      <FormikInput
+                      <div className="grid grid-cols-2 gap-3">
+                        <OnboardingReadonlyField
+                          name="city"
+                          label="City"
+                          icon={storefrontOutline}
+                        />
+                        <OnboardingReadonlyField
+                          name="pincode"
+                          label="Pincode"
+                          icon={fingerPrintOutline}
+                        />
+                      </div>
+                      <OnboardingReadonlyField
                         name="area"
                         label="Area / Locality"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
+                        icon={mapOutline}
                       />
-                      <FormikInput
-                        name="pincode"
-                        label="Pincode"
-                        type="text"
-                        placeholder="Auto-filled from map"
-                        readonly
-                      />
-                    </List>
+                    </div>
                   </>
                 )}
 

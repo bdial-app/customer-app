@@ -34,6 +34,7 @@ import { useAppContext } from "@/app/context/AppContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
 import { shareContent, openDirections } from "@/utils/sharing";
+import { triggerHaptic } from "@/utils/haptics";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
 
@@ -70,6 +71,7 @@ export default function ProductDetailsPage() {
 
   const handleToggleSaved = () => {
     requireAuth(() => {
+      triggerHaptic(liked ? "light" : "medium");
       toggleSaved.mutate({ itemId: id, itemType: "product" });
     });
   };

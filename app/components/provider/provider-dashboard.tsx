@@ -37,6 +37,7 @@ import ProviderQuickStats from "./provider-quick-stats";
 import { ActivePlanBanner, ActiveBoostBanner } from "./active-status-cards";
 import { useMyProvider, useMySponsorships } from "@/hooks/useMyProvider";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import OfflineFallback from "../offline-fallback";
 import { useProviderDetails } from "@/hooks/useProvider";
 import { useQuery } from "@tanstack/react-query";
@@ -974,6 +975,9 @@ const RevenueBoosters = ({
   onNavigate: (tab: string) => void;
   onNavigateToAnalytics?: (view: string) => void;
 }) => {
+  const { data: featureFlags } = useFeatureFlags();
+  const sponsorshipsEnabled = featureFlags?.sponsorships_enabled ?? false;
+
   const boosters = [
     {
       id: "deals",
@@ -1022,7 +1026,7 @@ const RevenueBoosters = ({
         className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {boosters.map((b) => (
+        {boosters.filter((b) => b.id !== "boost" || sponsorshipsEnabled).map((b) => (
           <motion.button
             key={b.id}
             whileTap={{ scale: 0.96 }}
@@ -1183,6 +1187,9 @@ const ProviderDashboard = ({
     queryFn: getCurrentSubscription,
     staleTime: 1000 * 60 * 2,
   });
+  const { data: featureFlags } = useFeatureFlags();
+  const subscriptionsVisible = featureFlags?.subscriptions_visible ?? true;
+  const sponsorshipsEnabled = featureFlags?.sponsorships_enabled ?? false;
   const { data: sponsorships } = useMySponsorships();
   const [warningsSheetOpen, setWarningsSheetOpen] = useState(false);
   const [warningModalDismissed, setWarningModalDismissed] = useState(() => {
@@ -1368,15 +1375,15 @@ const ProviderDashboard = ({
         verificationStatus={verificationStatus}
       />
       <TodayActivity stats={providerStats} />
-      {hasActivePlan ? (
+      {subscriptionsVisible && (hasActivePlan ? (
         <ActivePlanBanner
           subscription={currentSub!}
           onManage={() => handleNavigate("plans")}
         />
       ) : (
         <SubscriptionUpsell onNavigate={handleNavigate} />
-      )}
-      {activeSponsorships.length > 0 && (
+      ))}
+      {sponsorshipsEnabled && activeSponsorships.length > 0 && (
         <ActiveBoostBanner
           sponsorships={activeSponsorships}
           onManage={() => handleNavigate("boost")}
