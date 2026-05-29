@@ -127,7 +127,7 @@ function InviteFriendsContent() {
               {
                 emoji: "🏪",
                 title: "Support Local Businesses",
-                desc: "More users means more visibility for local providers",
+                desc: "More users means more visibility for local businesses",
               },
               {
                 emoji: "⭐",
@@ -137,7 +137,7 @@ function InviteFriendsContent() {
               {
                 emoji: "🤝",
                 title: "Stronger Together",
-                desc: "Build a trusted network of service providers near you",
+                desc: "Build a trusted network of businesses near you",
               },
               {
                 emoji: "🔍",

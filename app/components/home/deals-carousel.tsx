@@ -49,7 +49,7 @@ const DealsCarousel = ({
         <div className="flex items-center gap-2">
           <IonIcon icon={pricetagOutline} className="text-base text-rose-500" />
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
-            Deals Around You
+            Offers Around You
           </h2>
           <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full whitespace-nowrap">
             Limited Time

@@ -31,7 +31,7 @@ const allTabs: { id: ManagerTab; label: string; icon: string }[] = [
   { id: "products", label: "Catalogue", icon: cubeOutline },
   { id: "photos", label: "Photos", icon: imagesOutline },
   { id: "reviews", label: "Reviews", icon: starOutline },
-  { id: "deals", label: "Deals", icon: pricetagsOutline },
+  { id: "deals", label: "Offers", icon: pricetagsOutline },
   { id: "categories", label: "Categories", icon: gridOutline },
   { id: "plans", label: "Plans", icon: diamondOutline },
   { id: "boost", label: "Boost", icon: rocketOutline },

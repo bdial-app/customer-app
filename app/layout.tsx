@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Tijarah",
     description:
-      "Community-driven marketplace connecting customers with trusted local service providers",
+      "Community-driven marketplace connecting customers with trusted local businesses",
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,

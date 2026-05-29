@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const homeMetadata: Metadata = {
   title: "Tijarah - Home",
-  description: "Discover local services and trusted providers in your area on Tijarah marketplace",
+  description: "Discover local services and trusted businesses in your area on Tijarah marketplace",
 };
 
 export const loginMetadata: Metadata = {
@@ -15,17 +15,17 @@ export const loginMetadata: Metadata = {
 
 export const createAccountMetadata: Metadata = {
   title: "Create Account - Tijarah",
-  description: "Sign up for a new Tijarah account to browse services, connect with providers, or offer your services",
+  description: "Sign up for a new Tijarah account to browse services, connect with businesses, or offer your services",
 };
 
 export const allServicesMetadata: Metadata = {
   title: "All Services - Tijarah",
-  description: "Browse all available services and find trusted providers near you on Tijarah",
+  description: "Browse all available services and find trusted businesses near you on Tijarah",
 };
 
 export const serviceProvidersMetadata: Metadata = {
-  title: "Service Providers - Tijarah",
-  description: "Find and connect with verified service providers in your area on Tijarah",
+  title: "Businesses - Tijarah",
+  description: "Find and connect with verified businesses in your area on Tijarah",
 };
 
 export const productDetailsMetadata: Metadata = {
@@ -34,18 +34,18 @@ export const productDetailsMetadata: Metadata = {
 };
 
 export const providerDetailsMetadata: Metadata = {
-  title: "Provider Details - Tijarah",
-  description: "View provider details, services, and customer reviews on Tijarah",
+  title: "Business Details - Tijarah",
+  description: "View business details, services, and customer reviews on Tijarah",
 };
 
 export const searchMetadata: Metadata = {
   title: "Search Results - Tijarah",
-  description: "Search results for services and providers on Tijarah",
+  description: "Search results for services and businesses on Tijarah",
 };
 
 export const addLocationMetadata: Metadata = {
   title: "Add Location - Tijarah",
-  description: "Add a new business location to your Tijarah provider profile",
+  description: "Add a new business location to your Tijarah business profile",
 };
 
 export const inviteMetadata: Metadata = {
@@ -59,13 +59,13 @@ export const galleryMetadata: Metadata = {
 };
 
 export const providerOnboardingMetadata: Metadata = {
-  title: "Provider Onboarding - Tijarah",
-  description: "Complete your provider profile and start offering services on Tijarah",
+  title: "Business Onboarding - Tijarah",
+  description: "Complete your business profile and start offering services on Tijarah",
 };
 
 export const verifyMetadata: Metadata = {
   title: "Verify Account - Tijarah",
-  description: "Verify your provider account to go live on Tijarah",
+  description: "Verify your business account to go live on Tijarah",
 };
 
 export const privacyPolicyMetadata: Metadata = {

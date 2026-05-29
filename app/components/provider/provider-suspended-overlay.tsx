@@ -10,9 +10,9 @@ const ProviderSuspendedOverlay = () => {
   const { setUserMode } = useAppContext();
 
   const handleContactSupport = () => {
-    const subject = encodeURIComponent("Provider Suspension Review Request");
+    const subject = encodeURIComponent("Business Suspension Review Request");
     const body = encodeURIComponent(
-      "Hello Support Team,\n\nI would like to request a review of my provider account suspension.\n\nPlease let me know the reason and next steps.\n\nThank you."
+      "Hello Support Team,\n\nI would like to request a review of my business account suspension.\n\nPlease let me know the reason and next steps.\n\nThank you."
     );
     window.open(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`, "_self");
   };
@@ -39,8 +39,8 @@ const ProviderSuspendedOverlay = () => {
 
         {/* Description */}
         <p className="text-center text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-          Your provider profile has been suspended by our moderation team. You
-          cannot access your provider dashboard or manage your listings while
+          Your business profile has been suspended by our moderation team. You
+          cannot access your business dashboard or manage your listings while
           suspended.
         </p>
 
@@ -50,7 +50,7 @@ const ProviderSuspendedOverlay = () => {
             What does this mean?
           </h4>
           <ul className="text-[11px] text-red-700/80 space-y-1 leading-relaxed">
-            <li>• Your provider profile is hidden from all listings</li>
+            <li>• Your business profile is hidden from all listings</li>
             <li>• Customers cannot view or contact your business</li>
             <li>• Your products and offers are not visible</li>
           </ul>

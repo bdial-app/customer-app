@@ -1,11 +1,10 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
   arrowBack,
   sendSharp,
-  happyOutline,
   attachOutline,
   checkmarkDone,
   checkmark,
@@ -18,6 +17,8 @@ import {
   banOutline,
   volumeMuteOutline,
 } from "ionicons/icons";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { isNativePlatform } from "@/utils/platform";
 import { checkContent } from "@/utils/content-sanitizer";
 import { isNetworkError } from "@/utils/axios";
 import {
@@ -97,6 +98,18 @@ export default function MessagesPage({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initiallyScrolled = useRef(false);
+  const keyboardOffset = useKeyboardOffset();
+  const isNative = isNativePlatform();
+
+  // Keep a stable ref to onBack so gesture/history effects don't need it as a dep
+  const onBackRef = useRef(onBack);
+  useEffect(() => { onBackRef.current = onBack; }, [onBack]);
+
+  // Framer-motion x value drives the swipe-back slide animation
+  const x = useMotionValue(0);
+
+  // Pointer-based swipe state (left-edge drag)
+  const swipe = useRef({ active: false, startX: 0, lastX: 0, lastT: 0, vx: 0 });
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const lastMarkedMessageRef = useRef<string | null>(null);
 
@@ -221,6 +234,57 @@ export default function MessagesPage({
       initiallyScrolled.current = true;
     }
   }, [allMessages.length, lastMessageId, scrollToBottom]);
+
+  // Scroll to bottom when keyboard opens so latest messages stay visible
+  useEffect(() => {
+    if (keyboardOffset > 0) requestAnimationFrame(scrollToBottom);
+  }, [keyboardOffset, scrollToBottom]);
+
+  // Push a synthetic history entry on native so the OS back button/gesture
+  // has browser history to pop instead of minimising/closing the app.
+  // The global NativeBackButtonHandler in layoutWrapper calls window.history.back()
+  // when canGoBack is true — that fires popstate here and we call onBack().
+  useEffect(() => {
+    if (!isNative) return;
+    window.history.pushState({ tijarahChat: conversationId ?? 'new' }, '');
+    const handlePop = () => onBackRef.current();
+    window.addEventListener('popstate', handlePop);
+    return () => {
+      window.removeEventListener('popstate', handlePop);
+      // If the component unmounts via UI (not hardware back), clean up the
+      // synthetic entry so it doesn't pollute the history stack.
+      if (window.history.state?.tijarahChat) window.history.back();
+    };
+  }, [isNative, conversationId]);
+
+  // Left-edge swipe-back gesture handlers (native only)
+  const onSwipePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.clientX > 24) return;
+    swipe.current = { active: true, startX: e.clientX, lastX: 0, lastT: Date.now(), vx: 0 };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onSwipePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const s = swipe.current;
+    if (!s.active) return;
+    const now = Date.now();
+    const dx = Math.max(0, e.clientX - s.startX);
+    const dt = now - s.lastT;
+    if (dt > 0) s.vx = ((dx - s.lastX) / dt) * 1000;
+    s.lastX = dx;
+    s.lastT = now;
+    x.set(dx);
+  };
+  const onSwipePointerUp = () => {
+    const s = swipe.current;
+    if (!s.active) return;
+    s.active = false;
+    const W = typeof window !== 'undefined' ? window.innerWidth : 390;
+    if (s.lastX > W * 0.35 || s.vx > 500) {
+      animate(x, W, { duration: 0.2, ease: 'easeIn' }).then(() => onBackRef.current());
+    } else {
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 40 });
+    }
+  };
 
   // Infinite scroll — load older messages on scroll to top
   useEffect(() => {
@@ -370,7 +434,25 @@ export default function MessagesPage({
   });
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F5F5F0] dark:bg-slate-900">
+    <motion.div
+      className="flex flex-col h-[100dvh] bg-[#F0EFE9] dark:bg-slate-900"
+      style={{
+        x,
+        paddingBottom: isNative ? keyboardOffset : 0,
+        transition: keyboardOffset > 0 ? "padding-bottom 0.25s ease-out" : "padding-bottom 0.18s ease-in",
+      }}
+    >
+      {/* Left-edge invisible strip for iOS/Android swipe-back gesture */}
+      {isNative && (
+        <div
+          className="absolute inset-y-0 left-0 w-5 z-50"
+          style={{ touchAction: 'none' }}
+          onPointerDown={onSwipePointerDown}
+          onPointerMove={onSwipePointerMove}
+          onPointerUp={onSwipePointerUp}
+          onPointerCancel={onSwipePointerUp}
+        />
+      )}
       {/* Header */}
       <div
         className="shrink-0 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-30"
@@ -674,16 +756,16 @@ export default function MessagesPage({
       )}
       {/* Input bar */}
       <div
-        className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 py-2"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
+        className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 pt-2"
+        style={{ paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 10px)" }}
       >
         <div className="flex items-end gap-2">
           <motion.button
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.88 }}
             onClick={handleAttachClick}
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-slate-100 dark:active:bg-slate-700"
           >
-            <IonIcon icon={attachOutline} className="text-xl text-slate-500 dark:text-slate-400" />
+            <IonIcon icon={attachOutline} className="text-[22px] text-slate-400 dark:text-slate-500" />
           </motion.button>
           <input
             ref={fileInputRef}
@@ -693,32 +775,26 @@ export default function MessagesPage({
             onChange={handleFileChange}
           />
 
-          <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3.5 py-2 flex items-end gap-2">
+          <div className="flex-1 bg-slate-100 dark:bg-slate-700/70 rounded-3xl px-4 py-[9px] flex items-end min-h-[40px]">
             <textarea
               ref={inputRef}
               value={messageText}
               onChange={handleInput}
               onKeyDown={handleKeyDown}
-              placeholder="Write your message…"
+              placeholder="Message"
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-5"
+              className="flex-1 bg-transparent text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-[120px] leading-[1.45]"
               style={{ height: "auto" }}
             />
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="shrink-0 mb-px"
-            >
-              <IonIcon icon={happyOutline} className="text-xl text-slate-400" />
-            </motion.button>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={handleSend}
             disabled={sendMutation.isPending || uploadMutation.isPending}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 transition-colors ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 transition-all duration-150 ${
               messageText.trim() || attachedFile
-                ? "bg-slate-800 dark:bg-slate-600 shadow-lg"
+                ? "bg-violet-600 shadow-md shadow-violet-200 dark:shadow-violet-900/40"
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
           >
@@ -727,8 +803,8 @@ export default function MessagesPage({
             ) : (
               <IonIcon
                 icon={sendSharp}
-                className={`text-base ${
-                  messageText.trim() || attachedFile ? "text-white" : "text-slate-400"
+                className={`text-sm ${
+                  messageText.trim() || attachedFile ? "text-white" : "text-slate-400 dark:text-slate-500"
                 }`}
                 style={{ transform: "rotate(-35deg)", marginLeft: 2 }}
               />
@@ -838,6 +914,6 @@ export default function MessagesPage({
           </>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

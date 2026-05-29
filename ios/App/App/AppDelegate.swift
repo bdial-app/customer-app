@@ -1,6 +1,7 @@
 import UIKit
 import Capacitor
 import UserNotifications
+import FirebaseCore
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -8,8 +9,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Register for remote notifications (required for push on iOS).
-        // @capacitor-firebase/messaging plugin handles FirebaseApp.configure() and FCM token internally.
+        // Configure Firebase first so FirebaseMessaging can exchange the APNs
+        // token for an FCM token. Must happen before registerForRemoteNotifications.
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
         UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
         print("[Push Debug] 📡 Called registerForRemoteNotifications")

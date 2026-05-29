@@ -1261,7 +1261,7 @@ const WhatHappensNext = () => (
         },
         {
           step: "2",
-          text: "Your provider profile gets verified and activated",
+          text: "Your business profile gets verified and activated",
           time: "1-2 business days",
         },
         {
@@ -1329,7 +1329,7 @@ const UnderReviewBanner = ({
       iconColor: "text-green-500",
       title: "Registration Complete!",
       subtitle:
-        "Your provider account has been created successfully. You can now switch to Provider Mode to set up your business, add products, and start connecting with customers.",
+        "Your business account has been created successfully. You can now switch to Business Mode to set up your business, add products, and start connecting with customers.",
       steps: [
         { label: "Application submitted", done: true },
         { label: "Account created", done: true },
@@ -1403,7 +1403,7 @@ const UnderReviewBanner = ({
               className="text-emerald-500 dark:text-emerald-400 text-lg shrink-0 mt-0.5"
             />
             <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
-              Your provider dashboard is ready. Switch to Provider Mode from your profile to manage products, bookings, and business settings.
+              Your business dashboard is ready. Switch to Business Mode from your profile to manage products, bookings, and business settings.
             </p>
           </div>
         ) : (
@@ -1429,7 +1429,7 @@ const UnderReviewBanner = ({
               className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-600 active:bg-emerald-700 transition-colors shadow-md shadow-emerald-200/30"
             >
               <IonIcon icon={storefrontOutline} className="text-white text-xl" />
-              <span className="text-white font-semibold text-[15px]">Continue as Provider</span>
+              <span className="text-white font-semibold text-[15px]">Continue as Business</span>
               <IonIcon icon={arrowForwardOutline} className="text-white/80 text-base ml-auto" />
             </button>
             <button
@@ -1686,7 +1686,7 @@ const ProviderOnboardingPage = () => {
 
   const handleSubmit = async (values: any) => {
     if (!user?.id) {
-      setSubmitError("You must be logged in to become a provider.");
+      setSubmitError("You must be logged in to become a business.");
       return;
     }
 
@@ -1763,7 +1763,12 @@ const ProviderOnboardingPage = () => {
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
-      setProviderStatus(values.identity_doc ? "in_review" : "unverified");
+      if (values.identity_doc) {
+        setProviderStatus("in_review");
+      } else {
+        setProviderStatus("unverified");
+        router.replace("/provider-onboarding/verify");
+      }
     } catch (err: any) {
       const message =
         err?.response?.data?.message ??
@@ -1781,10 +1786,61 @@ const ProviderOnboardingPage = () => {
   if (statusLoading) {
     return (
       <Page>
-        <Navbar title="Become a Provider" />
+        <Navbar title="Become a Business" />
         <div className="flex flex-col items-center justify-center min-h-[70vh] gap-3">
           <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
           <p className="text-sm text-slate-400">Checking your status...</p>
+        </div>
+      </Page>
+    );
+  }
+
+  // Already registered but skipped verification — send them to the verify page
+  if (providerStatus === "unverified") {
+    return (
+      <Page>
+        <Navbar
+          title="Become a Business"
+          leftClassName="w-11"
+          left={
+            <Button clear onClick={() => goBack("/")}>
+              <IonIcon icon={arrowBack} className="w-5 h-5" />
+            </Button>
+          }
+        />
+        <div className="flex flex-col items-center px-6 pt-10 gap-6">
+          <div className="p-5 rounded-full border-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+            <IonIcon icon={shieldCheckmarkOutline} className="text-5xl text-amber-500" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">You&apos;re Already Registered!</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
+              Your business account has been created. Complete your identity verification to get better visibility and earn customer trust.
+            </p>
+          </div>
+          <div className="w-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-2xl p-3 flex items-start gap-2">
+            <IonIcon icon={informationCircleOutline} className="text-amber-500 text-lg shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+              Verified businesses appear higher in search results and earn more customer trust.
+            </p>
+          </div>
+          <div className="w-full flex flex-col gap-3 mt-2">
+            <button
+              type="button"
+              onClick={() => router.push("/provider-onboarding/verify")}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-violet-600 active:bg-violet-700 transition-colors shadow-md shadow-violet-200/30 text-white font-semibold text-[15px]"
+            >
+              <IonIcon icon={shieldCheckmarkOutline} className="text-white text-xl" />
+              Complete Verification
+            </button>
+            <button
+              type="button"
+              onClick={() => goBack("/")}
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-medium text-sm active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
+            >
+              Skip for Now
+            </button>
+          </div>
         </div>
       </Page>
     );
@@ -1803,7 +1859,7 @@ const ProviderOnboardingPage = () => {
   return (
     <Page className="!bg-white dark:!bg-slate-900">
       <Navbar
-        title="Become a Provider"
+        title="Become a Business"
         leftClassName="w-11"
         left={
           <Button clear onClick={handleBack} disabled={isSubmitting}>
@@ -2340,7 +2396,7 @@ const ProviderOnboardingPage = () => {
                     </div>
                     <div className="mx-4 mt-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-xl">
                       <p className="text-[10px] text-slate-400 font-medium">
-                        This step is optional — you can add products later from your provider dashboard.
+                        This step is optional — you can add products later from your business dashboard.
                       </p>
                     </div>
                   </>
@@ -2506,7 +2562,7 @@ const ProviderOnboardingPage = () => {
         iconColor="text-amber-600"
         iconBg="bg-amber-50"
         title="Skip Verification?"
-        description="You can always verify later from your dashboard, but verified providers get better visibility and trust from customers."
+        description="You can always verify later from your dashboard, but verified businesses get better visibility and trust from customers."
         confirmLabel="Skip for Now"
         cancelLabel="Add Verification"
         onConfirm={() => {
@@ -2523,7 +2579,7 @@ const ProviderOnboardingPage = () => {
 export default function ProviderOnboardingExport() {
   return (
     <PrivateRoute
-      title="Become a Provider"
+      title="Become a Business"
       description="Sign in to register your business and start reaching customers on Tijarah Connect."
     >
       <FeatureGate flag="provider_onboarding_enabled">

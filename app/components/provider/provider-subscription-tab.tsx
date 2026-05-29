@@ -304,10 +304,10 @@ const ProviderSubscriptionTab = () => {
                   >
                     <div className="mt-2 bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 space-y-2.5">
                       <PlanBenefit
-                        title={`${plan.maxActiveDeals === -1 ? "Unlimited" : plan.maxActiveDeals} Active Deals`}
+                        title={`${plan.maxActiveDeals === -1 ? "Unlimited" : plan.maxActiveDeals} Active Offers`}
                         description={plan.maxActiveDeals === -1
-                          ? "Post as many deals as you want — no limits. Keep your storefront fresh and attract more customers."
-                          : `Run up to ${plan.maxActiveDeals} deals at a time. Each deal is shown to customers searching nearby.`}
+                          ? "Post as many offers as you want — no limits. Keep your storefront fresh and attract more customers."
+                          : `Run up to ${plan.maxActiveDeals} offers at a time. Each offer is shown to customers searching nearby.`}
                       />
                       <PlanBenefit
                         title={`${plan.monthlyLeadUnlocks === -1 ? "Unlimited" : plan.monthlyLeadUnlocks} Lead Unlocks / Month`}
