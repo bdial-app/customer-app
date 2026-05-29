@@ -1899,8 +1899,7 @@ const ProviderOnboardingPage = () => {
       if (values.identity_doc) {
         setProviderStatus("in_review");
       } else {
-        setProviderStatus("unverified");
-        router.replace("/provider-onboarding/verify");
+        router.replace("/");
       }
     } catch (err: any) {
       const message =

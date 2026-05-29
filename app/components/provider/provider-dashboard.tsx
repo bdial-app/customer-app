@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -54,6 +54,7 @@ import ProviderWarningsSheet from "./provider-warnings-sheet";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import PullToRefresh from "../pull-to-refresh";
+import PageSplashScreen from "../page-splash-screen";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -1235,6 +1236,13 @@ const ProviderDashboard = ({
   const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
   const isLoading = providerLoading || detailsLoading;
+  const [showSplash, setShowSplash] = useState(!providerData && !details);
+  useEffect(() => {
+    if (!isLoading) {
+      const t = setTimeout(() => setShowSplash(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [isLoading]);
 
   const hasActivePlan = currentSub && currentSub.status === "active" && currentSub.plan;
   const activeSponsorships = sponsorships?.filter(
@@ -1298,6 +1306,10 @@ const ProviderDashboard = ({
         </div>
       </div>
     );
+  }
+
+  if (isLoading && showSplash) {
+    return <PageSplashScreen variant="business" message="Setting up your dashboard…" />;
   }
 
   if (isLoading) {

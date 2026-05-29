@@ -68,6 +68,7 @@ import { LeadUnlockSheet } from "@/app/components/monetization/lead-unlock-sheet
 import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
 import { MonetizationBanner } from "@/app/components/monetization/monetization-banner";
 import { ActivePlanBanner, ActiveBoostBanner } from "@/app/components/provider/active-status-cards";
+import PageSplashScreen from "./page-splash-screen";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
 import type { StatWithTrend } from "@/services/analytics.service";
@@ -387,6 +388,13 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
   const { data: analytics } = useProviderAnalytics();
   const { data: summary, isLoading: summaryLoading, isError: summaryError, refetch: refetchSummary } = useAnalyticsSummary(period);
+  const [showSplash, setShowSplash] = useState(!summary);
+  useEffect(() => {
+    if (!summaryLoading && (summary || summaryError)) {
+      const t = setTimeout(() => setShowSplash(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [summaryLoading, summary, summaryError]);
   const { data: topProducts } = useTopProducts(period);
   const { data: peakHours } = usePeakHours(period);
   const { data: leadsData, isLoading: leadsLoading } = useLeads(leadFilters);
@@ -444,6 +452,10 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
         kpi(summary.saves, "Saves", bookmarkOutline, "text-pink-600", "bg-pink-500"),
       ]
     : [];
+
+  if (showSplash && summaryLoading) {
+    return <PageSplashScreen variant="analytics" message="Loading your analytics…" />;
+  }
 
   // Offline + no cached analytics data → show fallback
   if (!isOnline && !summary) {
