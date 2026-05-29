@@ -34,7 +34,7 @@ import {
 } from "@/hooks/useSavedLocation";
 import { motion, AnimatePresence } from "framer-motion";
 import PrivateRoute from "@/app/components/private-route";
-import { getCurrentPosition } from "@/utils/geolocation";
+import { requestLocationOrPrompt } from "@/utils/geolocation";
 import { AppDialog } from "@/app/components/app-dialog";
 import { SavedLocation } from "@/services/saved-location.service";
 
@@ -306,10 +306,10 @@ const AddAddressView = ({ onBack }: { onBack: () => void }) => {
 
   const handleLocateMe = useCallback(async () => {
     try {
-      const { latitude, longitude } = await getCurrentPosition({
-        timeout: 10000,
-        maximumAge: 60000,
-      });
+      const { latitude, longitude } = await requestLocationOrPrompt(
+        "Finding your location",
+        { timeout: 10000, maximumAge: 60000 },
+      );
       const newPos = { lat: latitude, lng: longitude };
       setMarker(newPos);
       getAddress(latitude, longitude);

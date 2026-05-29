@@ -138,6 +138,9 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     if (effectiveLat || effectiveLng) return; // already have coordinates
     let cancelled = false;
     import("@/utils/geolocation").then(({ getCurrentPosition }) => {
+      // Auto-detect is a background/passive call — don't show the denial sheet
+      // here; users land on this page without explicitly asking for location.
+      // The sheet appears when they tap an explicit "use my location" CTA.
       getCurrentPosition({ timeout: 10000 }).then((pos) => {
         if (!cancelled) {
           dispatch(setGuestCoords({ lat: pos.latitude, lng: pos.longitude }));

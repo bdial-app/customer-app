@@ -8,7 +8,7 @@ import {
   useCreateAccountMutation,
 } from "./useAuth";
 import { useNotification } from "@/app/context/NotificationContext";
-import { getCurrentPosition } from "@/utils/geolocation";
+import { requestLocationOrPrompt, LOCATION_PERMISSION_DENIED } from "@/utils/geolocation";
 
 export type CreateAccountStep = "mobile" | "otp" | "details";
 
@@ -40,7 +40,7 @@ export const useCreateAccount = (initialMobile?: string) => {
 
   const requestLocation = useCallback(async () => {
     try {
-      const pos = await getCurrentPosition({
+      const pos = await requestLocationOrPrompt("Completing registration", {
         enableHighAccuracy: true,
         timeout: 10000,
       });
@@ -51,15 +51,15 @@ export const useCreateAccount = (initialMobile?: string) => {
         variant: "success",
       });
     } catch (error: any) {
-      const message =
-        error?.code === 1 || error?.message?.includes("denied")
-          ? "Location access denied. Please enable it in settings and try again."
-          : "Please enable location to complete registration.";
-      notify({
-        title: "Location Required",
-        subtitle: message,
-        variant: "warning",
-      });
+      // Denied surfaces the global LocationDeniedSheet (with Settings link);
+      // toast only for other failures like GPS timeout / services off.
+      if (error?.code !== LOCATION_PERMISSION_DENIED) {
+        notify({
+          title: "Location Required",
+          subtitle: "Could not determine your location. Please try again.",
+          variant: "warning",
+        });
+      }
     }
   }, [notify]);
 

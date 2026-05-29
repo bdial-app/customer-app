@@ -153,6 +153,31 @@ function getWebPosition(options?: GeoOptions): Promise<GeoPosition> {
 }
 
 /**
+ * Like `getCurrentPosition`, but if the call fails because the user previously
+ * denied the location permission (or denies it now), shows a global sheet that
+ * explains why and links to the device's Settings app.
+ *
+ * `featureLabel` is woven into the sheet copy (e.g. "Detecting your location").
+ * The original error is still thrown so callers can run their own fallback.
+ */
+export async function requestLocationOrPrompt(
+  featureLabel?: string,
+  options?: GeoOptions,
+): Promise<GeoPosition> {
+  try {
+    return await getCurrentPosition(options);
+  } catch (err: any) {
+    if (err?.code === LOCATION_PERMISSION_DENIED) {
+      const { showLocationDeniedSheet } = await import(
+        "@/hooks/useLocationDeniedSheet"
+      );
+      showLocationDeniedSheet(featureLabel);
+    }
+    throw err;
+  }
+}
+
+/**
  * Open the device's app settings page so the user can enable location permission.
  * Uses capacitor-native-settings plugin on Android/iOS.
  */

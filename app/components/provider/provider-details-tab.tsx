@@ -187,11 +187,14 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const handleDetectGPS = useCallback(async () => {
     setIsDetectingLocation(true);
     try {
-      const { getCurrentPosition } = await import("@/utils/geolocation");
-      const pos = await getCurrentPosition({ timeout: 10000, enableHighAccuracy: true });
+      const { requestLocationOrPrompt } = await import("@/utils/geolocation");
+      const pos = await requestLocationOrPrompt("Detecting your location", { timeout: 10000, enableHighAccuracy: true });
       handleMapSelect(pos.latitude, pos.longitude);
-    } catch {
-      alert("Could not detect location. Please allow location access and try again.");
+    } catch (err: any) {
+      const { LOCATION_PERMISSION_DENIED } = await import("@/utils/geolocation");
+      if (err?.code !== LOCATION_PERMISSION_DENIED) {
+        alert("Could not detect location. Please try again in an open area.");
+      }
     } finally {
       setIsDetectingLocation(false);
     }
