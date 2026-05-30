@@ -163,6 +163,10 @@ export interface HomeFeedResponse {
   dealsAroundYou: HomeProviderWithOffer[];
   sponsoredProviders: HomeSponsoredProvider[];
   bestProducts: HomeFeedProduct[];
+  // Personalized products picked from providers in the user's top categories.
+  // Same shape as bestProducts; derived server-side from personalizedCategories
+  // → providers in those categories → their hero/top products.
+  forYouProducts?: HomeFeedProduct[] | null;
 }
 
 // ─── API Functions ──────────────────────────────────────────────────

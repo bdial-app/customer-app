@@ -18,6 +18,7 @@ import DealsCarousel from "./home/deals-carousel";
 import SponsoredCarousel from "./home/sponsored-carousel";
 import ProviderCardSlider from "./home/provider-card-slider";
 import PicksForYou from "./home/picks-for-you";
+import PicksForYouProducts from "./home/picks-for-you-products";
 import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
@@ -196,10 +197,22 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 Banner has negative margin so it sits behind them on initial render. */}
             <GeoLocation />
 
-            {/* Sticky search bar — sticks at top of safe area on scroll */}
+            {/* Sticky search bar — when stuck, its blur extends UP into the safe
+                area so the dynamic-island / status-bar zone reads as one continuous
+                frosted bar with the categories sticky below. The negative margin-top
+                neutralizes the padding-top at rest, so the visual position is unchanged
+                until the user scrolls. */}
             <div
-              className="sticky z-40 backdrop-blur-xl"
-              style={{ top: "var(--sat, 0px)" }}
+              className={`sticky z-40 transition-colors duration-300 ${
+                heroScrolled
+                  ? "backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65"
+                  : ""
+              }`}
+              style={{
+                top: 0,
+                paddingTop: "var(--sat, 0px)",
+                marginTop: "calc(-1 * var(--sat, 0px))",
+              }}
             >
               <HeroSearchBar prompts={feed?.searchPrompts} scrolled={heroScrolled} />
             </div>
@@ -209,7 +222,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               ref={bannerRef}
               className="relative overflow-hidden"
               style={{
-                marginTop: "calc(-1 * (var(--sat, 0px) + 136px))",
+                marginTop: "calc(-1 * (var(--sat, 0px) + 124px))",
                 height: "min(50vh, 420px)",
                 minHeight: "340px",
               }}
@@ -221,10 +234,11 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               />
             </div>
 
-            {/* Categories — frosted glass, sticks below search bar */}
+            {/* Categories — frosted glass, sticks flush below the search bar so
+                the safe-area scrim, search, and categories form one continuous bar */}
             <div
-              className="sticky z-30 backdrop-blur-xl bg-white/55 dark:bg-slate-900/55 border-b border-white/20 dark:border-slate-700/30 pt-3"
-              style={{ top: "calc(var(--sat, 0px) + 72px)" }}
+              className="sticky z-30 backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65 border-b border-white/20 dark:border-slate-700/40 pt-2"
+              style={{ top: "calc(var(--sat, 0px) + 60px)" }}
             >
               <QuickCategories
                 personalizedCategories={personalizedCategories}
@@ -263,6 +277,13 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 isLoading={isLoading}
               />
             )}
+
+            {/* ✨ Just for You (Products) — magazine grid of products from preferred categories */}
+            <PicksForYouProducts
+              products={feed?.forYouProducts}
+              personalizedCategories={personalizedCategories}
+              isLoading={isLoading}
+            />
 
             {/* ♀ Women-Led Businesses — purple themed section */}
             {womenLedProviders.length > 0 && (
