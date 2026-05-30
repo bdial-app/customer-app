@@ -202,8 +202,13 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 frosted bar with the categories sticky below. The negative margin-top
                 neutralizes the padding-top at rest, so the visual position is unchanged
                 until the user scrolls. */}
+            {/* `flex flex-col` is load-bearing: it puts the wrapper into a flex
+                formatting context, which disables CSS margin collapse. Without it,
+                the inner search-bar's mb-3 escapes through the wrapper's open bottom
+                edge, leaving a 12px gap above the categories sticky that shows the
+                scrolled banner through. */}
             <div
-              className={`sticky z-40 transition-colors duration-300 ${
+              className={`sticky z-40 flex flex-col transition-colors duration-300 ${
                 heroScrolled
                   ? "backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65"
                   : ""
