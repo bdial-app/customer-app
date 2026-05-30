@@ -76,6 +76,16 @@ import type { StatWithTrend } from "@/services/analytics.service";
 type Period = "7d" | "30d" | "90d";
 type View = "overview" | "leads" | "lead-detail";
 
+const kpi = (stat: StatWithTrend | undefined, label: string, icon: string, accent: string, bg: string) => ({
+  label,
+  value: stat?.count?.toLocaleString() ?? "0",
+  sub: label.toLowerCase(),
+  change: stat?.trend ?? 0,
+  icon,
+  accent,
+  bg,
+});
+
 // ─── Custom Tooltip ───────────────────────────────────────────────────
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -415,34 +425,21 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
     (s) => s.isActive && new Date(s.endsAt) > new Date(),
   ) ?? [];
 
-  // Build sparkline chart data from summary
-  const chartData = summary?.profileViews.sparkline?.map((v, i) => ({
+  const chartData = useMemo(() => summary?.profileViews.sparkline?.map((v, i) => ({
     name: `${i + 1}`,
     views: v,
     enquiries: summary.enquiries.sparkline?.[i] || 0,
-  })) || [];
+  })) || [], [summary]);
 
-  // Peak hours chart data
-  const peakHoursData = peakHours?.map((v, i) => ({ hour: `${i}`, val: v })) || [];
-  const peakMax = Math.max(...(peakHours || [0]), 1);
-  const peakHourIdx = peakHours?.indexOf(Math.max(...(peakHours || [0]))) ?? 0;
+  const peakHoursData = useMemo(() => peakHours?.map((v, i) => ({ hour: `${i}`, val: v })) || [], [peakHours]);
+  const peakMax = useMemo(() => Math.max(...(peakHours || [0]), 1), [peakHours]);
+  const peakHourIdx = useMemo(() => peakHours?.indexOf(Math.max(...(peakHours || [0]))) ?? 0, [peakHours]);
   const peakLabel = `${peakHourIdx}:00–${peakHourIdx + 1}:00`;
 
   const totalReviews = analytics?.totalReviews ?? 0;
   const avgRating = analytics?.averageRating ?? 0;
 
-  // KPI helper
-  const kpi = (stat: StatWithTrend | undefined, label: string, icon: string, accent: string, bg: string) => ({
-    label,
-    value: stat?.count?.toLocaleString() ?? "0",
-    sub: label.toLowerCase(),
-    change: stat?.trend ?? 0,
-    icon,
-    accent,
-    bg,
-  });
-
-  const kpis = summary
+  const kpis = useMemo(() => summary
     ? [
         kpi(summary.profileViews, "Views", eyeOutline, "text-blue-600", "bg-blue-500"),
         kpi(summary.searchAppearances, "Searches", searchOutline, "text-violet-600", "bg-violet-500"),
@@ -451,7 +448,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
         kpi(summary.directions, "Directions", navigateOutline, "text-teal-600", "bg-teal-500"),
         kpi(summary.saves, "Saves", bookmarkOutline, "text-pink-600", "bg-pink-500"),
       ]
-    : [];
+    : [], [summary]);
 
   if (showSplash && summaryLoading) {
     return <PageSplashScreen variant="analytics" message="Loading your analytics…" />;

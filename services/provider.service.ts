@@ -338,6 +338,7 @@ export const becomeProvider = async (
   if (payload.facebookHandle) formData.append("facebookHandle", payload.facebookHandle);
   if (payload.youtubeHandle) formData.append("youtubeHandle", payload.youtubeHandle);
   if (payload.whatsappNumber) formData.append("whatsappNumber", payload.whatsappNumber);
+  if (payload.linkedinHandle) formData.append("linkedinHandle", payload.linkedinHandle);
 
   const { data } = await apiClient.post(PROVIDER_URLS.BECOME_PROVIDER, formData, {
     timeout: 120_000, // 2min — multiple image uploads on mobile networks

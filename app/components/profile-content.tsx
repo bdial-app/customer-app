@@ -841,7 +841,7 @@ const ProfileContent = memo(() => {
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
                 <div className="relative z-10">
                   <h3 className="text-white font-bold text-sm">
-                    Become a Business
+                    List your business
                   </h3>
                   <p className="text-white/70 text-xs mt-0.5 mb-3">
                     Start offering your services on Tijarah

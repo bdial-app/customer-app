@@ -26,7 +26,10 @@ export const useAnalyticsSummary = (period: "7d" | "30d" | "90d" = "7d") => {
   return useQuery<AnalyticsSummary>({
     queryKey: [...ANALYTICS_SUMMARY_KEY, period],
     queryFn: () => getAnalyticsSummary(period),
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
     retry: 2,
   });
 };
@@ -82,6 +85,9 @@ export const useTopProducts = (period: "7d" | "30d" | "90d" = "7d") => {
     queryKey: [...ANALYTICS_TOP_PRODUCTS_KEY, period],
     queryFn: () => getTopProducts(period),
     staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 20,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -90,6 +96,9 @@ export const usePeakHours = (period: "7d" | "30d" | "90d" = "7d") => {
     queryKey: [...ANALYTICS_PEAK_HOURS_KEY, period],
     queryFn: () => getPeakHours(period),
     staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 20,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -100,5 +109,8 @@ export const useVisitorInsights = (period: "7d" | "30d" | "90d" = "30d") => {
     queryKey: [...ANALYTICS_VISITOR_INSIGHTS_KEY, period],
     queryFn: () => getVisitorInsights(period),
     staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 20,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };

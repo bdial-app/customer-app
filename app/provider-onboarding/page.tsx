@@ -1819,7 +1819,7 @@ const ProviderOnboardingPage = () => {
 
   const handleSubmit = async (values: any) => {
     if (!user?.id) {
-      setSubmitError("You must be logged in to become a business.");
+      setSubmitError("You must be logged in to list your business.");
       return;
     }
 
@@ -1918,7 +1918,7 @@ const ProviderOnboardingPage = () => {
   if (statusLoading) {
     return (
       <Page>
-        <Navbar title="Become a Business" />
+        <Navbar title="List your business" />
         <div className="flex flex-col items-center justify-center min-h-[70vh] gap-3">
           <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
           <p className="text-sm text-slate-400">Checking your status...</p>
@@ -1932,7 +1932,7 @@ const ProviderOnboardingPage = () => {
     return (
       <Page>
         <Navbar
-          title="Become a Business"
+          title="List your business"
           leftClassName="w-11"
           left={
             <Button clear onClick={() => goBack("/")}>
@@ -1991,7 +1991,7 @@ const ProviderOnboardingPage = () => {
   return (
     <Page className="!bg-white dark:!bg-slate-900">
       <Navbar
-        title="Become a Business"
+        title="List your business"
         leftClassName="w-11"
         left={
           <Button clear onClick={handleBack} disabled={isSubmitting}>
@@ -2707,8 +2707,8 @@ const ProviderOnboardingPage = () => {
 export default function ProviderOnboardingExport() {
   return (
     <PrivateRoute
-      title="Become a Business"
-      description="Sign in to register your business and start reaching customers on Tijarah Connect."
+      title="List your business"
+      description="Sign in to list your business and start reaching customers on Tijarah Connect."
     >
       <FeatureGate flag="provider_onboarding_enabled">
         <ProviderOnboardingPage />

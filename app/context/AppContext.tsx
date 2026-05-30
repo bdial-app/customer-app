@@ -52,6 +52,8 @@ interface AppContextType {
   providerInfo: ProviderInfo | null;
   setProviderStatus: (status: ProviderStatus) => void;
   setUserMode: (mode: UserMode) => void;
+  /** Temporarily override mode without persisting to storage (for unauthenticated state). */
+  setUserModeNoSync: (mode: UserMode) => void;
   setProviderInfo: (info: ProviderInfo | null) => void;
   toggleMode: () => void;
   resetProviderState: () => void;
@@ -85,6 +87,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     updateUser({ preferredMode: mode }).catch(() => {});
   }, []);
 
+  // Sets mode in memory only — used when forcing guest users to customer mode
+  // so their saved "provider" preference in localStorage is not overwritten.
+  const setUserModeNoSync = useCallback((mode: UserMode) => {
+    _setUserMode(mode);
+  }, []);
+
   const toggleMode = useCallback(() => {
     const now = Date.now();
     if (now - lastToggleRef.current < 400) return;
@@ -114,6 +122,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         providerInfo,
         setProviderStatus,
         setUserMode,
+        setUserModeNoSync,
         setProviderInfo,
         toggleMode,
         resetProviderState,

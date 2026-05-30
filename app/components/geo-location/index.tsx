@@ -359,13 +359,12 @@ const GeoLocation = () => {
     <>
       {/* ── Header Bar ── */}
       <div
-        className="sticky top-0 z-40"
+        className="relative z-10"
         style={{
           paddingTop: "calc(var(--sat,0px) + 6px)",
-          background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
+          background: "linear-gradient(180deg, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.72) 80%, rgba(2,6,23,0.52) 100%)",
         }}
       >
-        <div className="absolute inset-x-0 bottom-0 h-px bg-white/[0.06]" />
         <div
           onClick={() => setOpen(true)}
           className="flex items-center justify-between gap-3 px-4 py-2.5 pb-3 cursor-pointer active:bg-white/[0.04] transition-colors"

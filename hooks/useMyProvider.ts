@@ -35,9 +35,10 @@ export const useMyProvider = () => {
     queryKey: PROVIDER_STATUS_KEY,
     queryFn: getMyProviderStatus,
     staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
     retry: 2,
     refetchOnWindowFocus: true,
-    placeholderData: (prev) => prev, // Keep stale data visible during refetch
+    placeholderData: (prev) => prev,
   });
 };
 
@@ -75,7 +76,10 @@ export const useProviderAnalytics = () => {
   return useQuery<ProviderAnalytics>({
     queryKey: ["my-provider-analytics"],
     queryFn: getMyAnalytics,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -100,7 +104,10 @@ export const useMyOffers = () => {
   return useQuery<ProviderOfferFull[]>({
     queryKey: MY_OFFERS_KEY,
     queryFn: getMyOffers,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 3,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -159,6 +166,9 @@ export const useSponsorshipPlans = () => {
     queryKey: SPONSORSHIP_PLANS_KEY,
     queryFn: getSponsorshipPlans,
     staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -166,7 +176,10 @@ export const useMySponsorships = () => {
   return useQuery<SponsoredListing[]>({
     queryKey: MY_SPONSORSHIPS_KEY,
     queryFn: getMySponsorships,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 3,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 

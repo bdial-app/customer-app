@@ -76,8 +76,8 @@ export default function PullToRefresh({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative h-full overflow-auto"
-      style={{ overscrollBehavior: "contain" }}
+      className="relative h-full overflow-y-auto overflow-x-hidden"
+      style={{ overscrollBehavior: "contain", touchAction: "pan-y" }}
     >
       {/* Pull indicator */}
       {(pullDistance > 0 || isRefreshing) && (

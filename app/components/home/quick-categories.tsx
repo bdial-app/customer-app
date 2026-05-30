@@ -29,7 +29,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
 
   if (isLoading) {
     return (
-      <div className="px-4 pb-3">
+      <div className="px-4">
         <div className="flex gap-3 overflow-x-auto no-scrollbar">
           {[...Array(5)].map((_, i) => (
             <div
@@ -96,7 +96,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
                 name={cat.name}
                 size="lg"
               />
-              <span className="text-[10px] font-semibold text-white/70 text-center leading-tight w-[68px] line-clamp-2">
+              <span className="text-[10px] font-semibold text-slate-700 dark:text-white/70 text-center leading-tight w-[68px] line-clamp-2">
                 {cat.name}
               </span>
             </motion.div>
@@ -109,10 +109,10 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
             onClick={() => router.push(ROUTE_PATH.CATEGORIES)}
             className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
           >
-            <div className="w-[62px] h-[62px] rounded-2xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center">
-              <span className="text-lg text-white/50">→</span>
+            <div className="w-[62px] h-[62px] rounded-2xl bg-slate-100 dark:bg-white/[0.08] border border-slate-200 dark:border-white/[0.1] flex items-center justify-center">
+              <span className="text-lg text-slate-400 dark:text-white/50">→</span>
             </div>
-            <span className="text-[10px] font-semibold text-white/40 text-center leading-tight">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-white/40 text-center leading-tight">
               See All
             </span>
           </motion.div>

@@ -38,6 +38,7 @@ export function TabPanel({ id, activeTab, children }: TabPanelProps) {
       style={{
         display: isActive ? "block" : "none",
         WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
       }}
     >
       {children}
