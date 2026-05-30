@@ -85,9 +85,10 @@ input, textarea, [contenteditable="true"] {
 
 /* Tab panel optimization — prevent layout thrash on hidden tabs */
 .tab-panel {
-  will-change: auto;
-  contain: layout style;
+  /* contain:layout breaks touch-scroll on Android WebView <85 — use paint only */
+  contain: paint;
   overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .tab-panel[style*="display: none"] {
