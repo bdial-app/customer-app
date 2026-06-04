@@ -216,6 +216,7 @@ const ProfileContent = memo(() => {
   const {
     providerStatus,
     userMode,
+    providerStatusResolved,
     setProviderStatus,
     setProviderInfo,
     setUserMode,
@@ -804,7 +805,21 @@ const ProfileContent = memo(() => {
             </div>
           </motion.div>
 
-          {/* Provider Status Cards */}
+          {/* Provider Status Cards — skeleton-gated until the real status
+              resolves, so a fresh login doesn't flash the customer "List your
+              business" card before snapping to the Business Mode toggle. */}
+          {!providerStatusResolved ? (
+            <div className="mx-4 mb-3">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex items-center justify-between animate-pulse">
+                <div className="space-y-2">
+                  <div className="h-3.5 w-28 bg-slate-100 dark:bg-slate-700 rounded" />
+                  <div className="h-2.5 w-40 bg-slate-100 dark:bg-slate-700 rounded" />
+                </div>
+                <div className="h-6 w-11 bg-slate-100 dark:bg-slate-700 rounded-full" />
+              </div>
+            </div>
+          ) : (
+          <>
           {(providerStatus === "approved" ||
             providerStatus === "in_review" ||
             providerStatus === "suspended" ||
@@ -979,6 +994,9 @@ const ProfileContent = memo(() => {
                 </div>
               </div>
             </div>
+          )}
+
+          </>
           )}
 
           {/* ── Provider Management Section (only in provider view) ── */}

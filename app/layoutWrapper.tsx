@@ -322,6 +322,72 @@ function AccountPausedHandler() {
   );
 }
 
+// Resolves the real provider status once per login at the app level, so the
+// home tab (and any other mode-dependent UI) knows the user's true mode without
+// waiting for the Profile tab to mount. Marks providerStatusResolved so the UI
+// can skeleton-gate instead of flashing the customer/"apply" default first.
+function ProviderStatusBootstrap() {
+  const user = useAppSelector((state) => state.auth.user as any);
+  const {
+    setProviderStatus,
+    setProviderInfo,
+    setUserMode,
+    setProviderStatusResolved,
+  } = useAppContext();
+  const resolvedForUserRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      resolvedForUserRef.current = null;
+      return;
+    }
+    // Already resolved for this user in this session — don't refetch on re-render.
+    if (resolvedForUserRef.current === user.id) return;
+    resolvedForUserRef.current = user.id;
+
+    let cancelled = false;
+    getMyProviderStatus()
+      .then((result) => {
+        if (cancelled) return;
+        setProviderStatus(result.providerStatus as any);
+        if (result.provider) {
+          setProviderInfo({
+            id: result.provider.id,
+            brandName: result.provider.brandName,
+          });
+        }
+        if (
+          result.preferredMode &&
+          result.providerStatus !== "disabled" &&
+          result.providerStatus !== "deleted"
+        ) {
+          setUserMode(result.preferredMode);
+        } else if (
+          result.providerStatus === "disabled" ||
+          result.providerStatus === "deleted"
+        ) {
+          setUserMode("customer");
+        }
+      })
+      .catch(() => {
+        // Allow a retry on next mount if the fetch failed.
+        if (!cancelled) resolvedForUserRef.current = null;
+      })
+      .finally(() => {
+        // Whether or not the fetch succeeded, stop gating — a failed fetch
+        // should fall back to the (storage-derived) status rather than hang
+        // on a skeleton forever.
+        if (!cancelled) setProviderStatusResolved(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, setProviderStatus, setProviderInfo, setUserMode, setProviderStatusResolved]);
+
+  return null;
+}
+
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   const [queryClient] = useState(
@@ -382,6 +448,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
           <LanguageProvider>
             <AppProvider>
               <AuthGateProvider>
+              <ProviderStatusBootstrap />
               <LanguageSyncBridge />
               <NavigationTracker />
               <PushNotificationBridge />

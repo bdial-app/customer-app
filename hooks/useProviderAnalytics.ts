@@ -14,8 +14,10 @@ import {
   VisitorInsights,
   LeadFilters,
 } from "@/services/analytics.service";
-import { createLeadUnlockCheckout, type LeadUnlockResponse } from "@/services/payment.service";
+import { createLeadUnlockCheckout, verifyAppleConsumable, type LeadUnlockResponse } from "@/services/payment.service";
 import { payWithRazorpay } from "@/services/razorpay.service";
+import { purchaseConsumable } from "@/services/iap.service";
+import { getNativePlatform } from "@/utils/platform";
 
 export const ANALYTICS_SUMMARY_KEY = ["analytics-summary"];
 export const ANALYTICS_LEADS_KEY = ["analytics-leads"];
@@ -55,19 +57,37 @@ export const useUnlockLead = () => {
   const qc = useQueryClient();
   return useMutation<LeadUnlockResponse, Error, { leadId: string; voucherCode?: string }>({
     mutationFn: async ({ leadId, voucherCode }) => {
-      const data = await createLeadUnlockCheckout(leadId, voucherCode);
-      if (!data.unlocked && data.method === "payment_required" && data.orderId && data.keyId) {
-        // Open Razorpay checkout modal
-        await payWithRazorpay({
-          orderId: data.orderId,
-          amount: data.amount!,
-          currency: data.currency!,
-          paymentId: data.paymentId!,
-          keyId: data.keyId,
-          description: data.description!,
-          prefill: data.prefill || {},
-        });
-        return { ...data, unlocked: true };
+      const isAppleIAP = getNativePlatform() === "ios";
+      // iOS → Apple IAP consumable; Android/Web → Razorpay. Vouchers aren't
+      // applied on iOS (Apple controls the price).
+      const data = await createLeadUnlockCheckout(
+        leadId,
+        isAppleIAP ? undefined : voucherCode,
+        isAppleIAP ? "apple" : "razorpay",
+      );
+      if (data.unlocked) return data;
+
+      if (data.method === "payment_required") {
+        // iOS → Apple IAP
+        if (isAppleIAP && data.gateway === "apple" && data.appleProductId) {
+          await purchaseConsumable(data.appleProductId, (transactionId) =>
+            verifyAppleConsumable({ paymentId: data.paymentId!, transactionId }),
+          );
+          return { ...data, unlocked: true };
+        }
+        // Android/Web → Razorpay
+        if (data.orderId && data.keyId) {
+          await payWithRazorpay({
+            orderId: data.orderId,
+            amount: data.amount!,
+            currency: data.currency!,
+            paymentId: data.paymentId!,
+            keyId: data.keyId,
+            description: data.description!,
+            prefill: data.prefill || {},
+          });
+          return { ...data, unlocked: true };
+        }
       }
       return data;
     },

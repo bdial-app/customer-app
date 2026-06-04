@@ -1,5 +1,48 @@
 import apiClient from "@/utils/axios";
 import { HOME_URLS } from "@/utils/urls";
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
+import { getTokenSync } from "@/utils/storage";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+// On native (iOS/Android with CapacitorHttp.enabled), axios's adapter is
+// patched and occasionally hands back the raw response body as a string,
+// causing the home feed to silently fall back to {}. Going through
+// CapacitorHttp.request directly with responseType: 'json' guarantees the
+// native plugin parses the body before returning it to JS.
+async function nativeGet(path: string, params?: Record<string, any>): Promise<any> {
+  const token = getTokenSync();
+  const res = await CapacitorHttp.request({
+    method: "GET",
+    url: `${API_BASE}${path}`,
+    params: params
+      ? Object.fromEntries(
+          Object.entries(params).filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : undefined,
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    responseType: "json",
+  });
+  // Throw on non-2xx so React Query treats it as an error instead of rendering
+  // the error body as if it were the feed (which was hiding 500s as "empty home").
+  if (res.status < 200 || res.status >= 300) {
+    const body = typeof res.data === "string" ? res.data.slice(0, 200) : JSON.stringify(res.data).slice(0, 200);
+    console.error(`[nativeGet] ${path} → HTTP ${res.status}`, body);
+    throw new Error(`HTTP ${res.status} from ${path}`);
+  }
+  let data: any = res.data;
+  if (typeof data === "string") {
+    const t = data.trim();
+    if (t && (t[0] === "{" || t[0] === "[")) {
+      try { data = JSON.parse(t); } catch { /* keep string */ }
+    }
+  }
+  return data;
+}
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -171,16 +214,36 @@ export interface HomeFeedResponse {
 
 // ─── API Functions ──────────────────────────────────────────────────
 
+// CapacitorHttp's native adapter sometimes hands back the response body as a
+// raw string instead of parsed JSON, bypassing axios's transformResponse.
+// Normalize at the call site so the home page renders regardless of adapter.
+function normalizeBody(data: unknown): any {
+  if (data == null) return data;
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    if (!trimmed) return null;
+    if (trimmed[0] === '{' || trimmed[0] === '[') {
+      try { return JSON.parse(trimmed); } catch { return null; }
+    }
+    return null;
+  }
+  return data;
+}
+
+const isNative = () => Capacitor.isNativePlatform?.() === true;
+
 export const getHomeFeed = async (params?: {
   lat?: number;
   lng?: number;
   city?: string;
 }): Promise<HomeFeedResponse> => {
-  const { data } = await apiClient.get(HOME_URLS.FEED, { params });
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+  const data = isNative()
+    ? await nativeGet(HOME_URLS.FEED, params)
+    : normalizeBody((await apiClient.get(HOME_URLS.FEED, { params })).data);
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
     return {} as HomeFeedResponse;
   }
-  return data;
+  return data as HomeFeedResponse;
 };
 
 export const getLiveActivity = async (params?: {
@@ -188,7 +251,9 @@ export const getLiveActivity = async (params?: {
   lng?: number;
   city?: string;
 }): Promise<LiveActivity[]> => {
-  const { data } = await apiClient.get(HOME_URLS.LIVE_ACTIVITY, { params });
+  const data = isNative()
+    ? await nativeGet(HOME_URLS.LIVE_ACTIVITY, params)
+    : normalizeBody((await apiClient.get(HOME_URLS.LIVE_ACTIVITY, { params })).data);
   return Array.isArray(data) ? data : [];
 };
 
@@ -199,8 +264,8 @@ export const getCategoryProviders = async (params: {
   city?: string;
   limit?: number;
 }): Promise<HomeProvider[]> => {
-  const { data } = await apiClient.get(HOME_URLS.CATEGORY_PROVIDERS, {
-    params,
-  });
-  return data;
+  const data = isNative()
+    ? await nativeGet(HOME_URLS.CATEGORY_PROVIDERS, params)
+    : normalizeBody((await apiClient.get(HOME_URLS.CATEGORY_PROVIDERS, { params })).data);
+  return Array.isArray(data) ? data : [];
 };

@@ -12,6 +12,9 @@ import {
   starOutline,
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
+import { getNativePlatform } from "@/utils/platform";
+
+const IS_IOS = getNativePlatform() === "ios";
 
 interface PricingPlan {
   id: string;
@@ -214,7 +217,9 @@ export function PricingModal({
             {/* Footer */}
             <div className="p-4 pt-2 border-t border-slate-100 dark:border-slate-700">
               <p className="text-[10px] text-center text-slate-400">
-                Cancel anytime • 7-day money-back guarantee • Secure payment via Razorpay
+                {IS_IOS
+                  ? "Cancel anytime • Billed securely via the App Store"
+                  : "Cancel anytime • 7-day money-back guarantee • Secure payment via Razorpay"}
               </p>
             </div>
           </motion.div>

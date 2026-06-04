@@ -535,6 +535,8 @@ export interface SponsorshipPlan {
   duration: number;
   features: string[];
   recommended: boolean;
+  /** App Store Connect product id for iOS IAP. Plans without one are hidden on iOS. */
+  appleProductId?: string;
 }
 
 export interface SponsoredListing {

@@ -207,8 +207,14 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 the inner search-bar's mb-3 escapes through the wrapper's open bottom
                 edge, leaving a 12px gap above the categories sticky that shows the
                 scrolled banner through. */}
+            {/* pointer-events-none on the wrapper makes the empty safe-area
+                padding region click-through to GeoLocation underneath; the
+                inner HeroSearchBar re-enables pointer events on itself. iOS
+                hit-tests by topmost box regardless of visual emptiness, so
+                without this the wrapper's z-40 was eating taps on the
+                location picker and notification bell. */}
             <div
-              className={`sticky z-40 flex flex-col transition-colors duration-300 ${
+              className={`sticky z-40 flex flex-col transition-colors duration-300 pointer-events-none ${
                 heroScrolled
                   ? "backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65"
                   : ""
@@ -219,7 +225,9 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 marginTop: "calc(-1 * var(--sat, 0px))",
               }}
             >
-              <HeroSearchBar prompts={feed?.searchPrompts} scrolled={heroScrolled} />
+              <div className="pointer-events-auto">
+                <HeroSearchBar prompts={feed?.searchPrompts} scrolled={heroScrolled} />
+              </div>
             </div>
 
             {/* Banner — pulled up to y=0 behind GeoLocation + search */}
@@ -251,7 +259,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             </div>
 
             {/* Personalized Greeting */}
-            <GreetingCard />
+            {/* <GreetingCard /> */}
 
             {/* Non-serviceable city banner */}
             {!isServiceable && selectedCity && (
@@ -259,11 +267,11 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             )}
 
             {/* Live Activity Pulse — social proof */}
-            <LiveActivityPulse
+            {/* <LiveActivityPulse
               lat={user?.latitude ?? undefined}
               lng={user?.longitude ?? undefined}
               city={user?.city ?? undefined}
-            />
+            /> */}
 
             {/* ⭐ Featured Businesses — gold themed sponsored carousel */}
             <SponsoredCarousel
@@ -304,6 +312,16 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 />
               </>
             )}
+                        {/* Near You - Horizontal Scroll */}
+            <ProviderCardSlider
+              title="Near You"
+              subtitle="Top-rated businesses nearby"
+              providers={nearbyProviders}
+              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=5`}
+              accentColor="#F8CB45"
+              isLoading={isLoading}
+            />
+
 
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
@@ -316,16 +334,6 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
 
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-
-            {/* Near You - Horizontal Scroll */}
-            <ProviderCardSlider
-              title="Near You"
-              subtitle="Top-rated businesses nearby"
-              providers={nearbyProviders}
-              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=5`}
-              accentColor="#F8CB45"
-              isLoading={isLoading}
-            />
 
             {/* Refer & Earn */}
             <div
@@ -518,7 +526,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               </Suspense>
             </div>
 
-            {/* Trust Banner */}
+            {/* Trust Banner
             <div
               className="mx-4 mt-3 mb-2 p-5 rounded-2xl border border-slate-100 dark:border-slate-800"
               style={{
@@ -591,7 +599,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="h-30"></div>
         </PullToRefresh>

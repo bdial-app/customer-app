@@ -71,7 +71,7 @@ export default function Home() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const [analyticsView, setAnalyticsView] = useState<string | null>(null);
-  const { userMode, setUserMode, setUserModeNoSync, providerStatus } = useAppContext();
+  const { userMode, setUserMode, setUserModeNoSync, providerStatus, providerStatusResolved } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user } = useAppSelector((state) => state.auth);
   const { requireAuth } = useAuthGate();
@@ -253,7 +253,21 @@ export default function Home() {
     >
       {/* Tab panels — absolute inset-0, each is its own scroll container */}
       <TabPanel id="home" activeTab={activeTab}>
-        {userMode === "customer" ? (
+        {/* For a logged-in user, hold a skeleton until the real provider status
+            resolves — otherwise the customer home flashes before snapping to the
+            business dashboard for users whose preferred mode is provider. Guests
+            (no user) are never gated; they always get the customer home. */}
+        {user && !providerStatusResolved ? (
+          <div className="px-4 pt-6 space-y-4">
+            <div className="h-44 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="h-6 w-1/3 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+              <div className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            </div>
+            <div className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          </div>
+        ) : userMode === "customer" ? (
           <UserHome isServiceable={isServiceable} selectedCity={selectedCity} />
         ) : (
           <ProviderDashboard onNavigateToListings={handleNavigateToListings} onNavigateToAnalytics={handleNavigateToAnalytics} />

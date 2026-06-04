@@ -36,8 +36,9 @@ import {
   useMySponsorships,
   useCreateSponsorship,
 } from "@/hooks/useMyProvider";
-import { createSponsorshipCheckout, validateVoucher } from "@/services/payment.service";
-import { payWithRazorpay } from "@/services/razorpay.service";
+import { validateVoucher } from "@/services/payment.service";
+import { usePayment } from "@/hooks/usePayment";
+import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
 
 const typeLabels: Record<string, string> = {
@@ -64,6 +65,10 @@ const ProviderSponsorTab = () => {
   const { data: plans, isLoading: plansLoading } = useSponsorshipPlans();
   const { data: sponsorships, isLoading: sponsorshipsLoading } = useMySponsorships();
   const createMutation = useCreateSponsorship();
+  const { purchaseSponsorship, isAppleIAP } = usePayment();
+  const { data: monetizationConfig } = useMonetizationConfig();
+  // Hidden on iOS (Apple controls price) or when the admin voucher flag is off.
+  const showVoucher = !isAppleIAP && monetizationConfig?.flags?.vouchersEnabled !== false;
   const [selectedPlan, setSelectedPlan] = useState<SponsorshipPlan | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [voucherCode, setVoucherCode] = useState("");
@@ -71,11 +76,40 @@ const ProviderSponsorTab = () => {
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // On iOS, only plans with an Apple product id can be sold via IAP — so plans
+  // without one (e.g. Growth) are hidden, and the most expensive remaining plan
+  // (Premium) is marked recommended.
+  const displayPlans = useMemo(() => {
+    const all = plans ?? [];
+    if (!isAppleIAP) return all;
+    const iosPlans = all.filter((p) => !!p.appleProductId);
+    if (iosPlans.length === 0) return iosPlans;
+    const topPriceId = iosPlans.reduce((max, p) => (p.price > max.price ? p : max), iosPlans[0]).id;
+    return iosPlans.map((p) => ({ ...p, recommended: p.id === topPriceId }));
+  }, [plans, isAppleIAP]);
+
   const now = new Date();
   const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > now && Number(s.spentAmount) < Number(s.budgetAmount)) ?? [];
   const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= now || Number(s.spentAmount) >= Number(s.budgetAmount)) ?? [];
 
+  // Placement types with a currently-running boost → block buying the same type
+  // again so the provider can't pay twice for an overlapping boost.
+  const activeTypeUntil = new Map<string, string>();
+  for (const s of activeSponsorships) {
+    const prev = activeTypeUntil.get(s.type);
+    if (!prev || new Date(s.endsAt) > new Date(prev)) activeTypeUntil.set(s.type, s.endsAt);
+  }
+
   const handleSelectPlan = (plan: SponsorshipPlan) => {
+    // Guard: don't let a provider buy a boost of a placement type that's already running.
+    if (activeTypeUntil.has(plan.type)) {
+      notify({
+        title: "Boost already active",
+        subtitle: `Your “${plan.name}” boost is still running. You can start a new one once it ends.`,
+        variant: "warning",
+      });
+      return;
+    }
     setSelectedPlan(plan);
     setShowConfirm(true);
     setVoucherCode("");
@@ -103,21 +137,22 @@ const ProviderSponsorTab = () => {
       const end = new Date(now);
       end.setDate(end.getDate() + selectedPlan.duration);
 
-      const orderResponse = await createSponsorshipCheckout({
+      // Routes to Apple IAP on iOS, Razorpay on Android/Web (see usePayment).
+      // Vouchers are not applied on iOS — Apple controls the price.
+      await purchaseSponsorship({
         type: selectedPlan.type,
         budgetAmount: selectedPlan.price,
         startsAt: now.toISOString(),
         endsAt: end.toISOString(),
-        voucherCode: voucherResult?.valid ? voucherCode : undefined,
+        voucherCode: isAppleIAP ? undefined : (voucherResult?.valid ? voucherCode : undefined),
       });
-
-      await payWithRazorpay(orderResponse);
       setShowConfirm(false);
       queryClient.invalidateQueries({ queryKey: ['my-sponsorships'] });
       notify({ title: "Boost activated!", subtitle: "Your listing is now being promoted.", variant: "success" });
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      notify({ title: "Payment failed", subtitle: "Please try again.", variant: "error" });
+    } catch (error: any) {
+      const msg = error?.message || "Please try again.";
+      console.error('Checkout failed:', msg, error);
+      notify({ title: "Payment failed", subtitle: msg, variant: "error" });
     } finally {
       setIsProcessing(false);
     }
@@ -192,8 +227,13 @@ const ProviderSponsorTab = () => {
           Choose a Plan
         </h3>
         <div className="space-y-3">
-          {plans?.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} onSelect={handleSelectPlan} />
+          {displayPlans.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              onSelect={handleSelectPlan}
+              activeUntil={activeTypeUntil.get(plan.type)}
+            />
           ))}
         </div>
       </div>
@@ -205,9 +245,13 @@ const ProviderSponsorTab = () => {
             <IonIcon icon={walletOutline} className="text-emerald-600 text-lg" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-emerald-700">Secure Payment via Razorpay</p>
+            <p className="text-xs font-semibold text-emerald-700">
+              {isAppleIAP ? "Secure Payment via the App Store" : "Secure Payment via Razorpay"}
+            </p>
             <p className="text-[11px] text-emerald-600 mt-0.5">
-              Pay securely with UPI, cards, or netbanking. Your payment is processed by Razorpay.
+              {isAppleIAP
+                ? "Billed securely through your Apple ID via the App Store."
+                : "Pay securely with UPI, cards, or netbanking. Your payment is processed by Razorpay."}
             </p>
           </div>
         </div>
@@ -276,7 +320,9 @@ const ProviderSponsorTab = () => {
                 </div>
               </div>
 
-              {/* Voucher Input */}
+              {/* Voucher Input — hidden on iOS (Apple IAP controls the price)
+                  and when the admin voucher feature flag is off */}
+              {showVoucher && (
               <div className="mb-4">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
@@ -303,11 +349,14 @@ const ProviderSponsorTab = () => {
                   </p>
                 )}
               </div>
+              )}
 
               <div className="flex items-start gap-2 mb-6 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
                 <IonIcon icon={shieldCheckmarkOutline} className="text-emerald-500 text-lg flex-shrink-0 mt-0.5" />
                 <p className="text-[11px] text-emerald-700">
-                  You&apos;ll complete payment through Razorpay&apos;s secure checkout.
+                  {isAppleIAP
+                    ? "You'll complete payment securely through the App Store."
+                    : "You'll complete payment through Razorpay's secure checkout."}
                 </p>
               </div>
 
@@ -564,24 +613,40 @@ const boostBenefits: Record<string, { where: string; benefit: string; tip: strin
   },
 };
 
-const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: SponsorshipPlan) => void }) => {
+const PlanCard = ({ plan, onSelect, activeUntil }: { plan: SponsorshipPlan; onSelect: (plan: SponsorshipPlan) => void; activeUntil?: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const benefits = boostBenefits[plan.type];
+  const isActive = !!activeUntil;
+  const daysLeft = activeUntil
+    ? Math.max(0, Math.ceil((new Date(activeUntil).getTime() - Date.now()) / 86400000))
+    : 0;
 
   return (
     <motion.div
-      whileTap={{ scale: 0.98 }}
+      whileTap={isActive ? undefined : { scale: 0.98 }}
       className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 transition-all ${
-        plan.recommended ? "border-teal-200 shadow-lg shadow-teal-100/50 dark:border-teal-700 dark:shadow-teal-900/30" : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
+        isActive
+          ? "border-emerald-200 dark:border-emerald-800 opacity-80"
+          : plan.recommended
+            ? "border-teal-200 shadow-lg shadow-teal-100/50 dark:border-teal-700 dark:shadow-teal-900/30"
+            : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
       }`}
     >
-      {plan.recommended && (
+      {isActive ? (
+        <div className="absolute -top-2.5 right-4 inline-flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+          <IonIcon icon={checkmarkCircle} className="text-[11px]" />
+          ACTIVE
+        </div>
+      ) : plan.recommended ? (
         <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
           RECOMMENDED
         </div>
-      )}
+      ) : null}
 
-      <div className="flex items-start gap-3" onClick={() => onSelect(plan)}>
+      <div
+        className={isActive ? "flex items-start gap-3 cursor-default" : "flex items-start gap-3 cursor-pointer"}
+        onClick={() => onSelect(plan)}
+      >
         <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${typeColors[plan.type]} flex items-center justify-center flex-shrink-0`}>
           <IonIcon icon={typeIcons[plan.type]} className="text-white text-xl" />
         </div>
@@ -591,6 +656,11 @@ const PlanCard = ({ plan, onSelect }: { plan: SponsorshipPlan; onSelect: (plan: 
             <span className="text-base font-bold text-teal-600">₹{plan.price}</span>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
+          {isActive && (
+            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+              Active now · {daysLeft} day{daysLeft === 1 ? "" : "s"} left — renew when it ends
+            </p>
+          )}
           <div className="flex flex-wrap gap-1.5 mt-2">
             {plan.features.map((f, i) => (
               <span key={i} className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">

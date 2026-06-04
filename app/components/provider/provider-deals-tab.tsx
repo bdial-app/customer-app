@@ -30,23 +30,40 @@ import {
   useDealCreationInfo,
   useMonetizationConfig,
 } from "@/hooks/useMonetizationConfig";
-import { DealPaymentSheet } from "@/app/components/monetization/deal-payment-sheet";
 import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
-import { createDealCreationCheckout } from "@/services/payment.service";
-import { payWithRazorpay } from "@/services/razorpay.service";
+import { usePayment } from "@/hooks/usePayment";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useNotification } from "@/app/context/NotificationContext";
 
+// Coerce empty form strings to undefined so optional number fields validate cleanly.
+const emptyToUndef = (_: unknown, orig: unknown) =>
+  orig === "" || orig == null ? undefined : Number(orig);
+
 const offerSchema = Yup.object({
-  title: Yup.string().trim().required("Title is required").max(150),
-  description: Yup.string().trim().max(500).nullable(),
+  title: Yup.string().trim().required("Title is required").min(3, "At least 3 characters").max(150, "Max 150 characters"),
+  description: Yup.string().trim().max(500, "Max 500 characters").nullable(),
   discountType: Yup.string().oneOf(["percentage", "flat"]).required(),
-  discountValue: Yup.string().required("Discount value is required"),
-  minOrderAmount: Yup.string().nullable(),
-  maxDiscount: Yup.string().nullable(),
+  discountValue: Yup.number()
+    .transform(emptyToUndef)
+    .typeError("Enter a valid number")
+    .required("Discount value is required")
+    .positive("Must be greater than 0")
+    .when("discountType", {
+      is: "percentage",
+      then: (s) => s.max(100, "Percentage can't exceed 100%"),
+    }),
+  minOrderAmount: Yup.number().transform(emptyToUndef).typeError("Enter a valid number").min(0, "Can't be negative").nullable(),
+  maxDiscount: Yup.number().transform(emptyToUndef).typeError("Enter a valid number").positive("Must be greater than 0").nullable(),
   startsAt: Yup.string().required("Start date is required"),
-  endsAt: Yup.string().required("End date is required"),
-  usageLimit: Yup.string().nullable(),
+  endsAt: Yup.string()
+    .required("End date is required")
+    .test("after-start", "End date must be after the start date", function (value) {
+      const { startsAt } = this.parent;
+      if (!value || !startsAt) return true;
+      return new Date(value) > new Date(startsAt);
+    }),
+  usageLimit: Yup.number().transform(emptyToUndef).typeError("Enter a whole number").integer("Must be a whole number").positive("Must be greater than 0").nullable(),
 });
 
 const formatDate = (iso: string) =>
@@ -77,75 +94,54 @@ const ProviderDealsTab = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<ProviderOfferFull | null>(null);
-  const [paymentPrompt, setPaymentPrompt] = useState(false);
-  const [dealCheckoutLoading, setDealCheckoutLoading] = useState(false);
+  // Pay-on-publish: a successful payment in the current create session. Lets a
+  // retry after a failed save skip re-charging, and only resets once an offer
+  // is actually created — so closing the form before publishing never charges.
+  const [paidThisSession, setPaidThisSession] = useState(false);
+  const [dealPaying, setDealPaying] = useState(false);
 
   const { data: offers = [], isLoading } = useMyOffers();
   const { data: limits } = useOfferLimits();
   const { data: dealInfo } = useDealCreationInfo();
   const { data: monetizationConfig } = useMonetizationConfig();
+  const { notify } = useNotification();
   const createMutation = useCreateOffer();
   const updateMutation = useUpdateOffer();
   const deleteMutation = useDeleteOffer();
+  const { purchaseDealCreation } = usePayment();
+  const keyboardOffset = useKeyboardOffset();
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const monetizationEnabled =
     monetizationConfig?.flags.dealsMonetizationEnabled ?? false;
-  const canCreateDeal =
-    !monetizationEnabled ||
-    !limits?.requiresPayment ||
-    (dealInfo && (dealInfo.isProSubscriber || dealInfo.freeRemaining > 0));
   const canCreateActive = limits
     ? limits.activeDeals < limits.maxActiveDeals
     : true;
 
+  // At the hard total-offer cap, no payment can create a new offer — the provider
+  // must upgrade or free a slot (the backend rejects creation). Never charge here.
+  const atHardCap =
+    !!limits && limits.maxTotalDeals !== -1 && limits.totalDeals >= limits.maxTotalDeals;
+
+  // A brand-new offer needs payment when monetization is on, the provider is out
+  // of free quota, isn't a Pro subscriber, and is still under the hard cap.
+  const needsDealPayment =
+    monetizationEnabled &&
+    !!dealInfo &&
+    dealInfo.freeRemaining <= 0 &&
+    !dealInfo.isProSubscriber &&
+    !atHardCap;
+
+  const dealFee = dealInfo?.isGrowthSubscriber
+    ? monetizationConfig?.dealPricing.discountedPrice
+    : monetizationConfig?.dealPricing.price;
+
+  // Always open the form directly — the fee (if any) is charged on Publish, not
+  // before. This way closing the form without publishing never charges.
   const handleAdd = () => {
-    if (
-      monetizationEnabled &&
-      limits?.requiresPayment &&
-      dealInfo &&
-      dealInfo.freeRemaining <= 0 &&
-      !dealInfo.isProSubscriber
-    ) {
-      setPaymentPrompt(true);
-      return;
-    }
     setEditing(null);
     setSheetOpen(true);
-  };
-
-  const handleDealPaymentConfirm = async (voucherCode?: string) => {
-    setDealCheckoutLoading(true);
-    try {
-      const result = await createDealCreationCheckout(voucherCode);
-      if (result.requiresPayment && result.orderId && result.keyId) {
-        await payWithRazorpay({
-          orderId: result.orderId,
-          amount: result.amount!,
-          currency: result.currency!,
-          paymentId: result.paymentId!,
-          keyId: result.keyId,
-          description: result.description!,
-          prefill: result.prefill || {},
-        });
-        setPaymentPrompt(false);
-        setEditing(null);
-        setSheetOpen(true);
-      } else {
-        // Free creation allowed — close sheet and open create form
-        setPaymentPrompt(false);
-        setEditing(null);
-        setSheetOpen(true);
-      }
-    } catch {
-      // fallback: just open create form
-      setPaymentPrompt(false);
-      setEditing(null);
-      setSheetOpen(true);
-    } finally {
-      setDealCheckoutLoading(false);
-    }
   };
 
   const handleEdit = (offer: ProviderOfferFull) => {
@@ -283,7 +279,7 @@ const ProviderDealsTab = () => {
             {/* Monetization enabled + limit reached: show buy CTA */}
             {limits.requiresPayment && monetizationEnabled && (
               <button
-                onClick={() => setPaymentPrompt(true)}
+                onClick={handleAdd}
                 className="mt-3 w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
               >
                 <IonIcon icon={diamondOutline} className="text-sm" />
@@ -458,7 +454,14 @@ const ProviderDealsTab = () => {
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
                   transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                  className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl max-h-[90vh] overflow-y-auto"
+                  className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl overflow-y-auto overflow-x-hidden"
+                  style={{
+                    // Lift the bottom-anchored sheet above the keyboard and cap
+                    // its height to the remaining space so the focused field can
+                    // scroll into view instead of hiding behind the keyboard.
+                    marginBottom: keyboardOffset,
+                    maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "90vh",
+                  }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Modal Header */}
@@ -501,8 +504,35 @@ const ProviderDealsTab = () => {
                       const titleCheck = checkContent(values.title);
                       const descCheck = checkContent(values.description || "");
                       if (titleCheck.flagged || descCheck.flagged) {
+                        notify({
+                          title: "Inappropriate content",
+                          subtitle: "Please revise your offer title or description.",
+                          variant: "error",
+                        });
                         return;
                       }
+
+                      // Pay-on-publish: only charge when actually publishing a new
+                      // offer, and only once per session — so closing the form
+                      // before publishing never charges, and a failed save after
+                      // doesn't double-charge.
+                      if (!editing && needsDealPayment && !paidThisSession) {
+                        try {
+                          setDealPaying(true);
+                          await purchaseDealCreation();
+                          setPaidThisSession(true);
+                        } catch (err: any) {
+                          notify({
+                            title: "Payment required",
+                            subtitle: err?.message || "Payment was cancelled. No charge was made.",
+                            variant: "error",
+                          });
+                          return; // keep form open; nothing created, no charge kept
+                        } finally {
+                          setDealPaying(false);
+                        }
+                      }
+
                       const payload = {
                         title: values.title.trim(),
                         description: values.description?.trim() || undefined,
@@ -529,27 +559,51 @@ const ProviderDealsTab = () => {
                       } else {
                         await createMutation.mutateAsync(payload);
                       }
+                      // Offer created — consume the paid session so the next new
+                      // offer is charged again as expected.
+                      setPaidThisSession(false);
                       setSheetOpen(false);
                       setEditing(null);
                     }}
                   >
                     {({ values, setFieldValue }) => (
-                      <Form className="p-5 space-y-5">
-                        {/* Active deals limit warning */}
-                        {!editing && !canCreateActive && (
-                          <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
+                      <Form
+                        className="p-5 space-y-5"
+                        style={{ paddingBottom: keyboardOffset > 0 ? 32 : undefined }}
+                      >
+                        {/* One-time fee notice (pay-on-publish) */}
+                        {!editing && needsDealPayment && (
+                          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2.5">
                             <IonIcon
-                              icon={alertCircleOutline}
-                              className="text-red-500 text-base mt-0.5 shrink-0"
+                              icon={diamondOutline}
+                              className="text-amber-500 text-base mt-0.5 shrink-0"
                             />
                             <div>
-                              <p className="text-xs font-semibold text-red-700">
+                              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                                One-time fee: ₹{dealFee ?? ""}
+                              </p>
+                              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+                                You&apos;ve used your free offers. You&apos;re only charged when you publish — close this form anytime before publishing and you won&apos;t be charged.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Active deals limit warning */}
+                        {!editing && !canCreateActive && (
+                          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-start gap-2.5">
+                            <IonIcon
+                              icon={alertCircleOutline}
+                              className="text-red-500 dark:text-red-400 text-base mt-0.5 shrink-0"
+                            />
+                            <div>
+                              <p className="text-xs font-semibold text-red-700 dark:text-red-300">
                                 Active limit reached
                               </p>
-                              <p className="text-[10px] text-red-500 mt-0.5">
-                                You already have 3 active offers. Your new offer
-                                will be created but it will only go live when
-                                another offer expires or is deactivated.
+                              <p className="text-[10px] text-red-500 dark:text-red-400 mt-0.5">
+                                You already have {limits?.maxActiveDeals ?? 3} active offers. Your new offer
+                                will be created but only goes live when another
+                                expires or is deactivated.
                               </p>
                             </div>
                           </div>
@@ -567,6 +621,8 @@ const ProviderDealsTab = () => {
                           name="description"
                           label="Description"
                           placeholder="e.g. Valid on weekends only, for orders above ₹500…"
+                          multiline
+                          rows={3}
                         />
 
                         {/* Discount Type Toggle */}
@@ -616,24 +672,27 @@ const ProviderDealsTab = () => {
                         <div className="grid grid-cols-2 gap-3">
                           <DealFormField
                             name="minOrderAmount"
-                            label="Min Order (₹)"
-                            placeholder="e.g. 500"
+                            label="Min Order"
+                            placeholder="500"
                             type="number"
+                            prefix="₹"
                           />
                           {values.discountType === "percentage" ? (
                             <DealFormField
                               name="maxDiscount"
-                              label="Max Discount (₹)"
-                              placeholder="e.g. 200"
+                              label="Max Discount"
+                              placeholder="200"
                               type="number"
+                              prefix="₹"
                             />
                           ) : (
                             <div />
                           )}
                         </div>
 
-                        {/* Dates Row */}
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Dates Row — slightly larger gap so the two native
+                            date controls don't visually touch on iOS */}
+                        <div className="grid grid-cols-2 gap-4">
                           <DealFormField
                             name="startsAt"
                             label="Start Date"
@@ -658,15 +717,22 @@ const ProviderDealsTab = () => {
                         <div className="space-y-2 pt-2 pb-4">
                           <button
                             type="submit"
-                            disabled={isSaving}
+                            disabled={isSaving || dealPaying}
                             className="w-full py-3.5 bg-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                           >
-                            {isSaving ? (
+                            {dealPaying ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Processing payment…
+                              </>
+                            ) : isSaving ? (
                               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : editing ? (
                               "Update Offer"
+                            ) : needsDealPayment && !paidThisSession ? (
+                              `Pay ₹${dealFee ?? ""} & Publish`
                             ) : (
-                              "Create Offer"
+                              "Publish Offer"
                             )}
                           </button>
 
@@ -717,32 +783,6 @@ const ProviderDealsTab = () => {
         isLoading={deleteMutation.isPending}
         loadingLabel="Deleting..."
         onConfirm={() => editing && handleDelete(editing.id)}
-      />
-
-      {/* Deal Payment Sheet */}
-      <DealPaymentSheet
-        open={paymentPrompt}
-        onClose={() => setPaymentPrompt(false)}
-        onConfirm={handleDealPaymentConfirm}
-        price={(() => {
-          if (!monetizationConfig) return 149;
-          return dealInfo?.isGrowthSubscriber
-            ? monetizationConfig.dealPricing.discountedPrice
-            : monetizationConfig.dealPricing.price;
-        })()}
-        originalPrice={
-          dealInfo?.isGrowthSubscriber
-            ? monetizationConfig?.dealPricing.price
-            : undefined
-        }
-        freeRemaining={dealInfo?.freeRemaining ?? 3}
-        freeTotal={monetizationConfig?.freeQuotas.dealsLifetime ?? 3}
-        isProSubscriber={dealInfo?.isProSubscriber ?? false}
-        isGrowthSubscriber={dealInfo?.isGrowthSubscriber ?? false}
-        monetizationEnabled={monetizationEnabled}
-        activeDeals={dealInfo?.activeDeals ?? 0}
-        maxActiveDeals={dealInfo?.maxActiveDeals ?? 3}
-        isLoading={dealCheckoutLoading}
       />
     </div>
   );
@@ -850,30 +890,52 @@ const DealFormField = ({
   label,
   placeholder,
   type = "text",
+  multiline = false,
+  rows = 3,
+  prefix,
 }: {
   name: string;
   label: string;
   placeholder?: string;
   type?: string;
-}) => (
-  <div>
-    <label
-      htmlFor={name}
-      className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
-    >
-      {label}
-    </label>
-    <Field
-      id={name}
-      name={name}
-      type={type}
-      placeholder={placeholder}
-      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
-    />
-    <ErrorMessage
-      name={name}
-      component="p"
-      className="text-[10px] text-red-500 mt-1"
-    />
-  </div>
-);
+  multiline?: boolean;
+  rows?: number;
+  prefix?: string;
+}) => {
+  // min-w-0 + max-w-full + box-border keep native date/number inputs from forcing
+  // the field wider than its grid cell (which caused horizontal scroll & overlap).
+  const inputCls =
+    "w-full min-w-0 max-w-full box-border px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors";
+  return (
+    <div className="min-w-0">
+      <label
+        htmlFor={name}
+        className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+      >
+        {label}
+      </label>
+      <div className="relative">
+        {prefix && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">
+            {prefix}
+          </span>
+        )}
+        <Field
+          id={name}
+          name={name}
+          as={multiline ? "textarea" : "input"}
+          rows={multiline ? rows : undefined}
+          type={multiline ? undefined : type}
+          inputMode={type === "number" ? "decimal" : undefined}
+          placeholder={placeholder}
+          className={prefix ? `${inputCls} pl-7` : inputCls}
+        />
+      </div>
+      <ErrorMessage
+        name={name}
+        component="p"
+        className="text-[10px] text-red-500 mt-1"
+      />
+    </div>
+  );
+};

@@ -118,21 +118,6 @@ const PicksForYouProducts = ({
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
-        {/* Why we picked this — floating chip */}
-        <div
-          className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-white max-w-[80%]"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(236,72,153,0.92), rgba(139,92,246,0.92))",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
-          }}
-        >
-          <IonIcon icon={sparklesOutline} className="text-[12px] shrink-0" />
-          <span className="truncate">{topReason}</span>
-        </div>
-
         {/* Price pill — top right */}
         {hero.price != null && (
           <div

@@ -53,6 +53,10 @@ export interface RazorpayOrderResponse {
   keyId: string;
   description: string;
   prefill: { name?: string; email?: string; contact?: string };
+  // Apple IAP variant (when gateway==='apple'): no Razorpay order is created;
+  // the client purchases `appleProductId` via StoreKit, then verifies `paymentId`.
+  gateway?: 'razorpay' | 'apple';
+  appleProductId?: string;
 }
 
 /** Razorpay subscription response from backend */
@@ -84,6 +88,9 @@ export interface LeadUnlockResponse {
   price?: number;
   tier?: string;
   prefill?: { name?: string; email?: string; contact?: string };
+  // Apple IAP variant (when gateway==='apple')
+  gateway?: 'razorpay' | 'apple';
+  appleProductId?: string;
 }
 
 export interface VoucherValidation {
@@ -110,8 +117,9 @@ export interface CreateSponsorshipCheckoutPayload {
 
 export const createSponsorshipCheckout = async (
   payload: CreateSponsorshipCheckoutPayload,
+  gateway?: 'razorpay' | 'apple',
 ): Promise<RazorpayOrderResponse> => {
-  const { data } = await apiClient.post(PAYMENT_URLS.SPONSORSHIP_CHECKOUT, payload);
+  const { data } = await apiClient.post(PAYMENT_URLS.SPONSORSHIP_CHECKOUT, { ...payload, gateway });
   return data;
 };
 
@@ -120,10 +128,12 @@ export const createSponsorshipCheckout = async (
 export const createLeadUnlockCheckout = async (
   leadId: string,
   voucherCode?: string,
+  gateway?: 'razorpay' | 'apple',
 ): Promise<LeadUnlockResponse> => {
   const { data } = await apiClient.post(PAYMENT_URLS.LEAD_UNLOCK_CHECKOUT, {
     leadId,
     voucherCode,
+    gateway,
   });
   return data;
 };
@@ -192,6 +202,15 @@ export const verifyAppleReceipt = async (body: {
   productId: string;
 }): Promise<{ status: string; subscriptionId: string }> => {
   const { data } = await apiClient.post(PAYMENT_URLS.VERIFY_APPLE, body);
+  return data;
+};
+
+/** Verify a one-time Apple consumable purchase and fulfil the pending payment. */
+export const verifyAppleConsumable = async (body: {
+  paymentId: string;
+  transactionId: string;
+}): Promise<{ status: string; paymentId: string }> => {
+  const { data } = await apiClient.post(PAYMENT_URLS.VERIFY_APPLE_CONSUMABLE, body);
   return data;
 };
 
@@ -268,6 +287,9 @@ export interface DealCreationCheckoutResponse {
   discounted?: boolean;
   freeRemaining?: number;
   prefill?: { name?: string; email?: string; contact?: string };
+  // Apple IAP variant (when gateway==='apple')
+  gateway?: 'razorpay' | 'apple';
+  appleProductId?: string;
 }
 
 export const getDealCreationInfo = async (): Promise<DealCreationInfo> => {
@@ -278,10 +300,12 @@ export const getDealCreationInfo = async (): Promise<DealCreationInfo> => {
 export const createDealCreationCheckout = async (
   voucherCode?: string,
   dealData?: Record<string, any>,
+  gateway?: 'razorpay' | 'apple',
 ): Promise<DealCreationCheckoutResponse> => {
   const { data } = await apiClient.post(PAYMENT_URLS.DEAL_CREATION_CHECKOUT, {
     voucherCode,
     dealData,
+    gateway,
   });
   return data;
 };
@@ -311,7 +335,10 @@ export interface MonetizationConfig {
     leadsMonetizationEnabled: boolean;
     dealsMonetizationEnabled: boolean;
     subscriptionsVisible: boolean;
+    vouchersEnabled: boolean;
   };
+  /** Apple consumable product ids (lead/deal/boost) for iOS StoreKit pre-registration. */
+  appleProductIds?: string[];
 }
 
 export const getMonetizationConfig = async (): Promise<MonetizationConfig> => {

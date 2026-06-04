@@ -30,6 +30,7 @@ import {
   type SubscriptionPlan,
 } from "@/services/payment.service";
 import { usePayment } from "@/hooks/usePayment";
+import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 
 const planIcons: Record<string, string> = {
   free: starOutline,
@@ -48,6 +49,9 @@ const planColors: Record<string, string> = {
 const ProviderSubscriptionTab = () => {
   const queryClient = useQueryClient();
   const { subscribe, restorePurchases, isAppleIAP, loading: paymentLoading, error: paymentError, clearError } = usePayment();
+  const { data: monetizationConfig } = useMonetizationConfig();
+  // Hidden on iOS (Apple controls price) and when the admin voucher flag is off.
+  const showVoucher = !isAppleIAP && monetizationConfig?.flags?.vouchersEnabled !== false;
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -386,7 +390,9 @@ const ProviderSubscriptionTab = () => {
                 </div>
               </div>
 
-              {/* Voucher Input */}
+              {/* Voucher Input — hidden on iOS (Apple controls price) and when
+                  the admin voucher feature flag is off */}
+              {showVoucher && (
               <div className="mb-4">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
@@ -413,6 +419,7 @@ const ProviderSubscriptionTab = () => {
                   </p>
                 )}
               </div>
+              )}
 
               {paymentError && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">

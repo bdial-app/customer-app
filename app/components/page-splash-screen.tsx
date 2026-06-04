@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { SPLASH_ICON } from "./splash-icon";
 
 interface PageSplashScreenProps {
   message?: string;
@@ -34,7 +35,7 @@ export default function PageSplashScreen({
         className="relative z-10 mb-8"
       >
         <img
-          src="/icons/512.png"
+          src={SPLASH_ICON}
           alt="Tijarah"
           className="w-16 h-16 rounded-2xl shadow-lg shadow-black/30"
         />

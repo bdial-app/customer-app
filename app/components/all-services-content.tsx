@@ -16,7 +16,7 @@ import {
   gridOutline,
   listOutline,
 } from "ionicons/icons";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import ProviderCard from "../components/provider-card";
 import FilterChips from "../components/filter-chips";
@@ -56,6 +56,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const { goBack } = useBackNavigation();
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const initialSearch = searchParams.get("search") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -117,6 +118,31 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     const next = searchParams.get("search") ?? "";
     setSearchQuery((prev) => (prev === next ? prev : next));
   }, [searchParams]);
+
+  // Mirror the active filters/sort back into the URL so removing a filter also
+  // removes it from the URL (and the URL stays shareable / correct on refresh).
+  // Skipped in sheet mode (this component doesn't own the host page's URL there).
+  // The `target !== current` guard makes it idempotent and loop-safe.
+  useEffect(() => {
+    if (isSheet) return;
+    const params = new URLSearchParams();
+    const search = searchParams.get("search");
+    if (search) params.set("search", search);
+    if (sortBy && sortBy !== "relevance") params.set("sort", sortBy);
+    if (sinceDays) params.set("sinceDays", String(sinceDays));
+    if (filters.categoryIds.size) params.set("categoryIds", Array.from(filters.categoryIds).join(","));
+    if (filters.minRating != null) params.set("minRating", String(filters.minRating));
+    if (filters.maxDistance != null) params.set("maxDistance", String(filters.maxDistance));
+    if (filters.verifiedOnly) params.set("verified", "true");
+    if (filters.womenLedOnly) params.set("womenLed", "true");
+
+    const qs = params.toString();
+    const target = qs ? `${pathname}?${qs}` : pathname;
+    const current = `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
+    if (target !== current) {
+      router.replace(target, { scroll: false });
+    }
+  }, [isSheet, sortBy, sinceDays, filters, searchParams, pathname, router]);
 
   // Persist view mode
   useEffect(() => {

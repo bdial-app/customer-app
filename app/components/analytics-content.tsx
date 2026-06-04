@@ -1761,6 +1761,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           isProSubscriber={leadUnlockInfo?.isProSubscriber ?? false}
           isGrowthSubscriber={leadUnlockInfo?.isGrowthSubscriber ?? false}
           monetizationEnabled={monetizationConfig?.flags.leadsMonetizationEnabled ?? false}
+          vouchersEnabled={monetizationConfig?.flags.vouchersEnabled !== false}
           isLoading={unlockMutation.isPending}
         />
       )}
