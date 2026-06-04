@@ -702,6 +702,14 @@ const ProfileContent = memo(() => {
               label="Privacy Policy"
               onClick={() => router.push("/privacy-policy")}
             />
+            <MenuRow
+              icon={lockClosedOutline}
+              iconColor="text-purple-500"
+              iconBg="bg-purple-50"
+              label="EULA"
+              sublabel="End User License Agreement"
+              onClick={() => router.push("/eula")}
+            />
           </MenuSection>
 
           {/* App Version */}
@@ -1145,6 +1153,14 @@ const ProfileContent = memo(() => {
               iconBg="bg-green-50"
               label="Privacy Policy"
               onClick={() => router.push("/privacy-policy")}
+            />
+            <MenuRow
+              icon={lockClosedOutline}
+              iconColor="text-purple-500"
+              iconBg="bg-purple-50"
+              label="EULA"
+              sublabel="End User License Agreement"
+              onClick={() => router.push("/eula")}
             />
           </MenuSection>
 
