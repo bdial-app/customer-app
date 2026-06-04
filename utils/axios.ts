@@ -24,6 +24,32 @@ const apiClient = axios.create({
   paramsSerializer: {
     indexes: null, // serialize arrays as categoryIds=a&categoryIds=b (no brackets)
   },
+  // On native, Capacitor's HTTP plugin (CapacitorHttp.enabled = true) routes
+  // requests through the native layer, which sometimes hands axios the raw JSON
+  // string instead of a parsed object. Without this transformer, every service
+  // that does `const { data } = await apiClient.get(...)` would receive a string
+  // and most of them silently fall back to empty objects, breaking the home
+  // feed, providers list, etc. Run axios's default transforms first so browser
+  // behaviour is unchanged, then parse anything that came through as a string.
+  transformResponse: [
+    ...(Array.isArray(axios.defaults.transformResponse)
+      ? axios.defaults.transformResponse
+      : axios.defaults.transformResponse
+        ? [axios.defaults.transformResponse]
+        : []),
+    (data) => {
+      if (typeof data !== "string") return data;
+      const trimmed = data.trim();
+      if (!trimmed) return data;
+      const first = trimmed[0];
+      if (first !== "{" && first !== "[") return data;
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return data;
+      }
+    },
+  ],
 });
 
 // Event emitter for account paused state

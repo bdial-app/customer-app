@@ -15,7 +15,7 @@ const FALLBACK_TEXTS = [
   'Search "Mehandi Artist"',
 ];
 
-const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: string[] }) => {
+const HeroSearchBar = ({ onTap, prompts, scrolled }: { onTap?: () => void; prompts?: string[]; scrolled?: boolean }) => {
   const router = useRouter();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -49,10 +49,26 @@ const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: strin
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.05 }}
       onClick={handleTap}
-      className="mx-4 mt-3 mb-4"
+      className="mx-4 mt-1 mb-3"
     >
-      <div className="flex items-center gap-3 bg-white/[0.08] backdrop-blur-md rounded-2xl px-4 py-3 border border-white/[0.1] active:bg-white/[0.12] transition-colors">
-        <IonIcon icon={search} className="text-lg text-white/40" />
+      <div
+        className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-colors ${
+          scrolled
+            ? "border-slate-900/[0.08] dark:border-white/15 active:bg-slate-900/[0.06] dark:active:bg-white/20"
+            : "border-white/25 active:bg-white/30"
+        }`}
+        style={{
+          background: scrolled
+            ? "rgba(15,23,42,0.05)"
+            : "rgba(255,255,255,0.18)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          boxShadow: scrolled
+            ? "none"
+            : "0 4px 24px rgba(0,0,0,0.30), 0 1px 6px rgba(0,0,0,0.18)",
+        }}
+      >
+        <IonIcon icon={search} className={`text-lg ${scrolled ? "text-slate-500 dark:text-white/80" : "text-white/80"}`} />
         <div className="flex-1 relative h-5 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.span
@@ -61,7 +77,7 @@ const HeroSearchBar = ({ onTap, prompts }: { onTap?: () => void; prompts?: strin
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -14 }}
               transition={{ duration: 0.25 }}
-              className="text-sm text-white/40 absolute whitespace-nowrap"
+              className={`text-sm absolute whitespace-nowrap font-medium ${scrolled ? "text-slate-600 dark:text-white/75" : "text-white/75"}`}
             >
               {placeholderTexts[placeholderIndex]}
             </motion.span>

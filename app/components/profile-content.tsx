@@ -216,6 +216,7 @@ const ProfileContent = memo(() => {
   const {
     providerStatus,
     userMode,
+    providerStatusResolved,
     setProviderStatus,
     setProviderInfo,
     setUserMode,
@@ -701,6 +702,14 @@ const ProfileContent = memo(() => {
               label="Privacy Policy"
               onClick={() => router.push("/privacy-policy")}
             />
+            <MenuRow
+              icon={lockClosedOutline}
+              iconColor="text-purple-500"
+              iconBg="bg-purple-50"
+              label="EULA"
+              sublabel="End User License Agreement"
+              onClick={() => router.push("/eula")}
+            />
           </MenuSection>
 
           {/* App Version */}
@@ -804,7 +813,21 @@ const ProfileContent = memo(() => {
             </div>
           </motion.div>
 
-          {/* Provider Status Cards */}
+          {/* Provider Status Cards — skeleton-gated until the real status
+              resolves, so a fresh login doesn't flash the customer "List your
+              business" card before snapping to the Business Mode toggle. */}
+          {!providerStatusResolved ? (
+            <div className="mx-4 mb-3">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex items-center justify-between animate-pulse">
+                <div className="space-y-2">
+                  <div className="h-3.5 w-28 bg-slate-100 dark:bg-slate-700 rounded" />
+                  <div className="h-2.5 w-40 bg-slate-100 dark:bg-slate-700 rounded" />
+                </div>
+                <div className="h-6 w-11 bg-slate-100 dark:bg-slate-700 rounded-full" />
+              </div>
+            </div>
+          ) : (
+          <>
           {(providerStatus === "approved" ||
             providerStatus === "in_review" ||
             providerStatus === "suspended" ||
@@ -841,7 +864,7 @@ const ProfileContent = memo(() => {
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
                 <div className="relative z-10">
                   <h3 className="text-white font-bold text-sm">
-                    Become a Business
+                    List your business
                   </h3>
                   <p className="text-white/70 text-xs mt-0.5 mb-3">
                     Start offering your services on Tijarah
@@ -979,6 +1002,9 @@ const ProfileContent = memo(() => {
                 </div>
               </div>
             </div>
+          )}
+
+          </>
           )}
 
           {/* ── Provider Management Section (only in provider view) ── */}
@@ -1127,6 +1153,14 @@ const ProfileContent = memo(() => {
               iconBg="bg-green-50"
               label="Privacy Policy"
               onClick={() => router.push("/privacy-policy")}
+            />
+            <MenuRow
+              icon={lockClosedOutline}
+              iconColor="text-purple-500"
+              iconBg="bg-purple-50"
+              label="EULA"
+              sublabel="End User License Agreement"
+              onClick={() => router.push("/eula")}
             />
           </MenuSection>
 

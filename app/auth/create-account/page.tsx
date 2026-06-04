@@ -46,7 +46,7 @@ const validationSchemas = {
       .matches(/^[a-zA-Z\s.'-]+$/, "Name should only contain letters")
       .required("Full name is required"),
     gender: Yup.string()
-      .oneOf(["male", "female", "other"])
+      .oneOf(["male", "female"])
       .required("Gender is required"),
     city: Yup.string().max(100, "Must be under 100 characters").required("City is required"),
     area: Yup.string().max(100, "Must be under 100 characters"),
@@ -130,9 +130,8 @@ const StepProgress = ({
 const GenderSelector = () => {
   const { values, setFieldValue, touched, errors } = useFormikContext<any>();
   const genders = [
-    { value: "male", label: "Male", emoji: "👨" },
-    { value: "female", label: "Female", emoji: "👩" },
-    { value: "other", label: "Other", emoji: "🧑" },
+    { value: "male", label: "Male", icon: "/icons/gender-male.png" },
+    { value: "female", label: "Female", icon: "/icons/gender-female.png" },
   ];
 
   return (
@@ -140,7 +139,7 @@ const GenderSelector = () => {
       <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
         Gender
       </label>
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-2 gap-3">
         {genders.map((g) => {
           const selected = values.gender === g.value;
           return (
@@ -148,7 +147,7 @@ const GenderSelector = () => {
               key={g.value}
               type="button"
               onClick={() => setFieldValue("gender", g.value)}
-              className={`relative flex flex-col items-center gap-1.5 py-3.5 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
+              className={`relative flex flex-col items-center gap-2 py-4 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
                 selected
                   ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20 shadow-sm shadow-amber-100/50"
                   : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600"
@@ -162,9 +161,14 @@ const GenderSelector = () => {
                   />
                 </div>
               )}
-              <span className="text-2xl">{g.emoji}</span>
+              <img
+                src={g.icon}
+                alt={g.label}
+                className="w-12 h-12 object-contain"
+                draggable={false}
+              />
               <span
-                className={`text-xs font-bold ${selected ? "text-amber-700 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"}`}
+                className={`text-sm font-bold ${selected ? "text-amber-700 dark:text-amber-400" : "text-slate-600 dark:text-slate-300"}`}
               >
                 {g.label}
               </span>

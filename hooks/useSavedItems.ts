@@ -58,32 +58,57 @@ export const useToggleSaved = () => {
       // Cancel in-flight refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["saved-items"] });
       await queryClient.cancelQueries({ queryKey: ["saved-item-ids"] });
+      await queryClient.cancelQueries({ queryKey: ["saved-check", itemId, itemType] });
 
+      // Snapshot all relevant caches for rollback
       const previousItems = queryClient.getQueryData<SavedItemData[]>(["saved-items"]);
       const previousIds = queryClient.getQueryData<SavedItemId[]>(["saved-item-ids"]);
+      const previousCheck = queryClient.getQueryData<{ saved: boolean }>(["saved-check", itemId, itemType]);
 
-      // Optimistically remove from saved-items list
-      queryClient.setQueryData<SavedItemData[]>(["saved-items"], (old = []) =>
-        old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)),
+      // Determine current saved state from whichever cache is available
+      const idsCache = previousIds ?? [];
+      const currentlySaved =
+        previousCheck?.saved ??
+        idsCache.some((i) => i.itemId === itemId && i.itemType === itemType);
+
+      const nextSaved = !currentlySaved;
+
+      // Optimistically flip the per-item saved-check cache (used by detail pages)
+      queryClient.setQueryData<{ saved: boolean }>(
+        ["saved-check", itemId, itemType],
+        { saved: nextSaved },
       );
 
-      // Optimistically remove from saved-item-ids list
+      // Optimistically update the ids list (used by explore / card grids)
       queryClient.setQueryData<SavedItemId[]>(["saved-item-ids"], (old = []) =>
-        old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)),
+        nextSaved
+          ? [...old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)), { itemId, itemType }]
+          : old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)),
       );
 
-      return { previousItems, previousIds };
+      // Optimistically remove from full saved-items list when unsaving
+      // (we don't have full item data to add when saving — server provides it)
+      if (!nextSaved) {
+        queryClient.setQueryData<SavedItemData[]>(["saved-items"], (old = []) =>
+          old.filter((i) => !(i.itemId === itemId && i.itemType === itemType)),
+        );
+      }
+
+      return { previousItems, previousIds, previousCheck };
     },
 
-    onError: (_err, _variables, context) => {
-      // Rollback on failure
+    onError: (_err, variables, context) => {
+      // Rollback all caches on failure
       if (context?.previousItems !== undefined)
         queryClient.setQueryData(["saved-items"], context.previousItems);
       if (context?.previousIds !== undefined)
         queryClient.setQueryData(["saved-item-ids"], context.previousIds);
+      if (context?.previousCheck !== undefined)
+        queryClient.setQueryData(["saved-check", variables.itemId, variables.itemType], context.previousCheck);
     },
 
     onSettled: (_data, _err, variables) => {
+      // Background re-sync to ensure consistency after the API call
       queryClient.invalidateQueries({ queryKey: ["saved-items"] });
       queryClient.invalidateQueries({ queryKey: ["saved-item-ids"] });
       queryClient.invalidateQueries({

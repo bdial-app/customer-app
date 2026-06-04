@@ -11,6 +11,7 @@ import { payWithRazorpay, subscribeWithRazorpay } from '@/services/razorpay.serv
 import {
   initializeIAP,
   purchaseAppleSubscription,
+  purchaseConsumable,
   restoreApplePurchases,
   isIAPAvailable,
 } from '@/services/iap.service';
@@ -20,9 +21,12 @@ import {
   createDealCreationCheckout,
   createSubscriptionCheckout,
   getSubscriptionPlans,
+  getMonetizationConfig,
+  verifyAppleConsumable,
   type CreateSponsorshipCheckoutPayload,
   type SubscriptionPlan,
 } from '@/services/payment.service';
+import { getSponsorshipPlans } from '@/services/provider.service';
 
 export type PaymentGateway = 'razorpay' | 'apple';
 
@@ -72,24 +76,48 @@ export function usePayment(): UsePaymentReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize Apple IAP on iOS
+  // Initialize Apple IAP on iOS — register BOTH subscription and consumable
+  // products before StoreKit initializes (products registered after init don't load).
+  // Boost ids come from sponsorship plans (always present in the deployed backend),
+  // lead/deal ids from the monetization config — merged so boost works regardless.
   useEffect(() => {
     if (isAppleIAP && isIAPAvailable()) {
-      getSubscriptionPlans()
-        .then((plans: SubscriptionPlan[]) => initializeIAP(plans))
-        .catch(() => {}); // silent fail — plans will load when tab opens
+      Promise.all([
+        getSubscriptionPlans(),
+        getSponsorshipPlans().catch(() => []),
+        getMonetizationConfig().catch(() => null),
+      ])
+        .then(([plans, sponsorPlans, config]: [SubscriptionPlan[], any[], any]) => {
+          const consumableIds = [
+            ...((sponsorPlans ?? []).map((p: any) => p?.appleProductId).filter(Boolean)),
+            ...((config?.appleProductIds ?? []) as string[]),
+          ];
+          return initializeIAP(plans, consumableIds);
+        })
+        .catch(() => {}); // silent fail — products load when a purchase is attempted
     }
   }, [isAppleIAP]);
 
   const clearError = useCallback(() => setError(null), []);
 
-  // ─── Sponsorship (Razorpay only — one-time, not a digital subscription) ───
+  // ─── Sponsorship / Boost ───
+  // iOS → Apple IAP consumable (App Store policy); Android/Web → Razorpay.
 
   const purchaseSponsorship = useCallback(async (payload: CreateSponsorshipCheckoutPayload) => {
     setLoading(true);
     setError(null);
     try {
-      const orderResponse = await createSponsorshipCheckout(payload);
+      const orderResponse = await createSponsorshipCheckout(payload, isAppleIAP ? 'apple' : 'razorpay');
+      if (isAppleIAP && orderResponse.gateway === 'apple') {
+        if (!orderResponse.appleProductId) throw new Error('Apple product not configured for this boost plan');
+        // Boost is a one-time, non-recurring purchase → Consumable IAP.
+        const result = await purchaseConsumable(
+          orderResponse.appleProductId,
+          (transactionId) => verifyAppleConsumable({ paymentId: orderResponse.paymentId, transactionId }),
+          'consumable',
+        );
+        return result as { status: string; paymentId: string };
+      }
       const result = await payWithRazorpay(orderResponse);
       return result;
     } catch (err: any) {
@@ -99,7 +127,7 @@ export function usePayment(): UsePaymentReturn {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAppleIAP]);
 
   // ─── Lead Unlock ───
 
@@ -107,7 +135,7 @@ export function usePayment(): UsePaymentReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await createLeadUnlockCheckout(leadId, voucherCode);
+      const response = await createLeadUnlockCheckout(leadId, voucherCode, isAppleIAP ? 'apple' : 'razorpay');
 
       if (response.unlocked) {
         return {
@@ -117,7 +145,15 @@ export function usePayment(): UsePaymentReturn {
         };
       }
 
-      // Payment required — use Razorpay (lead unlock is a one-time payment, not IAP)
+      // iOS → Apple IAP consumable
+      if (isAppleIAP && response.gateway === 'apple' && response.appleProductId) {
+        const result = await purchaseConsumable(response.appleProductId, (transactionId) =>
+          verifyAppleConsumable({ paymentId: response.paymentId!, transactionId }),
+        );
+        return { unlocked: true, method: 'payment_required', status: result.status, paymentId: result.paymentId };
+      }
+
+      // Android/Web → Razorpay
       if (response.orderId && response.keyId) {
         const payResult = await payWithRazorpay({
           orderId: response.orderId,
@@ -144,7 +180,7 @@ export function usePayment(): UsePaymentReturn {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAppleIAP]);
 
   // ─── Deal Creation ───
 
@@ -152,7 +188,7 @@ export function usePayment(): UsePaymentReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await createDealCreationCheckout(voucherCode, dealData);
+      const response = await createDealCreationCheckout(voucherCode, dealData, isAppleIAP ? 'apple' : 'razorpay');
 
       if (!response.requiresPayment) {
         return {
@@ -162,7 +198,15 @@ export function usePayment(): UsePaymentReturn {
         };
       }
 
-      // Payment required — use Razorpay
+      // iOS → Apple IAP consumable
+      if (isAppleIAP && response.gateway === 'apple' && response.appleProductId) {
+        const result = await purchaseConsumable(response.appleProductId, (transactionId) =>
+          verifyAppleConsumable({ paymentId: response.paymentId!, transactionId }),
+        );
+        return { requiresPayment: true, method: 'payment_required', status: result.status, paymentId: result.paymentId };
+      }
+
+      // Android/Web → Razorpay
       if (response.orderId && response.keyId) {
         const payResult = await payWithRazorpay({
           orderId: response.orderId,
@@ -189,7 +233,7 @@ export function usePayment(): UsePaymentReturn {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAppleIAP]);
 
   // ─── Subscription ───
 

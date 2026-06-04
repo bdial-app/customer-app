@@ -17,6 +17,8 @@ import PromoBannerCarousel from "./home/promo-banner-carousel";
 import DealsCarousel from "./home/deals-carousel";
 import SponsoredCarousel from "./home/sponsored-carousel";
 import ProviderCardSlider from "./home/provider-card-slider";
+import PicksForYou from "./home/picks-for-you";
+import PicksForYouProducts from "./home/picks-for-you-products";
 import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
@@ -29,9 +31,9 @@ import PullToRefresh from "./pull-to-refresh";
 import { inflateIfLow } from "@/utils/inflate-stats";
 import HomeSplashScreen from "./home/home-splash-screen";
 import CityExpansionBanner from "./city-expansion-banner";
+import GeoLocation from "./geo-location";
 
 // Lazy load below-fold sections — they are not visible on initial viewport
-const CommunityReviews = lazy(() => import("./home/community-reviews"));
 const ReferEarnCard = lazy(() => import("./home/refer-earn-card"));
 const BecomeProviderCTA = lazy(() => import("./home/become-provider-cta"));
 const CitySpotlight = lazy(() => import("./home/city-spotlight"));
@@ -58,6 +60,8 @@ const mapProvider = (p: any) => ({
 const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?: boolean; selectedCity?: string | null }) => {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [heroScrolled, setHeroScrolled] = useState(false);
   const user = useAppSelector((state) => state.auth.user);
   const guestCoords = useAppSelector((state) => state.location.guestCoords);
   const queryClient = useQueryClient();
@@ -83,6 +87,19 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
       return () => clearTimeout(timer);
     }
   }, [isLoading, feed, isError]);
+
+  // Track when the hero banner leaves the viewport so the sticky search bar
+  // can switch to dark text in light mode (white text on white bg is invisible).
+  useEffect(() => {
+    const el = bannerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setHeroScrolled(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   // Offline + no cached feed → show fallback
   if (!isOnline && !feed) {
@@ -171,33 +188,78 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
         <PullToRefresh onRefresh={handleRefresh}>
           <div
             ref={scrollRef}
-            className="flex flex-col pb-24 overflow-x-hidden"
+            className="flex flex-col pb-28"
+            style={{ overflowX: "clip" }}
           >
-            {/* === HERO SECTION — dark gradient continuation from header === */}
+            {/* === HERO SECTION ===
+                GeoLocation scrolls away naturally.
+                Search bar (z-40) sticks at top, categories (z-30) stick below it.
+                Banner has negative margin so it sits behind them on initial render. */}
+            <GeoLocation />
+
+            {/* Sticky search bar — when stuck, its blur extends UP into the safe
+                area so the dynamic-island / status-bar zone reads as one continuous
+                frosted bar with the categories sticky below. The negative margin-top
+                neutralizes the padding-top at rest, so the visual position is unchanged
+                until the user scrolls. */}
+            {/* `flex flex-col` is load-bearing: it puts the wrapper into a flex
+                formatting context, which disables CSS margin collapse. Without it,
+                the inner search-bar's mb-3 escapes through the wrapper's open bottom
+                edge, leaving a 12px gap above the categories sticky that shows the
+                scrolled banner through. */}
+            {/* pointer-events-none on the wrapper makes the empty safe-area
+                padding region click-through to GeoLocation underneath; the
+                inner HeroSearchBar re-enables pointer events on itself. iOS
+                hit-tests by topmost box regardless of visual emptiness, so
+                without this the wrapper's z-40 was eating taps on the
+                location picker and notification bell. */}
             <div
-              className="relative overflow-hidden"
+              className={`sticky z-40 flex flex-col transition-colors duration-300 pointer-events-none ${
+                heroScrolled
+                  ? "backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65"
+                  : ""
+              }`}
               style={{
-                background:
-                  "linear-gradient(180deg, #0f3460 0%, #1a1a2e 40%, #1a1a2e 100%)",
+                top: 0,
+                paddingTop: "var(--sat, 0px)",
+                marginTop: "calc(-1 * var(--sat, 0px))",
               }}
             >
-              {/* Ambient glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] rounded-full bg-amber-400/[0.06] blur-[80px] pointer-events-none" />
+              <div className="pointer-events-auto">
+                <HeroSearchBar prompts={feed?.searchPrompts} scrolled={heroScrolled} />
+              </div>
+            </div>
 
-              {/* Search Bar */}
-              <HeroSearchBar prompts={feed?.searchPrompts} />
+            {/* Banner — pulled up to y=0 behind GeoLocation + search */}
+            <div
+              ref={bannerRef}
+              className="relative overflow-hidden"
+              style={{
+                marginTop: "calc(-1 * (var(--sat, 0px) + 124px))",
+                height: "min(50vh, 420px)",
+                minHeight: "340px",
+              }}
+            >
+              <PromoBannerCarousel
+                banners={feed?.promoBanners}
+                isLoading={isLoading}
+                variant="hero"
+              />
+            </div>
 
-              {/* Category Scroll — personalized order when available */}
+            {/* Categories — frosted glass, sticks flush below the search bar so
+                the safe-area scrim, search, and categories form one continuous bar */}
+            <div
+              className="sticky z-30 backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65 border-b border-white/20 dark:border-slate-700/40 pt-2"
+              style={{ top: "calc(var(--sat, 0px) + 60px)" }}
+            >
               <QuickCategories
                 personalizedCategories={personalizedCategories}
               />
-
-              {/* Curved bottom transition */}
-              <div className="h-6 bg-[#efeff4] dark:bg-slate-900 rounded-t-[28px] -mb-px" />
             </div>
 
             {/* Personalized Greeting */}
-            <GreetingCard />
+            {/* <GreetingCard /> */}
 
             {/* Non-serviceable city banner */}
             {!isServiceable && selectedCity && (
@@ -205,17 +267,11 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             )}
 
             {/* Live Activity Pulse — social proof */}
-            <LiveActivityPulse
+            {/* <LiveActivityPulse
               lat={user?.latitude ?? undefined}
               lng={user?.longitude ?? undefined}
               city={user?.city ?? undefined}
-            />
-
-            {/* Promo Banner Carousel */}
-            <PromoBannerCarousel
-              banners={feed?.promoBanners}
-              isLoading={isLoading}
-            />
+            /> */}
 
             {/* ⭐ Featured Businesses — gold themed sponsored carousel */}
             <SponsoredCarousel
@@ -226,19 +282,21 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             {/* 🏷️ Deals Around You — red themed carousel */}
             <DealsCarousel deals={dealsAroundYou} isLoading={isLoading} />
 
-            {/* For You — personalized providers based on interests */}
+            {/* ✨ Picks for You — personalized spotlight with "why we picked this" */}
             {forYouProviders.length > 0 && (
-              <>
-                <ProviderCardSlider
-                  title="For You"
-                  subtitle="Based on your interests"
-                  providers={forYouProviders}
-                  viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`}
-                  accentColor="#8B5CF6"
-                  isLoading={isLoading}
-                />
-              </>
+              <PicksForYou
+                providers={forYouProviders}
+                personalizedCategories={personalizedCategories}
+                isLoading={isLoading}
+              />
             )}
+
+            {/* ✨ Just for You (Products) — magazine grid of products from preferred categories */}
+            <PicksForYouProducts
+              products={feed?.forYouProducts}
+              personalizedCategories={personalizedCategories}
+              isLoading={isLoading}
+            />
 
             {/* ♀ Women-Led Businesses — purple themed section */}
             {womenLedProviders.length > 0 && (
@@ -254,6 +312,16 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 />
               </>
             )}
+                        {/* Near You - Horizontal Scroll */}
+            <ProviderCardSlider
+              title="Near You"
+              subtitle="Top-rated businesses nearby"
+              providers={nearbyProviders}
+              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=5`}
+              accentColor="#F8CB45"
+              isLoading={isLoading}
+            />
+
 
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
@@ -266,16 +334,6 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
 
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-
-            {/* Near You - Horizontal Scroll */}
-            <ProviderCardSlider
-              title="Near You"
-              subtitle="Top-rated businesses nearby"
-              providers={nearbyProviders}
-              viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=distance&maxDistance=5`}
-              accentColor="#F8CB45"
-              isLoading={isLoading}
-            />
 
             {/* Refer & Earn */}
             <div
@@ -334,24 +392,6 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               </div>
             )}
 
-            {/* Community Reviews */}
-            <div
-              style={{
-                contentVisibility: "auto",
-                containIntrinsicSize: "auto 220px",
-              }}
-            >
-              <Suspense fallback={<LazyFallback />}>
-                <CommunityReviews
-                  reviews={feed?.communityReviews}
-                  isLoading={isLoading}
-                />
-              </Suspense>
-            </div>
-
-            {/* Divider */}
-            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-
             {/* Top Products */}
             {Array.isArray(feed?.bestProducts) && feed.bestProducts.length > 0 && (
               <>
@@ -372,7 +412,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-3 overflow-x-auto px-5 pb-4 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto px-5 pb-4 no-scrollbar">
                   {feed.bestProducts.map((product) => (
                     <div
                       key={product.id}
@@ -486,7 +526,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               </Suspense>
             </div>
 
-            {/* Trust Banner */}
+            {/* Trust Banner
             <div
               className="mx-4 mt-3 mb-2 p-5 rounded-2xl border border-slate-100 dark:border-slate-800"
               style={{
@@ -559,7 +599,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="h-30"></div>
         </PullToRefresh>

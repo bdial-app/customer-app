@@ -43,19 +43,20 @@ const AddressBarNavigation = ({
         ) : (
           <>
             <div className="flex items-center gap-1">
-              <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest leading-none mb-0.5">
-                Current Location
-              </p>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[14px] font-semibold text-white truncate leading-snug">
+              <span
+                className="text-[15px] font-bold text-white truncate leading-snug"
+                style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
+              >
                 {title}
               </span>
               {!hideChevron && (
-                <IonIcon icon={chevronDown} className="text-[11px] text-amber-400/80 shrink-0" />
+                <IonIcon icon={chevronDown} className="text-[12px] text-amber-400 shrink-0" />
               )}
             </div>
-            <p className="text-[11px] text-white/35 truncate leading-tight">
+            <p
+              className="text-[11px] text-white/85 truncate leading-tight"
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
+            >
               {address}
             </p>
           </>

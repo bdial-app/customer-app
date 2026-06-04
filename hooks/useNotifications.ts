@@ -15,18 +15,17 @@ import { useAppContext } from "@/app/context/AppContext";
 
 const notificationKeys = {
   all: ["notifications"] as const,
-  list: (page: number, type?: string, status?: string, targetMode?: string) =>
-    [...notificationKeys.all, "list", page, type, status, targetMode] as const,
+  list: (page: number, type?: string, status?: string) =>
+    [...notificationKeys.all, "list", page, type, status] as const,
   unreadCount: ["notifications", "unread-count"] as const,
   preferences: ["notifications", "preferences"] as const,
 };
 
 export function useNotifications(page = 1, type?: string, status?: "all" | "read" | "unread") {
-  const { userMode } = useAppContext();
   const user = useAppSelector((state) => state.auth.user);
   return useQuery({
-    queryKey: notificationKeys.list(page, type, status, userMode),
-    queryFn: () => getNotifications(page, 20, type, status, userMode),
+    queryKey: notificationKeys.list(page, type, status),
+    queryFn: () => getNotifications(page, 20, type, status),
     enabled: !!user,
   });
 }

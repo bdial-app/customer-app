@@ -50,8 +50,19 @@ interface AppContextType {
   providerStatus: ProviderStatus;
   userMode: UserMode;
   providerInfo: ProviderInfo | null;
+  /**
+   * True once the real provider status is known for the current session —
+   * either restored from a prior resolved session (localStorage) or fetched
+   * from the server after login. While false for a logged-in user, mode-dependent
+   * UI should render a skeleton instead of the default ("not_applied" / customer)
+   * state, which would otherwise flash before the server response arrives.
+   */
+  providerStatusResolved: boolean;
   setProviderStatus: (status: ProviderStatus) => void;
+  setProviderStatusResolved: (resolved: boolean) => void;
   setUserMode: (mode: UserMode) => void;
+  /** Temporarily override mode without persisting to storage (for unauthenticated state). */
+  setUserModeNoSync: (mode: UserMode) => void;
   setProviderInfo: (info: ProviderInfo | null) => void;
   toggleMode: () => void;
   resetProviderState: () => void;
@@ -64,6 +75,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     useState<ProviderStatus>(readStoredProviderStatus);
   const [userMode, _setUserMode] = useState<UserMode>("customer");
   const [providerInfo, setProviderInfo] = useState<ProviderInfo | null>(null);
+  // Optimistically "resolved" when a status was persisted by a prior session,
+  // so returning users render instantly. Fresh logins (logout clears storage)
+  // start unresolved and gate on the server fetch — see ProviderStatusBootstrap.
+  const [providerStatusResolved, setProviderStatusResolved] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return getItemSync(PROVIDER_STATUS_KEY) != null; } catch { return false; }
+  });
   const lastToggleRef = useRef(0);
   const hydratedRef = useRef(false);
 
@@ -85,6 +103,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     updateUser({ preferredMode: mode }).catch(() => {});
   }, []);
 
+  // Sets mode in memory only — used when forcing guest users to customer mode
+  // so their saved "provider" preference in localStorage is not overwritten.
+  const setUserModeNoSync = useCallback((mode: UserMode) => {
+    _setUserMode(mode);
+  }, []);
+
   const toggleMode = useCallback(() => {
     const now = Date.now();
     if (now - lastToggleRef.current < 400) return;
@@ -103,6 +127,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setProviderStatus("not_applied");
     _setUserMode("customer");
     setProviderInfo(null);
+    // Re-gate the next login: storage is cleared, so the default status is no
+    // longer trustworthy until the server fetch resolves it again.
+    setProviderStatusResolved(false);
     try { removeItemSync(USER_MODE_KEY); removeItemSync(PROVIDER_STATUS_KEY); } catch {}
   }, [setProviderStatus]);
 
@@ -112,8 +139,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         providerStatus,
         userMode,
         providerInfo,
+        providerStatusResolved,
         setProviderStatus,
+        setProviderStatusResolved,
         setUserMode,
+        setUserModeNoSync,
         setProviderInfo,
         toggleMode,
         resetProviderState,

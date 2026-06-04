@@ -123,7 +123,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
     <div
       className={`fixed left-0 right-0 z-30 ${
         isBrowser
-          ? "-bottom-2"
+          ? "bottom-0"
           : isIOSPlatform
           ? "-bottom-8"
           : "bottom-0"
@@ -152,7 +152,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                 onClick={() => setActiveTab(tab.id)}
                 aria-label={tab.label}
                 aria-current={isActive ? "page" : undefined}
-                className="relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-2.5 min-w-[48px] outline-none active:scale-90 transition-transform duration-100"
+                className="relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-3 min-w-[52px] outline-none active:scale-90 transition-transform duration-100"
               >
                 {/* Active pill background — CSS transition instead of Framer Motion layoutId */}
                 <div

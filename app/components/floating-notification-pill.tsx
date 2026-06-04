@@ -63,7 +63,7 @@ export default function FloatingNotificationPill({
     };
   }, []);
 
-  const bottomOffset = hasOtherPill ? "bottom-[136px]" : "bottom-[88px]";
+  const bottomPx = hasOtherPill ? 136 : 88;
 
   return (
     <AnimatePresence>
@@ -74,7 +74,8 @@ export default function FloatingNotificationPill({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.92 }}
           transition={{ type: "spring", stiffness: 400, damping: 28 }}
-          className={`fixed ${bottomOffset} left-1/2 -translate-x-1/2 z-40 w-[calc(100%-32px)] max-w-[380px]`}
+          className="fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-32px)] max-w-[380px]"
+          style={{ bottom: `calc(${bottomPx}px + var(--sab, env(safe-area-inset-bottom, 0px)))` }}
         >
           <div
             onClick={() => {

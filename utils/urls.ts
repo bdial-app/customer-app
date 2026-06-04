@@ -174,6 +174,7 @@ export const PAYMENT_URLS = {
   VERIFY_RAZORPAY: '/payments/verify/razorpay',
   VERIFY_RAZORPAY_SUBSCRIPTION: '/payments/verify/razorpay-subscription',
   VERIFY_APPLE: '/payments/verify/apple',
+  VERIFY_APPLE_CONSUMABLE: '/payments/verify/apple-consumable',
   MONETIZATION_CONFIG: '/config/monetization',
 };
 

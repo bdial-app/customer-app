@@ -364,10 +364,12 @@ export default function TimePicker({
           className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
             open
               ? "bg-[#0a84ff29] !text-[#0a84ff] shadow-md shadow-indigo-100 dark:shadow-indigo-900/30 scale-105"
-              : "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white"
+              : value
+              ? "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white"
+              : "bg-slate-50 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500"
           }`}
         >
-          {timeStr(committed)}
+          {value ? timeStr(committed) : "Tap to set"}
         </div>
       </div>
 

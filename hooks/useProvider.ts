@@ -39,7 +39,10 @@ export const useProviderDetails = (id: string) => {
     queryKey: ["provider-details", id],
     queryFn: () => getProviderDetails(id),
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
 };
 

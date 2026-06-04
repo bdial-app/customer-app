@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { SPLASH_ICON } from "../splash-icon";
 
 export default function HomeSplashScreen() {
   return (
@@ -19,7 +20,7 @@ export default function HomeSplashScreen() {
         className="relative z-10 mb-8"
       >
         <img
-          src="/icons/512.png"
+          src={SPLASH_ICON}
           alt="Tijarah"
           className="w-20 h-20 rounded-2xl shadow-lg shadow-black/30"
         />

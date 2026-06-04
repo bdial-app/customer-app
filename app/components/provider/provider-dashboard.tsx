@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -37,10 +37,9 @@ import ProviderQuickStats from "./provider-quick-stats";
 import { ActivePlanBanner, ActiveBoostBanner } from "./active-status-cards";
 import { useMyProvider, useMySponsorships } from "@/hooks/useMyProvider";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import OfflineFallback from "../offline-fallback";
 import { useProviderDetails } from "@/hooks/useProvider";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentSubscription } from "@/services/payment.service";
 import { shareProvider } from "@/utils/sharing";
 import {
   ProviderDetailsPhoto,
@@ -48,11 +47,13 @@ import {
   ProviderDetailsReview,
   ProviderDetailsOffer,
 } from "@/services/provider.service";
-import { getWarningsUnreadCount, getMyWarnings } from "@/services/report.service";
+import { useCurrentSubscription } from "@/hooks/useSubscription";
+import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import PullToRefresh from "../pull-to-refresh";
+import PageSplashScreen from "../page-splash-screen";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -379,7 +380,7 @@ interface ProviderStats {
   activeOffers: ProviderDetailsOffer[];
 }
 
-const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
+const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?: boolean }) => {
   const todayReviews = stats.reviews.filter((r) => {
     const posted = new Date(r.postedAt);
     const today = new Date();
@@ -400,35 +401,46 @@ const TodayActivity = ({ stats }: { stats: ProviderStats }) => {
           })}
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xl font-bold text-teal-600 dark:text-teal-400">
-            {todayReviews.length}
-          </p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            New Reviews
-          </p>
+      {loading ? (
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+              <div className="h-7 w-8 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse mx-auto mb-1" />
+              <div className="h-2.5 w-14 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse mx-auto" />
+            </div>
+          ))}
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
-            {stats.products.length}
-          </p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            Products
-          </p>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+            <p className="text-xl font-bold text-teal-600 dark:text-teal-400">
+              {todayReviews.length}
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              New Reviews
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
+              {stats.products.length}
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              Products
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+              {stats.photos.length}
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              Photos
+            </p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-            {stats.photos.length}
-          </p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            Photos
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
-};
+});
 
 // ─── Growth Tips ────────────────────────────────────────────────────
 interface GrowthTipsProps {
@@ -439,7 +451,7 @@ interface GrowthTipsProps {
   onVerify: () => void;
 }
 
-const GrowthTips = ({
+const GrowthTips = memo(({
   stats,
   provider,
   verificationStatus,
@@ -603,15 +615,37 @@ const GrowthTips = ({
       </div>
     </div>
   );
-};
+});
 
 // ─── Recent Reviews ─────────────────────────────────────────────────
-const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
+const RecentReviewsList = memo(({ stats, loading }: { stats: ProviderStats; loading?: boolean }) => {
   const allReviews = [...stats.reviews]
     .sort(
       (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
     )
     .slice(0, 3);
+
+  if (loading) {
+    return (
+      <div className="px-4 mb-4">
+        <div className="h-4 w-32 bg-slate-100 dark:bg-slate-700 rounded animate-pulse mb-3" />
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 animate-pulse shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-2 w-16 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="h-2.5 w-full bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (allReviews.length === 0) return null;
 
@@ -673,10 +707,32 @@ const RecentReviewsList = ({ stats }: { stats: ProviderStats }) => {
       </div>
     </div>
   );
-};
+});
 
 // ─── Products Overview ──────────────────────────────────────────────
-const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
+const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loading?: boolean }) => {
+  if (loading) {
+    return (
+      <div className="px-4 mb-4">
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="h-4 w-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-3 w-12 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden flex h-16">
+              <div className="w-16 shrink-0 bg-slate-100 dark:bg-slate-700 animate-pulse" />
+              <div className="flex-1 p-3 space-y-2">
+                <div className="h-3 w-28 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+                <div className="h-2.5 w-16 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (stats.products.length === 0) {
     return (
       <div className="px-4 mb-4">
@@ -761,10 +817,10 @@ const ProductsOverview = ({ stats }: { stats: ProviderStats }) => {
       </div>
     </div>
   );
-};
+});
 
 // ─── Profile Completeness ───────────────────────────────────────────
-const ProfileCompleteness = ({
+const ProfileCompleteness = memo(({
   provider,
   stats,
   onNavigate,
@@ -890,7 +946,7 @@ const ProfileCompleteness = ({
       </div>
     </div>
   );
-};
+});
 
 // ─── Subscription Upsell Card ───────────────────────────────────────
 const SubscriptionUpsell = ({
@@ -967,13 +1023,16 @@ const SubscriptionUpsell = ({
 };
 
 // ─── Revenue Boosters Section ───────────────────────────────────────
-const RevenueBoosters = ({
+const RevenueBoosters = memo(({
   onNavigate,
   onNavigateToAnalytics,
 }: {
   onNavigate: (tab: string) => void;
   onNavigateToAnalytics?: (view: string) => void;
 }) => {
+  const { data: featureFlags } = useFeatureFlags();
+  const sponsorshipsEnabled = featureFlags?.sponsorships_enabled ?? false;
+
   const boosters = [
     {
       id: "deals",
@@ -1022,7 +1081,7 @@ const RevenueBoosters = ({
         className="flex gap-3 overflow-x-auto no-scrollbar pb-1"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {boosters.map((b) => (
+        {boosters.filter((b) => b.id !== "boost" || sponsorshipsEnabled).map((b) => (
           <motion.button
             key={b.id}
             whileTap={{ scale: 0.96 }}
@@ -1051,16 +1110,38 @@ const RevenueBoosters = ({
       </div>
     </div>
   );
-};
+});
 
 // ─── Deals Overview Card ────────────────────────────────────────────
-const DealsOverview = ({
+const DealsOverview = memo(({
   offers,
   onManage,
+  loading,
 }: {
   offers: ProviderDetailsOffer[];
   onManage: () => void;
+  loading?: boolean;
 }) => {
+  if (loading) {
+    return (
+      <div className="px-4 mb-4">
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="h-4 w-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-3 w-16 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 animate-pulse shrink-0" />
+            <div className="space-y-1.5 flex-1">
+              <div className="h-3 w-28 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-2.5 w-20 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (offers.length === 0) {
     return (
       <div className="px-4 mb-4">
@@ -1158,7 +1239,7 @@ const DealsOverview = ({
       </div>
     </div>
   );
-};
+});
 
 // ─── Main Dashboard (Home Tab) ──────────────────────────────────────
 interface ProviderDashboardProps {
@@ -1176,13 +1257,22 @@ const ProviderDashboard = ({
 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
+  const cachedId = useRef(
+    typeof window !== "undefined" ? localStorage.getItem("tijarah:provider-id") ?? "" : ""
+  );
+  useEffect(() => {
+    if (providerId) {
+      cachedId.current = providerId;
+      localStorage.setItem("tijarah:provider-id", providerId);
+    }
+  }, [providerId]);
+  const effectiveProviderId = providerId || cachedId.current;
   const { data: details, isLoading: detailsLoading, isError: detailsError, refetch: refetchDetails } =
-    useProviderDetails(providerId);
-  const { data: currentSub } = useQuery({
-    queryKey: ["current-subscription"],
-    queryFn: getCurrentSubscription,
-    staleTime: 1000 * 60 * 2,
-  });
+    useProviderDetails(effectiveProviderId);
+  const { data: currentSub } = useCurrentSubscription();
+  const { data: featureFlags } = useFeatureFlags();
+  const subscriptionsVisible = featureFlags?.subscriptions_visible ?? true;
+  const sponsorshipsEnabled = featureFlags?.sponsorships_enabled ?? false;
   const { data: sponsorships } = useMySponsorships();
   const [warningsSheetOpen, setWarningsSheetOpen] = useState(false);
   const [warningModalDismissed, setWarningModalDismissed] = useState(() => {
@@ -1201,16 +1291,8 @@ const ProviderDashboard = ({
     const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
     return Date.now() - dismissedAt < twoDaysMs;
   });
-  const { data: warningsUnread, refetch: refetchWarnings } = useQuery({
-    queryKey: ["warnings-unread-count"],
-    queryFn: getWarningsUnreadCount,
-    staleTime: 1000 * 60 * 2,
-  });
-  const { data: allWarnings } = useQuery({
-    queryKey: ["my-warnings"],
-    queryFn: getMyWarnings,
-    staleTime: 1000 * 60 * 2,
-  });
+  const { data: warningsUnread, refetch: refetchWarnings } = useWarningsUnreadCount();
+  const { data: allWarnings } = useMyWarnings();
   const unreadWarningCount = warningsUnread?.unreadCount ?? warningsUnread?.count ?? 0;
   const totalWarningCount = Array.isArray(allWarnings) ? allWarnings.length : (allWarnings?.data?.length ?? 0);
   const showWarningModal = unreadWarningCount > 0 && !warningModalDismissed;
@@ -1227,7 +1309,14 @@ const ProviderDashboard = ({
 
   const providerStatus = providerData?.providerStatus ?? null;
   const verificationStatus = providerData?.verificationStatus ?? null;
-  const isLoading = providerLoading || detailsLoading;
+  const isLoading = providerLoading;
+  const [showSplash, setShowSplash] = useState(!providerData);
+  useEffect(() => {
+    if (!providerLoading) {
+      const t = setTimeout(() => setShowSplash(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [providerLoading]);
 
   const hasActivePlan = currentSub && currentSub.status === "active" && currentSub.plan;
   const activeSponsorships = sponsorships?.filter(
@@ -1238,12 +1327,12 @@ const ProviderDashboard = ({
   // regardless of the document verification record status
   const isApproved = providerStatus === "approved";
 
-  const providerStats: ProviderStats = {
+  const providerStats = useMemo<ProviderStats>(() => ({
     photos: details?.photos ?? [],
     products: details?.products ?? [],
     reviews: details?.reviews ?? [],
     activeOffers: details?.activeOffers ?? [],
-  };
+  }), [details]);
 
   // Only show "Get Verified" prompt if NOT already approved and no verification submitted at all
   const needsVerification =
@@ -1291,6 +1380,10 @@ const ProviderDashboard = ({
         </div>
       </div>
     );
+  }
+
+  if (isLoading && showSplash) {
+    return <PageSplashScreen variant="business" message="Setting up your dashboard…" />;
   }
 
   if (isLoading) {
@@ -1367,16 +1460,16 @@ const ProviderDashboard = ({
         onNavigate={handleNavigate}
         verificationStatus={verificationStatus}
       />
-      <TodayActivity stats={providerStats} />
-      {hasActivePlan ? (
+      <TodayActivity stats={providerStats} loading={detailsLoading} />
+      {subscriptionsVisible && (hasActivePlan ? (
         <ActivePlanBanner
           subscription={currentSub!}
           onManage={() => handleNavigate("plans")}
         />
       ) : (
         <SubscriptionUpsell onNavigate={handleNavigate} />
-      )}
-      {activeSponsorships.length > 0 && (
+      ))}
+      {sponsorshipsEnabled && activeSponsorships.length > 0 && (
         <ActiveBoostBanner
           sponsorships={activeSponsorships}
           onManage={() => handleNavigate("boost")}
@@ -1406,9 +1499,10 @@ const ProviderDashboard = ({
       <DealsOverview
         offers={providerStats.activeOffers}
         onManage={() => handleNavigate("deals")}
+        loading={detailsLoading}
       />
-      <ProductsOverview stats={providerStats} />
-      <RecentReviewsList stats={providerStats} />
+      <ProductsOverview stats={providerStats} loading={detailsLoading} />
+      <RecentReviewsList stats={providerStats} loading={detailsLoading} />
       <ProviderWarningsSheet
         isOpen={warningsSheetOpen}
         onClose={() => setWarningsSheetOpen(false)}

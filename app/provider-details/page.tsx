@@ -47,6 +47,7 @@ import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { shareProvider } from "@/utils/sharing";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
+import { triggerHaptic } from "@/utils/haptics";
 import { useCreateConversation } from "@/hooks/useChat";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -244,6 +245,7 @@ export default function ProviderDetailsPage() {
   const handleToggleSaved = () => {
     requireAuth(() => {
       if (!liked) trackSave();
+      triggerHaptic(liked ? "light" : "medium");
       toggleSaved.mutate({ itemId: id, itemType: "provider" });
     });
   };
@@ -328,10 +330,17 @@ export default function ProviderDetailsPage() {
     return `${names.slice(0, 2).join(" · ")} +${names.length - 2}`;
   }, [categories, provider?.description]);
 
-  const hours = provider
-    ? `${provider.openTime?.slice(0, 5) || "09:00"} – ${
-        provider.closeTime?.slice(0, 5) || "21:00"
-      }`
+  const fmt12h = (t: string | null | undefined) => {
+    if (!t) return null;
+    const [hStr, mStr] = t.slice(0, 5).split(":");
+    const h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+  const hours = provider?.openTime || provider?.closeTime
+    ? `${fmt12h(provider.openTime) ?? "–"} – ${fmt12h(provider.closeTime) ?? "–"}`
     : "";
 
   useEffect(() => {

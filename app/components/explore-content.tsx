@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useToggleSaved, useSavedItemIds } from "@/hooks/useSavedItems";
+import { triggerHaptic } from "@/utils/haptics";
 import { useExploreFeed, useTrackAd } from "@/hooks/useExplore";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import CommunityReviews from "@/app/components/home/community-reviews";
@@ -286,9 +287,11 @@ const ExploreContent = memo(() => {
   const handleToggle = useCallback(
     (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
+      const isSaved = savedProviderIds.has(id);
+      triggerHaptic(isSaved ? "light" : "medium");
       toggleSaved.mutate({ itemId: id, itemType: "provider" });
     },
-    [toggleSaved],
+    [toggleSaved, savedProviderIds],
   );
 
   // Impression tracking refs

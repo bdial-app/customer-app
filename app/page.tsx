@@ -22,7 +22,7 @@ import AnalyticsContent from "./components/analytics-content";
 import ExploreContent from "./components/explore-content";
 import SavedContent from "./components/saved-content";
 import { useAppContext } from "./context/AppContext";
-import GeoLocation from "./components/geo-location";
+import { getItemSync } from "@/utils/storage";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useChatSubscription } from "@/hooks/useChatSubscription";
@@ -71,7 +71,7 @@ export default function Home() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const [analyticsView, setAnalyticsView] = useState<string | null>(null);
-  const { userMode, setUserMode, providerStatus } = useAppContext();
+  const { userMode, setUserMode, setUserModeNoSync, providerStatus, providerStatusResolved } = useAppContext();
   const providerUnreadCount = useAppSelector((state) => state.chat.providerUnreadCount);
   const { user } = useAppSelector((state) => state.auth);
   const { requireAuth } = useAuthGate();
@@ -80,6 +80,7 @@ export default function Home() {
   const prevUserMode = useRef(userMode);
   const pendingTabRef = useRef<string | null>(null);
   const prevActiveChat = useRef<string | null>(null);
+  const prevUserRef = useRef(user);
 
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
@@ -138,16 +139,30 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Force customer mode for guests — provider mode requires authentication
-  // Also reset to home tab when user logs out while on a protected tab
+  // When a returning user logs in, immediately restore their saved mode from localStorage
+  // so they don't have to wait for the getMyProviderStatus() API call to see their dashboard.
+  useEffect(() => {
+    if (!prevUserRef.current && user) {
+      const storedMode = getItemSync("tijarah_user_mode");
+      if (storedMode === "provider") {
+        setUserMode("provider");
+      }
+    }
+    prevUserRef.current = user;
+  }, [user, setUserMode]);
+
+  // Force customer mode for guests without persisting — provider mode requires auth.
+  // Using setUserModeNoSync preserves the "provider" preference in localStorage so
+  // it can be restored instantly on next login (see effect above).
+  // Also reset to home tab when user logs out while on a protected tab.
   useEffect(() => {
     if (!user) {
-      if (userMode === "provider") setUserMode("customer");
+      if (userMode === "provider") setUserModeNoSync("customer");
       if (activeTab === "chats" || activeTab === "saved" || activeTab === "listings" || activeTab === "analytics") {
         setActiveTab("home");
       }
     }
-  }, [user, userMode, setUserMode, activeTab]);
+  }, [user, userMode, setUserModeNoSync, activeTab]);
 
   // Open a specific chat when dispatched from another page (e.g. provider-details, product-details)
   useEffect(() => {
@@ -238,8 +253,21 @@ export default function Home() {
     >
       {/* Tab panels — absolute inset-0, each is its own scroll container */}
       <TabPanel id="home" activeTab={activeTab}>
-        {userMode === "customer" && <GeoLocation />}
-        {userMode === "customer" ? (
+        {/* For a logged-in user, hold a skeleton until the real provider status
+            resolves — otherwise the customer home flashes before snapping to the
+            business dashboard for users whose preferred mode is provider. Guests
+            (no user) are never gated; they always get the customer home. */}
+        {user && !providerStatusResolved ? (
+          <div className="px-4 pt-6 space-y-4">
+            <div className="h-44 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="h-6 w-1/3 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+              <div className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            </div>
+            <div className="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          </div>
+        ) : userMode === "customer" ? (
           <UserHome isServiceable={isServiceable} selectedCity={selectedCity} />
         ) : (
           <ProviderDashboard onNavigateToListings={handleNavigateToListings} onNavigateToAnalytics={handleNavigateToAnalytics} />
@@ -305,7 +333,8 @@ export default function Home() {
               pendingTabRef.current = "chats";
               setUserMode("provider");
             }}
-            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
+            className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
+            style={{ bottom: "calc(88px + var(--sab, env(safe-area-inset-bottom, 0px)))" }}
           >
             <IonIcon icon={storefrontOutline} className="text-base shrink-0" />
             <span className="text-xs font-semibold whitespace-nowrap">

@@ -14,6 +14,11 @@ import {
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { validateVoucher } from "@/services/payment.service";
+import { getNativePlatform } from "@/utils/platform";
+
+// Vouchers can't be honored through Apple IAP (Apple fixes the price), so the
+// voucher UI is hidden on iOS.
+const IS_IOS = getNativePlatform() === "ios";
 
 interface DealPaymentSheetProps {
   open: boolean;
@@ -28,6 +33,8 @@ interface DealPaymentSheetProps {
   monetizationEnabled: boolean;
   activeDeals: number;
   maxActiveDeals: number;
+  /** Admin voucher feature flag — when false, the voucher field is hidden. Defaults to shown. */
+  vouchersEnabled?: boolean;
   isLoading?: boolean;
 }
 
@@ -44,6 +51,7 @@ export function DealPaymentSheet({
   monetizationEnabled,
   activeDeals,
   maxActiveDeals,
+  vouchersEnabled = true,
   isLoading,
 }: DealPaymentSheetProps) {
   const [voucherCode, setVoucherCode] = useState("");
@@ -189,28 +197,33 @@ export function DealPaymentSheet({
                   </p>
                 </div>
 
-                {/* Voucher input */}
-                <div className="flex gap-2 mb-4">
-                  <div className="flex-1 relative">
-                    <IonIcon icon={ticketOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                    <input
-                      type="text"
-                      value={voucherCode}
-                      onChange={(e) => { setVoucherCode(e.target.value); setVoucherResult(null); }}
-                      placeholder="Enter voucher or promo code"
-                      className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30"
-                    />
-                  </div>
-                  <button
-                    onClick={handleApplyVoucher}
-                    disabled={!voucherCode.trim() || applyingVoucher}
-                    className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium disabled:opacity-50"
-                  >
-                    {applyingVoucher ? "..." : "Apply"}
-                  </button>
-                </div>
-                {voucherResult && !voucherResult.valid && (
-                  <p className="text-[11px] text-red-500 -mt-2 mb-3">{voucherResult.message}</p>
+                {/* Voucher input — hidden on iOS (Apple IAP controls the price)
+                    and when the admin voucher feature flag is off */}
+                {!IS_IOS && vouchersEnabled && (
+                  <>
+                    <div className="flex gap-2 mb-4">
+                      <div className="flex-1 relative">
+                        <IonIcon icon={ticketOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                        <input
+                          type="text"
+                          value={voucherCode}
+                          onChange={(e) => { setVoucherCode(e.target.value); setVoucherResult(null); }}
+                          placeholder="Enter voucher or promo code"
+                          className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                        />
+                      </div>
+                      <button
+                        onClick={handleApplyVoucher}
+                        disabled={!voucherCode.trim() || applyingVoucher}
+                        className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium disabled:opacity-50"
+                      >
+                        {applyingVoucher ? "..." : "Apply"}
+                      </button>
+                    </div>
+                    {voucherResult && !voucherResult.valid && (
+                      <p className="text-[11px] text-red-500 -mt-2 mb-3">{voucherResult.message}</p>
+                    )}
+                  </>
                 )}
 
                 {/* Subscription upsell */}
