@@ -1,4 +1,4 @@
-package com.tijarah.app;
+package com.pronttera.tijarah;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
