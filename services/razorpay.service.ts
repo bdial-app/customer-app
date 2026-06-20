@@ -1,14 +1,20 @@
 /**
- * Razorpay Checkout Service — handles loading the Razorpay SDK and processing payments
- * Used for Android and Web users.
+ * Razorpay Checkout Service — processes payments for Android and Web users.
+ *
+ * Web/PWA: loads checkout.js and opens the hosted checkout modal.
+ * Android: uses the native Razorpay SDK via RazorpayCheckout plugin, because
+ *   checkout.js can't launch UPI apps from inside a WebView and therefore hides
+ *   UPI/wallet options. (iOS uses Apple IAP and never reaches this service.)
  */
 
+import { getNativePlatform } from '@/utils/platform';
 import {
   verifyRazorpayPayment,
   verifyRazorpaySubscription,
   type RazorpayOrderResponse,
   type RazorpaySubscriptionResponse,
 } from './payment.service';
+import { RazorpayCheckout } from './razorpay-native';
 
 // Razorpay Checkout types
 interface RazorpayOptions {
@@ -68,6 +74,25 @@ async function loadRazorpaySdk(): Promise<void> {
 export async function payWithRazorpay(
   orderResponse: RazorpayOrderResponse,
 ): Promise<{ status: string; paymentId: string }> {
+  // Android → native SDK (full UPI/wallet support); Web → checkout.js modal.
+  if (getNativePlatform() === 'android') {
+    const { response } = await RazorpayCheckout.open({
+      key: orderResponse.keyId,
+      amount: orderResponse.amount,
+      currency: orderResponse.currency,
+      name: 'Tijarah',
+      description: orderResponse.description,
+      order_id: orderResponse.orderId,
+      prefill: orderResponse.prefill,
+      theme: { color: '#6366f1' },
+    });
+    return verifyRazorpayPayment({
+      razorpay_order_id: response.razorpay_order_id!,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature!,
+    });
+  }
+
   await loadRazorpaySdk();
 
   return new Promise((resolve, reject) => {
@@ -113,6 +138,27 @@ export async function payWithRazorpay(
 export async function subscribeWithRazorpay(
   subResponse: RazorpaySubscriptionResponse,
 ): Promise<{ status: string; subscriptionId: string }> {
+  // Android → native SDK (full UPI/wallet support); Web → checkout.js modal.
+  if (getNativePlatform() === 'android') {
+    const { response } = await RazorpayCheckout.open({
+      key: subResponse.keyId,
+      name: 'Tijarah',
+      description: `${subResponse.planName} — ${subResponse.billingInterval}`,
+      subscription_id: subResponse.subscriptionId,
+      recurring: true,
+      prefill: subResponse.prefill,
+      theme: { color: '#6366f1' },
+    });
+    return verifyRazorpaySubscription({
+      razorpay_subscription_id: response.razorpay_subscription_id!,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature!,
+      planId: subResponse.metadata.planId,
+      providerId: subResponse.metadata.providerId,
+      billingInterval: subResponse.metadata.billingInterval,
+    });
+  }
+
   await loadRazorpaySdk();
 
   return new Promise((resolve, reject) => {

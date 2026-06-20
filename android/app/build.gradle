@@ -46,6 +46,9 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    // Razorpay native checkout — enables the UPI/intent flow inside the app.
+    // The web checkout.js can't launch UPI apps from a WebView, so it hides UPI.
+    implementation 'com.razorpay:checkout:1.6.41'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "Bash(npm install *)",
+      "Bash(xargs sed -n '1,140p')",
+      "Bash(grep -nA12 \"export async function verifyRazorpaySubscription\\\\|export async function verifyRazorpayPayment\" services/payment.service.ts)",
+      "Bash(echo \"=== total errors: $\\(npx tsc --noEmit 2>&1)",
+      "Bash(./gradlew :app:compileDebugJavaWithJavac -q)",
+      "Bash(echo \"=== gradle exit: $? ===\")"
+    ]
+  }
+}

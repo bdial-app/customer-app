@@ -40,3 +40,18 @@
 -keepattributes *Annotation*
 -keepattributes Signature
 -keepattributes InnerClasses
+
+# ─── Razorpay ────────────────────────────────────────────────────────
+-keepattributes JavascriptInterface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class com.razorpay.** { *; }
+-dontwarn com.razorpay.**
+-optimizations !method/inlining/*
+-keepclasseswithmembers class * {
+    public void onPayment*(...);
+}
+# proguard.io annotation referenced by the Razorpay SDK (safe to ignore if absent)
+-dontwarn proguard.annotation.**
+-keep class proguard.annotation.** { *; }
