@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch background: solid brand fill + centered logo so the splash bitmap is
+     never stretched to the window aspect ratio (raw @drawable/splash as a window
+     background gets scaled and distorted). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+    <item>
+        <bitmap android:gravity="center" android:src="@drawable/splash" />
+    </item>
+</layer-list>

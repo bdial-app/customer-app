@@ -7,7 +7,15 @@
       "Bash(grep -nA12 \"export async function verifyRazorpaySubscription\\\\|export async function verifyRazorpayPayment\" services/payment.service.ts)",
       "Bash(echo \"=== total errors: $\\(npx tsc --noEmit 2>&1)",
       "Bash(./gradlew :app:compileDebugJavaWithJavac -q)",
-      "Bash(echo \"=== gradle exit: $? ===\")"
+      "Bash(echo \"=== gradle exit: $? ===\")",
+      "Bash(ls -lt ~/Downloads/*.png ~/Downloads/*.jpg ~/Downloads/*.jpeg 2>/dev/null | head -15)",
+      "Read(//Users/apple/Downloads/**)",
+      "Bash(sips -g pixelWidth -g pixelHeight \"/Users/apple/Downloads/image 11.png\" \"/Users/apple/Downloads/Frame 5.png\")",
+      "Bash(cp \"/Users/apple/Downloads/Frame 5.png\" /Users/apple/Desktop/pronttera/customer-app/assets/splash.png)",
+      "Bash(cp \"/Users/apple/Downloads/Frame 5.png\" /Users/apple/Desktop/pronttera/customer-app/assets/splash-dark.png)",
+      "Bash(npx capacitor-assets *)",
+      "Bash(npx cap *)",
+      "Bash(./gradlew assembleDebug)"
     ]
   }
 }
