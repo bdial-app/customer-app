@@ -15,7 +15,11 @@
       "Bash(cp \"/Users/apple/Downloads/Frame 5.png\" /Users/apple/Desktop/pronttera/customer-app/assets/splash-dark.png)",
       "Bash(npx capacitor-assets *)",
       "Bash(npx cap *)",
-      "Bash(./gradlew assembleDebug)"
+      "Bash(./gradlew assembleDebug)",
+      "Bash(sips -g pixelWidth -g pixelHeight \"/Users/apple/Downloads/image 11.png\")",
+      "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon.png)",
+      "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon-foreground.png)",
+      "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon-background.png)"
     ]
   }
 }
