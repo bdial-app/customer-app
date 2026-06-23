@@ -3,6 +3,7 @@ import { Page } from "konsta/react";
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
+import { getPendingDeepLinkTarget, endDeepLinkLoading } from "@/utils/deep-link";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
   ssr: false,
@@ -57,6 +58,13 @@ export default function ProductDetailsPage() {
     setCurrentPhoto(0);
     setReportSheetOpen(false);
   }, [id]);
+
+  // Hand the cold-start deep-link loader off to real content once this page has
+  // loaded (success or error), so the branded loader fades straight to the
+  // product instead of flashing its own skeleton first.
+  useEffect(() => {
+    if (!isLoading && getPendingDeepLinkTarget()) endDeepLinkLoading();
+  }, [isLoading]);
 
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();

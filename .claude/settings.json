@@ -19,7 +19,15 @@
       "Bash(sips -g pixelWidth -g pixelHeight \"/Users/apple/Downloads/image 11.png\")",
       "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon.png)",
       "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon-foreground.png)",
-      "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon-background.png)"
+      "Bash(cp \"/Users/apple/Downloads/image 11.png\" assets/icon-background.png)",
+      "Read(//Users/apple/Library/Android/sdk/platform-tools/**)",
+      "Bash(adb devices *)",
+      "Bash(~/Library/Android/sdk/platform-tools/adb devices *)",
+      "Bash(~/Library/Android/sdk/emulator/emulator -list-avds)",
+      "Bash(emulator -list-avds)",
+      "Bash(~/Library/Android/sdk/emulator/emulator -avd Pixel_9_Pro -no-snapshot-load -no-boot-anim)",
+      "Bash(echo \"emulator launching in background, pid $!\")",
+      "Bash(grep -oE '\"[^\"]*products[^\"]*\"|\"[^\"]*providers[^\"]*\"|`[^`]*products[^`]*`|`[^`]*providers[^`]*`')"
     ]
   }
 }

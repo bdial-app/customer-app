@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { isNativePlatform } from "@/utils/platform";
-import { resolveDeepLink } from "@/utils/deep-link";
+import { resolveDeepLink, markDeepLinkLaunch, beginDeepLinkLoading } from "@/utils/deep-link";
 
 /**
  * Hook to handle deep links on native (Capacitor) via @capacitor/app.
@@ -33,6 +33,12 @@ export function useDeepLinks() {
             if (launchUrl?.url) {
               const target = parseAppUrl(launchUrl.url);
               if (target && target !== "/") {
+                // Suppress the first-launch onboarding overlay so it doesn't
+                // cover the deep-linked screen on a fresh / logged-out cold start.
+                markDeepLinkLaunch();
+                // Cover the cold-start Home-flash + initial fetch with a
+                // splash-style loader until the target page's content is ready.
+                beginDeepLinkLoading(target);
                 router.push(target);
               }
             }
@@ -43,6 +49,9 @@ export function useDeepLinks() {
         const listener = await App.addListener("appUrlOpen", ({ url }) => {
           const target = parseAppUrl(url);
           if (target && target !== "/") {
+            // Same suppression for the warm path: a not-logged-in user may have
+            // the onboarding overlay up when the link arrives.
+            markDeepLinkLaunch();
             router.push(target);
           }
         });

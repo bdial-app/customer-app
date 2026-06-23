@@ -4,6 +4,7 @@ import { BottomSheet } from "../components/bottom-sheet";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
+import { getPendingDeepLinkTarget, endDeepLinkLoading } from "@/utils/deep-link";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
   ssr: false,
@@ -195,6 +196,13 @@ export default function ProviderDetailsPage() {
 
   const { data, isLoading, isError } = useProviderDetails(id);
   const { data: combinedData } = useCombinedReviews(id);
+
+  // Hand the cold-start deep-link loader off to real content once this page has
+  // loaded (success or error), so the branded loader fades straight to the
+  // provider instead of flashing its own skeleton first.
+  useEffect(() => {
+    if (!isLoading && getPendingDeepLinkTarget()) endDeepLinkLoading();
+  }, [isLoading]);
 
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);

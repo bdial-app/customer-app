@@ -28,13 +28,14 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persist";
 import { useDeepLinks } from "@/hooks/useDeepLinks";
-import { resolveDeepLink } from "@/utils/deep-link";
+import { resolveDeepLink, markDeepLinkLaunch } from "@/utils/deep-link";
 import { isNativePlatform } from "@/utils/platform";
 import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
+import DeepLinkLoadingScreen from "./components/deep-link-loading-screen";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import LocationDeniedSheet from "./components/location-denied-sheet";
 import SmartAppBanner from "./components/smart-app-banner";
@@ -205,6 +206,7 @@ function PushNotificationBridge() {
         }
       }
       const targetUrl = resolveDeepLink({ route: data.route, params });
+      if (targetUrl && targetUrl !== "/") markDeepLinkLaunch();
       router.push(targetUrl);
     };
     window.addEventListener("native-notification-tap", handleNativeTap);
@@ -457,6 +459,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <PwaHistoryGuard />
               <NativeBackButtonHandler />
               {isNativePlatform() && <PermissionPrompt />}
+              {isNativePlatform() && <DeepLinkLoadingScreen />}
               <NotificationProvider>
                 <App theme="ios">
                   <MaintenanceGate>
