@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.tijarah.app"
+    namespace = "com.pronttera.tijarah"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.tijarah.app"
+        applicationId "com.pronttera.tijarah"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 4
+        versionName "1.0.03"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -19,9 +19,9 @@ android {
     signingConfigs {
         release {
             storeFile file("release-keystore.jks")
-            storePassword "tijarah2024"
-            keyAlias "tijarah-release"
-            keyPassword "tijarah2024"
+            storePassword "123456"
+            keyAlias "upload"
+            keyPassword "123456"
         }
     }
     buildTypes {

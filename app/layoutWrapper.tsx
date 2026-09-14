@@ -342,10 +342,12 @@ function ProviderStatusBootstrap() {
       return;
     }
     // Already resolved for this user in this session — don't refetch on re-render.
-    if (resolvedForUserRef.current === user.id) return;
-    resolvedForUserRef.current = user.id;
+    const userId = user.id;
+    if (resolvedForUserRef.current === userId) return;
+    resolvedForUserRef.current = userId;
 
     let cancelled = false;
+    let settled = false;
     getMyProviderStatus()
       .then((result) => {
         if (cancelled) return;
@@ -374,6 +376,7 @@ function ProviderStatusBootstrap() {
         if (!cancelled) resolvedForUserRef.current = null;
       })
       .finally(() => {
+        settled = true;
         // Whether or not the fetch succeeded, stop gating — a failed fetch
         // should fall back to the (storage-derived) status rather than hang
         // on a skeleton forever.
@@ -382,6 +385,14 @@ function ProviderStatusBootstrap() {
 
     return () => {
       cancelled = true;
+      // If this run is torn down before its request settles — React Strict Mode
+      // does exactly that on every mount in dev — release the guard. Otherwise
+      // the re-run sees the ref already set, returns early without fetching,
+      // and the cancelled request never flips providerStatusResolved: the home
+      // tab sits on its skeleton forever.
+      if (!settled && resolvedForUserRef.current === userId) {
+        resolvedForUserRef.current = null;
+      }
     };
   }, [user?.id, setProviderStatus, setProviderInfo, setUserMode, setProviderStatusResolved]);
 
