@@ -40,6 +40,7 @@ import { validateVoucher } from "@/services/payment.service";
 import { usePayment } from "@/hooks/usePayment";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
+import { isFreeSponsorship, hasBudgetLeft } from "@/services/provider.service";
 
 const typeLabels: Record<string, string> = {
   carousel: "Carousel",
@@ -89,8 +90,10 @@ const ProviderSponsorTab = () => {
   }, [plans, isAppleIAP]);
 
   const now = new Date();
-  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > now && Number(s.spentAmount) < Number(s.budgetAmount)) ?? [];
-  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= now || Number(s.spentAmount) >= Number(s.budgetAmount)) ?? [];
+  // A free (admin-granted) boost has a ₹0 budget, so `spent < budget` is 0 < 0 —
+  // false — and it would never count as running. hasBudgetLeft exempts it.
+  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > now && hasBudgetLeft(s)) ?? [];
+  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= now || !hasBudgetLeft(s)) ?? [];
 
   // Placement types with a currently-running boost → block buying the same type
   // again so the provider can't pay twice for an overlapping boost.
@@ -541,7 +544,7 @@ const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredList
                     <IonIcon icon={trendingUpOutline} className="text-[10px]" /> {bCtr}%
                   </span>
                   <span className="flex items-center gap-0.5">
-                    <IonIcon icon={walletOutline} className="text-[10px]" /> ₹{Number(b.spentAmount)}/₹{Number(b.budgetAmount)}
+                    <IonIcon icon={walletOutline} className="text-[10px]" /> {isFreeSponsorship(b) ? "Free" : `₹${Number(b.spentAmount)}/₹${Number(b.budgetAmount)}`}
                   </span>
                 </div>
                 <div className="h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
@@ -736,7 +739,8 @@ const SponsorshipCard = ({
   const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const ctr = sponsorship.impressions > 0 ? ((sponsorship.clicks / sponsorship.impressions) * 100).toFixed(1) : "0.0";
   const isExpired = new Date(sponsorship.endsAt) <= new Date();
-  const isExhausted = spent >= budget;
+  const isFree = isFreeSponsorship(sponsorship);
+  const isExhausted = !isFree && spent >= budget;
 
   // Status badge text
   const getStatusLabel = () => {
@@ -781,16 +785,23 @@ const SponsorshipCard = ({
         </div>
       </div>
 
-      {/* Budget Progress */}
-      <div>
-        <div className="flex items-center justify-between text-[10px] mb-1">
-          <span className="text-slate-500 dark:text-slate-400">Budget Used</span>
-          <span className="font-semibold text-slate-700 dark:text-slate-300">₹{spent} / ₹{budget}</span>
+      {/* Budget Progress — complimentary boosts have no budget to show */}
+      {isFree ? (
+        <div className="flex items-center justify-between text-[10px] rounded-xl bg-amber-50 dark:bg-amber-900/20 px-2.5 py-2">
+          <span className="font-semibold text-amber-700 dark:text-amber-400">Complimentary boost from Tijarah</span>
+          <span className="font-semibold text-amber-700 dark:text-amber-400">No charge</span>
         </div>
-        <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-red-500" : "bg-gradient-to-r from-teal-400 to-teal-500"}`} style={{ width: `${progress}%` }} />
+      ) : (
+        <div>
+          <div className="flex items-center justify-between text-[10px] mb-1">
+            <span className="text-slate-500 dark:text-slate-400">Budget Used</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">₹{spent} / ₹{budget}</span>
+          </div>
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-red-500" : "bg-gradient-to-r from-teal-400 to-teal-500"}`} style={{ width: `${progress}%` }} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -19,6 +19,7 @@ import {
 import type { SubscriptionInfo } from "@/services/payment.service";
 import type { SponsoredListing } from "@/services/provider.service";
 
+import { isFreeSponsorship } from "@/services/provider.service";
 // ─── Plan Config ────────────────────────────────────────────────────
 const planMeta: Record<string, { icon: string; gradient: string; accent: string }> = {
   starter: { icon: flashOutline, gradient: "from-blue-500 via-blue-600 to-indigo-600", accent: "blue" },
@@ -283,7 +284,7 @@ export const ActiveBoostBanner = ({ sponsorships, compact, onManage }: ActiveBoo
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-white/90">₹{s.budgetAmount} budget</span>
+                      <span className="text-[10px] text-white/90">{isFreeSponsorship(s) ? "Complimentary" : `₹${s.budgetAmount} budget`}</span>
                       <span className="text-[10px] text-white/70">·</span>
                       <span className="text-[10px] text-white/90">Ends {endDate}</span>
                       {slotDaysLeft <= 3 && (

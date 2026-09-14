@@ -555,7 +555,17 @@ export interface SponsoredListing {
   endsAt: string;
   isActive: boolean;
   createdAt: string;
+  /** 'free' = complimentary placement granted by Tijarah; never budget-capped. */
+  billingMode?: 'paid' | 'free';
+  source?: 'provider_paid' | 'admin_granted';
+  approvalStatus?: 'pending_approval' | 'approved' | 'rejected';
 }
+
+/** Complimentary placements have a ₹0 budget by design — never "exhausted". */
+export const isFreeSponsorship = (s: Pick<SponsoredListing, 'billingMode'>) => s.billingMode === 'free';
+
+export const hasBudgetLeft = (s: Pick<SponsoredListing, 'billingMode' | 'spentAmount' | 'budgetAmount'>) =>
+  isFreeSponsorship(s) || Number(s.spentAmount) < Number(s.budgetAmount);
 
 export interface CreateSponsorshipPayload {
   type: 'carousel' | 'inline' | 'top_result';
