@@ -30,6 +30,8 @@ import {
   diamondOutline,
   logoGoogle,
   cloudUploadOutline,
+  locationOutline,
+  navigateOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import ProviderHeader from "./provider-header";
@@ -820,6 +822,62 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
 });
 
 // ─── Profile Completeness ───────────────────────────────────────────
+/**
+ * A pin we geocoded from a city name is a placeholder: it puts the shop at the
+ * town centre, so the app refuses to quote a distance for it. Only a pin the
+ * owner (or a precise address lookup) gave us counts as the real thing.
+ */
+const hasExactPin = (provider: any): boolean =>
+  Boolean(
+    provider?.latitude &&
+      provider?.longitude &&
+      provider?.geocodePrecision !== "city",
+  );
+
+// ─── Pin Your Shop Card ─────────────────────────────────────────────
+const PinLocationCard = memo(({
+  provider,
+  onNavigate,
+}: {
+  provider: any;
+  onNavigate: (subTab: string) => void;
+}) => {
+  if (hasExactPin(provider)) return null;
+
+  const placed = Boolean(provider?.latitude && provider?.longitude);
+
+  return (
+    <div className="px-4 mb-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-amber-200 dark:border-amber-800/50">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+            <IonIcon icon={locationOutline} className="text-amber-600 dark:text-amber-400 text-lg" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-slate-900 dark:text-white">
+              Pin your shop on the map
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+              {placed
+                ? `We've placed you at the centre of ${provider?.city || "your city"} for now, so customers can't see how far away you are or get directions to you.`
+                : "Customers nearby can't see how far away you are, and can't get directions to you."}{" "}
+              Drop the pin once and you'll show up in “near me” searches.
+            </p>
+            <button
+              onClick={() => onNavigate("details")}
+              className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-white text-[12px] font-bold active:scale-[0.98] transition-transform"
+            >
+              <IonIcon icon={navigateOutline} className="text-sm" />
+              Set my location
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+PinLocationCard.displayName = "PinLocationCard";
+
 const ProfileCompleteness = memo(({
   provider,
   stats,
@@ -840,6 +898,11 @@ const ProfileCompleteness = memo(({
       target: "details",
     },
     { label: "Address", done: !!provider?.address, target: "details" },
+    {
+      label: "Map location",
+      done: hasExactPin(provider),
+      target: "details",
+    },
     {
       label: "Operating hours",
       done: !!provider?.openTime && !!provider?.closeTime,
@@ -1454,6 +1517,7 @@ const ProviderDashboard = ({
           <VerificationStatusCard status={verificationStatus} />
         )}
       {isApproved && <VerificationStatusCard status="approved" />}
+      <PinLocationCard provider={provider} onNavigate={handleNavigate} />
       <ProfileCompleteness
         provider={provider}
         stats={providerStats}

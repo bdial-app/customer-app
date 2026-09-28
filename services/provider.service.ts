@@ -74,6 +74,11 @@ export interface ProviderData {
   pincode: string | null;
   latitude: number | null;
   longitude: number | null;
+  /**
+   * How exact the pin is. 'city' means we only knew the town, so the pin is the
+   * city centre — never quote a distance or drive someone to it.
+   */
+  geocodePrecision?: "rooftop" | "street" | "locality" | "pincode" | "city" | "manual" | null;
   contactNumber: string;
   openTime: string | null;
   closeTime: string | null;
