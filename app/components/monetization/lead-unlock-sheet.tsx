@@ -219,7 +219,7 @@ export function LeadUnlockSheet({
             {/* CTA Button */}
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={() => onUnlock(voucherCode || undefined)}
+              onClick={() => onUnlock(voucherResult?.valid ? voucherCode : undefined)}
               disabled={isLoading}
               className={`w-full py-3.5 rounded-xl text-white text-sm font-bold shadow-lg disabled:opacity-50 ${
                 isFreeUnlock

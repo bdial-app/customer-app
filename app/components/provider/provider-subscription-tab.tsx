@@ -30,7 +30,6 @@ import {
   type SubscriptionPlan,
 } from "@/services/payment.service";
 import { usePayment } from "@/hooks/usePayment";
-import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 
 const planIcons: Record<string, string> = {
   free: starOutline,
@@ -49,9 +48,9 @@ const planColors: Record<string, string> = {
 const ProviderSubscriptionTab = () => {
   const queryClient = useQueryClient();
   const { subscribe, restorePurchases, isAppleIAP, loading: paymentLoading, error: paymentError, clearError } = usePayment();
-  const { data: monetizationConfig } = useMonetizationConfig();
-  // Hidden on iOS (Apple controls price) and when the admin voucher flag is off.
-  const showVoucher = !isAppleIAP && monetizationConfig?.flags?.vouchersEnabled !== false;
+  // Hidden everywhere for now: Razorpay subscriptions charge the plan price, so
+  // a voucher can't actually be applied (the backend rejects subscription codes).
+  const showVoucher = false;
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showConfirm, setShowConfirm] = useState(false);

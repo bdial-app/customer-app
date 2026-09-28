@@ -108,6 +108,10 @@ export function usePayment(): UsePaymentReturn {
     setError(null);
     try {
       const orderResponse = await createSponsorshipCheckout(payload, isAppleIAP ? 'apple' : 'razorpay');
+      // A voucher covered the whole price — the backend already activated the boost.
+      if ((orderResponse as { status?: string }).status === 'succeeded') {
+        return { status: 'succeeded', paymentId: orderResponse.paymentId };
+      }
       if (isAppleIAP && orderResponse.gateway === 'apple') {
         if (!orderResponse.appleProductId) throw new Error('Apple product not configured for this boost plan');
         // Boost is a one-time, non-recurring purchase → Consumable IAP.
