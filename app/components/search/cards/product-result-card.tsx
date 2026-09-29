@@ -10,6 +10,7 @@ const IonIcon = dynamic(
 import { locationOutline, navigateOutline, storefrontOutline } from "ionicons/icons";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { ProductSearchResult } from "@/services/search.service";
+import { distanceLabel, isApproximate } from "@/utils/distance-label";
 
 interface Props {
   product: ProductSearchResult;
@@ -60,12 +61,10 @@ const ProductResultCard = ({ product, index }: Props) => {
         )}
 
         {/* Distance */}
-        {product.distance != null && (
+        {distanceLabel(product) && (
           <div className="absolute bottom-2 left-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-gray-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
             <IonIcon icon={navigateOutline} className="w-3 h-3 text-amber-500" />
-            {product.distance < 1
-              ? `${Math.round(product.distance * 1000)}m`
-              : `${product.distance.toFixed(1)} km`}
+            {distanceLabel(product)}
           </div>
         )}
       </div>
@@ -91,11 +90,9 @@ const ProductResultCard = ({ product, index }: Props) => {
                 .filter(Boolean)
                 .join(", ")}
             </span>
-            {product.distance != null && (
+            {distanceLabel(product) && (
               <span className="ml-auto flex-shrink-0 text-amber-600 font-semibold">
-                ~{product.distance < 1
-                  ? `${Math.round(product.distance * 1000)}m`
-                  : `${product.distance.toFixed(1)} km`}
+                {isApproximate(product) ? "" : "~"}{distanceLabel(product)}
               </span>
             )}
           </div>

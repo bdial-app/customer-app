@@ -292,6 +292,27 @@ export const getProviderDetails = async (
   return data;
 };
 
+export interface InstagramPost {
+  imageUrl: string;
+  permalink: string;
+  isVideo: boolean;
+  caption: string | null;
+}
+
+export interface InstagramFeedResponse {
+  handle: string | null;
+  profileUrl: string | null;
+  posts: InstagramPost[];
+}
+
+/** The business's five most recent Instagram posts, if it has a business account. */
+export const getProviderInstagram = async (
+  id: string,
+): Promise<InstagramFeedResponse> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.INSTAGRAM(id));
+  return data;
+};
+
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
 ): Promise<{ provider: any; verification: any; products: any[] }> => {

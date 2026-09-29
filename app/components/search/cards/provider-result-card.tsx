@@ -16,6 +16,7 @@ import {
 } from "ionicons/icons";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { ProviderSearchResult } from "@/services/search.service";
+import { distanceLabel, isApproximate } from "@/utils/distance-label";
 
 interface Props {
   provider: ProviderSearchResult;
@@ -77,12 +78,10 @@ const ProviderResultCard = ({ provider, index }: Props) => {
         {/* Bottom badges row */}
         <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
           {/* Distance */}
-          {provider.distance != null && (
+          {distanceLabel(provider) && (
             <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-gray-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
               <IonIcon icon={navigateOutline} className="w-3 h-3 text-amber-500" />
-              {provider.distance < 1
-                ? `${Math.round(provider.distance * 1000)}m`
-                : `${provider.distance.toFixed(1)} km`}
+              {distanceLabel(provider)}
             </div>
           )}
 
@@ -134,11 +133,9 @@ const ProviderResultCard = ({ provider, index }: Props) => {
             <span className="truncate font-medium">
               {[provider.area, provider.city].filter(Boolean).join(", ")}
             </span>
-            {provider.distance != null && (
+            {distanceLabel(provider) && (
               <span className="ml-auto flex-shrink-0 text-amber-600 font-semibold">
-                ~{provider.distance < 1
-                  ? `${Math.round(provider.distance * 1000)}m`
-                  : `${provider.distance.toFixed(1)} km`}
+                {isApproximate(provider) ? "" : "~"}{distanceLabel(provider)}
               </span>
             )}
           </div>

@@ -29,6 +29,7 @@ import { useDeals } from "@/hooks/useDeals";
 import { getTopLevelCategories } from "@/services/category.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { ProviderWithOffer } from "@/services/explore.service";
+import { distanceLabel } from "@/utils/distance-label";
 
 type SortOption = "discount" | "ending_soon" | "distance" | "newest";
 type DiscountFilter = "all" | "percentage" | "flat";
@@ -99,8 +100,8 @@ const formatEndDate = (endsAt: string) => {
   });
 };
 
-const formatDistance = (d: number) =>
-  d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+// A city-level pin shows the town instead of a distance that would be wrong.
+const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
 
 const DealCard = ({
   deal,
@@ -184,14 +185,14 @@ const DealCard = ({
               </span>
             </div>
           )}
-          {deal.distance != null && (
+          {formatDistance(deal) && (
             <div className="flex items-center gap-0.5">
               <IonIcon
                 icon={locationOutline}
                 className="w-2.5 h-2.5 text-slate-400"
               />
               <span className="text-[9px] text-slate-400">
-                {formatDistance(deal.distance)}
+                {formatDistance(deal)}
               </span>
             </div>
           )}

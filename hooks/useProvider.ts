@@ -3,8 +3,10 @@ import {
   getNearbyProviders,
   getProviderById,
   getProviderDetails,
+  getProviderInstagram,
   submitReview,
   ProviderDetailsResponse,
+  InstagramFeedResponse,
   ProviderNearbyParams,
   SubmitReviewPayload,
 } from "@/services/provider.service";
@@ -42,6 +44,22 @@ export const useProviderDetails = (id: string) => {
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
     placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
+  });
+};
+
+/**
+ * Loaded on its own so the listing paints immediately — Instagram is a nice
+ * extra, never something the page waits for.
+ */
+export const useProviderInstagram = (id: string) => {
+  return useQuery<InstagramFeedResponse>({
+    queryKey: ["provider-instagram", id],
+    queryFn: () => getProviderInstagram(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
+    retry: false,
     refetchOnWindowFocus: false,
   });
 };

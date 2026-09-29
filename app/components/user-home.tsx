@@ -46,7 +46,8 @@ const LazyFallback = () => (
 const mapProvider = (p: any) => ({
   id: p.id,
   name: p.name,
-  image: p.image || p.bannerImage || p.profilePhotoUrl || "",
+  // The logo leads on the card; the banner is only a fallback.
+  image: p.image || p.profilePhotoUrl || p.bannerImage || "",
   service: p.services || undefined,
   rating: p.rating || 0,
   reviews: p.reviewCount || 0,

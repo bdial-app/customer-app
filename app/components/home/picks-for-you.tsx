@@ -2,11 +2,12 @@
 import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { star, sparklesOutline, navigateOutline } from "ionicons/icons";
+import { star, sparklesOutline, navigateOutline, locationOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { PersonalizedCategory } from "@/services/home.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
+import { distanceLabel, isApproximate } from "@/utils/distance-label";
 
 interface PicksProvider {
   id: string | number;
@@ -183,17 +184,13 @@ const PicksForYou = ({
                         </span>
                       </div>
                     )}
-                    {provider.distance != null && (
+                    {distanceLabel(provider) && (
                       <div className="flex items-center gap-0.5 text-[10px] text-slate-500 dark:text-slate-400">
                         <IonIcon
-                          icon={navigateOutline}
+                          icon={isApproximate(provider) ? locationOutline : navigateOutline}
                           className="w-2.5 h-2.5 text-amber-500"
                         />
-                        <span>
-                          {provider.distance < 1
-                            ? `${Math.round(provider.distance * 1000)}m`
-                            : `${provider.distance.toFixed(1)} km`}
-                        </span>
+                        <span>{distanceLabel(provider)}</span>
                       </div>
                     )}
                   </div>

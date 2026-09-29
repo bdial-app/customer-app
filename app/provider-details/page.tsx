@@ -44,6 +44,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
+import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { shareProvider } from "@/utils/sharing";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
@@ -857,6 +858,9 @@ export default function ProviderDetailsPage() {
                 ))}
               </div>
             )}
+
+            {/* Latest on Instagram */}
+            {id && <InstagramGrid providerId={id} />}
 
             {/* Info Chips */}
             <div className="grid grid-cols-2 gap-2.5">
