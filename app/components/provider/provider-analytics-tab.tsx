@@ -143,7 +143,7 @@ function TopProductsList({ period }: { period: Period }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100/60 dark:border-slate-700">
       <div className="flex items-center gap-2 mb-3">
-        <IonIcon icon={cubeOutline} className="text-lg text-teal-500" />
+        <IonIcon icon={cubeOutline} className="text-lg text-indigo-500" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">Top Products</h3>
       </div>
       <div className="space-y-2.5">
@@ -195,7 +195,7 @@ export default function ProviderAnalyticsTab() {
             onClick={() => setPeriod(p)}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
               period === p
-                ? "bg-teal-600 text-white shadow-sm"
+                ? "bg-indigo-600 text-white shadow-sm"
                 : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 active:bg-gray-200"
             }`}
           >
@@ -208,14 +208,14 @@ export default function ProviderAnalyticsTab() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard icon={eyeOutline} label="Views" stat={summary.profileViews} color="bg-blue-500" />
         <StatCard icon={searchOutline} label="Searches" stat={summary.searchAppearances} color="bg-violet-500" />
-        <StatCard icon={chatbubbleOutline} label="Enquiries" stat={summary.enquiries} color="bg-teal-500" />
+        <StatCard icon={chatbubbleOutline} label="Enquiries" stat={summary.enquiries} color="bg-indigo-500" />
         <StatCard icon={callOutline} label="Calls" stat={summary.calls} color="bg-amber-500" />
         <StatCard icon={navigateOutline} label="Directions" stat={summary.directions} color="bg-green-500" />
         <StatCard icon={bookmarkOutline} label="Saves" stat={summary.saves} color="bg-pink-500" />
       </div>
 
       {/* Conversion Rate */}
-      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-4 text-white">
+      <div className="bg-gradient-to-r from-indigo-700 to-indigo-600 rounded-2xl p-4 text-white">
         <div className="flex items-center gap-1.5">
           <p className="text-xs font-medium opacity-80 uppercase tracking-wider mb-1">Conversion Rate</p>
           <InfoTip text="% of people who viewed your profile and then took action (enquired, called, got directions)" size={11} className="text-white/60 mb-1" />

@@ -47,7 +47,7 @@ const ProductResultCard = ({ product, index }: Props) => {
 
         {/* Service badge */}
         {product.productType === "service" && (
-          <div className="absolute top-2 left-2 bg-teal-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+          <div className="absolute top-2 left-2 bg-indigo-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
             🛠️ Service
           </div>
         )}

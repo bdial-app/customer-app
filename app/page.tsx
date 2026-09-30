@@ -333,7 +333,7 @@ export default function Home() {
               pendingTabRef.current = "chats";
               setUserMode("provider");
             }}
-            className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-teal-500 text-white active:scale-95 transition-transform"
+            className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-indigo-500 text-white active:scale-95 transition-transform"
             style={{ bottom: "calc(88px + var(--sab, env(safe-area-inset-bottom, 0px)))" }}
           >
             <IonIcon icon={storefrontOutline} className="text-base shrink-0" />

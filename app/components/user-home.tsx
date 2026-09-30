@@ -438,7 +438,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                             </span>
                           ) : <span />}
                           {(product as any).productType === "service" && (
-                            <span className="px-2 py-0.5 rounded-lg bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
+                            <span className="px-2 py-0.5 rounded-lg bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
                               🛠️ Service
                             </span>
                           )}

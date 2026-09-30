@@ -1636,7 +1636,7 @@ export default function ProviderDetailsPage() {
                                 {/* Badges */}
                                 <div className="absolute top-2 left-2 right-2 flex items-start justify-between pointer-events-none">
                                   {isService ? (
-                                    <span className="px-1.5 py-0.5 rounded-md bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
+                                    <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
                                       🛠️ Service
                                     </span>
                                   ) : <span />}
@@ -1710,7 +1710,7 @@ export default function ProviderDetailsPage() {
                                 {/* Badges */}
                                 <div className="absolute top-2 left-2 right-2 flex items-start justify-between pointer-events-none">
                                   {isService ? (
-                                    <span className="px-1.5 py-0.5 rounded-md bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
+                                    <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
                                       🛠️ Service
                                     </span>
                                   ) : <span />}

@@ -415,7 +415,7 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
       ) : (
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-            <p className="text-xl font-bold text-teal-600 dark:text-teal-400">
+            <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
               {todayReviews.length}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -585,10 +585,10 @@ const GrowthTips = memo(({
             onClick={tip.action}
             className="flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700 cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
               <IonIcon
                 icon={tip.icon}
-                className="text-base text-teal-600 dark:text-teal-400"
+                className="text-base text-indigo-600 dark:text-indigo-400"
               />
             </div>
             <div className="flex-1 min-w-0">
@@ -668,7 +668,7 @@ const RecentReviewsList = memo(({ stats, loading }: { stats: ProviderStats; load
             className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700"
           >
             <div className="flex items-center gap-2.5 mb-1.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shrink-0">
                 <IonIcon
                   icon={personCircleOutline}
                   className="text-white text-lg"
@@ -739,8 +739,8 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
     return (
       <div className="px-4 mb-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 text-center">
-          <div className="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <IonIcon icon={ribbonOutline} className="text-2xl text-teal-400" />
+          <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+            <IonIcon icon={ribbonOutline} className="text-2xl text-indigo-400" />
           </div>
           <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
             No products or services yet
@@ -939,7 +939,7 @@ const ProfileCompleteness = memo(({
 
   return (
     <div className="px-4 mb-4">
-      <div className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-2xl p-4 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-indigo-800 to-indigo-600 rounded-2xl p-4 text-white relative overflow-hidden">
         <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/5" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-3">
@@ -964,7 +964,7 @@ const ProfileCompleteness = memo(({
                   cy="24"
                   r="20"
                   fill="none"
-                  stroke="white"
+                  stroke="#D4A537"
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeDasharray={`${(pct / 100) * 2 * Math.PI * 20} ${
@@ -1000,7 +1000,8 @@ const ProfileCompleteness = memo(({
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => onNavigate(incomplete[0].target)}
-              className="w-full mt-3 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-xs font-bold border border-white/20 active:bg-white/30 transition-colors"
+              className="w-full mt-3 py-2 rounded-xl text-xs font-bold active:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(135deg, #D4A537, #C08A2E)", color: "#1E1B4B" }}
             >
               Complete Now
             </motion.button>
@@ -1026,7 +1027,7 @@ const SubscriptionUpsell = ({
       >
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-amber-400/10 -translate-y-8 translate-x-8" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-teal-400/10 translate-y-6 -translate-x-6" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-indigo-400/10 translate-y-6 -translate-x-6" />
 
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
@@ -1048,7 +1049,7 @@ const SubscriptionUpsell = ({
 
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
-              <IonIcon icon={peopleOutline} className="text-teal-400 text-xs" />
+              <IonIcon icon={peopleOutline} className="text-indigo-400 text-xs" />
               <span className="text-[10px] text-white font-medium">
                 More Leads
               </span>
@@ -1224,7 +1225,7 @@ const DealsOverview = memo(({
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={onManage}
-            className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-semibold"
+            className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold"
           >
             <IonIcon icon={pricetagOutline} className="text-sm" />
             Create First Deal
@@ -1260,7 +1261,7 @@ const DealsOverview = memo(({
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onManage}
-          className="text-[10px] font-semibold text-teal-600"
+          className="text-[10px] font-semibold text-indigo-600"
         >
           Manage All
         </motion.button>
@@ -1292,7 +1293,7 @@ const DealsOverview = memo(({
             <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate flex-1">
               {nextExpiring.title}
             </span>
-            <span className="text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded-full ml-2 shrink-0">
+            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full ml-2 shrink-0">
               {nextExpiring.discountType === "percentage"
                 ? `${Number(nextExpiring.discountValue)}% OFF`
                 : `₹${Number(nextExpiring.discountValue)} OFF`}
@@ -1423,7 +1424,7 @@ const ProviderDashboard = ({
   if ((providerError || detailsError) && !providerData) {
     return (
       <div className="pb-24">
-        <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 px-5 pt-3 pb-5"
+        <div className="bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-600 px-5 pt-3 pb-5"
           style={{ paddingTop: "max(var(--sat,0px), 12px)" }}
         >
           <h1 className="text-lg font-bold text-white">Dashboard</h1>
@@ -1436,7 +1437,7 @@ const ProviderDashboard = ({
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Something went wrong. Please try again.</p>
           <button
             onClick={() => { refetchProvider(); refetchDetails(); }}
-            className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
+            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
           >
             Retry
           </button>
@@ -1452,7 +1453,7 @@ const ProviderDashboard = ({
   if (isLoading) {
     return (
       <div className="pb-24">
-        <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 px-5 pt-3 pb-5">
+        <div className="bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-600 px-5 pt-3 pb-5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-24 h-5 bg-white/20 rounded-full animate-pulse" />
           </div>

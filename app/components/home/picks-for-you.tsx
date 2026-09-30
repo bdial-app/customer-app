@@ -2,7 +2,7 @@
 import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { star, sparklesOutline, navigateOutline, locationOutline } from "ionicons/icons";
+import { star, sparkles, navigateOutline, locationOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { PersonalizedCategory } from "@/services/home.service";
@@ -21,11 +21,8 @@ interface PicksProvider {
   distance?: number;
 }
 
-const FALLBACK_REASONS = [
-  "Picked just for you",
-  "Trending nearby",
-  "Highly rated near you",
-];
+/** Shown when we have no categories to go on yet. */
+const FALLBACK_REASONS = ["Picked for you", "Trending nearby", "Highly rated"];
 
 const PicksForYou = ({
   providers,
@@ -39,10 +36,12 @@ const PicksForYou = ({
   const router = useRouter();
 
   const reasons = useMemo(() => {
+    // Just the category. "Because you love " ate most of the chip and pushed
+    // the only useful word out of view.
     const cats = (personalizedCategories || [])
       .filter((c) => c && c.name)
       .slice(0, 5)
-      .map((c) => `Because you love ${c.name}`);
+      .map((c) => c.name.trim());
     return cats.length > 0 ? cats : FALLBACK_REASONS;
   }, [personalizedCategories]);
 
@@ -56,11 +55,11 @@ const PicksForYou = ({
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-              boxShadow: "0 4px 12px rgba(139,92,246,0.35)",
+              background: "linear-gradient(135deg, #F59E0B, #F97316)",
+              boxShadow: "0 4px 12px rgba(245,158,11,0.32)",
             }}
           >
-            <IonIcon icon={sparklesOutline} className="text-white text-base" />
+            <IonIcon icon={sparkles} className="text-white text-base" />
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
@@ -74,7 +73,7 @@ const PicksForYou = ({
         <button
           onClick={() => router.push(`${ROUTE_PATH.ALL_SERVICES}?sort=relevance`)}
           className="text-xs font-semibold px-3 py-1 rounded-full active:scale-95 transition-transform"
-          style={{ color: "#8B5CF6", backgroundColor: "rgba(139,92,246,0.10)" }}
+          style={{ color: "#EA580C", backgroundColor: "rgba(249,115,22,0.10)" }}
         >
           See All →
         </button>
@@ -138,16 +137,15 @@ const PicksForYou = ({
 
                   {/* Why we picked this — top floating chip */}
                   <div
-                    className="absolute top-2.5 left-2.5 right-2.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold text-white"
+                    className="absolute top-2.5 left-2.5 max-w-[calc(100%-20px)] inline-flex items-center gap-1 pl-1.5 pr-2 py-1 rounded-full text-[10px] font-bold text-white"
                     style={{
-                      background:
-                        "linear-gradient(135deg, rgba(139,92,246,0.92), rgba(236,72,153,0.92))",
+                      background: "rgba(17,24,39,0.62)",
                       backdropFilter: "blur(8px)",
                       WebkitBackdropFilter: "blur(8px)",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.20)",
                     }}
                   >
-                    <IonIcon icon={sparklesOutline} className="text-[11px] shrink-0" />
+                    <IonIcon icon={sparkles} className="text-[11px] shrink-0 text-amber-300" />
                     <span className="truncate">{reason}</span>
                   </div>
 

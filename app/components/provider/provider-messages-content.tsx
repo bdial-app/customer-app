@@ -23,7 +23,7 @@ interface ProviderMessagesContentProps {
 
 const enquiryBadge: Record<string, { label: string; cls: string }> = {
   product: { label: "Quote", cls: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" },
-  listing: { label: "Booking", cls: "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400" },
+  listing: { label: "Booking", cls: "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400" },
   provider: { label: "Chat", cls: "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300" },
   direct: { label: "Chat", cls: "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300" },
 };
@@ -39,12 +39,12 @@ function getInitials(name: string): string {
 }
 
 const GRADIENTS = [
-  "from-teal-400 to-emerald-500",
+  "from-indigo-400 to-emerald-500",
   "from-violet-400 to-purple-500",
   "from-amber-400 to-orange-500",
   "from-pink-400 to-rose-500",
   "from-sky-400 to-blue-500",
-  "from-emerald-400 to-teal-500",
+  "from-emerald-400 to-indigo-500",
   "from-purple-400 to-violet-500",
   "from-red-400 to-pink-500",
 ];
@@ -102,11 +102,11 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
     <div className="flex flex-col">
       {/* Stats strip */}
       <div className="px-4 pt-2 pb-1 flex gap-2">
-        <div className="flex-1 bg-teal-50 dark:bg-teal-900/30 rounded-xl px-3 py-2 flex items-center gap-2">
-          <IonIcon icon={chatbubbleOutline} className="text-teal-600 dark:text-teal-400 text-sm" />
+        <div className="flex-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl px-3 py-2 flex items-center gap-2">
+          <IonIcon icon={chatbubbleOutline} className="text-indigo-600 dark:text-indigo-400 text-sm" />
           <div>
-            <p className="text-sm font-bold text-teal-700 dark:text-teal-300">{totalUnread}</p>
-            <p className="text-[9px] text-teal-600/60 dark:text-teal-400/60">Unread</p>
+            <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">{totalUnread}</p>
+            <p className="text-[9px] text-indigo-600/60 dark:text-indigo-400/60">Unread</p>
           </div>
         </div>
         <div className="flex-1 bg-amber-50 dark:bg-amber-900/30 rounded-xl px-3 py-2 flex items-center gap-2">
@@ -152,7 +152,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
             onClick={() => setFilter(f.key)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filter === f.key
-                ? "bg-teal-600 text-white"
+                ? "bg-indigo-600 text-white"
                 : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300"
             }`}
           >
@@ -227,7 +227,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
                         <h4 className={`text-[14px] leading-tight truncate ${conv.unreadCount > 0 ? "font-bold text-slate-900 dark:text-white" : "font-semibold text-slate-700 dark:text-slate-200"}`}>
                           {name}
                         </h4>
-                        <span className={`text-[11px] shrink-0 ${conv.unreadCount > 0 ? "font-semibold text-teal-500" : "text-slate-400"}`}>
+                        <span className={`text-[11px] shrink-0 ${conv.unreadCount > 0 ? "font-semibold text-indigo-500" : "text-slate-400"}`}>
                           {formatRelativeTime(conv.lastMessageAt)}
                         </span>
                       </div>
@@ -236,7 +236,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
                           {isSentByMe && (
                             <IonIcon
                               icon={conv.lastMessageStatus === "read" ? checkmarkDone : checkmark}
-                              className={`text-xs shrink-0 ${conv.lastMessageStatus === "read" ? "text-teal-500" : "text-slate-400"}`}
+                              className={`text-xs shrink-0 ${conv.lastMessageStatus === "read" ? "text-indigo-500" : "text-slate-400"}`}
                             />
                           )}
                           <p className={`text-[12px] truncate ${conv.unreadCount > 0 ? "text-slate-700 dark:text-slate-200 font-medium" : "text-slate-500 dark:text-slate-400"}`}>
@@ -244,7 +244,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
                           </p>
                         </div>
                         {conv.unreadCount > 0 && (
-                          <div className="shrink-0 min-w-[20px] h-5 rounded-full bg-teal-500 flex items-center justify-center px-1.5">
+                          <div className="shrink-0 min-w-[20px] h-5 rounded-full bg-indigo-500 flex items-center justify-center px-1.5">
                             <span className="text-[10px] font-bold text-white">{conv.unreadCount}</span>
                           </div>
                         )}

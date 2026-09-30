@@ -185,7 +185,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
                   className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-[13px] font-semibold border-2 transition-all active:scale-95 ${
                     isActive
                       ? opt.value === "services"
-                        ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400 shadow-sm shadow-teal-100 dark:shadow-none"
+                        ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-400 text-indigo-700 dark:text-indigo-400 shadow-sm shadow-indigo-100 dark:shadow-none"
                         : opt.value === "products"
                           ? "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400 shadow-sm shadow-amber-100 dark:shadow-none"
                           : "bg-gray-50 dark:bg-slate-700 border-gray-400 dark:border-slate-500 text-gray-700 dark:text-slate-200 shadow-sm"

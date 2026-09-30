@@ -125,7 +125,7 @@ const TIMELINE_EVENTS: Record<string, { label: string; description: string; icon
   product_view: { label: "Viewed a Product", description: "Checked out one of your products", icon: cubeOutline, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/30" },
   search_appear: { label: "Found via Search", description: "Your business appeared in their search", icon: searchOutline, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
   call_click: { label: "Tapped Call", description: "Clicked to call your business", icon: callOutline, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
-  direction_click: { label: "Got Directions", description: "Opened directions to your location", icon: navigateOutline, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-900/30" },
+  direction_click: { label: "Got Directions", description: "Opened directions to your location", icon: navigateOutline, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
   save: { label: "Saved Your Business", description: "Added you to their saved list", icon: bookmarkOutline, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30" },
   share: { label: "Shared Your Profile", description: "Shared your business with someone", icon: shareSocialOutline, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-900/30" },
   enquiry: { label: "Sent an Enquiry", description: "Reached out with a question", icon: chatbubbleOutline, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
@@ -445,7 +445,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
         kpi(summary.searchAppearances, "Searches", searchOutline, "text-violet-600", "bg-violet-500"),
         kpi(summary.enquiries, "Enquiries", chatbubbleOutline, "text-emerald-600", "bg-emerald-500"),
         kpi(summary.calls, "Calls", callOutline, "text-amber-600", "bg-amber-500"),
-        kpi(summary.directions, "Directions", navigateOutline, "text-teal-600", "bg-teal-500"),
+        kpi(summary.directions, "Directions", navigateOutline, "text-indigo-600", "bg-indigo-500"),
         kpi(summary.saves, "Saves", bookmarkOutline, "text-pink-600", "bg-pink-500"),
       ]
     : [], [summary]);
@@ -479,7 +479,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Something went wrong. Please try again.</p>
           <button
             onClick={() => refetchSummary()}
-            className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
+            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl active:scale-95 transition-transform"
           >
             Retry
           </button>
@@ -852,7 +852,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             <div className="px-4 mb-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-1.5 mb-2.5">
-                  <IonIcon icon={cubeOutline} className="text-sm text-teal-500" />
+                  <IonIcon icon={cubeOutline} className="text-sm text-indigo-500" />
                   <h3 className="text-xs font-bold text-slate-800 dark:text-white">Top Products</h3>
                 </div>
                 <div className="space-y-2">
@@ -908,7 +908,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                 },
                 {
                   icon: star,
-                  color: "from-emerald-500 to-teal-600",
+                  color: "from-emerald-500 to-indigo-600",
                   title: "Rating",
                   value: avgRating.toFixed(1),
                   desc: `${totalReviews} reviews`,
@@ -1160,7 +1160,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                             ? "bg-gradient-to-r from-red-400 to-red-500"
                             : budgetUsedPct > 50
                               ? "bg-gradient-to-r from-amber-400 to-orange-500"
-                              : "bg-gradient-to-r from-emerald-400 to-teal-500"
+                              : "bg-gradient-to-r from-emerald-400 to-indigo-500"
                         }`}
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.max(budgetUsedPct, 1)}%` }}
@@ -1253,7 +1253,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                 unlimited={leadUnlockInfo.isProSubscriber}
               />
               {leadUnlockInfo.subscriptionCreditsRemaining > 0 && !leadUnlockInfo.isProSubscriber && (
-                <span className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
+                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
                   +{leadUnlockInfo.subscriptionCreditsRemaining} plan credits
                 </span>
               )}

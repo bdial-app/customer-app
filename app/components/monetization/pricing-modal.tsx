@@ -47,7 +47,7 @@ const planIcons: Record<string, string> = {
 const planGradients: Record<string, string> = {
   free: "from-slate-400 to-slate-500",
   starter: "from-blue-500 to-indigo-500",
-  growth: "from-emerald-500 to-teal-500",
+  growth: "from-emerald-500 to-indigo-500",
   pro: "from-amber-500 to-orange-500",
 };
 
@@ -89,7 +89,7 @@ export function PricingModal({
             className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-2xl flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-teal-500 to-emerald-500 p-5 pb-6 relative">
+            <div className="bg-gradient-to-r from-indigo-500 to-emerald-500 p-5 pb-6 relative">
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
@@ -112,7 +112,7 @@ export function PricingModal({
                 <button
                   onClick={() => setBillingInterval("monthly")}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    billingInterval === "monthly" ? "bg-white text-teal-600" : "text-white/80"
+                    billingInterval === "monthly" ? "bg-white text-indigo-600" : "text-white/80"
                   }`}
                 >
                   Monthly
@@ -120,7 +120,7 @@ export function PricingModal({
                 <button
                   onClick={() => setBillingInterval("yearly")}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    billingInterval === "yearly" ? "bg-white text-teal-600" : "text-white/80"
+                    billingInterval === "yearly" ? "bg-white text-indigo-600" : "text-white/80"
                   }`}
                 >
                   Yearly
@@ -137,7 +137,7 @@ export function PricingModal({
                 const isCurrentPlan = currentPlan === plan.slug;
                 const price = billingInterval === "monthly" ? plan.priceMonthly : Math.round(plan.priceYearly / 12);
                 const icon = planIcons[plan.slug] || rocketOutline;
-                const gradient = planGradients[plan.slug] || "from-teal-500 to-emerald-500";
+                const gradient = planGradients[plan.slug] || "from-indigo-500 to-emerald-500";
                 const badge = planBadges[plan.slug];
 
                 return (
@@ -146,7 +146,7 @@ export function PricingModal({
                     whileTap={{ scale: 0.98 }}
                     className={`relative rounded-2xl border-2 p-4 transition-all ${
                       isCurrentPlan
-                        ? "border-teal-500 bg-teal-50/50 dark:bg-teal-900/10"
+                        ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/10"
                         : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800"
                     }`}
                   >
@@ -156,7 +156,7 @@ export function PricingModal({
                       </span>
                     )}
                     {isCurrentPlan && (
-                      <span className="absolute -top-2.5 left-4 px-2 py-0.5 rounded-full text-[9px] font-bold text-teal-700 bg-teal-100">
+                      <span className="absolute -top-2.5 left-4 px-2 py-0.5 rounded-full text-[9px] font-bold text-indigo-700 bg-indigo-100">
                         CURRENT
                       </span>
                     )}
@@ -237,7 +237,7 @@ function FeatureChip({ label, highlight }: { label: string; highlight: boolean }
     <div
       className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium ${
         highlight
-          ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 ring-1 ring-teal-200 dark:ring-teal-800"
+          ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-200 dark:ring-indigo-800"
           : "bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300"
       }`}
     >

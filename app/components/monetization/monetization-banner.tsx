@@ -10,19 +10,19 @@ interface MonetizationBannerProps {
   ctaLabel?: string;
   onCtaClick?: () => void;
   icon?: string;
-  gradient?: "amber" | "teal" | "emerald" | "purple";
+  gradient?: "amber" | "indigo" | "emerald" | "purple";
 }
 
 const gradientMap = {
   amber: "from-amber-500 to-orange-500",
-  teal: "from-teal-500 to-teal-600",
-  emerald: "from-emerald-500 to-teal-500",
+  indigo: "from-indigo-500 to-indigo-600",
+  emerald: "from-emerald-500 to-indigo-500",
   purple: "from-purple-500 to-indigo-500",
 };
 
 const borderMap = {
   amber: "border-l-amber-500",
-  teal: "border-l-teal-500",
+  indigo: "border-l-indigo-500",
   emerald: "border-l-emerald-500",
   purple: "border-l-purple-500",
 };

@@ -530,7 +530,7 @@ const ProviderHome = () => {
               </List>
               <div className="px-4 pb-4 mt-auto">
                 <button
-                  className="w-full py-3.5 rounded-2xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 transition-all active:scale-[0.98]"
+                  className="w-full py-3.5 rounded-2xl bg-indigo-500 text-white font-semibold text-sm disabled:opacity-50 transition-all active:scale-[0.98]"
                   onClick={handleReplySubmit}
                   disabled={!replyText.trim()}
                 >

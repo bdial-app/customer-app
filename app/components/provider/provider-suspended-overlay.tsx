@@ -70,7 +70,7 @@ const ProviderSuspendedOverlay = () => {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleContactSupport}
-          className="w-full flex items-center justify-center gap-2.5 bg-teal-600 text-white rounded-2xl px-4 py-3.5 mb-3 font-semibold text-sm shadow-sm active:bg-teal-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2.5 bg-indigo-600 text-white rounded-2xl px-4 py-3.5 mb-3 font-semibold text-sm shadow-sm active:bg-indigo-700 transition-colors"
         >
           <IonIcon icon={mailOutline} className="text-lg shrink-0" />
           Contact Support

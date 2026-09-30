@@ -248,7 +248,7 @@ const ProviderDealsTab = () => {
                       className={`h-full rounded-full transition-all ${
                         limits.totalDeals >= limits.maxTotalDeals
                           ? "bg-amber-500"
-                          : "bg-teal-500"
+                          : "bg-indigo-500"
                       }`}
                       style={{
                         width: `${Math.min(
@@ -346,7 +346,7 @@ const ProviderDealsTab = () => {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleAdd}
-              className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-semibold"
+              className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold"
             >
               <IonIcon icon={addOutline} className="text-sm" />
               Create Offer
@@ -430,7 +430,7 @@ const ProviderDealsTab = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleAdd}
-            className="fixed bottom-24 right-5 z-[60] w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/30"
+            className="fixed bottom-28 right-5 z-[60] w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30"
           >
             <IonIcon icon={addOutline} className="text-2xl" />
           </motion.button>,
@@ -640,7 +640,7 @@ const ProviderDealsTab = () => {
                                 }
                                 className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                                   values.discountType === type
-                                    ? "bg-white dark:bg-slate-600 text-teal-700 dark:text-teal-300 shadow-sm"
+                                    ? "bg-white dark:bg-slate-600 text-indigo-700 dark:text-indigo-300 shadow-sm"
                                     : "text-slate-500 dark:text-slate-400"
                                 }`}
                               >
@@ -718,7 +718,7 @@ const ProviderDealsTab = () => {
                           <button
                             type="submit"
                             disabled={isSaving || dealPaying}
-                            className="w-full py-3.5 bg-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full py-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                           >
                             {dealPaying ? (
                               <>
@@ -857,7 +857,7 @@ const OfferCard = ({
           </div>
         </div>
         <div className="shrink-0 ml-2">
-          <span className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded-lg">
+          <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-lg">
             {discountLabel}
           </span>
         </div>
@@ -905,7 +905,7 @@ const DealFormField = ({
   // min-w-0 + max-w-full + box-border keep native date/number inputs from forcing
   // the field wider than its grid cell (which caused horizontal scroll & overlap).
   const inputCls =
-    "w-full min-w-0 max-w-full box-border px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors";
+    "w-full min-w-0 max-w-full box-border px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-colors";
   return (
     <div className="min-w-0">
       <label

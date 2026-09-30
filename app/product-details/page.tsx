@@ -253,7 +253,7 @@ export default function ProductDetailsPage() {
             </span>
           )}
           {(product as any).productType === "service" && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border border-teal-200/60 dark:border-teal-800/40 text-teal-600 dark:text-teal-400 text-xs font-bold mb-2 ml-1">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-indigo-50 to-cyan-50 dark:from-indigo-900/20 dark:to-cyan-900/20 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2 ml-1">
               🛠️ Service
             </span>
           )}

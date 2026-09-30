@@ -43,7 +43,7 @@ interface LeadUnlockSheetProps {
 const tierConfig = {
   hot: { icon: flameOutline, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", label: "Hot Lead", gradient: "from-red-500 to-orange-500" },
   warm: { icon: thermometerOutline, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", label: "Warm Lead", gradient: "from-amber-400 to-orange-400" },
-  soft: { icon: leafOutline, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", label: "Soft Lead", gradient: "from-emerald-400 to-teal-400" },
+  soft: { icon: leafOutline, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", label: "Soft Lead", gradient: "from-emerald-400 to-indigo-400" },
   cold: { icon: snowOutline, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", label: "Cold Lead", gradient: "from-blue-400 to-indigo-400" },
 };
 
@@ -189,7 +189,7 @@ export function LeadUnlockSheet({
                           value={voucherCode}
                           onChange={(e) => { setVoucherCode(e.target.value); setVoucherResult(null); }}
                           placeholder="Enter voucher or promo code"
-                          className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                          className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                         />
                       </div>
                       <button
@@ -223,7 +223,7 @@ export function LeadUnlockSheet({
               disabled={isLoading}
               className={`w-full py-3.5 rounded-xl text-white text-sm font-bold shadow-lg disabled:opacity-50 ${
                 isFreeUnlock
-                  ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                  ? "bg-gradient-to-r from-emerald-500 to-indigo-500"
                   : "bg-gradient-to-r from-amber-500 to-orange-500"
               }`}
             >

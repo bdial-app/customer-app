@@ -69,8 +69,8 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
   return (
     <>
     <div className="relative overflow-hidden">
-      {/* Teal gradient hero */}
-      <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 px-5 pb-5" style={{ paddingTop: "calc(var(--sat,0px) + 12px)" }}>
+      {/* Indigo gradient hero — the business skin */}
+      <div className="bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-600 px-5 pb-5" style={{ paddingTop: "calc(var(--sat,0px) + 12px)" }}>
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

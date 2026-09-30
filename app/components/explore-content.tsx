@@ -41,7 +41,7 @@ import { distanceLabel, isApproximate } from "@/utils/distance-label";
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
-  "from-emerald-400 to-teal-600",
+  "from-emerald-400 to-indigo-600",
   "from-blue-400 to-indigo-600",
   "from-pink-400 to-rose-600",
   "from-violet-400 to-purple-600",
@@ -52,7 +52,7 @@ const COLLECTION_ICONS = [ribbonOutline, flashOutline, sparklesOutline, trending
 
 const STATIC_COLLECTIONS = [
   { id: "wedding", title: "Wedding Season", count: "24+", gradient: "from-amber-400 to-orange-600", icon: ribbonOutline },
-  { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-teal-600", icon: flashOutline },
+  { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-indigo-600", icon: flashOutline },
   { id: "new", title: "New Arrivals", count: "12+", gradient: "from-blue-400 to-indigo-600", icon: sparklesOutline },
   { id: "popular", title: "Most Booked", count: "30+", gradient: "from-pink-400 to-rose-600", icon: trendingUpOutline },
 ];

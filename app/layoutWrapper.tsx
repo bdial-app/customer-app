@@ -35,6 +35,8 @@ import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
+import WelcomeTour from "./components/onboarding/welcome-tour";
+import { hasSeenWelcomeTour, subscribeWelcomeTour } from "@/utils/welcome-tour";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import LocationDeniedSheet from "./components/location-denied-sheet";
 import SmartAppBanner from "./components/smart-app-banner";
@@ -57,6 +59,23 @@ if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform
       onlineManager.setOnline(status.connected);
     });
   });
+}
+
+/** True once the welcome tour is out of the way, so prompts can queue behind it. */
+function useTourFinished(): boolean {
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const read = () => setDone(hasSeenWelcomeTour());
+    read();
+    return subscribeWelcomeTour(read);
+  }, []);
+  return done;
+}
+
+function PermissionPromptAfterTour() {
+  const tourDone = useTourFinished();
+  if (!tourDone) return null;
+  return <PermissionPrompt />;
 }
 
 function LanguageSyncBridge() {
@@ -467,7 +486,8 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <ReconnectRefresher />
               <PwaHistoryGuard />
               <NativeBackButtonHandler />
-              {isNativePlatform() && <PermissionPrompt />}
+              <WelcomeTour />
+              {isNativePlatform() && <PermissionPromptAfterTour />}
               <NotificationProvider>
                 <App theme="ios">
                   <MaintenanceGate>

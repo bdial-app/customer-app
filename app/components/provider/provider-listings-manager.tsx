@@ -115,7 +115,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
     <div className="pb-24">
       {/* Header + Tabs fused into sticky bar */}
       <div
-        className="sticky top-0 z-40 bg-teal-600"
+        className="sticky top-0 z-40 bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-600"
         style={{ paddingTop: "max(var(--sat,0px), 8px)" }}
       >
         <div className="px-4 py-3">
@@ -138,8 +138,8 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative flex items-center gap-1.5 shrink-0 rounded-full transition-all duration-200 ${
                   isActive
-                    ? "bg-white text-teal-700 pl-3 pr-3.5 py-1.5 shadow-sm"
-                    : "bg-teal-500/40 text-white/80 px-2.5 py-1.5 active:bg-teal-500/60"
+                    ? "bg-white text-indigo-700 pl-3 pr-3.5 py-1.5 shadow-sm"
+                    : "bg-white/15 text-white/80 px-2.5 py-1.5 active:bg-white/25"
                 }`}
               >
                 <IonIcon icon={tab.icon} className="text-[15px]" />
