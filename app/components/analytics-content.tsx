@@ -232,7 +232,9 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
             {detail.visitor.userId && (
               <div className="flex items-center gap-2">
                 <IonIcon icon={callOutline} className="text-slate-400 text-sm" />
-                <span className="text-sm text-slate-600 dark:text-slate-400 font-mono">+91 •••••• ••{Math.floor(Math.random() * 90 + 10)}</span>
+                {/* Fully masked. Random trailing digits read as part of the real
+                    number and changed on every render. */}
+                <span className="text-sm text-slate-600 dark:text-slate-400 font-mono">+91 •••••• ••••</span>
               </div>
             )}
             <div className="flex items-center gap-2">

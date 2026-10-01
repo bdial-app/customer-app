@@ -18,9 +18,12 @@ export function useChatSubscription() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const channelRef = useRef<any>(null);
-  // Keep a ref so the broadcast callback always has the latest value
+  // Keep a ref so the broadcast callback always has the latest value. Synced
+  // in an effect: writing a ref during render is not allowed.
   const activeConversationRef = useRef(activeConversationId);
-  activeConversationRef.current = activeConversationId;
+  useEffect(() => {
+    activeConversationRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   // Fetch initial unread count
   const { data: unreadData } = useUnreadCount(!!user);

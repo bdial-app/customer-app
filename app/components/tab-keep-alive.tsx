@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect, ReactNode } from "react";
+import { useRef, useEffect, useState, ReactNode } from "react";
 
 interface TabPanelProps {
   id: string;
@@ -56,15 +56,17 @@ interface LazyTabPanelProps extends TabPanelProps {
  * Once mounted, keeps content alive (never unmounts).
  */
 export function LazyTabPanel({ id, activeTab, children, mountOnFirstVisit = true }: LazyTabPanelProps) {
-  const hasMounted = useRef(false);
   const isActive = activeTab === id;
-
-  if (isActive && !hasMounted.current) {
-    hasMounted.current = true;
+  // Once visited, stays mounted. State rather than a ref so render reads a
+  // value React knows about; the guarded update during render is React's
+  // documented way to derive state from props, applied before paint.
+  const [hasMounted, setHasMounted] = useState(isActive);
+  if (isActive && !hasMounted) {
+    setHasMounted(true);
   }
 
   // Don't render anything until first visit
-  if (mountOnFirstVisit && !hasMounted.current) {
+  if (mountOnFirstVisit && !hasMounted && !isActive) {
     return null;
   }
 

@@ -56,6 +56,7 @@ import ProviderWarningsSheet from "./provider-warnings-sheet";
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import PullToRefresh from "../pull-to-refresh";
 import PageSplashScreen from "../page-splash-screen";
+import { useNow } from "@/hooks/useNow";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -1186,6 +1187,7 @@ const DealsOverview = memo(({
   onManage: () => void;
   loading?: boolean;
 }) => {
+  const now = useNow();
   if (loading) {
     return (
       <div className="px-4 mb-4">
@@ -1243,7 +1245,7 @@ const DealsOverview = memo(({
     ? Math.max(
         0,
         Math.ceil(
-          (new Date(nextExpiring.endsAt).getTime() - Date.now()) /
+          (new Date(nextExpiring.endsAt).getTime() - now) /
             (1000 * 60 * 60 * 24),
         ),
       )

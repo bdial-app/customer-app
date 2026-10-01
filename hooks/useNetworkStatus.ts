@@ -1,5 +1,5 @@
 "use client";
-import { useSyncExternalStore, useCallback, useEffect, useRef } from "react";
+import { useSyncExternalStore, useCallback, useEffect } from "react";
 
 interface NetworkStatus {
   isOnline: boolean;
@@ -122,6 +122,9 @@ function getSnapshot() {
 }
 
 function subscribe(listener: () => void) {
+  // Attach the browser/Capacitor listeners on the first subscriber. Idempotent
+  // (_initListeners guards itself), and runs at commit rather than in render.
+  _initListeners();
   _listeners.add(listener);
   return () => {
     _listeners.delete(listener);
@@ -142,13 +145,6 @@ function getServerSnapshot() {
  * falls back to browser online/offline events on web.
  */
 export function useNetworkStatus(): NetworkStatus {
-  // Initialize listeners once
-  const initRef = useRef(false);
-  if (!initRef.current) {
-    initRef.current = true;
-    _initListeners();
-  }
-
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return {
