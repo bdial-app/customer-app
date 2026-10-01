@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+
 import { createPortal } from "react-dom";
 import { IonIcon } from "@ionic/react";
 import { arrowBack } from "ionicons/icons";
@@ -10,6 +10,7 @@ import {
   useUpdatePreferences,
 } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useIsClient } from "@/hooks/useIsClient";
 
 interface NotificationSettingsProps {
   open: boolean;
@@ -54,8 +55,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
   const { data: prefs, isLoading } = useNotificationPreferences();
   const updatePrefs = useUpdatePreferences();
   const { permissionStatus, requestPermission, isSupported, pushError } = usePushNotifications();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useIsClient();
 
   const handleToggle = (field: string, value: boolean) => {
     updatePrefs.mutate({ [field]: value });

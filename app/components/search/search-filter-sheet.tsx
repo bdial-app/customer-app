@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -28,6 +28,7 @@ import {
   setListingType,
   resetFilters,
 } from "@/store/slices/searchSlice";
+import { useIsClient } from "@/hooks/useIsClient";
 
 interface Props {
   opened: boolean;
@@ -120,8 +121,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     (tempWomenLed ? 1 : 0) +
     (tempListingType !== "all" ? 1 : 0);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useIsClient();
 
   const content = (
     <AnimatePresence>

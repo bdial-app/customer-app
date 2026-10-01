@@ -25,6 +25,7 @@ import {
 } from "ionicons/icons";
 import { useAllCategories } from "@/hooks/useCategories";
 import { Category } from "@/services/category.service";
+import { useIsClient } from "@/hooks/useIsClient";
 
 export interface AllServicesFilters {
   categoryIds: Set<string>;
@@ -196,8 +197,7 @@ const FilterSheet = ({
     }
   };
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useIsClient();
 
   const content = (
     <AnimatePresence>

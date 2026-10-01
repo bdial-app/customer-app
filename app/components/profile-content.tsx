@@ -58,6 +58,7 @@ import {
   setProfile as setReduxProfile,
   clearUser,
 } from "@/store/slices/authSlice";
+import { useIsClient } from "@/hooks/useIsClient";
 import { resetChat } from "@/store/slices/chatSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
@@ -172,10 +173,7 @@ const SlidePage = ({
   title: string;
   children: React.ReactNode;
 }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence>
