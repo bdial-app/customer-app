@@ -1,5 +1,6 @@
 "use client";
 
+import posthog from "posthog-js";
 import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
 import { detectDeviceType, getDeviceInfo } from "@/utils/deviceDetection";
@@ -45,9 +46,8 @@ export function useDeviceDetection() {
  */
 export function identifyUserWithDevice(
   userId: string,
-  userProperties?: Record<string, any>,
+  userProperties?: Record<string, unknown>,
 ) {
-  const posthog = usePostHog();
   const deviceInfo = getDeviceInfo();
 
   if (posthog) {
@@ -66,9 +66,8 @@ export function identifyUserWithDevice(
  */
 export function captureEventWithDevice(
   eventName: string,
-  properties?: Record<string, any>,
+  properties?: Record<string, unknown>,
 ) {
-  const posthog = usePostHog();
   const deviceInfo = getDeviceInfo();
 
   if (posthog) {

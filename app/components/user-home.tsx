@@ -102,11 +102,6 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
     return () => obs.disconnect();
   }, []);
 
-  // Offline + no cached feed → show fallback
-  if (!isOnline && !feed) {
-    return <OfflineFallback message="Connect to the internet to browse services near you." />;
-  }
-
   // Pull-to-refresh handler — invalidates home feed queries
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["home-feed"] });
@@ -175,6 +170,13 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
     [feed?.womenLedProviders],
   );
   const personalizedCategories = feed?.personalizedCategories || null;
+
+  // Offline + no cached feed → show fallback. This must sit below every hook:
+  // returning before them meant reconnecting changed the hook count between
+  // renders, and React throws on that.
+  if (!isOnline && !feed) {
+    return <OfflineFallback message="Connect to the internet to browse services near you." />;
+  }
 
   return (
     <>
