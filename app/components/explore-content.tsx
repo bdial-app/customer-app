@@ -37,10 +37,11 @@ import type {
   SponsoredProvider,
   ProviderWithOffer,
 } from "@/services/explore.service";
+import { distanceLabel, isApproximate } from "@/utils/distance-label";
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
-  "from-emerald-400 to-teal-600",
+  "from-emerald-400 to-indigo-600",
   "from-blue-400 to-indigo-600",
   "from-pink-400 to-rose-600",
   "from-violet-400 to-purple-600",
@@ -51,13 +52,13 @@ const COLLECTION_ICONS = [ribbonOutline, flashOutline, sparklesOutline, trending
 
 const STATIC_COLLECTIONS = [
   { id: "wedding", title: "Wedding Season", count: "24+", gradient: "from-amber-400 to-orange-600", icon: ribbonOutline },
-  { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-teal-600", icon: flashOutline },
+  { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-indigo-600", icon: flashOutline },
   { id: "new", title: "New Arrivals", count: "12+", gradient: "from-blue-400 to-indigo-600", icon: sparklesOutline },
   { id: "popular", title: "Most Booked", count: "30+", gradient: "from-pink-400 to-rose-600", icon: trendingUpOutline },
 ];
 
-const formatDistance = (d: number) =>
-  d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)} km`;
+// A business we only know the city for shows the town, not an invented distance.
+const formatDistance = distanceLabel;
 
 const formatOfferLabel = (type: string, value: number) =>
   type === "percentage" ? `${value}% OFF` : `₹${value} OFF`;
@@ -424,10 +425,10 @@ const ExploreContent = memo(() => {
                     <IonIcon icon={diamondOutline} className="w-2.5 h-2.5" />
                     Ad
                   </div>
-                  {p.distance != null && (
+                  {formatDistance(p) && (
                     <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
-                      <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
-                      {formatDistance(p.distance)}
+                      <IonIcon icon={isApproximate(p) ? locationOutline : navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
+                      {formatDistance(p)}
                     </div>
                   )}
                 </div>
@@ -507,8 +508,8 @@ const ExploreContent = memo(() => {
                         <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{p.rating.toFixed(1)}</span>
                       </div>
                     )}
-                    {p.distance != null && (
-                      <span className="text-[9px] text-slate-400">{formatDistance(p.distance)}</span>
+                    {formatDistance(p) && (
+                      <span className="text-[9px] text-slate-400">{formatDistance(p)}</span>
                     )}
                   </div>
                 </div>
@@ -826,10 +827,10 @@ function ExploreCarouselCard({
             className={`text-xs ${isSaved ? "text-red-400" : "text-white"}`}
           />
         </button>
-        {p.distance != null && (
+        {formatDistance(p) && (
           <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-            <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
-            {formatDistance(p.distance)}
+            <IonIcon icon={isApproximate(p) ? locationOutline : navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
+            {formatDistance(p)}
           </div>
         )}
       </div>

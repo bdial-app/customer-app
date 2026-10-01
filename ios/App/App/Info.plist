@@ -22,6 +22,16 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>whatsapp</string>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>maps</string>
+		<string>comgooglemaps</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
@@ -30,11 +40,14 @@
 	<string>Tijarah needs your location to show nearby services and providers</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Tijarah may need microphone access when recording video for your business profile</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Tijarah needs permission to save images to your photo library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Tijarah needs photo library access to upload images for your business</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<string>bluetooth-peripheral</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -59,17 +72,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>whatsapp</string>
-		<string>tel</string>
-		<string>mailto</string>
-		<string>maps</string>
-		<string>comgooglemaps</string>
-	</array>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Tijarah needs permission to save images to your photo library</string>
 </dict>
 </plist>

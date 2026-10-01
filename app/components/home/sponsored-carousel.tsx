@@ -18,9 +18,10 @@ import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { useTrackAd } from "@/hooks/useExplore";
 import type { HomeSponsoredProvider } from "@/services/home.service";
+import { distanceLabel } from "@/utils/distance-label";
 
-const formatDistance = (d: number) =>
-  d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+// A city-level pin shows the town instead of a distance that would be wrong.
+const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
 
 const SponsoredCarousel = ({
   providers,
@@ -168,10 +169,10 @@ const SponsoredCarousel = ({
                 {/* Bottom badges */}
                 <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
                   {/* Distance pill */}
-                  {provider.distance != null && (
+                  {formatDistance(provider) && (
                     <div className="bg-white/95 backdrop-blur-sm text-slate-700 dark:text-slate-800 text-[9px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm">
                       <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
-                      {formatDistance(provider.distance)}
+                      {formatDistance(provider)}
                     </div>
                   )}
 

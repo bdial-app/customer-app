@@ -4,6 +4,7 @@ import { IonIcon } from "@ionic/react";
 import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
+import { distanceLabel } from "@/utils/distance-label";
 
 interface Provider {
   id: string | number;
@@ -144,15 +145,13 @@ const FeaturedProviderGrid = ({
                   </div>
                 )}
                 {/* Distance pill */}
-                {provider.distance != null && (
+                {distanceLabel(provider) && (
                   <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
                     <IonIcon
                       icon={navigateOutline}
                       className="w-2.5 h-2.5 text-amber-500"
                     />
-                    {provider.distance < 1
-                      ? `${Math.round(provider.distance * 1000)}m`
-                      : `${provider.distance.toFixed(1)} km`}
+                    {distanceLabel(provider)}
                   </div>
                 )}
               </div>
@@ -190,12 +189,10 @@ const FeaturedProviderGrid = ({
                   <div className="flex items-center gap-0.5 mt-1 text-[10px] text-slate-400">
                     <IonIcon icon={location} className="w-2.5 h-2.5" />
                     <span className="truncate">{provider.location}</span>
-                    {provider.distance != null && (
+                    {distanceLabel(provider) && (
                       <span className="shrink-0 ml-auto text-amber-600 font-semibold">
                         ~
-                        {provider.distance < 1
-                          ? `${Math.round(provider.distance * 1000)}m`
-                          : `${provider.distance.toFixed(1)}km`}
+                        {distanceLabel(provider, true)}
                       </span>
                     )}
                   </div>

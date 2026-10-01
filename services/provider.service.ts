@@ -74,6 +74,11 @@ export interface ProviderData {
   pincode: string | null;
   latitude: number | null;
   longitude: number | null;
+  /**
+   * How exact the pin is. 'city' means we only knew the town, so the pin is the
+   * city centre — never quote a distance or drive someone to it.
+   */
+  geocodePrecision?: "rooftop" | "street" | "locality" | "pincode" | "city" | "manual" | null;
   contactNumber: string;
   openTime: string | null;
   closeTime: string | null;
@@ -284,6 +289,27 @@ export const getProviderDetails = async (
   id: string,
 ): Promise<ProviderDetailsResponse> => {
   const { data } = await apiClient.get(PROVIDER_URLS.DETAILS(id));
+  return data;
+};
+
+export interface InstagramPost {
+  imageUrl: string;
+  permalink: string;
+  isVideo: boolean;
+  caption: string | null;
+}
+
+export interface InstagramFeedResponse {
+  handle: string | null;
+  profileUrl: string | null;
+  posts: InstagramPost[];
+}
+
+/** The business's five most recent Instagram posts, if it has a business account. */
+export const getProviderInstagram = async (
+  id: string,
+): Promise<InstagramFeedResponse> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.INSTAGRAM(id));
   return data;
 };
 

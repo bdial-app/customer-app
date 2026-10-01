@@ -107,7 +107,7 @@ export function DealPaymentSheet({
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center">
                   <IonIcon icon={pricetagsOutline} className="text-white text-xl" />
                 </div>
                 <div>
@@ -156,7 +156,7 @@ export function DealPaymentSheet({
                 <div className="mt-1.5 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      activeDeals >= maxActiveDeals ? "bg-red-400" : "bg-teal-500"
+                      activeDeals >= maxActiveDeals ? "bg-red-400" : "bg-indigo-500"
                     }`}
                     style={{ width: `${Math.min(100, (activeDeals / maxActiveDeals) * 100)}%` }}
                   />
@@ -209,7 +209,7 @@ export function DealPaymentSheet({
                           value={voucherCode}
                           onChange={(e) => { setVoucherCode(e.target.value); setVoucherResult(null); }}
                           placeholder="Enter voucher or promo code"
-                          className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                          className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                         />
                       </div>
                       <button
@@ -243,7 +243,7 @@ export function DealPaymentSheet({
               disabled={isLoading}
               className={`w-full py-3.5 rounded-xl text-white text-sm font-bold shadow-lg disabled:opacity-50 ${
                 isFree
-                  ? "bg-gradient-to-r from-teal-500 to-emerald-500"
+                  ? "bg-gradient-to-r from-indigo-500 to-emerald-500"
                   : "bg-gradient-to-r from-amber-500 to-orange-500"
               }`}
             >

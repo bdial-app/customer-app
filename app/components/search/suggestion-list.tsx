@@ -45,12 +45,12 @@ const TYPE_CONFIG = {
   },
   service: {
     icon: cubeOutline,
-    color: "text-teal-500",
-    bg: "bg-teal-50 dark:bg-teal-900/30",
-    ring: "ring-teal-100",
+    color: "text-indigo-500",
+    bg: "bg-indigo-50 dark:bg-indigo-900/30",
+    ring: "ring-indigo-100",
     label: "Service",
-    labelBg: "bg-teal-50 dark:bg-teal-900/30",
-    labelText: "text-teal-600 dark:text-teal-400",
+    labelBg: "bg-indigo-50 dark:bg-indigo-900/30",
+    labelText: "text-indigo-600 dark:text-indigo-400",
   },
   category: {
     icon: gridOutline,

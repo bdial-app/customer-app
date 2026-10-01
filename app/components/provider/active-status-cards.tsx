@@ -23,7 +23,7 @@ import { isFreeSponsorship } from "@/services/provider.service";
 // ─── Plan Config ────────────────────────────────────────────────────
 const planMeta: Record<string, { icon: string; gradient: string; accent: string }> = {
   starter: { icon: flashOutline, gradient: "from-blue-500 via-blue-600 to-indigo-600", accent: "blue" },
-  growth: { icon: rocketOutline, gradient: "from-emerald-500 via-teal-500 to-cyan-600", accent: "teal" },
+  growth: { icon: rocketOutline, gradient: "from-emerald-500 via-indigo-500 to-cyan-600", accent: "indigo" },
   pro: { icon: diamondOutline, gradient: "from-amber-500 via-orange-500 to-rose-500", accent: "amber" },
 };
 

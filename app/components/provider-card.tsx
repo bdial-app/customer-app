@@ -14,6 +14,7 @@ import {
   ribbonOutline,
 } from "ionicons/icons";
 import { ROUTE_PATH } from "@/utils/contants";
+import { distanceLabel, isApproximate } from "@/utils/distance-label";
 
 export interface ProviderCardData {
   id: string;
@@ -27,6 +28,8 @@ export interface ProviderCardData {
   womenLed?: boolean;
   featured?: boolean;
   distance?: number | null;
+  approximateLocation?: boolean;
+  city?: string | null;
 }
 
 interface ProviderCardProps {
@@ -35,8 +38,8 @@ interface ProviderCardProps {
   variant?: "grid" | "list";
 }
 
-const formatDistance = (d: number) =>
-  d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)} km`;
+// A pin we only know to city level shows the town instead of a fake distance.
+const pill = (p: ProviderCardData) => distanceLabel(p);
 
 const RatingPill = ({ rating, reviews }: { rating?: number | null; reviews?: number }) => {
   if (rating != null && rating > 0) {
@@ -93,11 +96,11 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
               AD
             </div>
           )}
-          {/* Distance pill */}
-          {provider.distance != null && (
+          {/* Distance pill — a town name when we have no exact pin */}
+          {pill(provider) && (
             <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-semibold px-1.5 py-[2px] rounded-md flex items-center gap-0.5">
-              <IonIcon icon={navigateOutline} className="w-2.5 h-2.5" />
-              {formatDistance(provider.distance)}
+              <IonIcon icon={isApproximate(provider) ? locationOutline : navigateOutline} className="w-2.5 h-2.5" />
+              {pill(provider)}
             </div>
           )}
         </div>
@@ -193,11 +196,11 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
           </div>
         )}
 
-        {/* Bottom: Distance pill */}
-        {provider.distance != null && (
+        {/* Bottom: Distance pill — a town name when we have no exact pin */}
+        {pill(provider) && (
           <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[9px] font-semibold px-1.5 py-[2px] rounded-md flex items-center gap-0.5">
-            <IonIcon icon={navigateOutline} className="w-2.5 h-2.5" />
-            {formatDistance(provider.distance)}
+            <IonIcon icon={isApproximate(provider) ? locationOutline : navigateOutline} className="w-2.5 h-2.5" />
+            {pill(provider)}
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { locationOutline, star, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
+import { distanceLabel } from "@/utils/distance-label";
 
 interface Provider {
   id: string | number;
@@ -123,12 +124,10 @@ const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotligh
                       <span className="text-[10px] text-slate-400">({provider.reviews})</span>
                     )}
                   </div>
-                  {provider.distance != null && (
+                  {distanceLabel(provider) && (
                     <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-0.5">
                       <IonIcon icon={navigateOutline} className="w-2.5 h-2.5" />
-                      {provider.distance < 1
-                        ? `${Math.round(provider.distance * 1000)}m`
-                        : `${provider.distance.toFixed(1)}km`}
+                      {distanceLabel(provider, true)}
                     </span>
                   )}
                 </div>

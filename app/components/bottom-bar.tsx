@@ -132,7 +132,10 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
       {/* Provider mode indicator */}
       {isProvider && (
         <div className="flex justify-center mb-1">
-          <span className="px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-teal-500 text-white rounded-full shadow-sm">
+          <span
+            className="px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-full shadow-sm"
+            style={{ background: "linear-gradient(135deg, #D4A537, #C08A2E)", color: "#1E1B4B" }}
+          >
             Business Mode
           </span>
         </div>
@@ -159,7 +162,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                   className={`absolute inset-0 rounded-xl transition-all duration-200 ease-out ${
                     isActive
                       ? isProvider
-                        ? "bg-teal-50 dark:bg-teal-900/30 scale-100 opacity-100"
+                        ? "bg-indigo-50 dark:bg-indigo-900/30 scale-100 opacity-100"
                         : "bg-amber-50 dark:bg-amber-900/30 scale-100 opacity-100"
                       : "scale-75 opacity-0"
                   }`}
@@ -171,7 +174,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                     className={`text-[22px] transition-colors duration-200 ${
                       isActive
                         ? isProvider
-                          ? "text-teal-600"
+                          ? "text-indigo-600"
                           : "text-amber-600"
                         : "text-slate-400 dark:text-slate-500"
                     }`}
@@ -180,7 +183,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                   {tab.id === "chats" && badgeCount > 0 && (
                     <div
                       className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 ring-2 ring-white dark:ring-slate-800 shadow-sm ${
-                        isProvider ? "bg-teal-500" : "bg-red-500"
+                        isProvider ? "bg-indigo-600" : "bg-red-500"
                       }`}
                     >
                       <span className="text-[9px] font-bold text-white leading-none">
@@ -194,7 +197,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                   className={`relative z-10 text-[10px] font-semibold transition-colors duration-200 ${
                     isActive
                       ? isProvider
-                        ? "text-teal-600"
+                        ? "text-indigo-600"
                         : "text-amber-600"
                       : "text-slate-400 dark:text-slate-500"
                   }`}
@@ -207,7 +210,7 @@ const BottomBar = memo(({ activeTab, setActiveTab }: BottomBarProps) => {
                   className={`absolute -bottom-0.5 w-1 h-1 rounded-full transition-all duration-200 ease-out ${
                     isActive
                       ? isProvider
-                        ? "bg-teal-500 scale-100 opacity-100"
+                        ? "bg-indigo-600 scale-100 opacity-100"
                         : "bg-amber-500 scale-100 opacity-100"
                       : "scale-0 opacity-0"
                   }`}

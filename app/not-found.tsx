@@ -18,7 +18,7 @@ export default function NotFound() {
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -left-20 w-64 h-64 bg-amber-200/20 dark:bg-amber-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-32 -right-16 w-56 h-56 bg-teal-200/20 dark:bg-teal-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-32 -right-16 w-56 h-56 bg-indigo-200/20 dark:bg-indigo-500/5 rounded-full blur-3xl" />
         <div className="absolute top-1/3 right-10 w-32 h-32 bg-violet-200/15 dark:bg-violet-500/5 rounded-full blur-2xl" />
       </div>
 

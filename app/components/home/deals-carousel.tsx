@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { HomeProviderWithOffer } from "@/services/home.service";
+import { distanceLabel } from "@/utils/distance-label";
 
 const formatOfferLabel = (type: string, value: number) =>
   type === "percentage" ? `${value}% OFF` : `₹${value} OFF`;
@@ -28,8 +29,8 @@ const formatTimeLeft = (endsAt: string) => {
   return `${mins}m left`;
 };
 
-const formatDistance = (d: number) =>
-  d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+// A city-level pin shows the town instead of a distance that would be wrong.
+const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
 
 const DealsCarousel = ({
   deals,
@@ -141,9 +142,9 @@ const DealsCarousel = ({
                       </span>
                     </div>
                   )}
-                  {deal.distance != null && (
+                  {formatDistance(deal) && (
                     <span className="text-[9px] text-slate-400">
-                      {formatDistance(deal.distance)}
+                      {formatDistance(deal)}
                     </span>
                   )}
                 </div>

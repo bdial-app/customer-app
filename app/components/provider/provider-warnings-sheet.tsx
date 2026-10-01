@@ -138,7 +138,7 @@ export default function ProviderWarningsSheet({
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {loading && (
                 <div className="flex flex-col items-center py-10">
-                  <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                   <p className="text-xs text-slate-400 mt-3">Loading warnings…</p>
                 </div>
               )}

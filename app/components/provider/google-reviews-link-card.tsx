@@ -32,7 +32,7 @@ const GoogleLogo = ({ size = 20 }: { size?: number }) => (
 
 // ─── Trust level config ─────────────────────────────────────────────
 const trustConfig: Record<string, { label: string; gradient: string; icon: string }> = {
-  trusted:  { label: "Trusted",  gradient: "from-emerald-500 to-teal-600", icon: shieldCheckmarkOutline },
+  trusted:  { label: "Trusted",  gradient: "from-emerald-500 to-indigo-600", icon: shieldCheckmarkOutline },
   verified: { label: "Verified", gradient: "from-blue-500 to-indigo-600",  icon: shieldCheckmarkOutline },
   basic:    { label: "Basic",    gradient: "from-amber-500 to-orange-500", icon: starOutline },
 };
@@ -126,13 +126,13 @@ export default function GoogleReviewsLinkCard({
           className="relative overflow-hidden rounded-2xl border border-emerald-100 dark:border-emerald-800/30"
         >
           {/* Success gradient strip */}
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400" />
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-indigo-400 to-cyan-400" />
 
           <div className="bg-white dark:bg-slate-800 p-4 pt-5">
             {/* Header */}
             <div className="flex items-center gap-3 mb-3">
               <div className="relative">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/40 dark:to-teal-900/30 flex items-center justify-center border border-emerald-100 dark:border-emerald-800/30">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-50 to-indigo-50 dark:from-emerald-900/40 dark:to-indigo-900/30 flex items-center justify-center border border-emerald-100 dark:border-emerald-800/30">
                   <GoogleLogo size={22} />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-emerald-500 flex items-center justify-center ring-2 ring-white dark:ring-slate-800">

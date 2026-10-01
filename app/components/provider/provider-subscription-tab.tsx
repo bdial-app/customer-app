@@ -30,7 +30,6 @@ import {
   type SubscriptionPlan,
 } from "@/services/payment.service";
 import { usePayment } from "@/hooks/usePayment";
-import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 
 const planIcons: Record<string, string> = {
   free: starOutline,
@@ -42,16 +41,16 @@ const planIcons: Record<string, string> = {
 const planColors: Record<string, string> = {
   free: "from-slate-400 to-slate-500",
   starter: "from-blue-500 to-blue-600",
-  growth: "from-emerald-500 to-teal-600",
+  growth: "from-emerald-500 to-indigo-600",
   pro: "from-amber-500 to-orange-500",
 };
 
 const ProviderSubscriptionTab = () => {
   const queryClient = useQueryClient();
   const { subscribe, restorePurchases, isAppleIAP, loading: paymentLoading, error: paymentError, clearError } = usePayment();
-  const { data: monetizationConfig } = useMonetizationConfig();
-  // Hidden on iOS (Apple controls price) and when the admin voucher flag is off.
-  const showVoucher = !isAppleIAP && monetizationConfig?.flags?.vouchersEnabled !== false;
+  // Hidden everywhere for now: Razorpay subscriptions charge the plan price, so
+  // a voucher can't actually be applied (the backend rejects subscription codes).
+  const showVoucher = false;
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -246,20 +245,20 @@ const ProviderSubscriptionTab = () => {
               whileTap={{ scale: 0.98 }}
               className={`relative bg-white dark:bg-slate-800 rounded-2xl border p-4 transition-all ${
                 isCurrent
-                  ? "border-teal-300 bg-teal-50/50 dark:bg-teal-900/30 ring-1 ring-teal-200 dark:ring-teal-800"
+                  ? "border-indigo-300 bg-indigo-50/50 dark:bg-indigo-900/30 ring-1 ring-indigo-200 dark:ring-indigo-800"
                   : plan.slug === "growth"
                   ? "border-emerald-200 shadow-lg shadow-emerald-100/50 dark:border-emerald-700 dark:shadow-emerald-900/30"
                   : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
               }`}
             >
               {plan.slug === "growth" && !isCurrent && (
-                <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-emerald-500 to-indigo-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
                   BEST VALUE
                 </div>
               )}
 
               {isCurrent && (
-                <div className="absolute -top-2.5 right-4 bg-teal-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                <div className="absolute -top-2.5 right-4 bg-indigo-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
                   CURRENT PLAN
                 </div>
               )}
@@ -272,7 +271,7 @@ const ProviderSubscriptionTab = () => {
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-slate-800 dark:text-white">{plan.name}</h4>
                     <div className="text-right">
-                      <span className="text-base font-bold text-teal-600">₹{perMonth}</span>
+                      <span className="text-base font-bold text-indigo-600">₹{perMonth}</span>
                       <span className="text-[10px] text-slate-400 dark:text-slate-500">/mo</span>
                     </div>
                   </div>
@@ -290,7 +289,7 @@ const ProviderSubscriptionTab = () => {
               {/* Expandable "What you get" section */}
               <button
                 onClick={(e) => { e.stopPropagation(); setExpandedPlan(isExpanded ? null : plan.id); }}
-                className="flex items-center gap-1 mt-3 text-[11px] font-semibold text-teal-600 dark:text-teal-400"
+                className="flex items-center gap-1 mt-3 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400"
               >
                 <IonIcon icon={informationCircleOutline} className="text-sm" />
                 What&apos;s included
@@ -402,7 +401,7 @@ const ProviderSubscriptionTab = () => {
                       placeholder="Enter voucher or promo code"
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherResult(null); }}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-300"
                     />
                   </div>
                   <button
@@ -437,7 +436,7 @@ const ProviderSubscriptionTab = () => {
                 <button
                   onClick={handleCheckout}
                   disabled={paymentLoading}
-                  className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {paymentLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -466,7 +465,7 @@ const FeatureChip = ({ label }: { label: string }) => (
 
 const PlanBenefit = ({ title, description }: { title: string; description: string }) => (
   <div className="flex gap-2">
-    <IonIcon icon={checkmarkCircle} className="text-teal-500 text-sm flex-shrink-0 mt-0.5" />
+    <IonIcon icon={checkmarkCircle} className="text-indigo-500 text-sm flex-shrink-0 mt-0.5" />
     <div>
       <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{title}</p>
       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{description}</p>

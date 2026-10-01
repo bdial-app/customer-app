@@ -131,11 +131,11 @@ function LeadCard({
       <div className="flex gap-2 mt-3">
         {lead.isUnlocked ? (
           <>
-            <button onClick={onSelect} className="flex-1 py-2.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
+            <button onClick={onSelect} className="flex-1 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
               View Details
             </button>
             {lead.visitor.userId && (
-              <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
+              <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform">
                 <IonIcon icon={chatbubbleOutline} className="text-sm" />
                 Message
               </button>
@@ -268,7 +268,7 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
         <div className="space-y-3">
           {detail.timeline.slice(0, 20).map((ev, i) => (
             <div key={i} className="flex items-start gap-3">
-              <div className="w-2 h-2 mt-1.5 rounded-full bg-teal-400 shrink-0" />
+              <div className="w-2 h-2 mt-1.5 rounded-full bg-indigo-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-700">{ev.eventType.replace(/_/g, " ")}</p>
                 <p className="text-[10px] text-gray-400">
@@ -307,7 +307,7 @@ export default function ProviderLeadsTab() {
             onClick={() => { setTier(t.key); setPage(1); }}
             className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               tier === t.key
-                ? "bg-teal-600 text-white shadow-sm"
+                ? "bg-indigo-600 text-white shadow-sm"
                 : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 active:bg-gray-200"
             }`}
           >

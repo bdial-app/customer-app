@@ -21,7 +21,7 @@ const TYPE_CONFIG: Record<
 > = {
   chat_message: { icon: chatbubbleOutline, iconColor: "text-blue-500", iconBg: "bg-blue-50" },
   review_received: { icon: starOutline, iconColor: "text-amber-500", iconBg: "bg-amber-50" },
-  provider_status: { icon: storefrontOutline, iconColor: "text-teal-500", iconBg: "bg-teal-50" },
+  provider_status: { icon: storefrontOutline, iconColor: "text-indigo-500", iconBg: "bg-indigo-50" },
   verification_update: { icon: shieldCheckmarkOutline, iconColor: "text-green-500", iconBg: "bg-green-50" },
   booking_update: { icon: calendarOutline, iconColor: "text-purple-500", iconBg: "bg-purple-50" },
   promotional: { icon: megaphoneOutline, iconColor: "text-pink-500", iconBg: "bg-pink-50" },

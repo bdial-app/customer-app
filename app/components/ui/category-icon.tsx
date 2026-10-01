@@ -15,7 +15,7 @@ export const GRADIENT_PALETTE: Record<
     border: "border-amber-100 dark:border-amber-800/40",
   },
   emerald: {
-    gradient: "from-emerald-400 to-teal-500",
+    gradient: "from-emerald-400 to-green-500",
     bg: "bg-emerald-50 dark:bg-emerald-900/30",
     border: "border-emerald-100 dark:border-emerald-800/40",
   },
@@ -59,10 +59,12 @@ export const GRADIENT_PALETTE: Record<
     bg: "bg-indigo-50 dark:bg-indigo-900/30",
     border: "border-indigo-100 dark:border-indigo-800/40",
   },
+  // Key name kept: categories store it as `iconColor`, so renaming it would
+  // drop those to the fallback colour. Only the colour itself changed.
   teal: {
-    gradient: "from-teal-400 to-emerald-500",
-    bg: "bg-teal-50 dark:bg-teal-900/30",
-    border: "border-teal-100 dark:border-teal-800/40",
+    gradient: "from-purple-400 to-indigo-500",
+    bg: "bg-purple-50 dark:bg-purple-900/30",
+    border: "border-purple-100 dark:border-purple-800/40",
   },
   red: {
     gradient: "from-red-400 to-rose-600",

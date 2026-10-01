@@ -44,6 +44,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
+import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { shareProvider } from "@/utils/sharing";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
@@ -54,7 +55,7 @@ import { useAuthGate } from "@/hooks/useAuthGate";
 import { openChat } from "@/store/slices/chatSlice";
 import { store } from "@/store";
 import { useAppContext } from "../context/AppContext";
-import { openDirections } from "@/utils/sharing";
+import { openDirections, openPlaceSearch } from "@/utils/sharing";
 import {
   useTrackProviderView,
   useTrackAction,
@@ -426,6 +427,25 @@ export default function ProviderDetailsPage() {
   const reviewCount = stats?.reviewCount ?? 0;
   const ratingDist = stats?.ratingDist ?? [0, 0, 0, 0, 0];
   const owner = (provider as any)?.user;
+
+  // Whatever of the address we actually hold, so a shop imported with only a
+  // locality still shows where it is instead of an empty card.
+  const addressLine =
+    [provider?.address, provider?.area, provider?.city]
+      .map((part) => part?.trim())
+      .filter((part, i, arr) => part && arr.indexOf(part) === i)
+      .join(", ") + (provider?.pincode ? ` - ${provider.pincode}` : "");
+
+  // A city-centre pin is a placeholder, not an address: navigating to it would
+  // send someone to the wrong side of town.
+  const hasExactPin = Boolean(
+    provider?.latitude &&
+      provider?.longitude &&
+      provider?.geocodePrecision !== "city",
+  );
+  const mapsQuery = [provider?.brandName, provider?.area, provider?.city]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <Page
@@ -839,6 +859,9 @@ export default function ProviderDetailsPage() {
               </div>
             )}
 
+            {/* Latest on Instagram */}
+            {id && <InstagramGrid providerId={id} />}
+
             {/* Info Chips */}
             <div className="grid grid-cols-2 gap-2.5">
               <InfoChip
@@ -1183,7 +1206,7 @@ export default function ProviderDetailsPage() {
             )}
 
             {/* Address */}
-            {provider.address && (
+            {(provider.address || provider.area || provider.city) && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
                   Location
@@ -1200,12 +1223,10 @@ export default function ProviderDetailsPage() {
                         />
                       </div>
                       <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed flex-1">
-                        {provider.address}
-                        {provider.city ? `, ${provider.city}` : ""}
-                        {provider.pincode ? ` - ${provider.pincode}` : ""}
+                        {addressLine}
                       </p>
                     </div>
-                    {provider.latitude && provider.longitude && (
+                    {hasExactPin ? (
                       <button
                         onClick={() => {
                           trackDirection();
@@ -1220,6 +1241,23 @@ export default function ProviderDetailsPage() {
                         <IonIcon icon={navigateOutline} className="w-4 h-4" />
                         Get Directions
                       </button>
+                    ) : (
+                      <>
+                        <p className="mt-3 text-[11px] text-gray-500 dark:text-slate-400">
+                          We don&apos;t have this shop&apos;s exact pin yet, so we
+                          can&apos;t show how far it is. Search it on Maps below.
+                        </p>
+                        <button
+                          onClick={() => {
+                            trackDirection();
+                            openPlaceSearch(mapsQuery);
+                          }}
+                          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[13px] font-semibold active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
+                        >
+                          <IonIcon icon={navigateOutline} className="w-4 h-4" />
+                          Find on Maps
+                        </button>
+                      </>
                     )}
                   </>
                 ) : (
@@ -1240,9 +1278,7 @@ export default function ProviderDetailsPage() {
                         />
                       </div>
                       <p className="text-[13px] text-gray-400 dark:text-slate-500 leading-relaxed flex-1 blur-[5px]">
-                        {provider.address}
-                        {provider.city ? `, ${provider.city}` : ""}
-                        {provider.pincode ? ` - ${provider.pincode}` : ""}
+                        {addressLine}
                       </p>
                     </div>
                     {/* Frosted overlay */}
@@ -1600,7 +1636,7 @@ export default function ProviderDetailsPage() {
                                 {/* Badges */}
                                 <div className="absolute top-2 left-2 right-2 flex items-start justify-between pointer-events-none">
                                   {isService ? (
-                                    <span className="px-1.5 py-0.5 rounded-md bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
+                                    <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
                                       🛠️ Service
                                     </span>
                                   ) : <span />}
@@ -1674,7 +1710,7 @@ export default function ProviderDetailsPage() {
                                 {/* Badges */}
                                 <div className="absolute top-2 left-2 right-2 flex items-start justify-between pointer-events-none">
                                   {isService ? (
-                                    <span className="px-1.5 py-0.5 rounded-md bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
+                                    <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow-sm">
                                       🛠️ Service
                                     </span>
                                   ) : <span />}

@@ -25,11 +25,11 @@ const GRADIENT_MAP: Record<string, string> = {
     "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
   "from-amber-500 to-orange-600":
     "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)",
-  "from-emerald-500 to-teal-600":
+  "from-emerald-500 to-indigo-600":
     "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
   "from-fuchsia-500 to-pink-600":
     "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
-  "from-teal-500 to-emerald-600":
+  "from-indigo-500 to-emerald-600":
     "linear-gradient(135deg, #14b8a6 0%, #059669 100%)",
   "from-purple-500 to-indigo-600":
     "linear-gradient(135deg, #a855f7 0%, #4f46e5 100%)",
