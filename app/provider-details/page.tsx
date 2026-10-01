@@ -65,6 +65,14 @@ import { checkContent } from "@/utils/content-sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCombinedReviews } from "@/hooks/useCombinedReviews";
 import type { GoogleReview } from "@/services/google-reviews.service";
+import { isAxiosError } from "axios";
+
+type ViewSource = NonNullable<Parameters<typeof useTrackProviderView>[1]>;
+
+/** The API's `message` from a failed request (NestJS sends an array for validation errors). */
+function apiErrorMessage(err: unknown): string | string[] | undefined {
+  return isAxiosError<{ message?: string | string[] }>(err) ? err.response?.data?.message : undefined;
+}
 
 const TABS = ["Overview", "Reviews", "Catalogue", "Photos"] as const;
 type Tab = (typeof TABS)[number];
@@ -267,7 +275,7 @@ export default function ProviderDetailsPage() {
   if (isOwnProvider && callSheetOpened) setCallSheetOpened(false);
 
   // ─── Analytics Tracking ─────────────────────────────────────────
-  const source = (searchParams.get("src") as any) || "direct";
+  const source = (searchParams.get("src") as ViewSource | null) || "direct";
   useTrackProviderView(isOwnProvider ? undefined : id, source);
   const {
     trackChat,
@@ -290,18 +298,21 @@ export default function ProviderDetailsPage() {
   // Check if current user already reviewed this provider
   const hasAlreadyReviewed = useMemo(() => {
     if (!user || !reviews.length) return false;
-    return reviews.some((r: any) => r.reviewerId === user.id);
+    return reviews.some((r) => r.reviewerId === user.id);
   }, [user, reviews]);
 
+  // Read into locals so the memo's inputs are exactly what it depends on.
+  const bannerImageUrl = provider?.bannerImageUrl;
+  const profilePhotoUrl = provider?.profilePhotoUrl;
   const galleryImages = useMemo(() => {
     const urls: string[] = [];
-    if (provider?.bannerImageUrl) urls.push(provider.bannerImageUrl);
-    if (provider?.profilePhotoUrl) urls.push(provider.profilePhotoUrl);
+    if (bannerImageUrl) urls.push(bannerImageUrl);
+    if (profilePhotoUrl) urls.push(profilePhotoUrl);
     photos.forEach((p) => {
       if (p.imageUrl && !urls.includes(p.imageUrl)) urls.push(p.imageUrl);
     });
     return urls;
-  }, [provider?.bannerImageUrl, provider?.profilePhotoUrl, photos]);
+  }, [bannerImageUrl, profilePhotoUrl, photos]);
 
   const galleryItems = useMemo(
     () =>
@@ -367,7 +378,6 @@ export default function ProviderDetailsPage() {
       brandName: provider.brandName,
       description: provider.description,
       categoryLabel,
-      rating: stats?.rating ?? 0,
     });
   };
 
@@ -431,7 +441,7 @@ export default function ProviderDetailsPage() {
   const rating = Number(stats?.rating) || 0;
   const reviewCount = stats?.reviewCount ?? 0;
   const ratingDist = stats?.ratingDist ?? [0, 0, 0, 0, 0];
-  const owner = (provider as any)?.user;
+  const owner = provider?.user;
 
   // Whatever of the address we actually hold, so a shop imported with only a
   // locality still shows where it is instead of an empty card.
@@ -1515,7 +1525,7 @@ export default function ProviderDetailsPage() {
                     <div className="flex gap-1.5 mb-3">
                       {review.photos
                         .slice(0, 3)
-                        .map((p: any) =>
+                        .map((p) =>
                           p.imageUrl ? (
                             <img
                               key={p.id}
@@ -1624,7 +1634,7 @@ export default function ProviderDetailsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       {[...products].filter(p => p.isHero).map((product) => {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
-                        const isService = (product as any).productType === "service";
+                        const isService = product.productType === "service";
                         return (
                           <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
                             <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-200/70 dark:border-amber-700/40 shadow-[0_0_16px_rgba(251,191,36,0.18)] dark:shadow-[0_0_16px_rgba(251,191,36,0.12)] active:scale-[0.97] transition-transform">
@@ -1698,7 +1708,7 @@ export default function ProviderDetailsPage() {
                     <div className="grid grid-cols-2 gap-3.5">
                       {[...products].filter(p => !p.isHero).map((product) => {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
-                        const isService = (product as any).productType === "service";
+                        const isService = product.productType === "service";
                         return (
                           <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
                             <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] active:scale-[0.97] transition-transform">
@@ -1844,9 +1854,9 @@ export default function ProviderDetailsPage() {
                           dispatch(openChat(conv.id));
                           router.push("/");
                         },
-                        onError: (err: any) => {
+                        onError: (err) => {
                           const msg =
-                            err?.response?.data?.message ||
+                            apiErrorMessage(err) ||
                             err?.message ||
                             "Could not start conversation";
                           alert(Array.isArray(msg) ? msg.join(", ") : msg);
@@ -2050,9 +2060,9 @@ export default function ProviderDetailsPage() {
                         setReviewRating(5);
                         setSheetOpened(false);
                       },
-                      onError: (err: any) => {
+                      onError: (err) => {
                         const msg =
-                          err?.response?.data?.message ||
+                          apiErrorMessage(err) ||
                           err?.message ||
                           "Failed to submit review";
                         setReviewError(

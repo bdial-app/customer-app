@@ -78,22 +78,23 @@ export async function shareContent(data: {
   text: string;
   url: string;
 }): Promise<"shared" | "copied" | "failed"> {
+  // A message that already carries its link is shared as text alone, so share
+  // targets don't append the link a second time after the store links.
+  const linkInText = data.text.includes(data.url);
+  const payload = linkInText ? { title: data.title, text: data.text } : data;
+  const fallbackText = linkInText ? data.text : data.url;
+
   // Native: use Capacitor Share plugin for reliable native share sheet
   if (isNativePlatform()) {
     try {
       const { Share } = await import("@capacitor/share");
-      await Share.share({
-        title: data.title,
-        text: data.text,
-        url: data.url,
-        dialogTitle: data.title,
-      });
+      await Share.share({ ...payload, dialogTitle: data.title });
       return "shared";
     } catch {
       // User cancelled or plugin error — fallback to clipboard
     }
     try {
-      await navigator.clipboard.writeText(data.url);
+      await navigator.clipboard.writeText(fallbackText);
       return "copied";
     } catch {
       return "failed";
@@ -103,14 +104,14 @@ export async function shareContent(data: {
   // Web: use Web Share API with clipboard fallback
   if (navigator.share) {
     try {
-      await navigator.share(data);
+      await navigator.share(payload);
       return "shared";
     } catch {
       // User cancelled or error — fallback to clipboard
     }
   }
   try {
-    await navigator.clipboard.writeText(data.url);
+    await navigator.clipboard.writeText(fallbackText);
     return "copied";
   } catch {
     return "failed";
@@ -135,6 +136,16 @@ export function buildProviderLink(providerId: string): string {
 }
 
 /**
+ * Store links worth putting in front of people. The App Store link is skipped
+ * while it is still the placeholder id, so we never share a dead link.
+ */
+function getStoreLinks(): { label: string; url: string }[] {
+  const links = [{ label: "Android", url: PLAY_STORE_URL }];
+  if (!/id0+$/.test(APP_STORE_URL)) links.push({ label: "iPhone", url: APP_STORE_URL });
+  return links;
+}
+
+/**
  * Share a provider's profile with proper content and URL.
  */
 export async function shareProvider(provider: {
@@ -142,19 +153,24 @@ export async function shareProvider(provider: {
   brandName: string;
   description?: string | null;
   categoryLabel?: string;
-  rating?: number;
 }): Promise<"shared" | "copied" | "failed"> {
   const url = buildProviderLink(provider.id);
-  const parts: string[] = [];
-  if (provider.categoryLabel) parts.push(provider.categoryLabel);
-  if (provider.rating != null) parts.push(`⭐ ${provider.rating}`);
-  if (provider.description) parts.push(provider.description);
+  const description = provider.description?.replace(/\s+/g, " ").trim();
+  const blurb =
+    description && description.length > 140
+      ? `${description.slice(0, 137).trimEnd()}...`
+      : description;
+
+  const lines = [`Check out ${provider.brandName} on Tijarah Connect`];
+  if (provider.categoryLabel) lines.push(provider.categoryLabel);
+  if (blurb) lines.push("", blurb);
+  lines.push("", `View profile: ${url}`);
+  lines.push("", "Find trusted local businesses near you. Get the Tijarah Connect app:");
+  for (const store of getStoreLinks()) lines.push(`${store.label}: ${store.url}`);
 
   return shareContent({
-    title: provider.brandName,
-    text: `Check out ${provider.brandName} on Tijarah Connect!${
-      parts.length ? "\n" + parts.join("\n") : ""
-    }`,
+    title: `${provider.brandName} on Tijarah Connect`,
+    text: lines.join("\n"),
     url,
   });
 }
