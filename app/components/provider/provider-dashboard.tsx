@@ -393,7 +393,7 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-          Today's Activity
+          Today&apos;s Activity
         </h3>
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
           <IonIcon icon={calendarOutline} className="text-xs" />
@@ -861,7 +861,7 @@ const PinLocationCard = memo(({
               {placed
                 ? `We've placed you at the centre of ${provider?.city || "your city"} for now, so customers can't see how far away you are or get directions to you.`
                 : "Customers nearby can't see how far away you are, and can't get directions to you."}{" "}
-              Drop the pin once and you'll show up in “near me” searches.
+              Drop the pin once and you&apos;ll show up in “near me” searches.
             </p>
             <button
               onClick={() => onNavigate("details")}
@@ -1587,5 +1587,14 @@ const ProviderDashboard = ({
     </PullToRefresh>
   );
 };
+
+// memo() hides the inner function's name from React DevTools and errors.
+TodayActivity.displayName = "TodayActivity";
+GrowthTips.displayName = "GrowthTips";
+RecentReviewsList.displayName = "RecentReviewsList";
+ProductsOverview.displayName = "ProductsOverview";
+ProfileCompleteness.displayName = "ProfileCompleteness";
+RevenueBoosters.displayName = "RevenueBoosters";
+DealsOverview.displayName = "DealsOverview";
 
 export default ProviderDashboard;

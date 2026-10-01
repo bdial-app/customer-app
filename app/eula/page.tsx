@@ -45,10 +45,10 @@ export default function EulaPage() {
             1. Introduction
           </h4>
           <p className="text-xs">
-            Welcome to Tijarah ("the App"). This End User License Agreement
-            ("Agreement") is a legal agreement between you ("User," "you," or
-            "your") and Tijarah Community Commerce ("Company," "we," "us," or
-            "our"). By downloading, installing, or using the Tijarah App on any
+            Welcome to Tijarah (&quot;the App&quot;). This End User License Agreement
+            (&quot;Agreement&quot;) is a legal agreement between you (&quot;User,&quot; &quot;you,&quot; or
+            &quot;your&quot;) and Tijarah Community Commerce (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; or
+            &quot;our&quot;). By downloading, installing, or using the Tijarah App on any
             device, you agree to be bound by this Agreement. If you do not agree
             to these terms, please do not use the App.
           </p>
@@ -193,7 +193,7 @@ export default function EulaPage() {
           <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 space-y-2">
             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">IMPORTANT</p>
             <p className="text-xs">
-              THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTY
+              THE APP IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTY
               OF ANY KIND. TO THE FULLEST EXTENT PERMITTED BY LAW, TIJARAH IS
               NOT LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR
               PUNITIVE DAMAGES, OR ANY CLAIM EXCEEDING THE AMOUNT YOU PAID FOR

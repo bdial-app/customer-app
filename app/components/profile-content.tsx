@@ -1551,7 +1551,7 @@ const ProfileContent = memo(() => {
             5. Verified Badge
           </h4>
           <p>
-            The 'Verified' badge indicates Tijarah reviewed an identity or
+            The &apos;Verified&apos; badge indicates Tijarah reviewed an identity or
             community document. It does <strong>not</strong> guarantee quality,
             reliability, or safety of the business. Users must conduct their own
             due diligence.
@@ -1591,7 +1591,7 @@ const ProfileContent = memo(() => {
           </h4>
           <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3">
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              The Platform is provided on an "AS IS" basis without warranties of
+              The Platform is provided on an &quot;AS IS&quot; basis without warranties of
               any kind. Tijarah makes no warranty that the Platform will be
               uninterrupted, error-free, or that any listing is accurate or
               reliable.
@@ -2083,7 +2083,7 @@ const ReportBugSlide = ({
             Report Submitted!
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-            Thank you for helping improve Tijarah. We've received your bug
+            Thank you for helping improve Tijarah. We&apos;ve received your bug
             report and will investigate it.
           </p>
           <button
@@ -2096,7 +2096,7 @@ const ReportBugSlide = ({
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Found something broken? Tell us what happened and we'll fix it as
+            Found something broken? Tell us what happened and we&apos;ll fix it as
             quickly as possible.
           </p>
 

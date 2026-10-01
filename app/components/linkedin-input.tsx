@@ -23,7 +23,7 @@ function normalizeLinkedIn(raw: string): string {
   if (!trimmed) return "";
 
   // Strip full URL prefix variations
-  let path = trimmed
+  const path = trimmed
     .replace(/^https?:\/\/(www\.)?linkedin\.com\/?/, "")
     .replace(/^(www\.)?linkedin\.com\/?/, "")
     .replace(/\/+$/, "") // trailing slashes

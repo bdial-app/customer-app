@@ -59,7 +59,7 @@ function getSessionId(): string {
 
 let buffer: QueuedEvent[] = [];
 let flushTimer: ReturnType<typeof setInterval> | null = null;
-let lastEventKeys = new Map<string, number>(); // dedup key → timestamp
+const lastEventKeys = new Map<string, number>(); // dedup key → timestamp
 
 function dedupeKey(providerId: string, eventType: string, entityId?: string): string {
   return `${providerId}:${eventType}:${entityId || ""}`;

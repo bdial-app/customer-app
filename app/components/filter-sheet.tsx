@@ -440,7 +440,7 @@ const FilterSheet = ({
               ) : filteredCategories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-4">
                   <span className="text-2xl mb-2">🔍</span>
-                  <p className="text-[13px] text-gray-400 dark:text-slate-500">No categories match "{categorySearch}"</p>
+                  <p className="text-[13px] text-gray-400 dark:text-slate-500">No categories match &quot;{categorySearch}&quot;</p>
                 </div>
               ) : (
                 <div className="pb-2">

@@ -574,7 +574,7 @@ const ProviderHome = () => {
             ))}
             {products.length === 0 && (
               <div className="p-8 text-center text-slate-500">
-                You haven't added any products yet.
+                You haven&apos;t added any products yet.
               </div>
             )}
           </List>

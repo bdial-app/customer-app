@@ -1546,7 +1546,7 @@ const UnderReviewBanner = ({
               className="text-indigo-400 text-lg shrink-0 mt-0.5"
             />
             <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-              Your application is being reviewed. You'll be notified once approved.
+              Your application is being reviewed. You&apos;ll be notified once approved.
             </p>
           </div>
         )}
