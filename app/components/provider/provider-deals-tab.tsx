@@ -35,6 +35,12 @@ import { usePayment } from "@/hooks/usePayment";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useNotification } from "@/app/context/NotificationContext";
+import { isAxiosError } from "axios";
+
+/** The API's `message` from a failed request, if it sent one. */
+function apiErrorMessage(err: unknown): string | undefined {
+  return isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined;
+}
 
 // Coerce empty form strings to undefined so optional number fields validate cleanly.
 const emptyToUndef = (_: unknown, orig: unknown) =>
@@ -521,10 +527,12 @@ const ProviderDealsTab = () => {
                           setDealPaying(true);
                           await purchaseDealCreation();
                           setPaidThisSession(true);
-                        } catch (err: any) {
+                        } catch (err: unknown) {
                           notify({
                             title: "Payment required",
-                            subtitle: err?.message || "Payment was cancelled. No charge was made.",
+                            subtitle:
+                              (err instanceof Error && err.message) ||
+                              "Payment was cancelled. No charge was made.",
                             variant: "error",
                           });
                           return; // keep form open; nothing created, no charge kept
@@ -753,11 +761,9 @@ const ProviderDealsTab = () => {
                           {(createMutation.isError ||
                             updateMutation.isError) && (
                             <p className="text-xs text-red-500 text-center mt-1">
-                              {(
-                                (createMutation.error ||
-                                  updateMutation.error) as any
-                              )?.response?.data?.message ||
-                                "Something went wrong. Please try again."}
+                              {apiErrorMessage(
+                                createMutation.error || updateMutation.error,
+                              ) || "Something went wrong. Please try again."}
                             </p>
                           )}
                         </div>

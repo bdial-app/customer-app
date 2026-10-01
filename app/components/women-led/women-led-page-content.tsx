@@ -280,7 +280,7 @@ export default function WomenLedPageContent() {
                 >
                   All
                 </button>
-                {categories.slice(0, 12).map((cat: any) => (
+                {categories.slice(0, 12).map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
@@ -320,7 +320,7 @@ export default function WomenLedPageContent() {
           )}
           {selectedCategory && (
             <span className="shrink-0 flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[11px] px-3 py-1.5 rounded-full font-semibold">
-              {categories?.find((c: any) => c.id === selectedCategory)?.name || "Category"}
+              {categories?.find((c) => c.id === selectedCategory)?.name || "Category"}
               <button onClick={() => setSelectedCategory(null)}>
                 <IonIcon icon={closeCircle} className="w-3.5 h-3.5" />
               </button>

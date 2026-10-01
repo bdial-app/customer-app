@@ -51,7 +51,7 @@ export function useTrackProductView(
  */
 export function useTrackAction(providerId: string | undefined) {
   const track = useCallback(
-    (eventType: Parameters<typeof trackEvent>[1], entityId?: string, metadata?: Record<string, any>) => {
+    (eventType: Parameters<typeof trackEvent>[1], entityId?: string, metadata?: Record<string, unknown>) => {
       if (!providerId) return;
       trackEvent(providerId, eventType, { entityId, metadata });
     },

@@ -11,6 +11,27 @@ import {
 } from './payment.service';
 
 // Razorpay Checkout types
+/** Payload passed to `handler` on a successful checkout. */
+interface RazorpaySuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  /** Present for one-time order payments. */
+  razorpay_order_id: string;
+  /** Present for subscription payments. */
+  razorpay_subscription_id: string;
+}
+
+/** Payload of the `payment.failed` event. */
+interface RazorpayFailureResponse {
+  error?: {
+    code?: string;
+    description?: string;
+    source?: string;
+    step?: string;
+    reason?: string;
+  };
+}
+
 interface RazorpayOptions {
   key: string;
   amount?: number;
@@ -21,13 +42,13 @@ interface RazorpayOptions {
   subscription_id?: string;
   prefill?: { name?: string; email?: string; contact?: string };
   theme?: { color: string };
-  handler: (response: any) => void;
+  handler: (response: RazorpaySuccessResponse) => void;
   modal?: { ondismiss?: () => void };
 }
 
 interface RazorpayInstance {
   open: () => void;
-  on: (event: string, handler: (response: any) => void) => void;
+  on: (event: 'payment.failed', handler: (response: RazorpayFailureResponse) => void) => void;
 }
 
 declare global {
@@ -80,7 +101,7 @@ export async function payWithRazorpay(
       order_id: orderResponse.orderId,
       prefill: orderResponse.prefill,
       theme: { color: '#6366f1' },
-      handler: async (response: any) => {
+      handler: async (response: RazorpaySuccessResponse) => {
         try {
           // Verify payment signature with backend
           const result = await verifyRazorpayPayment({
@@ -99,7 +120,7 @@ export async function payWithRazorpay(
     };
 
     const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', (response: any) => {
+    rzp.on('payment.failed', (response: RazorpayFailureResponse) => {
       reject(new Error(response.error?.description || 'Payment failed'));
     });
     rzp.open();
@@ -123,7 +144,7 @@ export async function subscribeWithRazorpay(
       subscription_id: subResponse.subscriptionId,
       prefill: subResponse.prefill,
       theme: { color: '#6366f1' },
-      handler: async (response: any) => {
+      handler: async (response: RazorpaySuccessResponse) => {
         try {
           const result = await verifyRazorpaySubscription({
             razorpay_subscription_id: response.razorpay_subscription_id,
@@ -144,7 +165,7 @@ export async function subscribeWithRazorpay(
     };
 
     const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', (response: any) => {
+    rzp.on('payment.failed', (response: RazorpayFailureResponse) => {
       reject(new Error(response.error?.description || 'Subscription payment failed'));
     });
     rzp.open();

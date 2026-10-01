@@ -58,12 +58,15 @@ import {
   setProfile as setReduxProfile,
   clearUser,
 } from "@/store/slices/authSlice";
+import { useIsClient } from "@/hooks/useIsClient";
 import { resetChat } from "@/store/slices/chatSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useNotification } from "../context/NotificationContext";
 import { Preloader } from "konsta/react";
 import { useDispatch } from "react-redux";
 import { useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
+import type { AuthResponse } from "@/services/auth.service";
 import {
   getMyProviderStatus,
   disableMyProvider,
@@ -89,6 +92,10 @@ import { removeItemSync, removeItem } from "@/utils/storage";
 import { checkContent } from "@/utils/content-sanitizer";
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
+
+/** The `message` from an API error response body, if there is one. */
+const apiErrorMessage = (err: unknown): string | undefined =>
+  isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined;
 
 // ─── Reusable Menu Row ──────────────────────────────────────────────
 const MenuRow = ({
@@ -172,10 +179,7 @@ const SlidePage = ({
   title: string;
   children: React.ReactNode;
 }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence>
@@ -227,7 +231,7 @@ const ProfileContent = memo(() => {
     resetProviderState,
   } = useAppContext();
   const router = useRouter();
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const fcmToken = useAppSelector((state) => state.notification.fcmToken);
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
@@ -258,7 +262,7 @@ const ProfileContent = memo(() => {
     | null
   >(null);
 
-  const [profile, setProfile] = useState<any>(user || {});
+  const [profile, setProfile] = useState<Partial<AuthResponse["user"]>>(user || {});
 
   // Inline name editing
   const [isEditingName, setIsEditingName] = useState(false);
@@ -276,7 +280,7 @@ const ProfileContent = memo(() => {
     getMyProviderStatus()
       .then((result) => {
         if (!cancelled) {
-          setProviderStatus(result.providerStatus as any);
+          setProviderStatus(result.providerStatus);
           if (result.provider) {
             setProviderInfo({
               id: result.provider.id,
@@ -351,7 +355,7 @@ const ProfileContent = memo(() => {
     }
     try {
       await updateUserMutation.mutateAsync({ name: trimmed });
-      dispatch(setReduxProfile({ ...user, name: trimmed }));
+      if (user) dispatch(setReduxProfile({ ...user, name: trimmed }));
       setProfile({ ...user, name: trimmed });
       notify({
         title: "Name Updated",
@@ -359,10 +363,10 @@ const ProfileContent = memo(() => {
         variant: "success",
       });
       setIsEditingName(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify({
         title: "Update Failed",
-        subtitle: err?.response?.data?.message || "Something went wrong.",
+        subtitle: apiErrorMessage(err) || "Something went wrong.",
         variant: "error",
       });
     }
@@ -531,9 +535,9 @@ const ProfileContent = memo(() => {
         subtitle: "Your business profile is now visible again.",
         variant: "success",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err?.response?.data?.message ||
+        apiErrorMessage(err) ||
         "Failed to enable business. Please try again.";
       notify({
         title: "Cannot Re-enable Yet",
@@ -1259,7 +1263,7 @@ const ProfileContent = memo(() => {
         <LanguageSelector
           onLanguageChange={(newLocale: Locale) => {
             // Save to backend
-            updateUserMutation.mutate({ preferredLanguage: newLocale } as any, {
+            updateUserMutation.mutate({ preferredLanguage: newLocale }, {
               onSuccess: () => {
                 notify({
                   title: "Language Updated",
@@ -1551,7 +1555,7 @@ const ProfileContent = memo(() => {
             5. Verified Badge
           </h4>
           <p>
-            The 'Verified' badge indicates Tijarah reviewed an identity or
+            The &apos;Verified&apos; badge indicates Tijarah reviewed an identity or
             community document. It does <strong>not</strong> guarantee quality,
             reliability, or safety of the business. Users must conduct their own
             due diligence.
@@ -1591,7 +1595,7 @@ const ProfileContent = memo(() => {
           </h4>
           <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3">
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              The Platform is provided on an "AS IS" basis without warranties of
+              The Platform is provided on an &quot;AS IS&quot; basis without warranties of
               any kind. Tijarah makes no warranty that the Platform will be
               uninterrupted, error-free, or that any listing is accurate or
               reliable.
@@ -2053,10 +2057,10 @@ const ReportBugSlide = ({
       setDescription("");
       setSteps("");
       setCategory("other");
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify({
         title: "Submission Failed",
-        subtitle: err?.response?.data?.message || "Please try again.",
+        subtitle: apiErrorMessage(err) || "Please try again.",
         variant: "error",
       });
     } finally {
@@ -2083,7 +2087,7 @@ const ReportBugSlide = ({
             Report Submitted!
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-            Thank you for helping improve Tijarah. We've received your bug
+            Thank you for helping improve Tijarah. We&apos;ve received your bug
             report and will investigate it.
           </p>
           <button
@@ -2096,7 +2100,7 @@ const ReportBugSlide = ({
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Found something broken? Tell us what happened and we'll fix it as
+            Found something broken? Tell us what happened and we&apos;ll fix it as
             quickly as possible.
           </p>
 

@@ -9,7 +9,7 @@ export interface SubscriptionPlan {
   slug: string;
   priceMonthly: number;
   priceYearly: number;
-  features: Record<string, any> | null;
+  features: Record<string, unknown> | null;
   maxActiveDeals: number;
   maxTotalDeals: number;
   monthlyLeadUnlocks: number;
@@ -299,7 +299,7 @@ export const getDealCreationInfo = async (): Promise<DealCreationInfo> => {
 
 export const createDealCreationCheckout = async (
   voucherCode?: string,
-  dealData?: Record<string, any>,
+  dealData?: Record<string, unknown>,
   gateway?: 'razorpay' | 'apple',
 ): Promise<DealCreationCheckoutResponse> => {
   const { data } = await apiClient.post(PAYMENT_URLS.DEAL_CREATION_CHECKOUT, {

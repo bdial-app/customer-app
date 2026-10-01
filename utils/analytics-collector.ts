@@ -34,7 +34,7 @@ interface QueuedEvent {
   providerId: string;
   eventType: EventType;
   entityId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   duration?: number;
   source?: SourceType;
   timestamp: string;
@@ -59,7 +59,7 @@ function getSessionId(): string {
 
 let buffer: QueuedEvent[] = [];
 let flushTimer: ReturnType<typeof setInterval> | null = null;
-let lastEventKeys = new Map<string, number>(); // dedup key → timestamp
+const lastEventKeys = new Map<string, number>(); // dedup key → timestamp
 
 function dedupeKey(providerId: string, eventType: string, entityId?: string): string {
   return `${providerId}:${eventType}:${entityId || ""}`;
@@ -134,7 +134,7 @@ export function trackEvent(
   eventType: EventType,
   options?: {
     entityId?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     duration?: number;
     source?: SourceType;
   },

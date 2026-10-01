@@ -57,7 +57,7 @@ export interface LeadsResponse {
 export interface LeadTimelineEvent {
   eventType: string;
   entityId: string | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   duration: number | null;
   source: string | null;
   createdAt: string;

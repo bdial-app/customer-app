@@ -59,13 +59,21 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
     return true;
   });
 
-  // Sync external sub-tab navigation requests
+  // Sync external sub-tab navigation requests. Applied during render once the
+  // requested tab exists — tabs depend on flags that load async, and an effect
+  // keyed only on the request dropped it if it arrived first. The parent is
+  // told it was consumed from an effect, since that updates the parent.
+  const [appliedSubTab, setAppliedSubTab] = useState<string | null>(null);
+  const subTabReady = !!initialSubTab && tabs.some((t) => t.id === initialSubTab);
+  if (subTabReady && initialSubTab !== appliedSubTab) {
+    setAppliedSubTab(initialSubTab!);
+    setActiveTab(initialSubTab as ManagerTab);
+  } else if (!initialSubTab && appliedSubTab !== null) {
+    setAppliedSubTab(null);
+  }
   useEffect(() => {
-    if (initialSubTab && tabs.some((t) => t.id === initialSubTab)) {
-      setActiveTab(initialSubTab as ManagerTab);
-      onSubTabConsumed?.();
-    }
-  }, [initialSubTab, onSubTabConsumed]);
+    if (subTabReady) onSubTabConsumed?.();
+  }, [subTabReady, onSubTabConsumed]);
 
   // Auto-scroll active tab into view
   useEffect(() => {

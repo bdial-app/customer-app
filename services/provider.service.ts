@@ -1,5 +1,6 @@
 import apiClient from "@/utils/axios";
 import { PROVIDER_URLS, REVIEW_URLS } from "@/utils/urls";
+import type { UserProfile } from "@/services/user.service";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -19,8 +20,19 @@ export interface ProviderNearbyParams {
   sinceDays?: number;
 }
 
+/** A provider row from the nearby endpoint, merged with distance and review stats. */
+export interface NearbyProvider extends ProviderData {
+  distance: number | null;
+  rating: number | null;
+  reviewCount: number;
+  services: string | null;
+  isWomenLed?: boolean;
+  roadDistance?: string;
+  roadDistanceMeters?: number;
+}
+
 export interface NearbyProviderResponse {
-  data: any[];
+  data: NearbyProvider[];
   meta: {
     total: number;
     page: number;
@@ -89,7 +101,7 @@ export interface ProviderData {
   isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
-  user?: any;
+  user?: UserProfile;
   websiteUrl?: string | null;
   websiteLogoUrl?: string | null;
   instagramHandle?: string | null;
@@ -107,11 +119,28 @@ export interface ProviderData {
   trustLevel?: 'unverified' | 'basic' | 'verified' | 'trusted';
 }
 
+export interface ProviderVerification {
+  id: string;
+  userId: string;
+  aadhaarDocUrl: string;
+  aadhaarStatus: string;
+  ijamatNumber: string | null;
+  ijamatExpiry: string | null;
+  ijamatDocUrl: string | null;
+  ijamatStatus: string;
+  status: string;
+  adminNotes: string | null;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  reviewerName: string | null;
+  createdAt: string;
+}
+
 export interface ProviderStatusResponse {
   providerStatus: "not_applied" | "pending" | "in_review" | "approved" | "rejected" | "disabled" | "deleted" | "suspended" | "unverified";
   verificationStatus: string | null;
   provider: ProviderData | null;
-  verification: any | null;
+  verification: ProviderVerification | null;
   preferredMode?: "customer" | "provider";
 }
 
@@ -191,7 +220,7 @@ export const getWomenLedHub = async (
   return data;
 };
 
-export const getProviderById = async (id: string): Promise<any> => {
+export const getProviderById = async (id: string): Promise<ProviderData> => {
   const { data } = await apiClient.get(PROVIDER_URLS.BY_ID(id));
   return data;
 };
@@ -315,7 +344,11 @@ export const getProviderInstagram = async (
 
 export const becomeProvider = async (
   payload: BecomeProviderPayload,
-): Promise<{ provider: any; verification: any; products: any[] }> => {
+): Promise<{
+  provider: ProviderData;
+  verification: ProviderVerification | null;
+  products: ProviderDetailsProduct[];
+}> => {
   const { compressImageFile, compressImageFiles, COMPRESS_PRESETS } = await import("@/utils/compress-image");
 
   // Compress images before building FormData
@@ -378,7 +411,12 @@ export const getMyProviderStatus = async (): Promise<ProviderStatusResponse> => 
   return data;
 };
 
-export const sendProviderOtp = async (mobileNumber: string): Promise<any> => {
+export interface SendProviderOtpResponse {
+  message: string;
+  data: { mobileNumber: string; expiresIn: number; otp?: string };
+}
+
+export const sendProviderOtp = async (mobileNumber: string): Promise<SendProviderOtpResponse> => {
   const { data } = await apiClient.post(PROVIDER_URLS.SEND_OTP, { mobileNumber });
   return data;
 };
@@ -429,7 +467,7 @@ export const updateProviderCategories = async (
 export const submitVerification = async (
   file: File,
   docType?: string,
-): Promise<any> => {
+): Promise<ProviderVerification> => {
   const formData = new FormData();
   formData.append("file", file);
   if (docType) formData.append("docType", docType);
@@ -463,7 +501,7 @@ export const getMyAnalytics = async (): Promise<ProviderAnalytics> => {
 export const replyToReview = async (
   reviewId: string,
   replyText: string,
-): Promise<any> => {
+): Promise<ProviderDetailsReview> => {
   const { data } = await apiClient.post(`/reviews/${reviewId}/reply`, { replyText });
   return data;
 };
@@ -474,7 +512,7 @@ export interface SubmitReviewPayload {
   reviewText?: string;
 }
 
-export const submitReview = async (payload: SubmitReviewPayload): Promise<any> => {
+export const submitReview = async (payload: SubmitReviewPayload): Promise<ProviderDetailsReview> => {
   const { data } = await apiClient.post(REVIEW_URLS.CREATE, payload);
   return data;
 };

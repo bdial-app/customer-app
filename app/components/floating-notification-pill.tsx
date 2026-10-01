@@ -18,7 +18,7 @@ interface FloatingNotificationPillProps {
 interface PushEvent {
   title: string;
   body?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 const AUTO_DISMISS_MS = 6000;

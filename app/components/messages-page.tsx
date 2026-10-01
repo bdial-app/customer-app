@@ -21,6 +21,7 @@ import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { isNativePlatform } from "@/utils/platform";
 import { checkContent } from "@/utils/content-sanitizer";
 import { isNetworkError } from "@/utils/axios";
+import { isAxiosError } from "axios";
 import {
   useMessages,
   useSendMessage,
@@ -347,13 +348,16 @@ export default function MessagesPage({
       sendMutation.mutate(
         { content: text, messageType: "text" },
         {
-          onError: (err: any) => {
+          onError: (err: unknown) => {
             if (isNetworkError(err)) {
               setSendError("You're offline. Try again when connected.");
               setMessageText(text); // restore text
               return;
             }
-            const msg = err?.response?.data?.message || err?.message || "Failed to send";
+            const apiMessage = isAxiosError<{ message?: string | string[] }>(err)
+              ? err.response?.data?.message
+              : undefined;
+            const msg = apiMessage || (err instanceof Error ? err.message : undefined) || "Failed to send";
             setSendError(Array.isArray(msg) ? msg.join(", ") : msg);
           },
         },

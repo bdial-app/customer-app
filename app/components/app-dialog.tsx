@@ -1,9 +1,10 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+
 import dynamic from "next/dynamic";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useIsClient } from "@/hooks/useIsClient";
 
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
   ssr: false,
@@ -52,9 +53,8 @@ export const AppDialog = ({
   isLoading = false,
   loadingLabel,
 }: AppDialogProps) => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const keyboardOffset = useKeyboardOffset();
-  useEffect(() => { setMounted(true); }, []);
 
   const content = (
     <AnimatePresence>

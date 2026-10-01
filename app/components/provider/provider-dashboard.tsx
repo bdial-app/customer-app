@@ -1,5 +1,5 @@
 "use client";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -48,6 +48,7 @@ import {
   ProviderDetailsProduct,
   ProviderDetailsReview,
   ProviderDetailsOffer,
+  ProviderData,
 } from "@/services/provider.service";
 import { useCurrentSubscription } from "@/hooks/useSubscription";
 import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
@@ -56,6 +57,7 @@ import ProviderWarningsSheet from "./provider-warnings-sheet";
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import PullToRefresh from "../pull-to-refresh";
 import PageSplashScreen from "../page-splash-screen";
+import { useNow } from "@/hooks/useNow";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -393,7 +395,7 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-          Today's Activity
+          Today&apos;s Activity
         </h3>
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
           <IonIcon icon={calendarOutline} className="text-xs" />
@@ -447,7 +449,7 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
 // ─── Growth Tips ────────────────────────────────────────────────────
 interface GrowthTipsProps {
   stats: ProviderStats;
-  provider: any;
+  provider: ProviderData | null;
   verificationStatus: string | null;
   onNavigate: (subTab: string) => void;
   onVerify: () => void;
@@ -827,7 +829,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
  * town centre, so the app refuses to quote a distance for it. Only a pin the
  * owner (or a precise address lookup) gave us counts as the real thing.
  */
-const hasExactPin = (provider: any): boolean =>
+const hasExactPin = (provider: ProviderData | null): boolean =>
   Boolean(
     provider?.latitude &&
       provider?.longitude &&
@@ -839,7 +841,7 @@ const PinLocationCard = memo(({
   provider,
   onNavigate,
 }: {
-  provider: any;
+  provider: ProviderData | null;
   onNavigate: (subTab: string) => void;
 }) => {
   if (hasExactPin(provider)) return null;
@@ -861,7 +863,7 @@ const PinLocationCard = memo(({
               {placed
                 ? `We've placed you at the centre of ${provider?.city || "your city"} for now, so customers can't see how far away you are or get directions to you.`
                 : "Customers nearby can't see how far away you are, and can't get directions to you."}{" "}
-              Drop the pin once and you'll show up in “near me” searches.
+              Drop the pin once and you&apos;ll show up in “near me” searches.
             </p>
             <button
               onClick={() => onNavigate("details")}
@@ -884,7 +886,7 @@ const ProfileCompleteness = memo(({
   onNavigate,
   verificationStatus,
 }: {
-  provider: any;
+  provider: ProviderData | null;
   stats: ProviderStats;
   onNavigate: (subTab: string) => void;
   verificationStatus: string | null;
@@ -1186,6 +1188,7 @@ const DealsOverview = memo(({
   onManage: () => void;
   loading?: boolean;
 }) => {
+  const now = useNow();
   if (loading) {
     return (
       <div className="px-4 mb-4">
@@ -1243,7 +1246,7 @@ const DealsOverview = memo(({
     ? Math.max(
         0,
         Math.ceil(
-          (new Date(nextExpiring.endsAt).getTime() - Date.now()) /
+          (new Date(nextExpiring.endsAt).getTime() - now) /
             (1000 * 60 * 60 * 24),
         ),
       )
@@ -1321,16 +1324,17 @@ const ProviderDashboard = ({
 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
-  const cachedId = useRef(
+  const [cachedId, setCachedId] = useState(() =>
     typeof window !== "undefined" ? localStorage.getItem("tijarah:provider-id") ?? "" : ""
   );
+  // Remember the latest known id (adjusted during render, not in an effect)
+  if (providerId && providerId !== cachedId) setCachedId(providerId);
   useEffect(() => {
     if (providerId) {
-      cachedId.current = providerId;
       localStorage.setItem("tijarah:provider-id", providerId);
     }
   }, [providerId]);
-  const effectiveProviderId = providerId || cachedId.current;
+  const effectiveProviderId = providerId || cachedId;
   const { data: details, isLoading: detailsLoading, isError: detailsError, refetch: refetchDetails } =
     useProviderDetails(effectiveProviderId);
   const { data: currentSub } = useCurrentSubscription();
@@ -1587,5 +1591,14 @@ const ProviderDashboard = ({
     </PullToRefresh>
   );
 };
+
+// memo() hides the inner function's name from React DevTools and errors.
+TodayActivity.displayName = "TodayActivity";
+GrowthTips.displayName = "GrowthTips";
+RecentReviewsList.displayName = "RecentReviewsList";
+ProductsOverview.displayName = "ProductsOverview";
+ProfileCompleteness.displayName = "ProfileCompleteness";
+RevenueBoosters.displayName = "RevenueBoosters";
+DealsOverview.displayName = "DealsOverview";
 
 export default ProviderDashboard;

@@ -29,8 +29,9 @@ import {
   globeOutline,
   shieldCheckmarkOutline,
 } from "ionicons/icons";
-import { Formik, Form } from "formik";
+import { Formik, Form, type FormikProps } from "formik";
 import * as Yup from "yup";
+import { isAxiosError } from "axios";
 import { List, Button } from "konsta/react";
 import { BottomSheet } from "../bottom-sheet";
 import { FormikInput } from "../formik-input";
@@ -50,6 +51,23 @@ import { PhoneOtpVerifier } from "./phone-otp-verifier";
 
 interface ProviderDetailsTabProps {
   provider: ProviderData;
+}
+
+interface DetailsFormValues {
+  brandName: string;
+  description: string;
+  address: string;
+  city: string;
+  area: string;
+  pincode: string;
+  openTime: string;
+  closeTime: string;
+  websiteUrl: string;
+  instagramHandle: string;
+  facebookHandle: string;
+  youtubeHandle: string;
+  whatsappNumber: string;
+  linkedinHandle: string;
 }
 
 const detailsSchema = Yup.object({
@@ -139,7 +157,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const formikRef = useRef<any>(null);
+  const formikRef = useRef<FormikProps<DetailsFormValues>>(null);
 
   const handleSearchLocation = useCallback((query: string) => {
     setSearchQuery(query);
@@ -190,9 +208,10 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       const { requestLocationOrPrompt } = await import("@/utils/geolocation");
       const pos = await requestLocationOrPrompt("Detecting your location", { timeout: 10000, enableHighAccuracy: true });
       handleMapSelect(pos.latitude, pos.longitude);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const { LOCATION_PERMISSION_DENIED } = await import("@/utils/geolocation");
-      if (err?.code !== LOCATION_PERMISSION_DENIED) {
+      const code = typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
+      if (code !== LOCATION_PERMISSION_DENIED) {
         alert("Could not detect location. Please try again in an open area.");
       }
     } finally {
@@ -202,7 +221,7 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
 
   const { notify } = useNotification();
 
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: DetailsFormValues) => {
     // Content sanitization
     const brandCheck = checkContent(values.brandName || "");
     const descCheck = checkContent(values.description || "");
@@ -247,8 +266,10 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       notify({ title: "Number Updated", subtitle: "Your contact number has been changed successfully.", variant: "success" });
       setShowPhoneChange(false);
       setNewPhoneNumber("");
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to update contact number";
+    } catch (err: unknown) {
+      const msg =
+        (isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined) ||
+        "Failed to update contact number";
       notify({ title: "Error", subtitle: msg, variant: "error" });
     }
   };
@@ -495,16 +516,16 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
             </div>
 
             {/* Online Presence (view) */}
-            {((provider as any).websiteUrl || (provider as any).instagramHandle || (provider as any).facebookHandle || (provider as any).youtubeHandle || (provider as any).whatsappNumber) && (
+            {(provider.websiteUrl || provider.instagramHandle || provider.facebookHandle || provider.youtubeHandle || provider.whatsappNumber) && (
               <div className="mx-4 mt-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
                 <div className="px-4 py-2.5">
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Online Presence</p>
                 </div>
-                {(provider as any).websiteUrl && <InfoRow icon={globeOutline} label="Website" value={(provider as any).websiteUrl} />}
-                {(provider as any).instagramHandle && <InfoRow icon={logoInstagram} label="Instagram" value={`@${(provider as any).instagramHandle}`} />}
-                {(provider as any).facebookHandle && <InfoRow icon={logoFacebook} label="Facebook" value={(provider as any).facebookHandle} />}
-                {(provider as any).youtubeHandle && <InfoRow icon={logoYoutube} label="YouTube" value={(provider as any).youtubeHandle} />}
-                {(provider as any).whatsappNumber && <InfoRow icon={logoWhatsapp} label="WhatsApp" value={(provider as any).whatsappNumber} />}
+                {provider.websiteUrl && <InfoRow icon={globeOutline} label="Website" value={provider.websiteUrl} />}
+                {provider.instagramHandle && <InfoRow icon={logoInstagram} label="Instagram" value={`@${provider.instagramHandle}`} />}
+                {provider.facebookHandle && <InfoRow icon={logoFacebook} label="Facebook" value={provider.facebookHandle} />}
+                {provider.youtubeHandle && <InfoRow icon={logoYoutube} label="YouTube" value={provider.youtubeHandle} />}
+                {provider.whatsappNumber && <InfoRow icon={logoWhatsapp} label="WhatsApp" value={provider.whatsappNumber} />}
               </div>
             )}
           </motion.div>
@@ -540,12 +561,12 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
                   pincode: provider.pincode || "",
                   openTime: provider.openTime?.slice(0, 5) || "09:00",
                   closeTime: provider.closeTime?.slice(0, 5) || "18:00",
-                  websiteUrl: (provider as any).websiteUrl || "",
-                  instagramHandle: (provider as any).instagramHandle || "",
-                  facebookHandle: (provider as any).facebookHandle || "",
-                  youtubeHandle: (provider as any).youtubeHandle || "",
-                  whatsappNumber: (provider as any).whatsappNumber || "",
-                  linkedinHandle: (provider as any).linkedinHandle || "",
+                  websiteUrl: provider.websiteUrl || "",
+                  instagramHandle: provider.instagramHandle || "",
+                  facebookHandle: provider.facebookHandle || "",
+                  youtubeHandle: provider.youtubeHandle || "",
+                  whatsappNumber: provider.whatsappNumber || "",
+                  linkedinHandle: provider.linkedinHandle || "",
                 }}
                 validationSchema={detailsSchema}
                 onSubmit={handleSave}

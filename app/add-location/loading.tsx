@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 
 const Bone = ({ className = "" }: { className?: string }) => (
   <div
@@ -8,10 +8,7 @@ const Bone = ({ className = "" }: { className?: string }) => (
 );
 
 export default function AddLocationLoading() {
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const isDark = useIsDarkMode();
 
   return (
     <div

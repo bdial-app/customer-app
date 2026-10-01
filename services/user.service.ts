@@ -1,5 +1,6 @@
 import apiClient from "@/utils/axios";
 import { USER_URLS } from "@/utils/urls";
+import type { AuthResponse } from "@/services/auth.service";
 
 export interface UpdateUserPayload {
   name?: string;
@@ -42,12 +43,12 @@ export const pauseMyAccount = async (): Promise<{ message: string }> => {
   return data;
 };
 
-export const resumeMyAccount = async (): Promise<any> => {
+export const resumeMyAccount = async (): Promise<AuthResponse["user"]> => {
   const { data } = await apiClient.patch(USER_URLS.RESUME_ME);
   return data;
 };
 
-export const exportMyData = async (): Promise<any> => {
+export const exportMyData = async (): Promise<Record<string, unknown>> => {
   const { data } = await apiClient.get(USER_URLS.DATA_EXPORT);
   return data;
 };

@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -40,28 +41,34 @@ export default function ProviderWarningsSheet({
   onClose,
   onRead,
 }: ProviderWarningsSheetProps) {
-  const [warnings, setWarnings] = useState<Warning[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
+  // Fetched while open; React Query owns loading and error state, and a cached
+  // list shows instantly on reopen while it refreshes.
+  const {
+    data: warnings = [],
+    isLoading: loading,
+    isError,
+  } = useQuery({
+    queryKey: ["my-warnings"],
+    queryFn: async (): Promise<Warning[]> => {
+      const data = await getMyWarnings();
+      return Array.isArray(data) ? data : data?.data ?? [];
+    },
+    enabled: isOpen,
+    staleTime: 0,
+  });
+  const error = isError ? "Failed to load warnings" : null;
+
+  // Mark unread warnings as read once each — a refetch or a parent re-render
+  // must not send the same request again.
+  const markedRef = useRef(new Set<string>());
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    setError(null);
-    getMyWarnings()
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.data ?? [];
-        setWarnings(list);
-        // Mark unread warnings as read
-        const unread = list.filter((w: Warning) => !w.isRead);
-        if (unread.length > 0) {
-          Promise.all(unread.map((w: Warning) => markWarningRead(w.id).catch(() => {})))
-            .then(() => onRead?.());
-        }
-      })
-      .catch(() => setError("Failed to load warnings"))
-      .finally(() => setLoading(false));
-  }, [isOpen, onRead]);
+    const unread = warnings.filter((w) => !w.isRead && !markedRef.current.has(w.id));
+    if (unread.length === 0) return;
+    unread.forEach((w) => markedRef.current.add(w.id));
+    Promise.all(unread.map((w) => markWarningRead(w.id).catch(() => {}))).then(() => onRead?.());
+  }, [isOpen, warnings, onRead]);
 
   if (typeof window === "undefined") return null;
 

@@ -24,6 +24,7 @@ import {
 import { trackInvite } from "@/services/invite.service";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { isNativePlatform } from "@/utils/platform";
+import { useIsClient } from "@/hooks/useIsClient";
 
 function InviteFriendsContent() {
   const router = useRouter();
@@ -243,13 +244,10 @@ function InviteFriendsContent() {
 }
 
 export default function InviteFriendsPage() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const { isAuthenticated, requireAuth } = useAuthGate();
   const { goBack } = useBackNavigation();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (mounted && !isAuthenticated) {

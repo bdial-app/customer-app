@@ -9,6 +9,7 @@ import {
   VerifyOtpPayload,
   CreateAccountPayload,
   GoogleSignInPayload,
+  AuthResponse,
 } from "@/services/auth.service";
 import { useAppDispatch } from "./useAppStore";
 import { setUser, setProfile, setToken } from "@/store/slices/authSlice";
@@ -23,7 +24,7 @@ export const useVerifyOtp = () => {
   const dispatch = useAppDispatch();
   return useMutation({
     mutationFn: (payload: VerifyOtpPayload) => verifyOtp(payload),
-    onSuccess: (data: any) => {
+    onSuccess: (data: AuthResponse) => {
       const jwt = data.accessToken ?? data.token;
       if (jwt && typeof window !== "undefined") {
         setItemSync("token", jwt);
@@ -49,7 +50,7 @@ export const useGoogleSignIn = () => {
   const dispatch = useAppDispatch();
   return useMutation({
     mutationFn: (payload: GoogleSignInPayload) => googleSignIn(payload),
-    onSuccess: (data: any) => {
+    onSuccess: (data: AuthResponse) => {
       const jwt = data.accessToken ?? data.token;
       if (jwt && typeof window !== "undefined") {
         setItemSync("token", jwt);

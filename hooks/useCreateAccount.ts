@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { isAxiosError } from "axios";
 import { ROUTE_PATH } from "@/utils/contants";
 import {
   useSendOtp,
@@ -11,6 +12,26 @@ import { useNotification } from "@/app/context/NotificationContext";
 import { requestLocationOrPrompt, LOCATION_PERMISSION_DENIED } from "@/utils/geolocation";
 
 export type CreateAccountStep = "mobile" | "otp" | "details";
+
+export interface CreateAccountFormValues {
+  mobile: string;
+  otp: string;
+  name: string;
+  gender: string;
+  city: string;
+  area: string;
+  pincode: string;
+}
+
+/** Error body returned by the auth API. */
+interface ApiErrorBody {
+  message?: string;
+  error_code?: string;
+  retryAfterSeconds?: number;
+}
+
+const apiErrorBody = (err: unknown): ApiErrorBody | undefined =>
+  isAxiosError<ApiErrorBody>(err) ? err.response?.data : undefined;
 
 export const useCreateAccount = (initialMobile?: string) => {
   const router = useRouter();
@@ -50,10 +71,10 @@ export const useCreateAccount = (initialMobile?: string) => {
         subtitle: "We've accurately pinned your location.",
         variant: "success",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Denied surfaces the global LocationDeniedSheet (with Settings link);
       // toast only for other failures like GPS timeout / services off.
-      if (error?.code !== LOCATION_PERMISSION_DENIED) {
+      if ((error as { code?: string } | null | undefined)?.code !== LOCATION_PERMISSION_DENIED) {
         notify({
           title: "Location Required",
           subtitle: "Could not determine your location. Please try again.",
@@ -99,11 +120,11 @@ export const useCreateAccount = (initialMobile?: string) => {
         });
         startCooldown();
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         notify({
           title: "Error",
           subtitle:
-            err?.response?.data?.message ??
+            apiErrorBody(err)?.message ??
             "Failed to send OTP. Please try again.",
           variant: "error",
         });
@@ -111,7 +132,7 @@ export const useCreateAccount = (initialMobile?: string) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMobile]);
 
-  const handleBack = (setFieldValue: (field: string, value: any) => void) => {
+  const handleBack = (setFieldValue: (field: string, value: string) => void) => {
     if (currentStep === "otp") {
       setCurrentStep("mobile");
       setFieldValue("otp", "");
@@ -123,7 +144,7 @@ export const useCreateAccount = (initialMobile?: string) => {
   const handleNext = async (
     validateForm: () => Promise<Record<string, string>>,
     setTouched: (fields: Record<string, boolean>) => void,
-    values: any,
+    values: CreateAccountFormValues,
   ) => {
     const errors = await validateForm();
     if (Object.keys(errors).length > 0) {
@@ -170,18 +191,19 @@ export const useCreateAccount = (initialMobile?: string) => {
           setCurrentStep("details");
         }
       }
-    } catch (err: any) {
-      console.log("Error in handleNext:", err.response);
+    } catch (err: unknown) {
+      const response = isAxiosError(err) ? err.response : undefined;
+      console.log("Error in handleNext:", response);
       notify({
         title: "Error",
-        subtitle: JSON.stringify(err?.response || err) || "Error",
+        subtitle: JSON.stringify(response || err) || "Error",
 
         variant: "error",
       });
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: CreateAccountFormValues) => {
     if (!location) {
       notify({
         title: "Location Required",
@@ -204,11 +226,11 @@ export const useCreateAccount = (initialMobile?: string) => {
         longitude: location.lng,
       });
       router.push(ROUTE_PATH.HOME);
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify({
         title: "Error",
         subtitle:
-          err?.response?.data?.message ?? "Account creation failed. Try again.",
+          apiErrorBody(err)?.message ?? "Account creation failed. Try again.",
         variant: "error",
       });
     }
@@ -216,7 +238,7 @@ export const useCreateAccount = (initialMobile?: string) => {
 
   const handleResendOtp = async (
     mobile: string,
-    setFieldValue: (field: string, value: any) => void,
+    setFieldValue: (field: string, value: string) => void,
   ) => {
     if (resendCooldown > 0) return;
     try {
@@ -232,8 +254,8 @@ export const useCreateAccount = (initialMobile?: string) => {
         duration: 10000,
       });
       startCooldown();
-    } catch (err: any) {
-      const data = err?.response?.data;
+    } catch (err: unknown) {
+      const data = apiErrorBody(err);
       if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
         setResendCooldown(data.retryAfterSeconds);
         notify({
@@ -251,7 +273,7 @@ export const useCreateAccount = (initialMobile?: string) => {
     }
   };
 
-  const initialValues = {
+  const initialValues: CreateAccountFormValues = {
     mobile: initialMobile ?? "",
     otp: "",
     name: "",

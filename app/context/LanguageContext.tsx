@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import { NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider, type AbstractIntlMessages } from "next-intl";
 import { type Locale, defaultLocale, isRTL, locales } from "@/i18n/config";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { getItemSync, setItemSync } from "@/utils/storage";
@@ -28,7 +28,7 @@ function getStoredLocale(): Locale {
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale);
-  const [messages, setMessages] = useState<Record<string, any> | null>(null);
+  const [messages, setMessages] = useState<AbstractIntlMessages | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   // Load messages for a given locale
@@ -88,11 +88,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
  * Call this in a component inside both ReduxProvider and LanguageProvider.
  */
 export function useLanguageSync() {
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const { locale, setLocale } = useLanguage();
 
   useEffect(() => {
-    if (user?.preferredLanguage && locales.includes(user.preferredLanguage) && user.preferredLanguage !== locale) {
+    if (user?.preferredLanguage && locales.includes(user.preferredLanguage as Locale) && user.preferredLanguage !== locale) {
       setLocale(user.preferredLanguage as Locale);
     }
   }, [user?.preferredLanguage]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -17,6 +17,7 @@ import {
   hourglassOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
+import { isAxiosError } from "axios";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { submitVerification, getMyProviderStatus } from "@/services/provider.service";
 import { useQueryClient } from "@tanstack/react-query";
@@ -109,9 +110,11 @@ function VerifyContent() {
       await submitVerification(file, docType);
       queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
       setSubmitted(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err?.response?.data?.message ?? err?.message ?? "Something went wrong. Please try again.";
+        (isAxiosError<{ message?: string | string[] }>(err) ? err.response?.data?.message : undefined) ??
+        (err instanceof Error ? err.message : undefined) ??
+        "Something went wrong. Please try again.";
       setSubmitError(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setIsSubmitting(false);

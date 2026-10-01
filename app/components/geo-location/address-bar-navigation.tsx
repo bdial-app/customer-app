@@ -3,6 +3,7 @@ import { IonIcon } from "@ionic/react";
 import { locationSharp, chevronDown } from "ionicons/icons";
 import { motion } from "framer-motion";
 import React, { useState, useEffect } from "react";
+import { useIsClient } from "@/hooks/useIsClient";
 
 const AddressBarNavigation = ({
   title,
@@ -17,8 +18,7 @@ const AddressBarNavigation = ({
   hideIcon?: boolean;
   hideChevron?: boolean;
 }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useIsClient();
   const showSkeleton = mounted && isLoading;
 
   return (

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, checkmarkDoneOutline } from "ionicons/icons";
@@ -17,6 +17,7 @@ import { resolveDeepLink } from "@/utils/deep-link";
 import type { NotificationItem } from "@/services/notification.service";
 import { useAppContext } from "@/app/context/AppContext";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useIsClient } from "@/hooks/useIsClient";
 
 interface NotificationListProps {
   open: boolean;
@@ -27,8 +28,7 @@ export default function NotificationList({ open, onClose }: NotificationListProp
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"all" | "unread">("all");
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useIsClient();
   const { userMode } = useAppContext();
   const otherModeCount = useAppSelector((s) =>
     userMode === "provider" ? s.notification.customerUnreadCount : s.notification.providerUnreadCount,

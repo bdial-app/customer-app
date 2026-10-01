@@ -1,8 +1,5 @@
 "use client";
-import {
-  useState, useRef, useCallback, useMemo,
-  useImperativeHandle, forwardRef, useEffect, FC,
-} from "react";
+import { useState, useRef, useCallback, useMemo, useImperativeHandle, forwardRef, FC } from "react";
 import { createPortal } from "react-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Zoom } from "swiper/modules";
@@ -10,6 +7,7 @@ import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import { shareContent } from "@/utils/sharing";
 import "swiper/css/zoom";
+import { useIsClient } from "@/hooks/useIsClient";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,10 +64,9 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
 
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const swiperRef = useRef<SwiperType | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
 
   const openAt = useCallback((idx: number) => {
     setActiveIdx(idx);

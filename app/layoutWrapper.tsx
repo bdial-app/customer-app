@@ -45,12 +45,17 @@ import { hydrateStorageCache, removeItemSync } from "@/utils/storage";
 import { useStatusBar } from "@/hooks/useStatusBar";
 import { onReconnect } from "@/hooks/useNetworkStatus";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { isAxiosError } from "axios";
 
 // Initialize Sentry as early as possible
 initSentry();
 
+type CapacitorWindow = Window & {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
+
 // Wire react-query's onlineManager to Capacitor Network plugin for native offline support
-if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
+if (typeof window !== "undefined" && (window as CapacitorWindow).Capacitor?.isNativePlatform?.()) {
   import("@capacitor/network").then(({ Network }) => {
     Network.getStatus().then((status) => {
       onlineManager.setOnline(status.connected);
@@ -120,7 +125,7 @@ function PwaHistoryGuard() {
     // Only activate in standalone PWA mode
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone === true;
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (!isStandalone) return;
 
     // Push a sentinel state so the back button triggers popstate instead of closing the app
@@ -286,7 +291,7 @@ function AccountPausedHandler() {
       try {
         const providerRes = await getMyProviderStatus();
         if (providerRes.providerStatus) {
-          setProviderStatus(providerRes.providerStatus as any);
+          setProviderStatus(providerRes.providerStatus);
         }
         // Force customer mode since provider is disabled
         if (providerRes.providerStatus === 'disabled') {
@@ -294,9 +299,9 @@ function AccountPausedHandler() {
         }
       } catch {}
       setShowDialog(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg =
-        err?.response?.data?.message ||
+        (isAxiosError<{ message?: string }>(err) && err.response?.data?.message) ||
         "Failed to reactivate. Please try again.";
       setResumeError(msg);
     } finally {
@@ -346,7 +351,7 @@ function AccountPausedHandler() {
 // waiting for the Profile tab to mount. Marks providerStatusResolved so the UI
 // can skeleton-gate instead of flashing the customer/"apply" default first.
 function ProviderStatusBootstrap() {
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const {
     setProviderStatus,
     setProviderInfo,
@@ -370,7 +375,7 @@ function ProviderStatusBootstrap() {
     getMyProviderStatus()
       .then((result) => {
         if (cancelled) return;
-        setProviderStatus(result.providerStatus as any);
+        setProviderStatus(result.providerStatus);
         if (result.provider) {
           setProviderInfo({
             id: result.provider.id,
