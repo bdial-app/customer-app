@@ -207,10 +207,10 @@
     tslib "^2.4.0"
     xml2js "^0.5.0"
 
-"@capacitor/cli@^8.3.1":
-  version "8.3.1"
-  resolved "https://registry.npmjs.org/@capacitor/cli/-/cli-8.3.1.tgz"
-  integrity sha512-1sPGW4THTDfR6YjXwZ0jM7oAfAtciPOHN00qs/3sNAQx1kKrrEYSfDPwCm1/xlAgi0OeL69SiRfw314Ans+1sw==
+"@capacitor/cli@^8.5.2":
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/@capacitor/cli/-/cli-8.5.2.tgz"
+  integrity sha512-O2kpA5ZPJUAmliDCcmpMf8xnJwMezxlFPUrlyOAjbL3U9MFNY3l4ZpPI/UXwvyPmR8ETcVF9pFr+VdWq61rqTQ==
   dependencies:
     "@ionic/cli-framework-output" "^2.2.8"
     "@ionic/utils-subprocess" "^3.0.1"
@@ -228,12 +228,13 @@
     semver "^7.6.3"
     tar "^7.5.3"
     tslib "^2.8.1"
+    xcode "^3.0.1"
     xml2js "^0.6.2"
 
-"@capacitor/core@^8.3.0", "@capacitor/core@^8.3.1", "@capacitor/core@>=8.0.0", "@capacitor/core@>=8.0.2":
-  version "8.3.1"
-  resolved "https://registry.npmjs.org/@capacitor/core/-/core-8.3.1.tgz"
-  integrity sha512-UF8ItlHguU1Z6GXfPTeT2gakf+ctNI8pAS1kwSBQlsJMlfD4OPoto/SmKnOxKCQvnF4WRcdWeg6C0zREUNaAQg==
+"@capacitor/core@^8.3.0", "@capacitor/core@^8.5.0", "@capacitor/core@^8.5.2", "@capacitor/core@>=8.0.0", "@capacitor/core@>=8.0.2":
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/@capacitor/core/-/core-8.5.2.tgz"
+  integrity sha512-agnQbGdhGw/KZFuLf7H9SY2o+oE7upkr/WPQsYaokXP6f9chaE8iVmbKkfN6SVl4w3pmz7oZ3Ur1hbkmy1hx+w==
   dependencies:
     tslib "^2.1.0"
 
@@ -249,10 +250,10 @@
   resolved "https://registry.npmjs.org/@capacitor/haptics/-/haptics-8.0.2.tgz"
   integrity sha512-c2hZzRR5Fk1tbTvhG1jhh2XBAf3EhnIerMIb2sl7Mt41Gxx1fhBJFDa0/BI1IbY4loVepyyuqNC9820/GZuoWQ==
 
-"@capacitor/ios@^8.3.1":
-  version "8.3.1"
-  resolved "https://registry.npmjs.org/@capacitor/ios/-/ios-8.3.1.tgz"
-  integrity sha512-BEhLyYYHWJLib4mpaPMaaylbC8meqgxbNYwQJH2svsSLW7yo/hFie+Zoo66a44XnqcMd2tvmAuzimWunXZi/xA==
+"@capacitor/ios@^8.5.2":
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/@capacitor/ios/-/ios-8.5.2.tgz"
+  integrity sha512-eOT2S67AfTFG7KN0T3oxwAajrJz4rSye+ODfvChiwrk0F/+kWufFM1qU6cDjGJUOfwdAoeuEpZyWHSwZlu4GFg==
 
 "@capacitor/keyboard@^8.0.3":
   version "8.0.3"

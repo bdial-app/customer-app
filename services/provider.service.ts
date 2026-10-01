@@ -74,6 +74,11 @@ export interface ProviderData {
   pincode: string | null;
   latitude: number | null;
   longitude: number | null;
+  /**
+   * How exact the pin is. 'city' means we only knew the town, so the pin is the
+   * city centre — never quote a distance or drive someone to it.
+   */
+  geocodePrecision?: "rooftop" | "street" | "locality" | "pincode" | "city" | "manual" | null;
   contactNumber: string;
   openTime: string | null;
   closeTime: string | null;
@@ -284,6 +289,27 @@ export const getProviderDetails = async (
   id: string,
 ): Promise<ProviderDetailsResponse> => {
   const { data } = await apiClient.get(PROVIDER_URLS.DETAILS(id));
+  return data;
+};
+
+export interface InstagramPost {
+  imageUrl: string;
+  permalink: string;
+  isVideo: boolean;
+  caption: string | null;
+}
+
+export interface InstagramFeedResponse {
+  handle: string | null;
+  profileUrl: string | null;
+  posts: InstagramPost[];
+}
+
+/** The business's five most recent Instagram posts, if it has a business account. */
+export const getProviderInstagram = async (
+  id: string,
+): Promise<InstagramFeedResponse> => {
+  const { data } = await apiClient.get(PROVIDER_URLS.INSTAGRAM(id));
   return data;
 };
 
@@ -555,7 +581,17 @@ export interface SponsoredListing {
   endsAt: string;
   isActive: boolean;
   createdAt: string;
+  /** 'free' = complimentary placement granted by Tijarah; never budget-capped. */
+  billingMode?: 'paid' | 'free';
+  source?: 'provider_paid' | 'admin_granted';
+  approvalStatus?: 'pending_approval' | 'approved' | 'rejected';
 }
+
+/** Complimentary placements have a ₹0 budget by design — never "exhausted". */
+export const isFreeSponsorship = (s: Pick<SponsoredListing, 'billingMode'>) => s.billingMode === 'free';
+
+export const hasBudgetLeft = (s: Pick<SponsoredListing, 'billingMode' | 'spentAmount' | 'budgetAmount'>) =>
+  isFreeSponsorship(s) || Number(s.spentAmount) < Number(s.budgetAmount);
 
 export interface CreateSponsorshipPayload {
   type: 'carousel' | 'inline' | 'top_result';

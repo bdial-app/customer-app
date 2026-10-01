@@ -36,6 +36,8 @@ import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import DeepLinkLoadingScreen from "./components/deep-link-loading-screen";
+import WelcomeTour from "./components/onboarding/welcome-tour";
+import { hasSeenWelcomeTour, subscribeWelcomeTour } from "@/utils/welcome-tour";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import LocationDeniedSheet from "./components/location-denied-sheet";
 import SmartAppBanner from "./components/smart-app-banner";
@@ -58,6 +60,23 @@ if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform
       onlineManager.setOnline(status.connected);
     });
   });
+}
+
+/** True once the welcome tour is out of the way, so prompts can queue behind it. */
+function useTourFinished(): boolean {
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const read = () => setDone(hasSeenWelcomeTour());
+    read();
+    return subscribeWelcomeTour(read);
+  }, []);
+  return done;
+}
+
+function PermissionPromptAfterTour() {
+  const tourDone = useTourFinished();
+  if (!tourDone) return null;
+  return <PermissionPrompt />;
 }
 
 function LanguageSyncBridge() {
@@ -344,10 +363,12 @@ function ProviderStatusBootstrap() {
       return;
     }
     // Already resolved for this user in this session — don't refetch on re-render.
-    if (resolvedForUserRef.current === user.id) return;
-    resolvedForUserRef.current = user.id;
+    const userId = user.id;
+    if (resolvedForUserRef.current === userId) return;
+    resolvedForUserRef.current = userId;
 
     let cancelled = false;
+    let settled = false;
     getMyProviderStatus()
       .then((result) => {
         if (cancelled) return;
@@ -376,6 +397,7 @@ function ProviderStatusBootstrap() {
         if (!cancelled) resolvedForUserRef.current = null;
       })
       .finally(() => {
+        settled = true;
         // Whether or not the fetch succeeded, stop gating — a failed fetch
         // should fall back to the (storage-derived) status rather than hang
         // on a skeleton forever.
@@ -384,6 +406,14 @@ function ProviderStatusBootstrap() {
 
     return () => {
       cancelled = true;
+      // If this run is torn down before its request settles — React Strict Mode
+      // does exactly that on every mount in dev — release the guard. Otherwise
+      // the re-run sees the ref already set, returns early without fetching,
+      // and the cancelled request never flips providerStatusResolved: the home
+      // tab sits on its skeleton forever.
+      if (!settled && resolvedForUserRef.current === userId) {
+        resolvedForUserRef.current = null;
+      }
     };
   }, [user?.id, setProviderStatus, setProviderInfo, setUserMode, setProviderStatusResolved]);
 
@@ -458,7 +488,8 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <ReconnectRefresher />
               <PwaHistoryGuard />
               <NativeBackButtonHandler />
-              {isNativePlatform() && <PermissionPrompt />}
+              <WelcomeTour />
+              {isNativePlatform() && <PermissionPromptAfterTour />}
               {isNativePlatform() && <DeepLinkLoadingScreen />}
               <NotificationProvider>
                 <App theme="ios">

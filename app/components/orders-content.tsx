@@ -79,7 +79,7 @@ const BOOKINGS: Booking[] = [
     id: "B004",
     providerName: "Mehandi Arts",
     providerAvatar: "MA",
-    avatarColor: "from-emerald-400 to-teal-500",
+    avatarColor: "from-emerald-400 to-indigo-500",
     service: "Bridal Mehandi — Full Hands",
     date: "Mar 15",
     time: "11:00 AM",

@@ -19,6 +19,7 @@ import AddressBarNavigation from "./address-bar-navigation";
 import NotificationBell from "../notification-center/NotificationBell";
 import NotificationDropdown from "../notification-center/NotificationDropdown";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { useAppContext } from "../../context/AppContext";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import {
@@ -36,6 +37,7 @@ import {
   chevronDown,
   logInOutline,
   mapOutline,
+  storefrontOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -75,6 +77,20 @@ const GeoLocation = () => {
   const { recentLocations, guestCoords } = useAppSelector((state) => state.location);
   const user = useAppSelector((state) => state.auth.user as any);
   const { requireAuth } = useAuthGate();
+  // Read from context rather than re-fetching: layoutWrapper already resolves
+  // the provider status once per session.
+  const { providerStatus, userMode, setUserMode } = useAppContext();
+
+  // Someone who has applied — at any stage — goes to their dashboard. Everyone
+  // else goes to the form that starts one.
+  const hasBusiness = ["pending", "in_review", "approved", "unverified", "suspended"].includes(providerStatus);
+  const businessPending = providerStatus === "pending" || providerStatus === "in_review";
+
+  const openBusiness = () => {
+    if (!user) { requireAuth(); return; }
+    if (hasBusiness) { setUserMode("provider"); return; }
+    router.push("/provider-onboarding");
+  };
 
   // Resolve coordinates: logged-in uses user profile, guest uses persisted Redux state.
   // Force Number() because TypeORM/pg returns numeric columns as strings from PostgreSQL.
@@ -380,7 +396,22 @@ const GeoLocation = () => {
               hideIcon
             />
           </div>
-          <div onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 shrink-0">
+            {/* Straight to your business — or to starting one. Hidden while the
+                dashboard is already on screen. */}
+            {userMode !== "provider" && (
+              <button
+                onClick={openBusiness}
+                aria-label={hasBusiness ? "Go to my business" : "List my business"}
+                title={hasBusiness ? "Go to my business" : "List my business"}
+                className="relative w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:scale-90 transition-transform"
+              >
+                <IonIcon icon={storefrontOutline} className="text-[17px] text-white/75" />
+                {businessPending && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
+              </button>
+            )}
             {user ? (
               <NotificationBell onClick={() => setNotifOpen((v) => !v)} className="!w-9 !h-9 !rounded-2xl !bg-white/[0.07] !border !border-white/[0.08] !p-0 [&_ion-icon]:!text-white/75 [&_ion-icon]:!text-[17px]" />
             ) : (

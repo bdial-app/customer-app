@@ -1,5 +1,5 @@
 "use client";
-import { memo } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
   () => import("@ionic/react").then((m) => m.IonIcon),
@@ -16,10 +16,12 @@ import {
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
+import { useTrackAd } from "@/hooks/useExplore";
 import type { HomeSponsoredProvider } from "@/services/home.service";
+import { distanceLabel } from "@/utils/distance-label";
 
-const formatDistance = (d: number) =>
-  d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+// A city-level pin shows the town instead of a distance that would be wrong.
+const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
 
 const SponsoredCarousel = ({
   providers,
@@ -29,6 +31,51 @@ const SponsoredCarousel = ({
   isLoading?: boolean;
 }) => {
   const router = useRouter();
+  const trackAd = useTrackAd();
+  const trackedRef = useRef(new Set<string>());
+  const listRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Record a view once per listing, when the card is at least half on screen —
+   * same 50% threshold the explore feed uses. This writes an ad_event row for
+   * the admin analytics chart; the listing's own impression counter is
+   * incremented server-side when the feed is built, so nothing is double-counted.
+   */
+  useEffect(() => {
+    const node = listRef.current;
+    if (!node || isLoading || providers.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const entityId = (entry.target as HTMLElement).dataset.trackId;
+          if (!entityId || trackedRef.current.has(entityId)) return;
+          trackedRef.current.add(entityId);
+          trackAd.mutate({ eventType: "impression", entityType: "sponsored_listing", entityId });
+        });
+      },
+      { threshold: 0.5 },
+    );
+
+    node.querySelectorAll("[data-track-id]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [providers, isLoading, trackAd]);
+
+  /** Bill the click, then navigate. */
+  const handleClick = useCallback(
+    (provider: HomeSponsoredProvider) => {
+      if (provider.sponsoredListingId) {
+        trackAd.mutate({
+          eventType: "click",
+          entityType: "sponsored_listing",
+          entityId: provider.sponsoredListingId,
+        });
+      }
+      router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`);
+    },
+    [trackAd, router],
+  );
 
   if (!isLoading && (!Array.isArray(providers) || providers.length === 0)) return null;
 
@@ -69,17 +116,15 @@ const SponsoredCarousel = ({
         {/* Scroll hint gradient */}
         <div className="absolute right-0 top-0 bottom-3 w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none rounded-r-2xl" />
         <div
+          ref={listRef}
           className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {providers.map((provider, i) => (
             <div
               key={provider.sponsoredListingId}
-              onClick={() =>
-                router.push(
-                  `${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`
-                )
-              }
+              data-track-id={provider.sponsoredListingId}
+              onClick={() => handleClick(provider)}
               className="shrink-0 w-[220px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.96] transition-transform duration-150 shadow-[0_2px_12px_rgba(245,158,11,0.08)] border border-amber-100/60 dark:border-amber-900/30"
             >
               {/* Image */}
@@ -124,10 +169,10 @@ const SponsoredCarousel = ({
                 {/* Bottom badges */}
                 <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
                   {/* Distance pill */}
-                  {provider.distance != null && (
+                  {formatDistance(provider) && (
                     <div className="bg-white/95 backdrop-blur-sm text-slate-700 dark:text-slate-800 text-[9px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm">
                       <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
-                      {formatDistance(provider.distance)}
+                      {formatDistance(provider)}
                     </div>
                   )}
 

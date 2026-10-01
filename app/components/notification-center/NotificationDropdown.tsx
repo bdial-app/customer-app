@@ -32,7 +32,7 @@ import { useAppSelector } from "@/hooks/useAppStore";
 const TYPE_ICON: Record<NotificationType, { icon: string; color: string }> = {
   chat_message: { icon: chatbubbleOutline, color: "text-blue-500" },
   review_received: { icon: starOutline, color: "text-amber-500" },
-  provider_status: { icon: storefrontOutline, color: "text-teal-500" },
+  provider_status: { icon: storefrontOutline, color: "text-indigo-500" },
   verification_update: { icon: shieldCheckmarkOutline, color: "text-green-500" },
   booking_update: { icon: calendarOutline, color: "text-purple-500" },
   promotional: { icon: megaphoneOutline, color: "text-pink-500" },

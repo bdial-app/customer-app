@@ -40,6 +40,7 @@ import { validateVoucher } from "@/services/payment.service";
 import { usePayment } from "@/hooks/usePayment";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
+import { isFreeSponsorship, hasBudgetLeft } from "@/services/provider.service";
 
 const typeLabels: Record<string, string> = {
   carousel: "Carousel",
@@ -89,8 +90,10 @@ const ProviderSponsorTab = () => {
   }, [plans, isAppleIAP]);
 
   const now = new Date();
-  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > now && Number(s.spentAmount) < Number(s.budgetAmount)) ?? [];
-  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= now || Number(s.spentAmount) >= Number(s.budgetAmount)) ?? [];
+  // A free (admin-granted) boost has a ₹0 budget, so `spent < budget` is 0 < 0 —
+  // false — and it would never count as running. hasBudgetLeft exempts it.
+  const activeSponsorships = sponsorships?.filter((s) => s.isActive && new Date(s.endsAt) > now && hasBudgetLeft(s)) ?? [];
+  const pastSponsorships = sponsorships?.filter((s) => !s.isActive || new Date(s.endsAt) <= now || !hasBudgetLeft(s)) ?? [];
 
   // Placement types with a currently-running boost → block buying the same type
   // again so the provider can't pay twice for an overlapping boost.
@@ -239,7 +242,7 @@ const ProviderSponsorTab = () => {
       </div>
 
       {/* Payment Info */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800">
+      <div className="bg-gradient-to-r from-emerald-50 to-indigo-50 dark:from-emerald-900/30 dark:to-indigo-900/30 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
             <IonIcon icon={walletOutline} className="text-emerald-600 text-lg" />
@@ -332,7 +335,7 @@ const ProviderSponsorTab = () => {
                       placeholder="Enter voucher or promo code"
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherResult(null); }}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-300"
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-300"
                     />
                   </div>
                   <button
@@ -370,7 +373,7 @@ const ProviderSponsorTab = () => {
                 <button
                   onClick={handleCreateSponsorship}
                   disabled={isProcessing}
-                  className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {isProcessing ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -541,7 +544,7 @@ const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredList
                     <IonIcon icon={trendingUpOutline} className="text-[10px]" /> {bCtr}%
                   </span>
                   <span className="flex items-center gap-0.5">
-                    <IonIcon icon={walletOutline} className="text-[10px]" /> ₹{Number(b.spentAmount)}/₹{Number(b.budgetAmount)}
+                    <IonIcon icon={walletOutline} className="text-[10px]" /> {isFreeSponsorship(b) ? "Free" : `₹${Number(b.spentAmount)}/₹${Number(b.budgetAmount)}`}
                   </span>
                 </div>
                 <div className="h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
@@ -628,17 +631,17 @@ const PlanCard = ({ plan, onSelect, activeUntil }: { plan: SponsorshipPlan; onSe
         isActive
           ? "border-emerald-200 dark:border-emerald-800 opacity-80"
           : plan.recommended
-            ? "border-teal-200 shadow-lg shadow-teal-100/50 dark:border-teal-700 dark:shadow-teal-900/30"
+            ? "border-indigo-200 shadow-lg shadow-indigo-100/50 dark:border-indigo-700 dark:shadow-indigo-900/30"
             : "border-slate-100 dark:border-slate-700 hover:border-slate-200"
       }`}
     >
       {isActive ? (
-        <div className="absolute -top-2.5 right-4 inline-flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+        <div className="absolute -top-2.5 right-4 inline-flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-indigo-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
           <IonIcon icon={checkmarkCircle} className="text-[11px]" />
           ACTIVE
         </div>
       ) : plan.recommended ? (
-        <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+        <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-indigo-500 to-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
           RECOMMENDED
         </div>
       ) : null}
@@ -653,7 +656,7 @@ const PlanCard = ({ plan, onSelect, activeUntil }: { plan: SponsorshipPlan; onSe
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-slate-800 dark:text-white">{plan.name}</h4>
-            <span className="text-base font-bold text-teal-600">₹{plan.price}</span>
+            <span className="text-base font-bold text-indigo-600">₹{plan.price}</span>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{plan.duration} days · {typeLabels[plan.type]}</p>
           {isActive && (
@@ -675,7 +678,7 @@ const PlanCard = ({ plan, onSelect, activeUntil }: { plan: SponsorshipPlan; onSe
       {/* Expandable "How it works" section */}
       <button
         onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-        className="flex items-center gap-1 mt-3 text-[11px] font-semibold text-teal-600 dark:text-teal-400"
+        className="flex items-center gap-1 mt-3 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400"
       >
         <IonIcon icon={informationCircleOutline} className="text-sm" />
         How it helps you
@@ -736,7 +739,8 @@ const SponsorshipCard = ({
   const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const ctr = sponsorship.impressions > 0 ? ((sponsorship.clicks / sponsorship.impressions) * 100).toFixed(1) : "0.0";
   const isExpired = new Date(sponsorship.endsAt) <= new Date();
-  const isExhausted = spent >= budget;
+  const isFree = isFreeSponsorship(sponsorship);
+  const isExhausted = !isFree && spent >= budget;
 
   // Status badge text
   const getStatusLabel = () => {
@@ -781,16 +785,23 @@ const SponsorshipCard = ({
         </div>
       </div>
 
-      {/* Budget Progress */}
-      <div>
-        <div className="flex items-center justify-between text-[10px] mb-1">
-          <span className="text-slate-500 dark:text-slate-400">Budget Used</span>
-          <span className="font-semibold text-slate-700 dark:text-slate-300">₹{spent} / ₹{budget}</span>
+      {/* Budget Progress — complimentary boosts have no budget to show */}
+      {isFree ? (
+        <div className="flex items-center justify-between text-[10px] rounded-xl bg-amber-50 dark:bg-amber-900/20 px-2.5 py-2">
+          <span className="font-semibold text-amber-700 dark:text-amber-400">Complimentary boost from Tijarah</span>
+          <span className="font-semibold text-amber-700 dark:text-amber-400">No charge</span>
         </div>
-        <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-red-500" : "bg-gradient-to-r from-teal-400 to-teal-500"}`} style={{ width: `${progress}%` }} />
+      ) : (
+        <div>
+          <div className="flex items-center justify-between text-[10px] mb-1">
+            <span className="text-slate-500 dark:text-slate-400">Budget Used</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">₹{spent} / ₹{budget}</span>
+          </div>
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-red-500" : "bg-gradient-to-r from-indigo-400 to-indigo-500"}`} style={{ width: `${progress}%` }} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

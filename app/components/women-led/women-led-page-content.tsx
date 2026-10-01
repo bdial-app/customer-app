@@ -29,6 +29,7 @@ import {
   WomenLedProvider,
 } from "@/services/provider.service";
 import { getTopLevelCategories } from "@/services/category.service";
+import { distanceLabel } from "@/utils/distance-label";
 
 type SortOption = "rating" | "newest" | "reviews";
 
@@ -515,12 +516,10 @@ function ProviderCard({
                 <span className="truncate max-w-[100px]">{provider.location}</span>
               </span>
             )}
-            {provider.distance != null && (
+            {distanceLabel(provider) && (
               <span className="flex items-center gap-0.5 text-[10px] text-blue-500 dark:text-blue-400 font-semibold">
                 <IonIcon icon={navigateOutline} className="w-3 h-3 shrink-0" />
-                {provider.distance < 1
-                  ? `${Math.round(provider.distance * 1000)}m`
-                  : `${provider.distance.toFixed(1)} km`}
+                {distanceLabel(provider)}
               </span>
             )}
             {provider.reviewCount > 0 && (

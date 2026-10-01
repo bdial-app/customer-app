@@ -2,17 +2,11 @@
 import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { sparklesOutline, arrowForward, storefront } from "ionicons/icons";
+import { bagHandle, arrowForward, storefront } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { HomeFeedProduct, PersonalizedCategory } from "@/services/home.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
-
-const FALLBACK_REASONS = [
-  "Hand-picked for you",
-  "Matches your taste",
-  "You might love this",
-];
 
 const formatPrice = (price: number | null, currency: string) => {
   if (price == null) return null;
@@ -31,9 +25,17 @@ const PicksForYouProducts = ({
 }) => {
   const router = useRouter();
 
-  const topReason = useMemo(() => {
-    const firstCat = (personalizedCategories || []).find((c) => c && c.name);
-    return firstCat ? `Because you love ${firstCat.name}` : FALLBACK_REASONS[0];
+  // Name the categories instead of claiming "categories you love" — it is the
+  // same information, and it tells the customer why this section is here.
+  const fromCategories = useMemo(() => {
+    const names = (personalizedCategories || [])
+      .filter((c) => c && c.name)
+      .map((c) => c.name.trim())
+      .filter(Boolean);
+    if (names.length === 0) return "Hand-picked from categories you love";
+    const shown = names.slice(0, 2).join(", ");
+    const extra = names.length - Math.min(2, names.length);
+    return extra > 0 ? `From ${shown} & ${extra} more` : `From ${shown}`;
   }, [personalizedCategories]);
 
   const list = Array.isArray(products) ? products : [];
@@ -70,18 +72,18 @@ const PicksForYouProducts = ({
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, #F59E0B, #EC4899, #8B5CF6)",
-              boxShadow: "0 4px 14px rgba(236,72,153,0.30)",
+              background: "linear-gradient(135deg, #F59E0B, #F97316)",
+              boxShadow: "0 4px 14px rgba(245,158,11,0.30)",
             }}
           >
-            <IonIcon icon={sparklesOutline} className="text-white text-base" />
+            <IonIcon icon={bagHandle} className="text-white text-base" />
           </div>
           <div>
             <h2 className="text-[16px] font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight">
               Just for you
             </h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Hand-picked from categories you love
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+              {fromCategories}
             </p>
           </div>
         </div>
@@ -219,7 +221,7 @@ const PicksForYouProducts = ({
 
               {/* Service badge */}
               {product.productType === "service" && (
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold text-white bg-teal-500/90 backdrop-blur-sm">
+                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold text-white bg-indigo-500/90 backdrop-blur-sm">
                   Service
                 </div>
               )}

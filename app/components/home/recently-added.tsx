@@ -5,6 +5,7 @@ import { sparklesOutline, star, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
+import { distanceLabel } from "@/utils/distance-label";
 
 interface Provider {
   id: string | number;
@@ -83,20 +84,18 @@ const RecentlyAdded = ({
                     preset="card"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-indigo-50 dark:from-emerald-900/20 dark:to-indigo-900/20">
                     <span className="text-3xl font-bold text-emerald-200">{provider.name?.charAt(0)?.toUpperCase()}</span>
                   </div>
                 )}
                 {/* "New" badge */}
-                <div className="absolute top-2 left-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                <div className="absolute top-2 left-2 bg-gradient-to-r from-emerald-500 to-indigo-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                 New
                 </div>
-                {provider.distance != null && (
+                {distanceLabel(provider) && (
                   <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
                     <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
-                    {provider.distance < 1
-                      ? `${Math.round(provider.distance * 1000)}m`
-                      : `${provider.distance.toFixed(1)} km`}
+                    {distanceLabel(provider)}
                   </div>
                 )}
               </div>

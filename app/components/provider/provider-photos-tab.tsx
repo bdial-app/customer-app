@@ -97,10 +97,10 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
             whileTap={{ scale: 0.9 }}
             onClick={() => fileRef.current?.click()}
             disabled={isBusy}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 active:bg-teal-100 disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 active:bg-indigo-100 disabled:opacity-50"
           >
-            <IonIcon icon={addOutline} className="text-teal-600 text-sm" />
-            <span className="text-xs font-semibold text-teal-600">Add</span>
+            <IonIcon icon={addOutline} className="text-indigo-600 text-sm" />
+            <span className="text-xs font-semibold text-indigo-600">Add</span>
           </motion.button>
         )}
       </div>
@@ -125,9 +125,9 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
 
       {/* Upload progress */}
       {uploadMutation.isPending && (
-        <div className="mx-4 mb-3 px-4 py-3 bg-teal-50 dark:bg-teal-900/30 rounded-xl flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-teal-700 dark:text-teal-300 font-medium">Uploading photos...</span>
+        <div className="mx-4 mb-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">Uploading photos...</span>
         </div>
       )}
 
@@ -184,8 +184,8 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
       ) : (
         /* Empty State */
         <div className="px-4 py-12 text-center">
-          <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IonIcon icon={imagesOutline} className="text-4xl text-teal-400" />
+          <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <IonIcon icon={imagesOutline} className="text-4xl text-indigo-400" />
           </div>
           <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
             No photos yet
@@ -198,7 +198,7 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
               whileTap={{ scale: 0.95 }}
               onClick={() => fileRef.current?.click()}
               disabled={isBusy}
-              className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               <IonIcon icon={cloudUploadOutline} className="text-lg" />
               Upload Photos

@@ -11,7 +11,7 @@ interface PageSplashScreenProps {
 const GRADIENTS = {
   brand: "from-[#0f3460] via-[#1a1a2e] to-[#16213e]",
   analytics: "from-slate-900 via-slate-900 to-slate-800",
-  business: "from-teal-700 via-teal-600 to-emerald-600",
+  business: "from-indigo-700 via-indigo-600 to-emerald-600",
 };
 
 export default function PageSplashScreen({

@@ -139,7 +139,7 @@ export function PhoneOtpVerifier({
               type="button"
               onClick={handleSendOtp}
               disabled={sendOtpMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 transition-colors active:bg-teal-600"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm disabled:opacity-50 transition-colors active:bg-indigo-700"
             >
               {sendOtpMutation.isPending ? (
                 <>
@@ -187,7 +187,7 @@ export function PhoneOtpVerifier({
                     value={otp[i] || ""}
                     onChange={(e) => handleOtpChange(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
-                    className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:border-teal-500 dark:focus:border-teal-400 focus:ring-2 focus:ring-teal-100 dark:focus:ring-teal-900/40 outline-none transition-all"
+                    className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 outline-none transition-all"
                   />
                 ))}
               </div>
@@ -199,7 +199,7 @@ export function PhoneOtpVerifier({
               type="button"
               onClick={() => { if (otp.length === 6) onVerified(otp); }}
               disabled={otp.length !== 6 || isPending}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 transition-colors active:bg-teal-600"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm disabled:opacity-50 transition-colors active:bg-indigo-700"
             >
               {isPending ? (
                 <>

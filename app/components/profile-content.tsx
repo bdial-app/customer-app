@@ -25,6 +25,7 @@ import {
   documentTextOutline,
   informationCircleOutline,
   helpCircleOutline,
+  sparklesOutline,
   mailOutline,
   logOutOutline,
   trashOutline,
@@ -50,6 +51,8 @@ import { useTheme } from "../context/ThemeContext";
 import { LanguageSelector, LanguageMenuButton } from "./language-selector";
 import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
+import { resetWelcomeTour } from "@/utils/welcome-tour";
+import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import {
   setProfile as setReduxProfile,
@@ -656,6 +659,14 @@ const ProfileContent = memo(() => {
           {/* Support */}
           <MenuSection title="Support">
             <MenuRow
+              icon={sparklesOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="How Tijarah works"
+              sublabel="Watch the 30-second tour again"
+              onClick={() => { resetWelcomeTour(); router.push(ROUTE_PATH.HOME); }}
+            />
+            <MenuRow
               icon={helpCircleOutline}
               iconColor="text-indigo-500"
               iconBg="bg-indigo-50"
@@ -965,7 +976,7 @@ const ProfileContent = memo(() => {
                       whileTap={{ scale: 0.95 }}
                       onClick={handleEnableProvider}
                       disabled={isDisablingProvider || !canReEnable}
-                      className="mt-3 px-4 py-2 bg-teal-500 text-white text-xs font-bold rounded-xl disabled:opacity-50"
+                      className="mt-3 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl disabled:opacity-50"
                     >
                       {isDisablingProvider
                         ? "Enabling..."
@@ -1015,8 +1026,8 @@ const ProfileContent = memo(() => {
                 {providerStatus === "disabled" ? (
                   <MenuRow
                     icon={eyeOutline}
-                    iconColor="text-teal-500"
-                    iconBg="bg-teal-50"
+                    iconColor="text-indigo-500"
+                    iconBg="bg-indigo-50"
                     label={canReEnable ? "Re-enable Business" : `Re-enable in ${cooldownRemaining}h`}
                     sublabel={canReEnable ? "Make your profile visible again" : "Cooldown period active"}
                     onClick={canReEnable ? handleEnableProvider : undefined}
@@ -1107,6 +1118,14 @@ const ProfileContent = memo(() => {
 
           {/* ── Support Section ──────────────────────────────────── */}
           <MenuSection title="Support">
+            <MenuRow
+              icon={sparklesOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="How Tijarah works"
+              sublabel="Watch the 30-second tour again"
+              onClick={() => { resetWelcomeTour(); router.push(ROUTE_PATH.HOME); }}
+            />
             <MenuRow
               icon={helpCircleOutline}
               iconColor="text-indigo-500"

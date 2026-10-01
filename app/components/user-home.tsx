@@ -46,7 +46,8 @@ const LazyFallback = () => (
 const mapProvider = (p: any) => ({
   id: p.id,
   name: p.name,
-  image: p.image || p.bannerImage || p.profilePhotoUrl || "",
+  // The logo leads on the card; the banner is only a fallback.
+  image: p.image || p.profilePhotoUrl || p.bannerImage || "",
   service: p.services || undefined,
   rating: p.rating || 0,
   reviews: p.reviewCount || 0,
@@ -437,7 +438,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                             </span>
                           ) : <span />}
                           {(product as any).productType === "service" && (
-                            <span className="px-2 py-0.5 rounded-lg bg-teal-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
+                            <span className="px-2 py-0.5 rounded-lg bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
                               🛠️ Service
                             </span>
                           )}

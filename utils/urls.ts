@@ -44,6 +44,7 @@ export const PROVIDER_URLS = {
   WOMEN_LED: "/providers/women-led",
   BY_ID: (id: string) => `/providers/${id}`,
   DETAILS: (id: string) => `/providers/${id}/details`,
+  INSTAGRAM: (id: string) => `/providers/${id}/instagram`,
   UPDATE: (id: string) => `/providers/${id}`,
   BECOME_PROVIDER: "/providers/become-provider",
   MY_STATUS: "/providers/my-status",

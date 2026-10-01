@@ -111,21 +111,21 @@ function UnifiedCategoryPicker({
           <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">— helps customers find you</span>
         </label>
         {hasSelection ? (
-          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl">
-            <IonIcon icon={layersOutline} className="text-teal-500 text-base shrink-0" />
+          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+            <IonIcon icon={layersOutline} className="text-indigo-500 text-base shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-teal-700 dark:text-teal-300 truncate">{displayName}</p>
+              <p className="text-[13px] font-semibold text-indigo-700 dark:text-indigo-300 truncate">{displayName}</p>
               {displayParent && (
-                <p className="text-[10px] text-teal-500/70 dark:text-teal-400/50 truncate">in {displayParent}</p>
+                <p className="text-[10px] text-indigo-500/70 dark:text-indigo-400/50 truncate">in {displayParent}</p>
               )}
             </div>
             <button type="button" onClick={handleClear} className="shrink-0 p-0.5">
-              <IonIcon icon={closeCircle} className="text-teal-400 dark:text-teal-600 text-lg" />
+              <IonIcon icon={closeCircle} className="text-indigo-400 dark:text-indigo-600 text-lg" />
             </button>
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="shrink-0 text-[11px] font-semibold text-teal-600 dark:text-teal-400"
+              className="shrink-0 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400"
             >
               Change
             </button>
@@ -134,7 +134,7 @@ function UnifiedCategoryPicker({
           <button
             type="button"
             onClick={() => { setIsOpen(true); setTimeout(() => searchInputRef.current?.focus(), 150); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-left transition-colors active:border-teal-300"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-left transition-colors active:border-indigo-300"
           >
             <IonIcon icon={searchOutline} className="text-slate-400 dark:text-slate-500 text-base" />
             <span className="text-sm text-slate-400 dark:text-slate-500">Search & select a category...</span>
@@ -159,7 +159,7 @@ function UnifiedCategoryPicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder='Try "rida", "stitching", "salon"...'
-          className="w-full pl-9 pr-9 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-teal-300 dark:border-teal-700 rounded-xl focus:outline-none focus:border-teal-400 text-slate-800 dark:text-white placeholder:text-slate-400"
+          className="w-full pl-9 pr-9 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-indigo-300 dark:border-indigo-700 rounded-xl focus:outline-none focus:border-indigo-400 text-slate-800 dark:text-white placeholder:text-slate-400"
           autoFocus
         />
         {search && (
@@ -175,7 +175,7 @@ function UnifiedCategoryPicker({
           /* ── Search results ── */
           isSearching ? (
             <div className="flex items-center justify-center py-6">
-              <div className="w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : results.length === 0 ? (
             <div className="py-6 text-center">
@@ -196,19 +196,19 @@ function UnifiedCategoryPicker({
                     r.parentName || "",
                   )}
                   className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors ${
-                    isActive ? "bg-teal-50 dark:bg-teal-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    isActive ? "bg-indigo-50 dark:bg-indigo-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${r.parentId ? "bg-teal-400" : "bg-slate-300"}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${r.parentId ? "bg-indigo-400" : "bg-slate-300"}`} />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-xs truncate ${isActive ? "font-semibold text-teal-700 dark:text-teal-300" : "text-slate-700 dark:text-slate-300"}`}>
+                    <p className={`text-xs truncate ${isActive ? "font-semibold text-indigo-700 dark:text-indigo-300" : "text-slate-700 dark:text-slate-300"}`}>
                       {r.name}
                     </p>
                     {r.parentName && (
                       <p className="text-[10px] text-slate-400 truncate">in {r.parentName}</p>
                     )}
                   </div>
-                  {isActive && <IonIcon icon={checkmarkCircle} className="text-teal-500 text-sm shrink-0" />}
+                  {isActive && <IonIcon icon={checkmarkCircle} className="text-indigo-500 text-sm shrink-0" />}
                 </button>
               );
             })
@@ -230,7 +230,7 @@ function UnifiedCategoryPicker({
                       type="button"
                       onClick={() => setExpandedParent(isExpanded ? null : cat.id)}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 text-left border-b border-slate-100 dark:border-slate-700 transition-colors ${
-                        isParentActive ? "bg-teal-50 dark:bg-teal-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                        isParentActive ? "bg-indigo-50 dark:bg-indigo-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                       }`}
                     >
                       <IonIcon
@@ -243,7 +243,7 @@ function UnifiedCategoryPicker({
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleSelect(cat.id, "", cat.name, "", ""); }}
-                        className="text-[10px] font-semibold text-teal-500 dark:text-teal-400 px-2 py-1 rounded-lg bg-teal-50 dark:bg-teal-900/30 shrink-0 active:bg-teal-100"
+                        className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 shrink-0 active:bg-indigo-100"
                       >
                         Select
                       </button>
@@ -252,7 +252,7 @@ function UnifiedCategoryPicker({
                       <div className="bg-slate-50/50 dark:bg-slate-900/30">
                         {subs.length === 0 ? (
                           <div className="flex items-center gap-2 px-8 py-2">
-                            <div className="w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
                             <span className="text-[11px] text-slate-400">Loading...</span>
                           </div>
                         ) : (
@@ -264,16 +264,16 @@ function UnifiedCategoryPicker({
                                 type="button"
                                 onClick={() => handleSelect(cat.id, sub.id, cat.name, sub.name, cat.name)}
                                 className={`w-full flex items-center gap-2 pl-8 pr-3 py-2 text-left transition-colors ${
-                                  isSubActive ? "bg-teal-50 dark:bg-teal-900/20" : "hover:bg-white dark:hover:bg-slate-700/50"
+                                  isSubActive ? "bg-indigo-50 dark:bg-indigo-900/20" : "hover:bg-white dark:hover:bg-slate-700/50"
                                 }`}
                               >
-                                <span className="w-1 h-1 rounded-full bg-teal-400 shrink-0" />
+                                <span className="w-1 h-1 rounded-full bg-indigo-400 shrink-0" />
                                 <span className={`text-xs flex-1 truncate ${
-                                  isSubActive ? "font-semibold text-teal-700 dark:text-teal-300" : "text-slate-600 dark:text-slate-400"
+                                  isSubActive ? "font-semibold text-indigo-700 dark:text-indigo-300" : "text-slate-600 dark:text-slate-400"
                                 }`}>
                                   {sub.name}
                                 </span>
-                                {isSubActive && <IonIcon icon={checkmarkCircle} className="text-teal-500 text-xs shrink-0" />}
+                                {isSubActive && <IonIcon icon={checkmarkCircle} className="text-indigo-500 text-xs shrink-0" />}
                               </button>
                             );
                           })
@@ -451,7 +451,7 @@ const ProviderProductsTab = ({
               📦 {products.filter(p => p.productType !== "service").length} Products
             </span>
             {products.some(p => p.productType === "service") && (
-              <span className="shrink-0 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-900/30 text-[11px] font-semibold text-teal-600 dark:text-teal-400">
+              <span className="shrink-0 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
                 🛠️ {products.filter(p => p.productType === "service").length} Services
               </span>
             )}
@@ -536,7 +536,7 @@ const ProviderProductsTab = ({
                         <span className="text-slate-200 dark:text-slate-600">·</span>
                         <span className={`text-[10px] font-semibold ${
                           isService
-                            ? "text-teal-500 dark:text-teal-400"
+                            ? "text-indigo-500 dark:text-indigo-400"
                             : "text-slate-400 dark:text-slate-500"
                         }`}>
                           {isService ? "Service" : "Product"}
@@ -562,8 +562,8 @@ const ProviderProductsTab = ({
         </div>
       ) : (
         <div className="px-4 py-12 text-center">
-          <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IonIcon icon={cubeOutline} className="text-4xl text-teal-400" />
+          <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <IonIcon icon={cubeOutline} className="text-4xl text-indigo-400" />
           </div>
           <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
             No products or services yet
@@ -575,7 +575,7 @@ const ProviderProductsTab = ({
             whileTap={{ scale: 0.95 }}
             onClick={handleAdd}
             disabled={!providerId}
-            className="px-5 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
           >
             <IonIcon icon={addOutline} className="text-lg" />
             Add Product or Service
@@ -583,16 +583,22 @@ const ProviderProductsTab = ({
         </div>
       )}
 
-      {/* FAB */}
-      {products.length > 0 && providerId && (
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={handleAdd}
-          className="fixed right-5 bottom-28 z-20 w-14 h-14 rounded-2xl bg-teal-500 text-white shadow-lg shadow-teal-500/25 flex items-center justify-center"
-        >
-          <IonIcon icon={addOutline} className="text-2xl" />
-        </motion.button>
-      )}
+      {/* FAB — rendered into <body>. A `fixed` element inside a transformed
+          ancestor (framer-motion sets transform while animating) positions
+          against that ancestor instead of the viewport, which made this drift
+          up the page as you scrolled. */}
+      {products.length > 0 && providerId && typeof document !== "undefined" &&
+        createPortal(
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleAdd}
+            aria-label="Add a product or service"
+            className="fixed right-5 bottom-28 z-[60] w-14 h-14 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 flex items-center justify-center"
+          >
+            <IonIcon icon={addOutline} className="text-2xl" />
+          </motion.button>,
+          document.body,
+        )}
 
       <div className="h-20" />
 
@@ -723,7 +729,7 @@ const ProviderProductsTab = ({
                             className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
                               values.productType === t
                                 ? t === "service"
-                                  ? "bg-teal-50 dark:bg-teal-900/30 border-teal-400 text-teal-700 dark:text-teal-400"
+                                  ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-400 text-indigo-700 dark:text-indigo-400"
                                   : "bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-400"
                                 : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600"
                             }`}
@@ -758,7 +764,7 @@ const ProviderProductsTab = ({
                           </div>
                         ))}
                         {photoPreviews.length < 5 && (
-                          <label className="w-20 h-20 rounded-xl border-2 border-dashed border-teal-300 bg-teal-50/50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-colors active:scale-95">
+                          <label className="w-20 h-20 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors active:scale-95">
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -767,8 +773,8 @@ const ProviderProductsTab = ({
                               className="hidden"
                               onChange={handlePhotoSelect}
                             />
-                            <IonIcon icon={cameraOutline} className="text-lg text-teal-500" />
-                            <span className="text-[9px] text-teal-600 mt-0.5 font-medium">Add</span>
+                            <IonIcon icon={cameraOutline} className="text-lg text-indigo-500" />
+                            <span className="text-[9px] text-indigo-600 mt-0.5 font-medium">Add</span>
                           </label>
                         )}
                       </div>
@@ -791,7 +797,7 @@ const ProviderProductsTab = ({
                       <Field
                         name="name"
                         placeholder="e.g. Custom Rida, Bridal Mehendi, AC Repair"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-colors"
                       />
                       <ErrorMessage name="name" component="p" className="text-[10px] text-red-500 mt-1" />
                     </div>
@@ -806,7 +812,7 @@ const ProviderProductsTab = ({
                         name="price"
                         type="number"
                         placeholder="e.g. 1500 (leave blank if price varies)"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-colors"
                       />
                     </div>
 
@@ -818,7 +824,7 @@ const ProviderProductsTab = ({
                         name="description"
                         rows={3}
                         placeholder="Describe what's included, delivery time, materials used..."
-                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors resize-none"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-colors resize-none"
                       />
                     </div>
 
@@ -838,7 +844,7 @@ const ProviderProductsTab = ({
                                 !hasPrice
                                   ? "bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed"
                                   : values.currency === c
-                                    ? "bg-teal-500 text-white border-teal-500"
+                                    ? "bg-indigo-500 text-white border-indigo-500"
                                     : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600"
                               }`}
                             >
@@ -875,7 +881,7 @@ const ProviderProductsTab = ({
                       <Field
                         name="keywords"
                         placeholder="e.g. rida, abaya, custom stitching (comma-separated)"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-colors"
                       />
                       <p className="text-[10px] text-slate-400 mt-1">Separate with commas. These help your product show in search.</p>
                     </div>
@@ -909,7 +915,7 @@ const ProviderProductsTab = ({
                       <button
                         type="submit"
                         disabled={!isValid || (!dirty && photoFiles.length === 0 && !editing) || isSaving}
-                        className="w-full py-3.5 rounded-xl bg-teal-500 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full py-3.5 rounded-xl bg-indigo-500 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {isSaving ? (
                           <>

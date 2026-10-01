@@ -11,6 +11,7 @@ import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import CategoryIcon from "@/app/components/ui/category-icon";
 import { GRADIENT_PALETTE } from "@/app/components/ui/category-icon";
 import OptimizedImage from "@/app/components/ui/optimized-image";
+import { distanceLabel } from "@/utils/distance-label";
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -403,12 +404,10 @@ export default function CategoriesPage() {
                             <BadgeCheck size={8} /> Verified
                           </div>
                         )}
-                        {provider.distance != null && (
+                        {distanceLabel(provider) && (
                           <div className="absolute bottom-1.5 left-1.5 bg-white/90 backdrop-blur-sm text-slate-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
                             <MapPin size={8} className="text-amber-500" />
-                            {provider.distance < 1
-                              ? `${Math.round(provider.distance * 1000)}m`
-                              : `${provider.distance.toFixed(1)} km`}
+                            {distanceLabel(provider)}
                           </div>
                         )}
                       </div>

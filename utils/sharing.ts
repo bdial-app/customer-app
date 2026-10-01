@@ -32,6 +32,26 @@ export function getAppDownloadLink(): string {
 }
 
 /**
+ * Look a place up by name on Maps, for businesses we have no exact pin for.
+ * Better than navigating someone to a city centre we guessed.
+ */
+export function openPlaceSearch(query: string) {
+  const q = encodeURIComponent(query.trim());
+  if (!q) return;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    window.location.href = `maps://maps.apple.com/?q=${q}`;
+  } else {
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${q}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+}
+
+/**
  * Open directions to a location in Google Maps.
  * On mobile: tries to open the native Maps app.
  * On desktop: opens Google Maps in a new tab.
