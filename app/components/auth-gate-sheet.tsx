@@ -5,6 +5,7 @@ import { useField, Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { useSendOtp, useRegistrationSendOtp, useCreateAccountMutation } from "@/hooks/useAuth";
 import { verifyOtp as verifyOtpDirect, googleSignIn as googleSignInDirect } from "@/services/auth.service";
+import type { CreateAccountPayload } from "@/services/auth.service";
 import { useAppDispatch } from "@/hooks/useAppStore";
 import { setToken, setProfile } from "@/store/slices/authSlice";
 import { useNotification } from "@/app/context/NotificationContext";
@@ -27,6 +28,7 @@ import { CITY_NAMES } from "@/app/data/locations";
 import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/geocode.service";
 import type { SearchGeocodeResult } from "@/services/geocode.service";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { isAxiosError } from "axios";
 
 // ─── Constants ──────────────────────────────────────────────────
 // TODO: Re-enable when native Google + Apple SSO are implemented
@@ -36,8 +38,29 @@ const MINI_MAP_STYLE = { width: "100%", height: "100%" };
 // ─── Types ──────────────────────────────────────────────────────
 type Step = "mobile" | "otp" | "register-otp" | "details";
 
+interface AuthFormValues {
+  mobile: string;
+  otp: string;
+  name: string;
+  gender: string;
+  city: string;
+  area: string;
+  pincode: string;
+}
+
+/** Error body the auth endpoints send back (OTP rate limiting, etc). */
+interface AuthErrorBody {
+  error_code?: string;
+  retryAfterSeconds?: number;
+  message?: string;
+}
+
+function authErrorBody(err: unknown): AuthErrorBody | undefined {
+  return isAxiosError<AuthErrorBody>(err) ? err.response?.data : undefined;
+}
+
 // ─── Validation Schemas ─────────────────────────────────────────
-const schemas: Record<Step, Yup.ObjectSchema<any>> = {
+const schemas: Record<Step, Yup.AnyObjectSchema> = {
   mobile: Yup.object({
     mobile: Yup.string().matches(/^\d{10}$/, "Enter valid 10 digit number").required("Required"),
   }),
@@ -99,7 +122,7 @@ function InlineInput({
 
 // ─── Dark Gender Selector ───────────────────────────────────────
 function GenderSelector() {
-  const { values, setFieldValue, touched, errors } = useFormikContext<any>();
+  const { values, setFieldValue, touched, errors } = useFormikContext<AuthFormValues>();
   const genders = [
     { value: "male", label: "Male", icon: "/icons/gender-male.png" },
     { value: "female", label: "Female", icon: "/icons/gender-female.png" },
@@ -135,7 +158,7 @@ function GenderSelector() {
 
 // ─── Dark City Selector ─────────────────────────────────────────
 function CitySelector() {
-  const { values, setFieldValue, touched, errors, setFieldTouched } = useFormikContext<any>();
+  const { values, setFieldValue, touched, errors, setFieldTouched } = useFormikContext<AuthFormValues>();
   const [cityOpen, setCityOpen] = useState(false);
   const [citySearch, setCitySearch] = useState("");
   const filteredCities = CITY_NAMES.filter((c) => c.toLowerCase().includes(citySearch.toLowerCase()));
@@ -198,7 +221,7 @@ function AuthGateSheetContent() {
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
 
   // Ref to access Formik setFieldValue from outside the render prop
-  const setFieldValueRef = useRef<((field: string, value: any) => void) | null>(null);
+  const setFieldValueRef = useRef<((field: string, value: string) => void) | null>(null);
 
   const dispatch = useAppDispatch();
   const pendingTokenRef = useRef<string | null>(null);
@@ -248,11 +271,12 @@ function AuthGateSheetContent() {
       } catch {
         // Reverse geocode failed silently — user can fill manually
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Denied flow surfaces the global LocationDeniedSheet with a Settings link;
       // only toast for other geolocation failures (timeout, services off, etc).
       const { LOCATION_PERMISSION_DENIED } = await import("@/utils/geolocation");
-      if (err?.code !== LOCATION_PERMISSION_DENIED) {
+      const code = typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
+      if (code !== LOCATION_PERMISSION_DENIED) {
         notify({ title: "Location Required", subtitle: "Could not determine your location. Please try again.", variant: "warning" });
       }
     } finally {
@@ -325,8 +349,8 @@ function AuthGateSheetContent() {
   const handleAuthSubmit = async (
     validateForm: () => Promise<Record<string, string>>,
     setTouched: (t: Record<string, boolean>) => void,
-    values: any,
-    setFieldValue: (f: string, v: any) => void,
+    values: AuthFormValues,
+    setFieldValue: (f: string, v: string) => void,
   ) => {
     const errors = await validateForm();
     if (Object.keys(errors).length) {
@@ -357,7 +381,7 @@ function AuthGateSheetContent() {
         setIsVerifying(true);
         try {
           const res = await verifyOtpDirect({ mobileNumber: values.mobile, otp: values.otp });
-          const jwt = (res as any).accessToken ?? (res as any).token;
+          const jwt = res.accessToken ?? res.token;
           // Clear previous user's provider view state so it doesn't leak across logins
           removeItemSync("tijarah_user_mode");
           removeItemSync("tijarah_provider_status");
@@ -389,7 +413,7 @@ function AuthGateSheetContent() {
           notify({ title: "Invalid name", subtitle: "Your name contains inappropriate language. Please revise.", variant: "error" });
           return;
         }
-        const payload: Record<string, any> = {
+        const payload: CreateAccountPayload = {
           name: trimmedName,
           gender: values.gender,
         };
@@ -405,7 +429,7 @@ function AuthGateSheetContent() {
         if (pendingTokenRef.current) {
           setItemSync("token", pendingTokenRef.current);
         }
-        await createAccountMutation.mutateAsync(payload as any);
+        await createAccountMutation.mutateAsync(payload);
         // createAccountMutation.onSuccess dispatches setProfile(user) — user now has a name.
         // Now also dispatch the JWT token to Redux so the user is fully authenticated.
         if (pendingTokenRef.current) {
@@ -415,8 +439,8 @@ function AuthGateSheetContent() {
         notify({ title: "Welcome!", subtitle: `Account created for ${values.name}`, variant: "success" });
         // AuthGateContext auto-closes because user.name is now set
       }
-    } catch (err: any) {
-      const data = err?.response?.data;
+    } catch (err: unknown) {
+      const data = authErrorBody(err);
       if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
         setResendCountdown(data.retryAfterSeconds);
         if (step === "mobile") setStep("otp");
@@ -427,7 +451,7 @@ function AuthGateSheetContent() {
     }
   };
 
-  const handleResendOtp = async (mobile: string, setFieldValue: (f: string, v: any) => void) => {
+  const handleResendOtp = async (mobile: string, setFieldValue: (f: string, v: string) => void) => {
     try {
       const isRegistration = step === "register-otp";
       const mutation = isRegistration ? regSendOtp : sendOtp;
@@ -436,8 +460,8 @@ function AuthGateSheetContent() {
       setFieldValue("otp", "");
       setResendCountdown(60);
       notify({ title: "OTP Resent", subtitle: code ? `Your new code: ${code}` : "Check your messages", variant: "success", duration: 10000 });
-    } catch (err: any) {
-      const data = err?.response?.data;
+    } catch (err: unknown) {
+      const data = authErrorBody(err);
       if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
         setResendCountdown(data.retryAfterSeconds);
         notify({ title: "Please wait", subtitle: `Resend available in ${data.retryAfterSeconds}s`, variant: "warning" });
@@ -456,7 +480,7 @@ function AuthGateSheetContent() {
         const info = await r.json();
         setIsVerifying(true);
         const res = await googleSignInDirect({ email: info.email, name: info.name, googleId: info.sub });
-        const jwt = (res as any).accessToken ?? (res as any).token;
+        const jwt = res.accessToken ?? res.token;
         if (res.user?.name) {
           if (jwt) {
             setItemSync("token", jwt);
@@ -472,8 +496,8 @@ function AuthGateSheetContent() {
           }
           setStep("details");
         }
-      } catch (err: any) {
-        notify({ title: "Google Sign-In failed", subtitle: err?.response?.data?.message ?? "Please try again", variant: "error" });
+      } catch (err: unknown) {
+        notify({ title: "Google Sign-In failed", subtitle: authErrorBody(err)?.message ?? "Please try again", variant: "error" });
       } finally {
         setIsVerifying(false);
       }

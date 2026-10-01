@@ -126,9 +126,11 @@ const StepProgress = ({
   );
 };
 
+type CreateAccountValues = ReturnType<typeof useCreateAccount>["initialValues"];
+
 // ─── Gender Selector ────────────────────────────────────────────
 const GenderSelector = () => {
-  const { values, setFieldValue, touched, errors } = useFormikContext<any>();
+  const { values, setFieldValue, touched, errors } = useFormikContext<CreateAccountValues>();
   const genders = [
     { value: "male", label: "Male", icon: "/icons/gender-male.png" },
     { value: "female", label: "Female", icon: "/icons/gender-female.png" },
@@ -188,7 +190,7 @@ const GenderSelector = () => {
 // ─── City Selector ──────────────────────────────────────────────
 const CitySelector = () => {
   const { values, setFieldValue, touched, errors, setFieldTouched } =
-    useFormikContext<any>();
+    useFormikContext<CreateAccountValues>();
   const [cityOpen, setCityOpen] = useState(false);
   const [citySearch, setCitySearch] = useState("");
 
@@ -298,7 +300,7 @@ const CitySelector = () => {
 // ─── Location Details ──────────────────────────────────────────
 const LocationFields = () => {
   const { values, setFieldValue, touched, errors, setFieldTouched } =
-    useFormikContext<any>();
+    useFormikContext<CreateAccountValues>();
 
   return (
     <>

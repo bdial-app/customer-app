@@ -21,14 +21,20 @@ function detectPlatform(): Platform {
   return "web";
 }
 
+type CapacitorWindow = Window & {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
+
+type StandaloneNavigator = Navigator & { standalone?: boolean };
+
 function detectRuntime(): Runtime {
   if (typeof window === "undefined") return "browser";
   // Capacitor injects this global
-  if ((window as any).Capacitor?.isNativePlatform?.()) return "capacitor";
+  if ((window as CapacitorWindow).Capacitor?.isNativePlatform?.()) return "capacitor";
   // Standalone PWA mode
   if (
     window.matchMedia("(display-mode: standalone)").matches ||
-    (navigator as any).standalone === true
+    (navigator as StandaloneNavigator).standalone === true
   ) {
     return "pwa";
   }

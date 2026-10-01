@@ -19,7 +19,7 @@ import { useSearchSuggestions } from "@/hooks/useSearch";
 import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { ROUTE_PATH } from "@/utils/contants";
-import type { SearchSuggestion } from "@/services/search.service";
+import type { SearchSuggestion, SearchSortBy } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
 import SuggestionList from "./suggestion-list";
@@ -49,7 +49,7 @@ const SearchPageContent = () => {
   const debouncedQuery = useDebounce(query, 150);
   const [isFocused, setIsFocused] = useState(!initialQ);
 
-  const user = useAppSelector((s) => s.auth.user as any);
+  const user = useAppSelector((s) => s.auth.user);
   const lat = user?.latitude;
   const lng = user?.longitude;
 
@@ -64,7 +64,7 @@ const SearchPageContent = () => {
     const womenLed = searchParams.get("womenLedOnly");
 
     if (catIds) dispatch(setCategoryIds(catIds.split(",").filter(Boolean)));
-    if (sortBy && ["relevance", "distance", "rating", "newest"].includes(sortBy)) dispatch(setSortBy(sortBy as any));
+    if (sortBy && ["relevance", "distance", "rating", "newest"].includes(sortBy)) dispatch(setSortBy(sortBy as SearchSortBy));
     if (minRating) dispatch(setMinRating(parseFloat(minRating)));
     if (maxDistance) dispatch(setMaxDistance(parseFloat(maxDistance)));
     if (verified === "true") dispatch(setVerifiedOnly(true));

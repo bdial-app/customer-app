@@ -11,9 +11,20 @@ import {
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { distanceLabel } from "@/utils/distance-label";
+import { distanceLabel, type HasDistance } from "@/utils/distance-label";
 
-const ProviderList = ({ providerList }: { providerList: any[] }) => {
+export interface ProviderListItem extends HasDistance {
+  id: string;
+  name?: string;
+  image?: string | null;
+  service?: string | null;
+  rating?: number | null;
+  reviews?: number | null;
+  verified?: boolean;
+  womenLed?: boolean;
+}
+
+const ProviderList = ({ providerList }: { providerList: ProviderListItem[] }) => {
   const router = useRouter();
 
   const handleNavigate = (id: string) => {
@@ -23,7 +34,7 @@ const ProviderList = ({ providerList }: { providerList: any[] }) => {
   return (
     <div className="px-4 pb-4">
       <div className="grid grid-cols-2 gap-3">
-        {providerList.map((provider: any, index: number) => (
+        {providerList.map((provider: ProviderListItem, index: number) => (
           <motion.div
             key={provider.id}
             initial={{ opacity: 0, y: 16 }}

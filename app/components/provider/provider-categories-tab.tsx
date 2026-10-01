@@ -241,7 +241,7 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
                   }`}
                 >
                   {/* Icon */}
-                  <CategoryIcon icon={cat.icon} iconColor={(cat as any).iconColor} imageUrl={(cat as any).imageUrl} name={cat.name} size="xs" />
+                  <CategoryIcon icon={cat.icon} iconColor={cat.iconColor} imageUrl={cat.imageUrl} name={cat.name} size="xs" />
 
                   {/* Name */}
                   <span className="flex-1 text-left text-sm font-medium text-slate-700 dark:text-slate-200">

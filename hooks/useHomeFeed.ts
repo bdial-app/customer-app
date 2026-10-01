@@ -20,7 +20,7 @@ export const useHomeFeed = (params?: {
     gcTime: 10 * 60 * 1000, // 10 minutes — keeps data in cache longer
     refetchOnWindowFocus: false,
     refetchOnMount: "always", // Always refetch on mount to avoid stale/corrupt cache
-    placeholderData: (prev: any) => prev, // Show stale data instantly while revalidating
+    placeholderData: (prev) => prev, // Show stale data instantly while revalidating
     retry: (failureCount, error) => {
       // Retry up to 2 times on network/timeout errors (common on mobile data)
       if (isNetworkError(error)) return failureCount < 2;

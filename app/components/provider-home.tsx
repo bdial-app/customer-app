@@ -164,7 +164,7 @@ const ProviderHome = () => {
 
   // Photos State
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
-  const [providerPhotos, setProviderPhotos] = useState<any[]>([1]); // Mock data: [1] means has photos. [] means empty.
+  const [providerPhotos, setProviderPhotos] = useState<unknown[]>([1]); // Mock data: [1] means has photos. [] means empty.
 
   const handleAddProduct = () => {
     setEditingProduct(null);

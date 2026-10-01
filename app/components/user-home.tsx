@@ -23,6 +23,7 @@ import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
 import { useHomeFeed } from "@/hooks/useHomeFeed";
+import type { HomeProvider } from "@/services/home.service";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import OfflineFallback from "./offline-fallback";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -43,7 +44,15 @@ const LazyFallback = () => (
   <div className="h-[200px] mx-4 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
 );
 
-const mapProvider = (p: any) => ({
+/** Home-feed providers; some endpoints also send these card fields. */
+type FeedProvider = HomeProvider & {
+  profilePhotoUrl?: string | null;
+  bannerImage?: string | null;
+  isWomenLed?: boolean;
+  womenLed?: boolean;
+};
+
+const mapProvider = (p: FeedProvider) => ({
   id: p.id,
   name: p.name,
   // The logo leads on the card; the banner is only a fallback.
@@ -55,7 +64,8 @@ const mapProvider = (p: any) => ({
   location: p.location || undefined,
   verified: p.verified || false,
   womenLed: p.isWomenLed || p.womenLed || false,
-  distance: p.distance,
+  // Cards read null and undefined the same way (no distance known).
+  distance: p.distance ?? undefined,
 });
 
 const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?: boolean; selectedCity?: string | null }) => {
@@ -108,44 +118,32 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
   }, [queryClient]);
 
   // Memoize mapped providers to avoid re-creating on every render
+  const nearbyProvidersRaw = feed?.nearbyProviders;
   const nearbyProviders = useMemo(
-    () =>
-      (Array.isArray(feed?.nearbyProviders) ? feed.nearbyProviders : []).map(
-        mapProvider,
-      ),
-    [feed?.nearbyProviders],
+    () => (Array.isArray(nearbyProvidersRaw) ? nearbyProvidersRaw : []).map(mapProvider),
+    [nearbyProvidersRaw],
   );
   const featuredCategory = feed?.featuredCategory;
+  const featuredProvidersRaw = featuredCategory?.providers;
   const featuredProviders = useMemo(
-    () =>
-      (Array.isArray(featuredCategory?.providers)
-        ? featuredCategory.providers
-        : []
-      ).map(mapProvider),
-    [featuredCategory?.providers],
+    () => (Array.isArray(featuredProvidersRaw) ? featuredProvidersRaw : []).map(mapProvider),
+    [featuredProvidersRaw],
   );
+  const topRatedProvidersRaw = feed?.topRatedProviders;
   const topRatedProviders = useMemo(
-    () =>
-      (Array.isArray(feed?.topRatedProviders)
-        ? feed.topRatedProviders
-        : []
-      ).map(mapProvider),
-    [feed?.topRatedProviders],
+    () => (Array.isArray(topRatedProvidersRaw) ? topRatedProvidersRaw : []).map(mapProvider),
+    [topRatedProvidersRaw],
   );
   const cityData = feed?.cityProviders;
+  const cityProvidersRaw = cityData?.providers;
   const cityProviders = useMemo(
-    () =>
-      (Array.isArray(cityData?.providers) ? cityData.providers : []).map(
-        mapProvider,
-      ),
-    [cityData?.providers],
+    () => (Array.isArray(cityProvidersRaw) ? cityProvidersRaw : []).map(mapProvider),
+    [cityProvidersRaw],
   );
+  const newArrivalsRaw = feed?.newArrivals;
   const newArrivals = useMemo(
-    () =>
-      (Array.isArray(feed?.newArrivals) ? feed.newArrivals : []).map(
-        mapProvider,
-      ),
-    [feed?.newArrivals],
+    () => (Array.isArray(newArrivalsRaw) ? newArrivalsRaw : []).map(mapProvider),
+    [newArrivalsRaw],
   );
   const dealsAroundYou = Array.isArray(feed?.dealsAroundYou)
     ? feed.dealsAroundYou
@@ -154,20 +152,15 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
     ? feed.sponsoredProviders
     : [];
   const stats = feed?.platformStats;
+  const forYouProvidersRaw = feed?.forYouProviders;
   const forYouProviders = useMemo(
-    () =>
-      (Array.isArray(feed?.forYouProviders) ? feed.forYouProviders : []).map(
-        mapProvider,
-      ),
-    [feed?.forYouProviders],
+    () => (Array.isArray(forYouProvidersRaw) ? forYouProvidersRaw : []).map(mapProvider),
+    [forYouProvidersRaw],
   );
+  const womenLedProvidersRaw = feed?.womenLedProviders;
   const womenLedProviders = useMemo(
-    () =>
-      (Array.isArray(feed?.womenLedProviders)
-        ? feed.womenLedProviders
-        : []
-      ).map(mapProvider),
-    [feed?.womenLedProviders],
+    () => (Array.isArray(womenLedProvidersRaw) ? womenLedProvidersRaw : []).map(mapProvider),
+    [womenLedProvidersRaw],
   );
   const personalizedCategories = feed?.personalizedCategories || null;
 
@@ -439,7 +432,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                               ★ Hero
                             </span>
                           ) : <span />}
-                          {(product as any).productType === "service" && (
+                          {product.productType === "service" && (
                             <span className="px-2 py-0.5 rounded-lg bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
                               🛠️ Service
                             </span>

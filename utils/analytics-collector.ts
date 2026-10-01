@@ -34,7 +34,7 @@ interface QueuedEvent {
   providerId: string;
   eventType: EventType;
   entityId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   duration?: number;
   source?: SourceType;
   timestamp: string;
@@ -134,7 +134,7 @@ export function trackEvent(
   eventType: EventType,
   options?: {
     entityId?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     duration?: number;
     source?: SourceType;
   },

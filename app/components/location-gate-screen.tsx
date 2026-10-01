@@ -23,7 +23,7 @@ interface LocationGateScreenProps {
 
 export default function LocationGateScreen({ onLocationSet }: LocationGateScreenProps) {
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const updateUserMutation = useUpdateUser();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,7 +78,9 @@ export default function LocationGateScreen({ onLocationSet }: LocationGateScreen
     try {
       const { latitude, longitude } = await getCurrentPosition({ timeout: 15000 });
       await applyLocation(latitude, longitude);
-    } catch (err: any) {
+    } catch (caught: unknown) {
+      // Geolocation failures carry a string `code` (see utils/geolocation).
+      const err = caught as { code?: string; message?: string } | null | undefined;
       const code = err?.code;
       if (code === LOCATION_PERMISSION_DENIED) {
         setLocationDenied(true);

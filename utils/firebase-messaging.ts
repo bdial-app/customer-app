@@ -1,4 +1,4 @@
-import { getMessaging, getToken, onMessage, isSupported, Messaging } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, isSupported, Messaging, MessagePayload } from "firebase/messaging";
 import { getFirebaseApp } from "./firebase";
 
 let messagingInstance: Messaging | null = null;
@@ -13,7 +13,7 @@ export function isIOS(): boolean {
 export function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   return (
-    (window.navigator as any).standalone === true ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true ||
     window.matchMedia("(display-mode: standalone)").matches
   );
 }
@@ -150,9 +150,9 @@ export async function requestFCMToken(): Promise<FCMTokenResult> {
     }
 
     return { token, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Push] requestFCMToken error:", error);
-    const msg = error?.message || String(error);
+    const msg = (error instanceof Error && error.message) || String(error);
 
     if (msg.includes("messaging/permission-blocked")) {
       return { token: null, error: "Notification permission is blocked. Please enable it in your browser settings." };
@@ -170,7 +170,7 @@ export async function requestFCMToken(): Promise<FCMTokenResult> {
  * Returns an unsubscribe function.
  */
 export async function onForegroundMessage(
-  callback: (payload: any) => void
+  callback: (payload: MessagePayload) => void
 ): Promise<(() => void) | null> {
   const messaging = await getMessagingInstance();
   if (!messaging) return null;

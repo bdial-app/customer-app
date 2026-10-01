@@ -16,9 +16,13 @@ import { Preferences } from "@capacitor/preferences";
  * interceptor (`getTokenSync`) never has to touch async storage mid-request.
  */
 
+type CapacitorWindow = Window & {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
+
 function isNative(): boolean {
   if (typeof window === "undefined") return false;
-  return !!(window as any).Capacitor?.isNativePlatform?.();
+  return !!(window as CapacitorWindow).Capacitor?.isNativePlatform?.();
 }
 
 // ── Async helpers ────────────────────────────────────────────────────

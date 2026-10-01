@@ -153,8 +153,8 @@ const ProviderSponsorTab = () => {
       setShowConfirm(false);
       queryClient.invalidateQueries({ queryKey: ['my-sponsorships'] });
       notify({ title: "Boost activated!", subtitle: "Your listing is now being promoted.", variant: "success" });
-    } catch (error: any) {
-      const msg = error?.message || "Please try again.";
+    } catch (error: unknown) {
+      const msg = (error instanceof Error && error.message) || "Please try again.";
       console.error('Checkout failed:', msg, error);
       notify({ title: "Payment failed", subtitle: msg, variant: "error" });
     } finally {

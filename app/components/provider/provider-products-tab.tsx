@@ -40,6 +40,9 @@ interface ProviderProductsTabProps {
   providerId: string | null;
 }
 
+/** A product being edited; the API also returns its search keywords. */
+type EditableProduct = ProviderDetailsProduct & { keywords?: string[] };
+
 const productSchema = Yup.object({
   name: Yup.string().required("Product name is required").max(150),
   price: Yup.string().nullable(),
@@ -332,7 +335,7 @@ const ProviderProductsTab = ({
 }: ProviderProductsTabProps) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editing, setEditing] = useState<ProviderDetailsProduct | null>(null);
+  const [editing, setEditing] = useState<EditableProduct | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -654,7 +657,7 @@ const ProviderProductsTab = ({
                   productType: editing?.productType || "product",
                   categoryId: editing?.categoryId || "",
                   subcategoryId: editing?.subcategoryId || "",
-                  keywords: (editing as any)?.keywords?.join(", ") || "",
+                  keywords: editing?.keywords?.join(", ") || "",
                 }}
                 validationSchema={productSchema}
                 enableReinitialize

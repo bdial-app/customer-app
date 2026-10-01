@@ -12,6 +12,7 @@ import {
 } from "@/services/report.service";
 import { useNotification } from "../context/NotificationContext";
 import { checkContent } from "@/utils/content-sanitizer";
+import { isAxiosError } from "axios";
 
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
   ssr: false,
@@ -34,10 +35,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   "400": "Unable to submit report. Please check your input.",
 };
 
-function getErrorMessage(error: any): string {
-  const msg = error?.response?.data?.message;
+function getErrorMessage(error: unknown): string {
+  const response = isAxiosError<{ message?: unknown }>(error) ? error.response : undefined;
+  const msg = response?.data?.message;
   if (typeof msg === "string" && msg.trim()) return msg;
-  const status = error?.response?.status?.toString();
+  const status = response?.status?.toString();
   if (status && ERROR_MESSAGES[status]) return ERROR_MESSAGES[status];
   return "Something went wrong. Please try again.";
 }
@@ -91,7 +93,7 @@ export default function ReportSheet({
         variant: "success",
       });
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify({
         title: "Report failed",
         subtitle: getErrorMessage(error),

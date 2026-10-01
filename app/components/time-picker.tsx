@@ -61,7 +61,7 @@ function useDrum(
 
   const updateCls = (f: number) => {
     if (!trackRef.current) return;
-    Array.from(trackRef.current.children).forEach((el: any, i) => {
+    Array.from(trackRef.current.children as HTMLCollectionOf<HTMLElement>).forEach((el, i) => {
       const r = i - PAD - Math.round(f);
       el.dataset.state = r === 0 ? "sel" : Math.abs(r) === 1 ? "near" : "";
     });
@@ -104,9 +104,10 @@ function useDrum(
   useEffect(() => {
     const col = colRef.current;
     if (!col) return;
-    const py = (e: any) => (e.touches ? e.touches[0].clientY : e.clientY);
+    const py = (e: MouseEvent | TouchEvent) =>
+      "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    const onDown = (e: any) => {
+    const onDown = (e: MouseEvent | TouchEvent) => {
       if (s.current.raf) cancelAnimationFrame(s.current.raf);
       s.current.drag = true;
       s.current.sy = py(e);
@@ -114,9 +115,9 @@ function useDrum(
       s.current.vy = 0;
       s.current.ly = s.current.sy;
       s.current.lt = Date.now();
-      if (!e.touches) e.preventDefault();
+      if (!("touches" in e)) e.preventDefault();
     };
-    const onMove = (e: any) => {
+    const onMove = (e: MouseEvent | TouchEvent) => {
       if (!s.current.drag) return;
       const y = py(e),
         now = Date.now(),
@@ -130,14 +131,14 @@ function useDrum(
         : Math.max(-0.4, Math.min(items.length - 0.6, nf));
       applyPx(CY - (cl + PAD) * ITEM_H);
       updateCls(cl);
-      if (!e.touches) e.preventDefault();
+      if (!("touches" in e)) e.preventDefault();
     };
     const onUp = () => {
       if (!s.current.drag) return;
       s.current.drag = false;
       animTo(curFloat() + (-s.current.vy / ITEM_H) * 3.5);
     };
-    const onWheel = (e: any) => {
+    const onWheel = (e: WheelEvent) => {
       if (s.current.raf) cancelAnimationFrame(s.current.raf);
       animTo(curFloat() + e.deltaY / ITEM_H);
       e.preventDefault();

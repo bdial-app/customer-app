@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { PromoBanner as PromoBannerType } from "@/services/home.service";
 
 interface Banner {
-  image_url: any;
+  image_url: string;
   id: string;
   title: string;
   subtitle: string;

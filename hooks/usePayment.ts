@@ -25,10 +25,19 @@ import {
   verifyAppleConsumable,
   type CreateSponsorshipCheckoutPayload,
   type SubscriptionPlan,
+  type MonetizationConfig,
 } from '@/services/payment.service';
-import { getSponsorshipPlans } from '@/services/provider.service';
+import { getSponsorshipPlans, type SponsorshipPlan } from '@/services/provider.service';
 
 export type PaymentGateway = 'razorpay' | 'apple';
+
+/** `err?.message || fallback` for an unknown thrown value. */
+function errorMessage(err: unknown, fallback: string): string {
+  if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string' && err.message) {
+    return err.message;
+  }
+  return fallback;
+}
 
 interface UsePaymentReturn {
   /** Current payment gateway based on platform */
@@ -48,7 +57,7 @@ interface UsePaymentReturn {
     paymentId?: string;
   }>;
   /** Create a deal (may be free via quota) */
-  purchaseDealCreation: (voucherCode?: string, dealData?: Record<string, any>) => Promise<{
+  purchaseDealCreation: (voucherCode?: string, dealData?: Record<string, unknown>) => Promise<{
     requiresPayment: boolean;
     method: string;
     status?: string;
@@ -87,9 +96,9 @@ export function usePayment(): UsePaymentReturn {
         getSponsorshipPlans().catch(() => []),
         getMonetizationConfig().catch(() => null),
       ])
-        .then(([plans, sponsorPlans, config]: [SubscriptionPlan[], any[], any]) => {
+        .then(([plans, sponsorPlans, config]: [SubscriptionPlan[], SponsorshipPlan[], MonetizationConfig | null]) => {
           const consumableIds = [
-            ...((sponsorPlans ?? []).map((p: any) => p?.appleProductId).filter(Boolean)),
+            ...((sponsorPlans ?? []).map((p) => p?.appleProductId).filter((id): id is string => Boolean(id))),
             ...((config?.appleProductIds ?? []) as string[]),
           ];
           return initializeIAP(plans, consumableIds);
@@ -124,8 +133,8 @@ export function usePayment(): UsePaymentReturn {
       }
       const result = await payWithRazorpay(orderResponse);
       return result;
-    } catch (err: any) {
-      const msg = err?.message || 'Payment failed';
+    } catch (err: unknown) {
+      const msg = errorMessage(err, 'Payment failed');
       setError(msg);
       throw err;
     } finally {
@@ -177,8 +186,8 @@ export function usePayment(): UsePaymentReturn {
       }
 
       throw new Error('Unexpected response from lead unlock');
-    } catch (err: any) {
-      const msg = err?.message || 'Lead unlock failed';
+    } catch (err: unknown) {
+      const msg = errorMessage(err, 'Lead unlock failed');
       setError(msg);
       throw err;
     } finally {
@@ -188,7 +197,7 @@ export function usePayment(): UsePaymentReturn {
 
   // ─── Deal Creation ───
 
-  const purchaseDealCreation = useCallback(async (voucherCode?: string, dealData?: Record<string, any>) => {
+  const purchaseDealCreation = useCallback(async (voucherCode?: string, dealData?: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
     try {
@@ -230,8 +239,8 @@ export function usePayment(): UsePaymentReturn {
       }
 
       throw new Error('Unexpected response from deal creation checkout');
-    } catch (err: any) {
-      const msg = err?.message || 'Deal creation payment failed';
+    } catch (err: unknown) {
+      const msg = errorMessage(err, 'Deal creation payment failed');
       setError(msg);
       throw err;
     } finally {
@@ -264,8 +273,8 @@ export function usePayment(): UsePaymentReturn {
         const result = await subscribeWithRazorpay(subResponse);
         return result;
       }
-    } catch (err: any) {
-      const msg = err?.message || 'Subscription failed';
+    } catch (err: unknown) {
+      const msg = errorMessage(err, 'Subscription failed');
       setError(msg);
       throw err;
     } finally {

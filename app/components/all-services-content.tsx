@@ -151,7 +151,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
     }
   }, [viewMode]);
 
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const guestCoords = useAppSelector((state) => state.location.guestCoords);
   const selectedCity = useAppSelector((state) => state.location.selectedCity);
 
@@ -212,7 +212,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const providers = useMemo(() => {
     if (!data) return [];
     const mapped = data.pages.flatMap((page) =>
-      (Array.isArray(page?.data) ? page.data : []).map((p: any) => ({
+      (Array.isArray(page?.data) ? page.data : []).map((p) => ({
         id: p.id,
         name: p.brandName,
         image: p.profilePhotoUrl || p.bannerImageUrl || "",

@@ -33,7 +33,7 @@ export const useAuthGateContext = () => {
 };
 
 export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
-  const user = useAppSelector((state) => state.auth.user) as any;
+  const user = useAppSelector((state) => state.auth.user);
   const [isOpen, setIsOpen] = useState(false);
   const pendingCallbackRef = useRef<(() => void) | null>(null);
   // Cooldown: prevent the 401 listener from reopening the sheet right after dismissal

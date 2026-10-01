@@ -25,7 +25,7 @@ interface PricingPlan {
   monthlyLeadUnlocks: number;
   maxActiveDeals: number;
   sponsorshipTypes: string[] | null;
-  features?: Record<string, any>;
+  features?: Record<string, unknown>;
 }
 
 interface PricingModalProps {

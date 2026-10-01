@@ -37,6 +37,16 @@ import { shareContent, openDirections } from "@/utils/sharing";
 import { triggerHaptic } from "@/utils/haptics";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
+import type { ProductDetail, ProductProviderSummary } from "@/services/product.service";
+import { isAxiosError } from "axios";
+
+// Fields the product API returns that the shared service types don't declare.
+type ProductWithType = ProductDetail & { productType?: "product" | "service" };
+type ProviderWithCoords = ProductProviderSummary & {
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+};
+type ViewSource = NonNullable<Parameters<typeof useTrackProductView>[2]>;
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -79,14 +89,14 @@ export default function ProductDetailsPage() {
     });
   };
 
-  const product = data?.product;
-  const provider = data?.provider ?? null;
+  const product: ProductWithType | undefined = data?.product;
+  const provider: ProviderWithCoords | null = data?.provider ?? null;
   const isOwnProduct = Boolean(user && provider && user.id === provider.userId);
   const stats = data?.stats;
   const related = data?.related ?? [];
 
   // ─── Analytics Tracking ─────────────────────────────────────────
-  const source = (searchParams.get("src") as any) || "direct";
+  const source = (searchParams.get("src") as ViewSource | null) || "direct";
   useTrackProductView(
     isOwnProduct ? undefined : provider?.id,
     isOwnProduct ? undefined : id,
@@ -96,14 +106,17 @@ export default function ProductDetailsPage() {
     isOwnProduct ? undefined : provider?.id,
   );
 
+  // Read into locals so the memo's inputs are exactly what it depends on.
+  const photoUrls = product?.photoUrls;
+  const photoUrl = product?.photoUrl;
   const photos = useMemo(() => {
-    if (product?.photoUrls?.length) {
-      const valid = product.photoUrls.filter((u: string) => !!u);
+    if (photoUrls?.length) {
+      const valid = photoUrls.filter((u: string) => !!u);
       if (valid.length) return valid;
     }
-    if (product?.photoUrl) return [product.photoUrl];
+    if (photoUrl) return [photoUrl];
     return [FALLBACK_IMAGE];
-  }, [product?.photoUrls, product?.photoUrl]);
+  }, [photoUrls, photoUrl]);
 
   if (!id) {
     return (
@@ -255,7 +268,7 @@ export default function ProductDetailsPage() {
               ✦ Featured Product
             </span>
           )}
-          {(product as any).productType === "service" && (
+          {product.productType === "service" && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-indigo-50 to-cyan-50 dark:from-indigo-900/20 dark:to-cyan-900/20 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2 ml-1">
               🛠️ Service
             </span>
@@ -336,13 +349,13 @@ export default function ProductDetailsPage() {
 
         {/* Get Directions */}
         {provider &&
-          (provider as any)?.latitude &&
-          (provider as any)?.longitude && (
+          provider?.latitude &&
+          provider?.longitude && (
             <button
               onClick={() =>
                 openDirections(
-                  Number((provider as any).latitude),
-                  Number((provider as any).longitude),
+                  Number(provider.latitude),
+                  Number(provider.longitude),
                   provider.brandName,
                 )
               }
@@ -355,7 +368,7 @@ export default function ProductDetailsPage() {
 
         {provider?.categories && provider.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {provider.categories.map((cat: any) => (
+            {provider.categories.map((cat) => (
               <span
                 key={cat.id}
                 className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full"
@@ -506,8 +519,11 @@ export default function ProductDetailsPage() {
                     dispatch(openChat(conv.id));
                     router.push('/');
                   },
-                  onError: (err: any) => {
-                    const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
+                  onError: (err) => {
+                    const apiMsg = isAxiosError<{ message?: string | string[] }>(err)
+                      ? err.response?.data?.message
+                      : undefined;
+                    const msg = apiMsg || err?.message || 'Could not start conversation';
                     alert(Array.isArray(msg) ? msg.join(', ') : msg);
                   },
               });
@@ -517,7 +533,7 @@ export default function ProductDetailsPage() {
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? "Opening Chat..." : (product as any)?.productType === "service" ? "Enquire About Service" : "Send Enquiry"}
+            {isCreatingChat ? "Opening Chat..." : product?.productType === "service" ? "Enquire About Service" : "Send Enquiry"}
           </button>
         )}
       </div>

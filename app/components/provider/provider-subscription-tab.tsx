@@ -28,6 +28,7 @@ import {
   resumeSubscription,
   validateVoucher,
   type SubscriptionPlan,
+  type VoucherValidation,
 } from "@/services/payment.service";
 import { usePayment } from "@/hooks/usePayment";
 
@@ -55,7 +56,7 @@ const ProviderSubscriptionTab = () => {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showConfirm, setShowConfirm] = useState(false);
   const [voucherCode, setVoucherCode] = useState("");
-  const [voucherResult, setVoucherResult] = useState<any>(null);
+  const [voucherResult, setVoucherResult] = useState<VoucherValidation | null>(null);
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 

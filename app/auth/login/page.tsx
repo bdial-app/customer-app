@@ -12,8 +12,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { IonIcon } from "@ionic/react";
 import { logoApple } from "ionicons/icons";
+import { isAxiosError } from "axios";
 
 type LoginStep = "mobile" | "otp";
+
+/** Error body returned by the auth API. */
+interface ApiErrorBody {
+  message?: string;
+  error_code?: string;
+  retryAfterSeconds?: number;
+}
+
+const apiErrorBody = (err: unknown): ApiErrorBody | undefined =>
+  isAxiosError<ApiErrorBody>(err) ? err.response?.data : undefined;
 
 // TODO: Re-enable when native Google + Apple SSO are implemented
 const SHOW_SSO_BUTTONS = false;
@@ -186,8 +197,8 @@ function LoginContent() {
           });
         }
       }
-    } catch (err: any) {
-      const data = err?.response?.data;
+    } catch (err: unknown) {
+      const data = apiErrorBody(err);
       if (data?.error_code === "OTP_RATE_LIMITED" && data?.retryAfterSeconds) {
         setResendCountdown(data.retryAfterSeconds);
         if (step === "mobile") setStep("otp");
@@ -197,10 +208,11 @@ function LoginContent() {
           variant: "warning",
         });
       } else {
-        setDebugError(JSON.stringify(err?.response || err, null, 2));
+        const response = isAxiosError(err) ? err.response : undefined;
+        setDebugError(JSON.stringify(response || err, null, 2));
         notify({
           title: "Error",
-          subtitle: err?.response?.data?.message || "Something went wrong",
+          subtitle: data?.message || "Something went wrong",
           variant: "error",
         });
       }
@@ -235,10 +247,10 @@ function LoginContent() {
             variant: "info",
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         notify({
           title: "Google Sign-In failed",
-          subtitle: err?.response?.data?.message ?? "Please try again",
+          subtitle: apiErrorBody(err)?.message ?? "Please try again",
           variant: "error",
         });
       }
@@ -389,8 +401,8 @@ function LoginContent() {
                               variant: "success",
                               duration: 10000,
                             });
-                          } catch (err: any) {
-                            const data = err?.response?.data;
+                          } catch (err: unknown) {
+                            const data = apiErrorBody(err);
                             if (
                               data?.error_code === "OTP_RATE_LIMITED" &&
                               data?.retryAfterSeconds

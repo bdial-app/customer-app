@@ -94,8 +94,8 @@ export default function Home() {
   // City gating state
   const selectedCity = useAppSelector((state) => state.location.selectedCity);
   const guestCoords = useAppSelector((state) => state.location.guestCoords);
-  const userLat = (user as any)?.latitude;
-  const userLng = (user as any)?.longitude;
+  const userLat = user?.latitude;
+  const userLng = user?.longitude;
   const effectiveLat = userLat || guestCoords?.lat;
   const effectiveLng = userLng || guestCoords?.lng;
   const hasSelectedCity = !!selectedCity;

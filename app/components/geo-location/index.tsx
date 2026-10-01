@@ -75,7 +75,7 @@ const GeoLocation = () => {
   const updateUserMutation = useUpdateUser();
   const { data: savedLocations } = useSavedLocations();
   const { recentLocations, guestCoords } = useAppSelector((state) => state.location);
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const { requireAuth } = useAuthGate();
   // Read from context rather than re-fetching: layoutWrapper already resolves
   // the provider status once per session.
@@ -204,8 +204,9 @@ const GeoLocation = () => {
         dispatch(setSelectedCity(geo.city || null));
       }).catch(() => {});
       setOpen(false);
-    } catch (err: any) {
-      const code = err?.code;
+    } catch (err: unknown) {
+      const code =
+        typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
       if (code === LOCATION_PERMISSION_DENIED) {
         setLocationDenied(true);
         setLocationError("Location permission denied. Please allow location access in app settings.");
@@ -214,14 +215,16 @@ const GeoLocation = () => {
       } else if (code === LOCATION_TIMEOUT) {
         setLocationError("Could not get your location. Please try again in an open area with better GPS signal.");
       } else {
-        setLocationError(err?.message || "Unable to get your location. Please try again.");
+        setLocationError(
+          (err instanceof Error && err.message) || "Unable to get your location. Please try again.",
+        );
       }
     } finally {
       setIsLocating(false);
     }
   };
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.y > 100 || info.velocity.y > 500) {
       setOpen(false);
     }

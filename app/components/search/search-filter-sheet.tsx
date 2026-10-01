@@ -61,7 +61,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
   const dispatch = useAppDispatch();
   const { filters } = useAppSelector((s) => s.search);
   const { data: catResponse } = useAllCategories(1, 100);
-  const allCategories = catResponse?.data?.filter((c: any) => c.parentId === null) ?? [];
+  const allCategories = catResponse?.data?.filter((c) => c.parentId === null) ?? [];
 
   const [tempCats, setTempCats] = useState<Set<string>>(
     new Set(filters.categoryIds)
@@ -306,10 +306,10 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
               Categories
             </h3>
             <div className="space-y-0.5">
-              {allCategories.map((cat: any) => {
+              {allCategories.map((cat) => {
                 const isExpanded = expandedCats.has(cat.id);
                 const children = cat.children ?? [];
-                const selectedCount = children.filter((c: any) =>
+                const selectedCount = children.filter((c) =>
                   tempCats.has(c.id)
                 ).length;
 
@@ -361,7 +361,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
 
                     {children.length > 0 && isExpanded && (
                       <div className="ml-5 mb-2 space-y-0.5 border-l-2 border-gray-100 dark:border-slate-700 pl-3">
-                        {children.map((child: any) => (
+                        {children.map((child) => (
                           <button
                             key={child.id}
                             onClick={() => toggleCat(child.id)}

@@ -50,7 +50,16 @@ const COLLECTION_GRADIENTS = [
 
 const COLLECTION_ICONS = [ribbonOutline, flashOutline, sparklesOutline, trendingUpOutline, diamondOutline, megaphoneOutline];
 
-const STATIC_COLLECTIONS = [
+interface Collection {
+  id: string;
+  title: string;
+  count: string;
+  gradient: string;
+  icon: string;
+  categoryId?: string;
+}
+
+const STATIC_COLLECTIONS: Collection[] = [
   { id: "wedding", title: "Wedding Season", count: "24+", gradient: "from-amber-400 to-orange-600", icon: ribbonOutline },
   { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-indigo-600", icon: flashOutline },
   { id: "new", title: "New Arrivals", count: "12+", gradient: "from-blue-400 to-indigo-600", icon: sparklesOutline },
@@ -267,7 +276,7 @@ const ExploreContent = memo(() => {
     router.prefetch(ROUTE_PATH.SEARCH);
   }, [router]);
 
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const feedParams = {
     lat: user?.latitude ?? undefined,
     lng: user?.longitude ?? undefined,
@@ -308,7 +317,7 @@ const ExploreContent = memo(() => {
   );
 
   // Collections from quick categories or static fallback
-  const collections = useMemo(() => {
+  const collections = useMemo((): Collection[] => {
     const cats = feed?.quickCategories ?? [];
     if (cats.length >= 4) {
       return cats.slice(0, 6).map((cat, i) => ({
@@ -523,7 +532,7 @@ const ExploreContent = memo(() => {
       <div className="mt-5">
         <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
         <div className="grid grid-cols-2 gap-2.5 px-4">
-          {collections.slice(0, 4).map((col: any, i: number) => (
+          {collections.slice(0, 4).map((col, i) => (
             <div
               key={col.id}
               onClick={() =>

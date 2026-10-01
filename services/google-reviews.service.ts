@@ -1,4 +1,5 @@
 import apiClient from "@/utils/axios";
+import type { ProviderDetailsReview } from "@/services/provider.service";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ export interface CombinedReviewsAggregates {
 
 export interface CombinedReviewsResponse {
   appReviews: {
-    data: any[];
+    data: ProviderDetailsReview[];
     total: number;
     page: number;
     limit: number;

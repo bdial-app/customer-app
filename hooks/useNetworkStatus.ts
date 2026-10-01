@@ -76,13 +76,17 @@ function _dismissBackOnline() {
   _notify();
 }
 
+type CapacitorWindow = Window & {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
+
 function _initListeners() {
   if (_initialized) return;
   _initialized = true;
 
   if (typeof window === "undefined") return;
 
-  if ((window as any).Capacitor?.isNativePlatform?.()) {
+  if ((window as CapacitorWindow).Capacitor?.isNativePlatform?.()) {
     import("@capacitor/network").then(({ Network }) => {
       Network.getStatus().then((status) => {
         // Only mark offline on init, never trigger "back online" on first load

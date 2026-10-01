@@ -45,7 +45,7 @@ import { useRouter } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useQueryClient } from "@tanstack/react-query";
 import TimePicker from "../components/time-picker";
-import { Formik, Form, useField } from "formik";
+import { Formik, Form, useField, type FormikProps, type FormikTouched } from "formik";
 import * as Yup from "yup";
 import { FormikInput } from "../components/formik-input";
 import WhatsAppPhoneInput from "../components/whatsapp-phone-input";
@@ -68,6 +68,7 @@ import PrivateRoute from "@/app/components/private-route";
 import FeatureGate from "@/app/components/feature-gate";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useObjectUrl, useObjectUrls } from "@/hooks/useObjectUrl";
+import { isAxiosError } from "axios";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -91,6 +92,25 @@ const STEPS = [
 ] as const;
 
 type StepId = 1 | 2 | 3 | 4 | 5;
+
+interface OnboardingFormValues {
+  brand_name: string;
+  description: string;
+  contact_number: string;
+  open_time: string;
+  close_time: string;
+  address: string;
+  city: string;
+  area: string;
+  pincode: string;
+  identity_doc: File | null;
+  website_url: string;
+  instagram_handle: string;
+  facebook_handle: string;
+  youtube_handle: string;
+  whatsapp_number: string;
+  linkedin_handle: string;
+}
 
 // ---------------------------------------------------------------------------
 // Validation schemas per step
@@ -141,7 +161,7 @@ const step5Schema = Yup.object({
     ),
 });
 
-const schemaForStep: Record<StepId, Yup.ObjectSchema<any>> = {
+const schemaForStep: Record<StepId, Yup.ObjectSchema<Yup.AnyObject>> = {
   1: step1Schema,
   2: step2Schema,
   3: step3Schema,
@@ -1614,7 +1634,7 @@ const ProviderOnboardingPage = () => {
     lng: number;
   } | null>(null);
   const pendingSubmitRef = useRef<(() => void) | null>(null);
-  const formikRef = useRef<any>(null);
+  const formikRef = useRef<FormikProps<OnboardingFormValues>>(null);
 
   // Fetch categories
   useEffect(() => {
@@ -1629,7 +1649,7 @@ const ProviderOnboardingPage = () => {
     const fetchStatus = async () => {
       try {
         const result = await getMyProviderStatus();
-        if (!cancelled) setProviderStatus(result.providerStatus as any);
+        if (!cancelled) setProviderStatus(result.providerStatus);
       } catch {
         // keep as not_applied
       } finally {
@@ -1669,7 +1689,9 @@ const ProviderOnboardingPage = () => {
       } catch {
         setDetectedLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
       }
-    } catch (err: any) {
+    } catch (caught: unknown) {
+      // Geolocation failures carry a string `code` (see utils/geolocation).
+      const err = caught as { code?: string } | null | undefined;
       // Permission-denied surfaces the global LocationDeniedSheet (handled in
       // requestLocationOrPrompt) — only fall back to a generic alert for other
       // failures like GPS timeout / services disabled.
@@ -1707,10 +1729,13 @@ const ProviderOnboardingPage = () => {
         variant: "success",
         duration: 10000,
       });
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Failed to send OTP";
+    } catch (err: unknown) {
+      const data = isAxiosError<{ message?: unknown; retryAfterSeconds?: number }>(err)
+        ? err.response?.data
+        : undefined;
+      const msg = data?.message ?? "Failed to send OTP";
       setOtpError(typeof msg === "string" ? msg : JSON.stringify(msg));
-      if (err?.response?.data?.retryAfterSeconds) setOtpCooldown(err.response.data.retryAfterSeconds);
+      if (data?.retryAfterSeconds) setOtpCooldown(data.retryAfterSeconds);
     } finally { setOtpSending(false); }
   }, []);
 
@@ -1726,8 +1751,11 @@ const ProviderOnboardingPage = () => {
       } else {
         setOtpError("Invalid OTP");
       }
-    } catch (err: any) {
-      setOtpError(err?.response?.data?.message ?? "Verification failed");
+    } catch (err: unknown) {
+      setOtpError(
+        (isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined) ??
+          "Verification failed",
+      );
     } finally { setOtpVerifying(false); }
   }, [otpCode]);
 
@@ -1768,7 +1796,10 @@ const ProviderOnboardingPage = () => {
     else goBack("/");
   };
 
-  const handleNext = async (validateForm: any, setTouched: any) => {
+  const handleNext = async (
+    validateForm: FormikProps<OnboardingFormValues>["validateForm"],
+    setTouched: FormikProps<OnboardingFormValues>["setTouched"],
+  ) => {
     const errors = await validateForm();
     const stepFields: Record<StepId, string[]> = {
       1: ["brand_name", "description", "contact_number"],
@@ -1786,15 +1817,15 @@ const ProviderOnboardingPage = () => {
       setCurrentStep(Math.min(currentStep + 1, 5) as StepId);
     } else {
       setTouched(
-        relevantErrors.reduce(
+        relevantErrors.reduce<FormikTouched<OnboardingFormValues>>(
           (acc, k) => ({ ...acc, [k]: true }),
-          {} as any,
+          {},
         ),
       );
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: OnboardingFormValues) => {
     if (!user?.id) {
       setSubmitError("You must be logged in to list your business.");
       return;
@@ -1816,9 +1847,9 @@ const ProviderOnboardingPage = () => {
     if (detectedCoords) {
       latitude = String(detectedCoords.lat);
       longitude = String(detectedCoords.lng);
-    } else if ((user as any)?.latitude && (user as any)?.longitude) {
-      latitude = String((user as any).latitude);
-      longitude = String((user as any).longitude);
+    } else if (user?.latitude && user?.longitude) {
+      latitude = String(user.latitude);
+      longitude = String(user.longitude);
     }
 
     try {
@@ -1878,10 +1909,10 @@ const ProviderOnboardingPage = () => {
       } else {
         router.replace("/");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err?.response?.data?.message ??
-        err?.message ??
+        (isAxiosError<{ message?: string | string[] }>(err) ? err.response?.data?.message : undefined) ??
+        (err instanceof Error ? err.message : undefined) ??
         "Something went wrong. Please try again.";
       setSubmitError(
         Array.isArray(message) ? message.join(", ") : message,

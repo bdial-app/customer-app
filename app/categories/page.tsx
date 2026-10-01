@@ -13,6 +13,9 @@ import { GRADIENT_PALETTE } from "@/app/components/ui/category-icon";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel } from "@/utils/distance-label";
 
+/** Top-level categories come back with a provider count attached. */
+type CategoryWithCount = Category & { providerCount?: number };
+
 export default function CategoriesPage() {
   const router = useRouter();
   const { data: categories = [], isLoading } = useTopLevelCategories();
@@ -40,8 +43,8 @@ export default function CategoriesPage() {
   // Popular categories — top 5 by providerCount (derived client-side, no API)
   const popularCategories = useMemo(() => {
     return [...categories]
-      .filter((c: any) => (c.providerCount ?? 0) > 0)
-      .sort((a: any, b: any) => (b.providerCount ?? 0) - (a.providerCount ?? 0))
+      .filter((c: CategoryWithCount) => (c.providerCount ?? 0) > 0)
+      .sort((a: CategoryWithCount, b: CategoryWithCount) => (b.providerCount ?? 0) - (a.providerCount ?? 0))
       .slice(0, 5);
   }, [categories]);
 
@@ -192,7 +195,7 @@ export default function CategoriesPage() {
                   </span>
                 </div>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                  {popularCategories.map((cat: any) => (
+                  {popularCategories.map((cat: CategoryWithCount) => (
                     <button
                       key={cat.id}
                       onClick={() => handleNavigateToSearch(cat.name, cat.id)}
@@ -223,7 +226,7 @@ export default function CategoriesPage() {
                       <p className="text-sm">No categories available</p>
                     </div>
                   )
-                  : categories.map((cat: any) => {
+                  : categories.map((cat: CategoryWithCount) => {
                       const hasProviders = (cat.providerCount ?? 0) > 0;
                       return (
                         <motion.button
@@ -265,7 +268,7 @@ export default function CategoriesPage() {
             {/* ── Hero Header ── */}
             {(() => {
               const palette = GRADIENT_PALETTE[selectedParent.iconColor ?? ""] ?? GRADIENT_PALETTE.amber;
-              const totalProviders = subCategories.reduce((sum: number, s: SubCategory) => sum + (s.providerCount ?? 0), 0) || (selectedParent as any).providerCount || 0;
+              const totalProviders = subCategories.reduce((sum: number, s: SubCategory) => sum + (s.providerCount ?? 0), 0) || (selectedParent as CategoryWithCount).providerCount || 0;
               const totalBookings = subCategories.reduce((sum: number, s: SubCategory) => sum + (s.recentBookings ?? 0), 0);
               return (
                 <div className={`relative overflow-hidden bg-gradient-to-br ${palette.gradient} px-4 pt-5 pb-6`}>
@@ -273,7 +276,7 @@ export default function CategoriesPage() {
                   <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white/[0.04]" />
                   <div className="relative z-10 flex items-start gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                      <CategoryIcon icon={selectedParent.icon} iconColor={selectedParent.iconColor} imageUrl={(selectedParent as any).imageUrl} name={selectedParent.name} size="md" />
+                      <CategoryIcon icon={selectedParent.icon} iconColor={selectedParent.iconColor} imageUrl={selectedParent.imageUrl} name={selectedParent.name} size="md" />
                     </div>
                     <div className="flex-1 min-w-0 pt-0.5">
                       <h2 className="text-lg font-bold text-white leading-snug">

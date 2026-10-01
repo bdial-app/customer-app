@@ -1,5 +1,5 @@
 "use client";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -48,6 +48,7 @@ import {
   ProviderDetailsProduct,
   ProviderDetailsReview,
   ProviderDetailsOffer,
+  ProviderData,
 } from "@/services/provider.service";
 import { useCurrentSubscription } from "@/hooks/useSubscription";
 import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
@@ -448,7 +449,7 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
 // ─── Growth Tips ────────────────────────────────────────────────────
 interface GrowthTipsProps {
   stats: ProviderStats;
-  provider: any;
+  provider: ProviderData | null;
   verificationStatus: string | null;
   onNavigate: (subTab: string) => void;
   onVerify: () => void;
@@ -828,7 +829,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
  * town centre, so the app refuses to quote a distance for it. Only a pin the
  * owner (or a precise address lookup) gave us counts as the real thing.
  */
-const hasExactPin = (provider: any): boolean =>
+const hasExactPin = (provider: ProviderData | null): boolean =>
   Boolean(
     provider?.latitude &&
       provider?.longitude &&
@@ -840,7 +841,7 @@ const PinLocationCard = memo(({
   provider,
   onNavigate,
 }: {
-  provider: any;
+  provider: ProviderData | null;
   onNavigate: (subTab: string) => void;
 }) => {
   if (hasExactPin(provider)) return null;
@@ -885,7 +886,7 @@ const ProfileCompleteness = memo(({
   onNavigate,
   verificationStatus,
 }: {
-  provider: any;
+  provider: ProviderData | null;
   stats: ProviderStats;
   onNavigate: (subTab: string) => void;
   verificationStatus: string | null;
@@ -1323,16 +1324,17 @@ const ProviderDashboard = ({
 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
-  const cachedId = useRef(
+  const [cachedId, setCachedId] = useState(() =>
     typeof window !== "undefined" ? localStorage.getItem("tijarah:provider-id") ?? "" : ""
   );
+  // Remember the latest known id (adjusted during render, not in an effect)
+  if (providerId && providerId !== cachedId) setCachedId(providerId);
   useEffect(() => {
     if (providerId) {
-      cachedId.current = providerId;
       localStorage.setItem("tijarah:provider-id", providerId);
     }
   }, [providerId]);
-  const effectiveProviderId = providerId || cachedId.current;
+  const effectiveProviderId = providerId || cachedId;
   const { data: details, isLoading: detailsLoading, isError: detailsError, refetch: refetchDetails } =
     useProviderDetails(effectiveProviderId);
   const { data: currentSub } = useCurrentSubscription();

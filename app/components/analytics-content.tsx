@@ -71,7 +71,7 @@ import { ActivePlanBanner, ActiveBoostBanner } from "@/app/components/provider/a
 import PageSplashScreen from "./page-splash-screen";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
-import type { StatWithTrend } from "@/services/analytics.service";
+import type { StatWithTrend, LeadFilters } from "@/services/analytics.service";
 
 type Period = "7d" | "30d" | "90d";
 type View = "overview" | "leads" | "lead-detail";
@@ -87,12 +87,18 @@ const kpi = (stat: StatWithTrend | undefined, label: string, icon: string, accen
 });
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────
-const ChartTooltip = ({ active, payload, label }: any) => {
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: ReadonlyArray<{ dataKey?: string | number; color?: string; value?: string | number }>;
+  label?: string | number;
+}
+
+const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-slate-800 text-white rounded-lg px-2.5 py-1.5 text-[10px] shadow-lg">
       <div className="font-bold mb-0.5">{label}</div>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: p.color }} />
           <span className="capitalize">{p.dataKey}: {p.value}</span>
@@ -380,7 +386,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
   const [showFilters, setShowFilters] = useState(false);
 
   const leadFilters = useMemo(() => {
-    const f: Record<string, any> = {
+    const f: LeadFilters = {
       tier: leadTier,
       page: leadPage,
       limit: 20,

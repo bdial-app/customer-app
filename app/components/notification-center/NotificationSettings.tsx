@@ -10,6 +10,7 @@ import {
   useUpdatePreferences,
 } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import type { NotificationPreferences } from "@/services/notification.service";
 import { useIsClient } from "@/hooks/useIsClient";
 
 interface NotificationSettingsProps {
@@ -57,7 +58,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
   const { permissionStatus, requestPermission, isSupported, pushError } = usePushNotifications();
   const mounted = useIsClient();
 
-  const handleToggle = (field: string, value: boolean) => {
+  const handleToggle = <K extends keyof NotificationPreferences>(field: K, value: NotificationPreferences[K]) => {
     updatePrefs.mutate({ [field]: value });
   };
 
@@ -227,7 +228,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                       <input
                         type="time"
                         value={prefs?.quietHoursStart || "22:00"}
-                        onChange={(e) => handleToggle("quietHoursStart" as any, e.target.value as any)}
+                        onChange={(e) => handleToggle("quietHoursStart", e.target.value)}
                         className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent dark:text-white"
                       />
                     </div>
@@ -236,7 +237,7 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                       <input
                         type="time"
                         value={prefs?.quietHoursEnd || "07:00"}
-                        onChange={(e) => handleToggle("quietHoursEnd" as any, e.target.value as any)}
+                        onChange={(e) => handleToggle("quietHoursEnd", e.target.value)}
                         className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent dark:text-white"
                       />
                     </div>

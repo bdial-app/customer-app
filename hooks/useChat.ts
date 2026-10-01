@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient, useQuery, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase";
 import * as chatApi from "@/services/chat.service";
 import type { ChatMessage, ConversationDetail } from "@/services/chat.service";
@@ -60,7 +61,7 @@ export function useSendMessage(conversationId: string | null) {
     mutationFn: (data: {
       content?: string;
       messageType?: "text" | "image" | "enquiry" | "quote_request";
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }) => {
       const clientMessageId = crypto.randomUUID();
       return chatApi.sendMessage(conversationId!, {
@@ -198,7 +199,7 @@ export function useBlockConversation() {
 export function useChatRealtime(conversationId: string | null) {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
-  const channelRef = useRef<any>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     if (!conversationId || !supabase) return;

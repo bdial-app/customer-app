@@ -2,6 +2,11 @@
  * Platform detection utilities for Capacitor native vs web/PWA.
  */
 
+import type { CapacitorGlobal } from '@capacitor/core';
+
+/** The Capacitor bridge native shells inject onto `window` (absent on web). */
+type WindowWithCapacitor = Window & { Capacitor?: Partial<CapacitorGlobal> };
+
 let _isNative: boolean | null = null;
 
 /**
@@ -18,7 +23,7 @@ export function isNativePlatform(): boolean {
 
   try {
     // Capacitor injects this on the window object in native shells
-    const cap = (window as any).Capacitor;
+    const cap = (window as WindowWithCapacitor).Capacitor;
     const result = cap?.isNativePlatform?.() ?? false;
     if (result) _isNative = true;
     return result;
@@ -34,7 +39,7 @@ export function getNativePlatform(): 'android' | 'ios' | 'web' {
   if (typeof window === 'undefined') return 'web';
 
   try {
-    const cap = (window as any).Capacitor;
+    const cap = (window as WindowWithCapacitor).Capacitor;
     if (cap?.isNativePlatform?.()) {
       const platform = cap.getPlatform?.();
       if (platform === 'android') return 'android';

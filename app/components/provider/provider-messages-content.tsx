@@ -87,7 +87,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
   const { isOnline } = useNetworkStatus();
 
   const apiFilter = filter === "quotes" ? "enquiries" : filter === "unread" ? "unread" : "all";
-  const { data, isLoading } = useConversations(apiFilter as any, search || undefined, "provider");
+  const { data, isLoading } = useConversations(apiFilter, search || undefined, "provider");
 
   const conversations = data?.conversations || [];
   const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);

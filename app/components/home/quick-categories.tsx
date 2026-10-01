@@ -4,6 +4,7 @@ import { useTopLevelCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { PersonalizedCategory } from "@/services/home.service";
+import type { Category } from "@/services/category.service";
 import { useCategoryInteraction } from "@/hooks/useCategoryInteraction";
 import CategoryIcon from "@/app/components/ui/category-icon";
 
@@ -54,14 +55,14 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
   const isWide = typeof window !== 'undefined' && window.innerWidth >= 768;
   const maxDisplay = isWide ? 9 : 4;
 
-  let displayCategories: any[];
+  let displayCategories: Category[];
   if (Array.isArray(personalizedCategories) && personalizedCategories.length > 0) {
-    const catMap = new Map(categories.map((c: any) => [c.id, c]));
+    const catMap = new Map(categories.map((c) => [c.id, c]));
     const personalized = personalizedCategories
       .map((pc) => catMap.get(pc.id))
-      .filter(Boolean);
+      .filter((c): c is Category => Boolean(c));
     const personalizedIds = new Set(personalizedCategories.map((pc) => pc.id));
-    const rest = categories.filter((c: any) => !personalizedIds.has(c.id));
+    const rest = categories.filter((c) => !personalizedIds.has(c.id));
     displayCategories = [...personalized, ...rest].slice(0, maxDisplay);
   } else {
     displayCategories = categories.slice(0, maxDisplay);
@@ -76,7 +77,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
         animate="show"
         className="flex gap-3 overflow-x-auto no-scrollbar px-4"
       >
-        {displayCategories.map((cat: any) => (
+        {displayCategories.map((cat) => (
             <motion.div
               key={cat.id}
               variants={cardItem}

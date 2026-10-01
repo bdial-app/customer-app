@@ -47,17 +47,26 @@ interface IAPReceipt {
   transactions: IAPTransaction[];
 }
 
+/** CdvPurchase IError shape (also tolerates the older errorCode/errorMessage fields). */
+interface IAPError {
+  isError?: boolean;
+  code?: number | string;
+  errorCode?: number | string;
+  message?: string;
+  errorMessage?: string;
+}
+
 interface IAPStore {
   register: (products: Array<{ id: string; type: string; platform: string }>) => void;
   initialize: (platforms?: string[]) => Promise<void>;
   get: (productId: string) => IAPProduct | undefined;
   products?: IAPProduct[];
-  order: (offerOrProduct: IAPProduct | IAPOffer) => Promise<any>;
+  order: (offerOrProduct: IAPProduct | IAPOffer) => Promise<IAPError | undefined>;
   when: () => {
-    approved: (cb: (transaction: IAPTransaction) => void) => any;
-    verified: (cb: (receipt: IAPReceipt) => void) => any;
-    finished: (cb: (transaction: IAPTransaction) => void) => any;
-    productUpdated: (cb: (product: IAPProduct) => void) => any;
+    approved: (cb: (transaction: IAPTransaction) => void) => unknown;
+    verified: (cb: (receipt: IAPReceipt) => void) => unknown;
+    finished: (cb: (transaction: IAPTransaction) => void) => unknown;
+    productUpdated: (cb: (product: IAPProduct) => void) => unknown;
   };
   restorePurchases: () => Promise<void>;
   update?: () => Promise<void>;
@@ -73,10 +82,11 @@ let listenersReady = false;
 // verify handler. This avoids the bug where registering a `when().approved`
 // callback per purchase accumulates global listeners that cross-fire (a
 // consumable approval triggering the subscription verifier and vice-versa).
+// Method signatures so entries can hold each purchase's own typed resolve/verify.
 interface PendingPurchase {
-  verify: (transaction: IAPTransaction) => Promise<any>;
-  resolve: (value: any) => void;
-  reject: (err: any) => void;
+  verify(transaction: IAPTransaction): Promise<unknown>;
+  resolve(value: unknown): void;
+  reject(err: unknown): void;
 }
 const pendingPurchases = new Map<string, PendingPurchase>();
 
@@ -116,11 +126,12 @@ function setupListeners(store: IAPStore): void {
 }
 
 /** Turn a CdvPurchase IError (or anything) into a readable message. */
-function formatIapError(e: any): string {
+function formatIapError(e: unknown): string {
   if (!e) return 'Unknown StoreKit error';
   if (typeof e === 'string') return e;
-  const code = e.code ?? e.errorCode;
-  const msg = e.message ?? e.errorMessage;
+  const err = e as IAPError;
+  const code = err.code ?? err.errorCode;
+  const msg = err.message ?? err.errorMessage;
   if (msg && code !== undefined) return `${msg} (code ${code})`;
   if (msg) return msg;
   if (code !== undefined) return `StoreKit error code ${code}`;
@@ -148,9 +159,9 @@ function selectBaseOffer(product: IAPProduct): IAPProduct | IAPOffer {
  * builds). On failure we clean up the pending entry and reject with a real
  * message instead of an empty {}.
  */
-function placeOrder(store: IAPStore, product: IAPProduct, productId: string, reject: (e: any) => void): void {
+function placeOrder(store: IAPStore, product: IAPProduct, productId: string, reject: (e: unknown) => void): void {
   Promise.resolve(store.order(selectBaseOffer(product))).then(
-    (result: any) => {
+    (result: IAPError | undefined) => {
       if (result && (result.isError || result.code !== undefined || result.message)) {
         pendingPurchases.delete(productId);
         reject(new Error(formatIapError(result)));

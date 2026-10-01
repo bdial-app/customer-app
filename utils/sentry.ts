@@ -71,6 +71,6 @@ export function clearSentryUser() {
 /**
  * Manually capture an error with optional context.
  */
-export function captureError(error: Error, context?: Record<string, any>) {
+export function captureError(error: Error, context?: Record<string, unknown>) {
   Sentry.captureException(error, { extra: context });
 }
