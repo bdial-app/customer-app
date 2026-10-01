@@ -68,6 +68,9 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (user && user.name && isOpen) {
       const wasSessionRecovery = was401Ref.current;
+      // Deliberately an effect: closing is one step of reacting to sign-in
+      // succeeding, alongside refetching and firing the queued callback.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false);
       was401Ref.current = false;
       const cb = pendingCallbackRef.current;

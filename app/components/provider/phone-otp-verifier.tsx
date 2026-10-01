@@ -49,13 +49,16 @@ export function PhoneOtpVerifier({
     };
   }, [countdown]);
 
-  // Reset when phone number changes
-  useEffect(() => {
+  // Reset when the phone number changes (during render, so a stale code for
+  // the old number is never shown against the new one)
+  const [shownPhone, setShownPhone] = useState(phoneNumber);
+  if (phoneNumber !== shownPhone) {
+    setShownPhone(phoneNumber);
     setStep("idle");
     setOtp("");
     setDevOtp("");
     setCountdown(0);
-  }, [phoneNumber]);
+  }
 
   const handleSendOtp = useCallback(async () => {
     const phone = phoneNumber.replace(/\D/g, "").slice(-10);

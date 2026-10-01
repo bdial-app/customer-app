@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { useIsClient } from "@/hooks/useIsClient";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import { Formik, Form, useField } from "formik";
@@ -528,11 +529,7 @@ function LoginContent() {
 /* ── Page wrapper (client-only for Google SDK) ── */
 export default function LoginPage() {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setReady(true);
-  }, []);
+  const ready = useIsClient();
 
   if (!ready) {
     return (

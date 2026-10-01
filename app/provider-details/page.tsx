@@ -216,8 +216,12 @@ export default function ProviderDetailsPage() {
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<typeof activeOffers[number] | null>(null);
 
-  // Reset local UI state when navigating to a different provider
-  useEffect(() => {
+  // Reset local UI state when navigating to a different provider. State is
+  // reset during render so the new provider never paints with the old one's
+  // tab or open sheets; scrolling is a DOM effect and stays in an effect.
+  const [shownId, setShownId] = useState(id);
+  if (id !== shownId) {
+    setShownId(id);
     setActiveTab("Overview");
     setHeaderVisible(false);
     setSheetOpened(false);
@@ -228,6 +232,8 @@ export default function ProviderDetailsPage() {
     setReviewSuccess(false);
     setReportSheetOpen(false);
     setSelectedDeal(null);
+  }
+  useEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0 });
   }, [id]);
 
@@ -256,10 +262,9 @@ export default function ProviderDetailsPage() {
     user && provider && user.id === provider.userId,
   );
 
-  // Close call sheet if user logs in as this provider (guest → own-provider transition)
-  useEffect(() => {
-    if (isOwnProvider) setCallSheetOpened(false);
-  }, [isOwnProvider]);
+  // Close call sheet if user logs in as this provider (guest → own-provider
+  // transition). An owner never needs the call sheet on their own listing.
+  if (isOwnProvider && callSheetOpened) setCallSheetOpened(false);
 
   // ─── Analytics Tracking ─────────────────────────────────────────
   const source = (searchParams.get("src") as any) || "direct";

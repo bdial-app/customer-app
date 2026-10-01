@@ -69,6 +69,10 @@ const SearchPageContent = () => {
     if (maxDistance) dispatch(setMaxDistance(parseFloat(maxDistance)));
     if (verified === "true") dispatch(setVerifiedOnly(true));
     if (womenLed === "true") dispatch(setWomenLedOnly(true));
+    // Deliberately an effect: this copies the URL (an external system) into
+    // Redux, then marks the page ready so the first search uses those filters.
+    // Dispatching during render would update other components mid-render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFiltersReady(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -93,8 +93,13 @@ const FilterSheet = ({
   const [tempVerified, setTempVerified] = useState(filters.verifiedOnly);
   const [tempWomenLed, setTempWomenLed] = useState(filters.womenLedOnly);
 
-  // Sync temp state when sheet opens
-  useEffect(() => {
+  // Sync temp state when the sheet opens, or when the applied filters change
+  // while it is open. Keyed on the filters' content, not object identity, so
+  // a parent re-render cannot wipe choices the user is still making.
+  const syncKey = opened ? JSON.stringify(filters) : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
     if (opened) {
       setTempCats(new Set(filters.categoryIds));
       setTempRating(filters.minRating);
@@ -103,7 +108,7 @@ const FilterSheet = ({
       setTempWomenLed(filters.womenLedOnly);
       setCategorySearch("");
     }
-  }, [opened, filters]);
+  }
 
   // Filter categories by search
   const filteredCategories = useMemo(() => {

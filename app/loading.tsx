@@ -1,16 +1,13 @@
 "use client";
 import { Page, Block } from "konsta/react";
-import { useEffect, useState } from "react";
+import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 
 const Skeleton = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded-md ${className}`} />
 );
 
 export default function Loading() {
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const isDark = useIsDarkMode();
 
   return (
     <Page

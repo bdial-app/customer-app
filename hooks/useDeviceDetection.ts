@@ -2,7 +2,15 @@
 
 import posthog from "posthog-js";
 import { usePostHog } from "posthog-js/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useIsClient } from "@/hooks/useIsClient";
+
+type DeviceInfo = {
+  device_type: "mobile" | "tablet" | "desktop";
+  screen_width: number;
+  screen_height: number;
+  user_agent: string;
+};
 import { detectDeviceType, getDeviceInfo } from "@/utils/deviceDetection";
 
 /**
@@ -10,33 +18,26 @@ import { detectDeviceType, getDeviceInfo } from "@/utils/deviceDetection";
  */
 export function useDeviceDetection() {
   const posthog = usePostHog();
-  const [deviceInfo, setDeviceInfo] = useState({
-    device_type: "desktop" as "mobile" | "tablet" | "desktop",
-    screen_width: 0,
-    screen_height: 0,
-    user_agent: "",
-  });
+  // Read from the browser once hydrated; the server and the hydration pass
+  // get the defaults, so the markup matches.
+  const isClient = useIsClient();
+  const deviceInfo = useMemo(
+    () =>
+      isClient
+        ? (getDeviceInfo() as DeviceInfo)
+        : ({ device_type: "desktop", screen_width: 0, screen_height: 0, user_agent: "" } as DeviceInfo),
+    [isClient],
+  );
 
+  // Update PostHog with device info
   useEffect(() => {
-    const info = getDeviceInfo();
-    setDeviceInfo(
-      info as {
-        device_type: "mobile" | "tablet" | "desktop";
-        screen_width: number;
-        screen_height: number;
-        user_agent: string;
-      },
-    );
-
-    // Update PostHog with device info
-    if (posthog) {
-      posthog.setPersonProperties({
-        device_type: info.device_type,
-        screen_width: info.screen_width,
-        screen_height: info.screen_height,
-      });
-    }
-  }, [posthog]);
+    if (!isClient || !posthog) return;
+    posthog.setPersonProperties({
+      device_type: deviceInfo.device_type,
+      screen_width: deviceInfo.screen_width,
+      screen_height: deviceInfo.screen_height,
+    });
+  }, [isClient, posthog, deviceInfo]);
 
   return deviceInfo;
 }

@@ -353,14 +353,21 @@ interface AnalyticsContentProps {
 const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: AnalyticsContentProps) => {
   const { isOnline } = useNetworkStatus();
   const [period, setPeriod] = useState<Period>("7d");
-  const [view, setView] = useState<View>("overview");
-
+  const requestedView: View | null =
+    initialView === "overview" || initialView === "leads" ? initialView : null;
+  const [view, setView] = useState<View>(requestedView ?? "overview");
+  // Jump to a view the parent asks for: applied during render, and the parent
+  // told it was consumed from an effect (which updates the parent).
+  const [appliedView, setAppliedView] = useState<View | null>(requestedView);
+  if (requestedView && requestedView !== appliedView) {
+    setAppliedView(requestedView);
+    setView(requestedView);
+  } else if (!requestedView && appliedView !== null) {
+    setAppliedView(null);
+  }
   useEffect(() => {
-    if (initialView && (initialView === "overview" || initialView === "leads")) {
-      setView(initialView);
-      onViewConsumed?.();
-    }
-  }, [initialView, onViewConsumed]);
+    if (requestedView) onViewConsumed?.();
+  }, [requestedView, onViewConsumed]);
   const [leadTier, setLeadTier] = useState<string | undefined>(undefined);
   const [leadPage, setLeadPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);

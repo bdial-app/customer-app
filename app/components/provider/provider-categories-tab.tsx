@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -44,14 +44,19 @@ const getPlaceholderColor = (name: string) => {
 const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
   const { data: allCategories = [], isLoading } = useTopLevelCategories();
   const queryClient = useQueryClient();
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => currentCategories.map((c) => c.id));
   const [search, setSearch] = useState("");
   const [brokenIcons, setBrokenIcons] = useState<Set<string>>(new Set());
 
-  // Initialize from current categories
-  useEffect(() => {
+  // Re-sync when the saved categories change. Compared by ids, not array
+  // identity: a parent passing a fresh array each render would otherwise wipe
+  // the user's in-progress selection (and, done during render, loop forever).
+  const currentKey = currentCategories.map((c) => c.id).join(",");
+  const [syncedKey, setSyncedKey] = useState(currentKey);
+  if (currentKey !== syncedKey) {
+    setSyncedKey(currentKey);
     setSelectedIds(currentCategories.map((c) => c.id));
-  }, [currentCategories]);
+  }
 
   const hasChanges = useMemo(() => {
     const currentIds = currentCategories.map((c) => c.id).sort();

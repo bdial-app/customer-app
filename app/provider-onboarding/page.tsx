@@ -67,6 +67,7 @@ import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
 import FeatureGate from "@/app/components/feature-gate";
 import { checkContent } from "@/utils/content-sanitizer";
+import { useObjectUrl, useObjectUrls } from "@/hooks/useObjectUrl";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -839,14 +840,7 @@ const PhotoFileUpload = ({
   hint: string;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!file) { setPreview(null); return; }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+  const preview = useObjectUrl(file);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -918,13 +912,7 @@ const ProductFormCard = ({
   onRemove: () => void;
 }) => {
   const imgRef = useRef<HTMLInputElement>(null);
-  const [previews, setPreviews] = useState<string[]>([]);
-
-  useEffect(() => {
-    const urls = product.images.map((f) => URL.createObjectURL(f));
-    setPreviews(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
-  }, [product.images]);
+  const previews = useObjectUrls(product.images);
 
   const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -1155,23 +1143,12 @@ const DocFilePicker = ({
   onChange: (file: File | null) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const hasError = touched && !!error;
   const docLabel =
     DOC_TYPES.find((d) => d.id === docType)?.label ?? "Document";
 
-  useEffect(() => {
-    if (!file) {
-      setPreview(null);
-      return;
-    }
-    if (file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    setPreview(null);
-  }, [file]);
+  // Only images get an inline preview; PDFs show the file name instead.
+  const preview = useObjectUrl(file && file.type.startsWith("image/") ? file : null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;

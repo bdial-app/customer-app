@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "konsta/react";
+import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 
 const ITEM_H = 44;
 const PAD = 2;
@@ -233,7 +234,7 @@ export default function TimePicker({
   const [portalPosition, setPortalPosition] = useState({ top: 0, right: 0 });
   const anchorRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isDark = typeof window !== "undefined" && document.documentElement.classList.contains("dark");
+  const isDark = useIsDarkMode();
 
   // Parses both 24-hour ("09:00") and 12-hour ("9:00 AM") formats
   const parseTime = (str: string) => {
@@ -274,6 +275,14 @@ export default function TimePicker({
   };
 
   const [committed, setCommitted] = useState(parseTime(value));
+  // Re-sync when the parent changes the value. Adjusted during render (React's
+  // pattern for state derived from props) rather than in an effect, which
+  // would paint the stale time for a frame first.
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    setCommitted(parseTime(value));
+  }
   const pending = useRef(parseTime(value));
 
   const timeStr = (s: { h: number; m: number; ap: number }) =>
@@ -335,10 +344,6 @@ export default function TimePicker({
       window.removeEventListener("resize", resizeHandler);
     };
   }, [open]);
-
-  useEffect(() => {
-    setCommitted(parseTime(value));
-  }, [value]);
 
   return (
     <div className="relative">
