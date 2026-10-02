@@ -46,7 +46,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
-import { shareProvider } from "@/utils/sharing";
+import { useShareBusiness } from "@/hooks/useShare";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { triggerHaptic } from "@/utils/haptics";
 import { useCreateConversation } from "@/hooks/useChat";
@@ -277,6 +277,8 @@ export default function ProviderDetailsPage() {
   // ─── Analytics Tracking ─────────────────────────────────────────
   const source = (searchParams.get("src") as ViewSource | null) || "direct";
   useTrackProviderView(isOwnProvider ? undefined : id, source);
+  // Built in the background once the page has data, so the tap shares at once.
+  const { share: shareBusiness, busy: sharing } = useShareBusiness(id, { asOwner: isOwnProvider });
   const {
     trackChat,
     trackCall,
@@ -373,12 +375,7 @@ export default function ProviderDetailsPage() {
   const handleShare = async () => {
     if (!provider) return;
     trackShare();
-    await shareProvider({
-      id: provider.id,
-      brandName: provider.brandName,
-      description: provider.description,
-      categoryLabel,
-    });
+    await shareBusiness();
   };
 
   // -- Loading --
@@ -511,7 +508,10 @@ export default function ProviderDetailsPage() {
                 )}
                 <button
                   onClick={handleShare}
-                  className="w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                  disabled={sharing}
+                  aria-busy={sharing}
+                  aria-label="Share this business"
+                  className={`w-9 h-9 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-800 transition-colors ${sharing ? "opacity-60 animate-pulse" : ""}`}
                 >
                   <IonIcon
                     icon={shareSocial}
@@ -624,7 +624,10 @@ export default function ProviderDetailsPage() {
                 )}
                 <button
                   onClick={handleShare}
-                  className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                  disabled={sharing}
+                  aria-busy={sharing}
+                  aria-label="Share this business"
+                  className={`w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform ${sharing ? "opacity-60 animate-pulse" : ""}`}
                 >
                   <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
                 </button>

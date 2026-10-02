@@ -33,7 +33,8 @@ import { store } from "@/store";
 import { useAppContext } from "@/app/context/AppContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
-import { shareContent, openDirections } from "@/utils/sharing";
+import { openDirections } from "@/utils/sharing";
+import { useShareProduct } from "@/hooks/useShare";
 import { triggerHaptic } from "@/utils/haptics";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
@@ -105,6 +106,8 @@ export default function ProductDetailsPage() {
   const { trackShare, trackSave, trackChat, trackCall } = useTrackAction(
     isOwnProduct ? undefined : provider?.id,
   );
+  // Built in the background once the page has data, so the tap shares at once.
+  const { share: shareProduct, busy: sharing } = useShareProduct(id, { asOwner: isOwnProduct });
 
   // Read into locals so the memo's inputs are exactly what it depends on.
   const photoUrls = product?.photoUrls;
@@ -186,13 +189,13 @@ export default function ProductDetailsPage() {
               <button
                 onClick={async () => {
                   if (!product) return;
-                  await shareContent({
-                    title: product.name,
-                    text: `Check out ${product.name}${price !== null ? ` - ${currency}${price.toLocaleString()}` : ""}\n${product.description || ""}`,
-                    url: window.location.href,
-                  });
+                  trackShare();
+                  await shareProduct();
                 }}
-                className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                disabled={sharing}
+                aria-busy={sharing}
+                aria-label="Share this product"
+                className={`w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform ${sharing ? "opacity-60 animate-pulse" : ""}`}
               >
                 <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
               </button>

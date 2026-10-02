@@ -14,7 +14,7 @@ import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
 import NotificationBell from "../notification-center/NotificationBell";
 import NotificationDropdown from "../notification-center/NotificationDropdown";
-import { shareProvider } from "@/utils/sharing";
+import { useShareBusiness } from "@/hooks/useShare";
 
 interface ProviderHeaderProps {
   provider: ProviderData | null;
@@ -37,6 +37,9 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
   const updateMutation = useUpdateProvider();
   const [notifOpen, setNotifOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  // The owner speaking for their own business: "We're on Tijarah Connect!"
+  // Above the early return: hooks run on every render.
+  const { share: shareBusiness, busy: sharing } = useShareBusiness(provider?.id, { asOwner: true, prefetch: false });
 
   if (!provider) return null;
 
@@ -87,14 +90,11 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                shareProvider({
-                  id: provider.id,
-                  brandName: provider.brandName || "My Business",
-                  description: provider.description,
-                });
-              }}
-              className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
+              onClick={() => void shareBusiness()}
+              disabled={sharing}
+              aria-busy={sharing}
+              aria-label="Share your business"
+              className={`w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center ${sharing ? "opacity-60 animate-pulse" : ""}`}
             >
               <IonIcon icon={shareSocialOutline} className="text-white text-lg" />
             </motion.button>

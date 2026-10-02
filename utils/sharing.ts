@@ -1,29 +1,16 @@
 import { isNativePlatform, getNativePlatform } from "./platform";
+import { APP_STORE_URL, PLAY_STORE_URL, detectDevicePlatform, storeLinksText, storeUrlFor } from "./store-links";
+
+// Older imports read the store links from here.
+export { APP_STORE_URL, PLAY_STORE_URL };
 
 /**
- * Canonical app URL used for all sharing links.
- * Matches metadataBase in layout.tsx and deep link domains in AndroidManifest.xml.
- * On native, window.location.origin returns "https://localhost" which is useless for sharing.
- */
-export const APP_BASE_URL: string = process.env.NEXT_APP_BASE_URL ?? "https://tijarahapp.in";
-/**
- * Store links for native app downloads.
- * Configure via NEXT_PUBLIC_PLAY_STORE_URL and NEXT_PUBLIC_APP_STORE_URL in .env
- */
-export const PLAY_STORE_URL: string = process.env.NEXT_PUBLIC_PLAY_STORE_URL || 'https://play.google.com/store/apps/details?id=com.tijarah.app';
-export const APP_STORE_URL: string = process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/app/tijarah/id000000000';
-
-/**
- * Get the appropriate download link based on the current platform.
- * On Android native → Play Store link
- * On iOS native → App Store link
- * On web → website URL (which has smart banner / deep link support)
+ * The store for the phone in someone's hand: Capacitor knows inside the app,
+ * the user agent decides in a browser. Never the website — a link to the web
+ * app is not where we want a new user to land.
  */
 export function getAppDownloadLink(): string {
-  const platform = getNativePlatform();
-  if (platform === "android") return PLAY_STORE_URL;
-  if (platform === "ios") return APP_STORE_URL;
-  return APP_BASE_URL;
+  return storeUrlFor(detectDevicePlatform(getNativePlatform()));
 }
 
 /**
@@ -117,59 +104,117 @@ export async function shareContent(data: {
   }
 }
 
-/**
- * Build an invite link for the app.
- */
-export function buildInviteLink(referrerName?: string): string {
-  const params = referrerName ? `?ref=${encodeURIComponent(referrerName)}` : "";
-  return `${APP_BASE_URL}${params}`;
+// ── Sharing with an image ────────────────────────────────
+
+export interface RichShare {
+  title: string;
+  caption: string;
+  /** The branded card, or null when it could not be made — the caption still goes. */
+  image: Blob | null;
+  filename: string;
 }
 
-/**
- * Build a shareable link for a provider details page.
- */
-export function buildProviderLink(providerId: string): string {
-  return `${APP_BASE_URL}/provider-details?id=${encodeURIComponent(
-    providerId,
-  )}`;
+export interface RichShareResult {
+  status: "shared" | "copied" | "cancelled" | "failed";
+  withImage: boolean;
+  /** The caption was also put on the clipboard, for apps that drop it. */
+  captionCopied: boolean;
 }
 
-/**
- * Store links worth putting in front of people. The App Store link is skipped
- * while it is still the placeholder id, so we never share a dead link.
- */
-function getStoreLinks(): { label: string; url: string }[] {
-  const links = [{ label: "Android", url: PLAY_STORE_URL }];
-  if (!/id0+$/.test(APP_STORE_URL)) links.push({ label: "iPhone", url: APP_STORE_URL });
-  return links;
-}
+const isCancel = (err: unknown) => {
+  const e = err as { name?: string; message?: string } | null;
+  return e?.name === "AbortError" || /cancel|abort|dismiss/i.test(e?.message ?? "");
+};
 
-/**
- * Share a provider's profile with proper content and URL.
- */
-export async function shareProvider(provider: {
-  id: string;
-  brandName: string;
-  description?: string | null;
-  categoryLabel?: string;
-}): Promise<"shared" | "copied" | "failed"> {
-  const description = provider.description?.replace(/\s+/g, " ").trim();
-  const blurb =
-    description && description.length > 140
-      ? `${description.slice(0, 137).trimEnd()}...`
-      : description;
-
-  const lines = [`Check out ${provider.brandName} on Tijarah Connect`];
-  if (provider.categoryLabel) lines.push(provider.categoryLabel);
-  if (blurb) lines.push("", blurb);
-  lines.push("", "Find trusted local businesses near you. Get the Tijarah Connect app:");
-  for (const store of getStoreLinks()) lines.push(`${store.label}: ${store.url}`);
-
-  return shareContent({
-    title: `${provider.brandName} on Tijarah Connect`,
-    text: lines.join("\n"),
+const blobToBase64 = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
   });
+
+/**
+ * The native share sheet only takes files on disk, so the card is written to
+ * the app's cache first. Returns null on an app build that predates the
+ * Filesystem plugin, so the share quietly falls back to text.
+ */
+async function writeShareFile(blob: Blob, filename: string): Promise<string | null> {
+  try {
+    const { Filesystem, Directory } = await import("@capacitor/filesystem");
+    const { uri } = await Filesystem.writeFile({
+      path: `share/${filename}`,
+      data: await blobToBase64(blob),
+      directory: Directory.Cache,
+      recursive: true,
+    });
+    return uri;
+  } catch {
+    return null;
+  }
 }
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Share a branded card with its caption: native sheet in the app, the Web
+ * Share API in a browser, the clipboard when neither can take it.
+ *
+ * WhatsApp on iPhone keeps an image but drops the text that came with it, so
+ * there the caption is copied first and the caller tells the person to paste.
+ */
+export async function shareRich(share: RichShare): Promise<RichShareResult> {
+  const platform = getNativePlatform();
+  const onIOS = detectDevicePlatform(platform) === "ios";
+
+  if (isNativePlatform()) {
+    const { Share } = await import("@capacitor/share");
+    const uri = share.image ? await writeShareFile(share.image, share.filename) : null;
+    const captionCopied = uri && onIOS ? await copyText(share.caption) : false;
+    try {
+      await Share.share({
+        title: share.title,
+        text: share.caption,
+        ...(uri ? { files: [uri] } : {}),
+        dialogTitle: share.title,
+      });
+      return { status: "shared", withImage: !!uri, captionCopied };
+    } catch (err) {
+      if (isCancel(err)) return { status: "cancelled", withImage: !!uri, captionCopied };
+    }
+    return { status: (await copyText(share.caption)) ? "copied" : "failed", withImage: false, captionCopied: true };
+  }
+
+  // Browser. Files are only offered where the browser says it can send them.
+  if (typeof navigator !== "undefined" && navigator.share) {
+    const file = share.image ? new File([share.image], share.filename, { type: share.image.type || "image/jpeg" }) : null;
+    const canSendFile = !!file && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
+    const captionCopied = canSendFile && onIOS ? await copyText(share.caption) : false;
+    try {
+      await navigator.share(
+        canSendFile ? { title: share.title, text: share.caption, files: [file!] } : { title: share.title, text: share.caption },
+      );
+      return { status: "shared", withImage: canSendFile, captionCopied };
+    } catch (err) {
+      if (isCancel(err)) return { status: "cancelled", withImage: canSendFile, captionCopied };
+      // NotAllowedError: the tap that started this expired while the card was
+      // being drawn. The clipboard below still gets the message out.
+    }
+  }
+
+  return { status: (await copyText(share.caption)) ? "copied" : "failed", withImage: false, captionCopied: true };
+}
+
+/** A filename people will recognise in their gallery. */
+export const shareFilename = (name: string) =>
+  `tijarah-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "share"}.jpg`;
 
 /**
  * Open WhatsApp with pre-filled text. Works on both native and web.
@@ -183,23 +228,15 @@ export function openWhatsApp(text: string) {
   );
 }
 
+/** The pitch every "invite a friend" message carries, with both store links. */
+export const inviteMessage = (referrerName?: string) =>
+  `${referrerName ? `${referrerName} invites you to` : "Come"} discover trusted local businesses on Tijarah Connect — ` +
+  `shops, services, deals and home businesses near you, all in one free app.\n\n${storeLinksText()}`;
+
 /**
- * Share an invite to join the app.
- * On native: shares the appropriate store link (Play Store / App Store) so recipients can download.
- * On web: shares the website deep link.
+ * Share an invite to join the app. Both store links go in the message: the
+ * person reading it may not use the same phone as the person sending it.
  */
-export async function shareInvite(
-  referrerName?: string,
-): Promise<"shared" | "copied" | "failed"> {
-  const downloadLink = getAppDownloadLink();
-  const webLink = buildInviteLink(referrerName);
-  // On native, share the store link; on web, share the website link
-  const link = isNativePlatform() ? downloadLink : webLink;
-  return shareContent({
-    title: "Join Tijarah Connect",
-    text: referrerName
-      ? `${referrerName} invites you to discover amazing local businesses on Tijarah Connect!\n\nDownload the app:`
-      : "Discover amazing local businesses on Tijarah Connect!\n\nDownload the app:",
-    url: link,
-  });
+export async function shareInvite(referrerName?: string): Promise<"shared" | "copied" | "failed"> {
+  return shareContent({ title: "Join Tijarah Connect", text: inviteMessage(referrerName) });
 }

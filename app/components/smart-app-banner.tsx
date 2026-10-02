@@ -1,15 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import { isNativePlatform } from "@/utils/platform";
-import { PLAY_STORE_URL } from "@/utils/sharing";
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/utils/store-links";
 
 const DISMISS_KEY = "smart_app_banner_dismissed";
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function getStoreInfo() {
   const ua = navigator.userAgent;
+  // The iPhone app is live (App Store id6772507338), so both stores are real now.
   if (/iPhone|iPad|iPod/.test(ua)) {
-    return { platform: "ios" as const, available: false };
+    return { platform: "ios" as const, available: true };
   }
   return { platform: "android" as const, available: true };
 }
@@ -56,9 +57,9 @@ export default function SmartAppBanner() {
   };
 
   const handleOpen = () => {
-    const { available } = getStoreInfo();
+    const { platform, available } = getStoreInfo();
     if (available) {
-      window.open(PLAY_STORE_URL, "_blank", "noopener,noreferrer");
+      window.open(platform === "ios" ? APP_STORE_URL : PLAY_STORE_URL, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -93,7 +94,7 @@ export default function SmartAppBanner() {
               : "Coming soon to the App Store"}
           </p>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
-            {available ? "Free on Google Play" : "Available on Play Store"}
+            {available ? (platform === "ios" ? "Free on the App Store" : "Free on Google Play") : "Available on Play Store"}
           </p>
         </div>
 
