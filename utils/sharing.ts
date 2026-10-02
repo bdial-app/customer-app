@@ -121,6 +121,20 @@ export interface RichShareResult {
   captionCopied: boolean;
 }
 
+/**
+ * Desktop Chrome accepts a shared file and then hands the target whatever it
+ * wrote to disk — the share arrives with a line of
+ * ".../Chrome/Default/WebShare/share-<uuid>/tijarah-x.jpg" in it instead of a
+ * picture. A card is only worth sending from a phone anyway, so a desktop
+ * browser gets the caption alone.
+ */
+const isPhoneBrowser = () => {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIpad = /Macintosh/.test(ua) && typeof document !== "undefined" && "ontouchend" in document;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || isIpad;
+};
+
 const isCancel = (err: unknown) => {
   const e = err as { name?: string; message?: string } | null;
   return e?.name === "AbortError" || /cancel|abort|dismiss/i.test(e?.message ?? "");
@@ -195,7 +209,8 @@ export async function shareRich(share: RichShare): Promise<RichShareResult> {
   // Browser. Files are only offered where the browser says it can send them.
   if (typeof navigator !== "undefined" && navigator.share) {
     const file = share.image ? new File([share.image], share.filename, { type: share.image.type || "image/jpeg" }) : null;
-    const canSendFile = !!file && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
+    const canSendFile =
+      !!file && isPhoneBrowser() && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] });
     const captionCopied = canSendFile && onIOS ? await copyText(share.caption) : false;
     try {
       await navigator.share(

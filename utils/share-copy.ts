@@ -95,11 +95,11 @@ const lines = (...parts: (string | false | null | undefined)[]) =>
     .trim();
 
 /**
- * There is no web page to link to, so the message says exactly what to search
- * for once the app is installed — the next best thing to a deep link.
+ * How every share ends: the name to search for, then both store links. Both,
+ * because the sender cannot know which phone the person reading it uses.
  */
-const getTheApp = (searchFor: string, why: string) =>
-  `Get the free Tijarah Connect app and search “${searchFor}” to ${why}:\n${storeLinksText()}`;
+const findUs = (who: "them" | "us", name: string) =>
+  `Find ${who} on Tijarah Connect — search “${name}”.\n${storeLinksText()}`;
 
 // ── Captions ─────────────────────────────────────────────
 
@@ -116,7 +116,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
 
   if (asOwner) {
     return lines(
-      "We’re on Tijarah Connect! 🎉",
+      "We’re on Tijarah Connect 🎉",
       "",
       `*${b.name}*`,
       identity,
@@ -127,12 +127,12 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       b.hours && `🕒 Open ${b.hours}`,
       "",
-      getTheApp(b.name, "see our products, grab our offers and message us directly"),
+      findUs("us", b.name),
     );
   }
 
   return lines(
-    "Found a great local business on Tijarah Connect 👇",
+    "Found a great business on Tijarah Connect 👇",
     "",
     `*${b.name}*`,
     identity,
@@ -144,7 +144,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
     b.deal && `🎁 Running now: ${dealLine(b.deal)}`,
     b.hours && `🕒 Open ${b.hours}`,
     "",
-    getTheApp(b.name, "see everything they offer and message them directly"),
+    findUs("them", b.name),
   );
 }
 
@@ -167,7 +167,7 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
       where && `📍 ${where}`,
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       "",
-      getTheApp(b.name, p.kind === "service" ? "book it with us or ask us anything" : "order it from us or ask us anything"),
+      findUs("us", b.name),
     );
   }
 
@@ -183,6 +183,6 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
     `From *${b.name}*${where ? ` · ${where}` : ""}${trust ? ` · ✅ ${trust}` : ""}`,
     b.deal && `🎁 This shop is running ${dealLine(b.deal)}`,
     "",
-    getTheApp(b.name, p.kind === "service" ? "book it or ask them about it" : "order it or ask them about it"),
+    findUs("them", b.name),
   );
 }

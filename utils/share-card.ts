@@ -21,7 +21,6 @@ const BRAND_2 = "#4f46e5";
 const INK = "#0f172a";
 const MUTED = "#64748b";
 const LINE = "#e2e8f0";
-const SOFT = "#f1f5f9";
 
 const IMAGE_TIMEOUT_MS = 4000;
 
@@ -78,10 +77,6 @@ async function prepareFont() {
 
 const font = (ctx: Ctx, weight: number, size: number) => {
   ctx.font = `${weight} ${size}px ${fontFamily}`;
-};
-
-const tracking = (ctx: Ctx, px: number) => {
-  if ("letterSpacing" in ctx) ctx.letterSpacing = `${px}px`;
 };
 
 function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
@@ -189,15 +184,38 @@ function text(
   value: string,
   x: number,
   y: number,
-  opts: { size: number; weight?: number; color?: string; maxWidth: number; maxLines?: number; lineHeight?: number },
+  opts: {
+    size: number;
+    weight?: number;
+    color?: string;
+    maxWidth: number;
+    maxLines?: number;
+    lineHeight?: number;
+    /** Centre each line on `x` instead of starting it there. */
+    centre?: boolean;
+  },
 ): number {
   font(ctx, opts.weight ?? 400, opts.size);
   ctx.fillStyle = opts.color ?? INK;
   ctx.textBaseline = "alphabetic";
+  if (opts.centre) ctx.textAlign = "center";
   const lh = opts.lineHeight ?? Math.round(opts.size * 1.22);
   const rows = wrap(ctx, value, opts.maxWidth, opts.maxLines ?? 1);
   rows.forEach((row, i) => ctx.fillText(row, x, y + opts.size + i * lh));
+  ctx.textAlign = "left";
   return y + (rows.length ? opts.size + (rows.length - 1) * lh + Math.round(opts.size * 0.3) : 0);
+}
+
+/** What `text` would occupy, without drawing it — for laying a card out first. */
+function textHeight(
+  ctx: Ctx,
+  value: string,
+  opts: { size: number; weight?: number; maxWidth: number; maxLines?: number; lineHeight?: number },
+): number {
+  font(ctx, opts.weight ?? 400, opts.size);
+  const lh = opts.lineHeight ?? Math.round(opts.size * 1.22);
+  const rows = wrap(ctx, value, opts.maxWidth, opts.maxLines ?? 1);
+  return rows.length ? opts.size + (rows.length - 1) * lh + Math.round(opts.size * 0.3) : 0;
 }
 
 /** A rounded label; returns its width so the caller can lay out a row. */
@@ -273,20 +291,53 @@ function avatar(ctx: Ctx, img: HTMLImageElement | null, name: string, cx: number
   ctx.restore();
 }
 
-function trustPills(ctx: Ctx, b: ShareBusiness, x: number, y: number, maxX: number): number {
-  const items: { label: string; bg: string; fg: string; check?: boolean }[] = [];
+type Badge = { label: string; bg: string; fg: string; check?: boolean };
+
+const BADGE_SIZE = 28;
+const BADGE_ROW_H = Math.round(BADGE_SIZE * 1.75) + 28;
+
+const badgeList = (b: ShareBusiness): Badge[] => {
+  const items: Badge[] = [];
+  if (b.deal) items.push({ label: b.deal.label.toUpperCase(), bg: "#f59e0b", fg: "#ffffff" });
   if (b.verified) items.push({ label: "Verified", bg: "#dcfce7", fg: "#15803d", check: true });
   if (b.womenLed) items.push({ label: "Women-led", bg: "#fce7f3", fg: "#be185d" });
   if (b.communityVerified) items.push({ label: "Community verified", bg: "#fef3c7", fg: "#b45309", check: true });
+  return items;
+};
+
+/** The row's height for the layout pass; 0 when there is nothing to show. */
+const badgeHeight = (b: ShareBusiness) => (badgeList(b).length ? 24 + BADGE_ROW_H : 0);
+
+/** The offer and trust labels, as one centred row under the name. */
+function badges(ctx: Ctx, b: ShareBusiness, y: number, maxWidth: number): number {
+  const items = badgeList(b);
   if (!items.length) return y;
-  let cx = x;
+
+  const GAP = 16;
+  const widthOf = (it: Badge) => {
+    font(ctx, 700, BADGE_SIZE);
+    return Math.round(BADGE_SIZE * 0.7) * 2 + (it.check ? BADGE_SIZE * 0.9 : 0) + ctx.measureText(it.label).width;
+  };
+
+  // Measure the whole row first so it can be centred; anything that would not
+  // fit on the line is dropped rather than wrapped.
+  const shown: { it: Badge; w: number }[] = [];
+  let total = 0;
   for (const it of items) {
-    font(ctx, 700, 26);
-    const est = ctx.measureText(it.label).width + 26 * 2.3;
-    if (cx + est > maxX) break;
-    cx += pill(ctx, it.label, cx, y, { ...it, size: 26 }) + 14;
+    const w = widthOf(it);
+    const next = total + w + (shown.length ? GAP : 0);
+    if (next > maxWidth) break;
+    shown.push({ it, w });
+    total = next;
   }
-  return y + Math.round(26 * 1.75) + 26;
+  if (!shown.length) return y;
+
+  let x = (W - total) / 2;
+  for (const { it, w } of shown) {
+    pill(ctx, it.label, x, y, { ...it, size: BADGE_SIZE });
+    x += w + GAP;
+  }
+  return y + BADGE_ROW_H;
 }
 
 /**
@@ -328,7 +379,7 @@ function footer(ctx: Ctx, icon: HTMLImageElement | null, headlines: string[], su
   text(ctx, sub.value, tx, y + 92, { size: sub.size, weight: 500, color: "rgba(255,255,255,0.78)", maxWidth: tw });
 }
 
-const storesLine = "Free on Google Play & the App Store";
+const storesLine = "Free on Android & iPhone";
 
 function newCanvas(): { canvas: HTMLCanvasElement; ctx: Ctx } | null {
   if (typeof document === "undefined") return null;
@@ -355,6 +406,12 @@ const APP_ICON = "/icons/512.png";
 
 // ── Business card ────────────────────────────────────────
 
+/**
+ * The business logo is the only picture on this card. It used to carry a banner
+ * behind the logo and a row of product thumbnails under the text, which read as
+ * four images of a business rather than one brand — on a phone the logo is what
+ * someone recognises, so everything else here is type.
+ */
 export async function renderBusinessCard(b: ShareBusiness): Promise<Blob | null> {
   const made = newCanvas();
   if (!made) return null;
@@ -362,104 +419,53 @@ export async function renderBusinessCard(b: ShareBusiness): Promise<Blob | null>
   const loader = new ImageLoader();
   try {
     await prepareFont();
-    const products = (b.products ?? []).slice(0, 3);
-    const [banner, logo, icon, ...thumbs] = await Promise.all([
-      loader.load(b.bannerUrl),
-      loader.load(b.logoUrl),
-      loader.load(APP_ICON),
-      ...products.map((p) => loader.load(p.imageUrl)),
-    ]);
+    const [logo, icon] = await Promise.all([loader.load(b.logoUrl), loader.load(APP_ICON)]);
 
-    // Banner — shorter when products need the room below.
-    const BANNER_H = products.length ? 470 : 520;
-    if (banner) drawCover(ctx, banner, 0, 0, W, BANNER_H);
-    else brandGradient(ctx, 0, 0, W, BANNER_H);
-    const shade = ctx.createLinearGradient(0, BANNER_H * 0.45, 0, BANNER_H);
-    shade.addColorStop(0, "rgba(0,0,0,0)");
-    shade.addColorStop(1, "rgba(0,0,0,0.35)");
-    ctx.fillStyle = shade;
-    ctx.fillRect(0, 0, W, BANNER_H);
-
-    if (b.deal) {
-      pill(ctx, b.deal.label.toUpperCase(), PAD, PAD, { bg: "#f59e0b", fg: "#ffffff", size: 34 });
-    }
-
-    // Logo, overlapping the banner edge
-    const R = 108;
-    avatar(ctx, logo, b.name, PAD + R + 12, BANNER_H, R, 12);
-
-    // Identity
-    let y = BANNER_H + R + 34;
+    const cx = W / 2;
     const maxW = W - PAD * 2;
-    y = text(ctx, b.name, PAD, y, { size: 62, weight: 800, maxWidth: maxW, maxLines: 2, lineHeight: 74 });
+    const R = 190;
+
+    const NAME = { size: 64, weight: 800, maxWidth: maxW, maxLines: 2, lineHeight: 76 } as const;
+    const IDENTITY = { size: 32, weight: 500, maxWidth: maxW } as const;
+    const DESC = { size: 32, weight: 400, maxWidth: maxW, lineHeight: 44 } as const;
+    const GAP = { logo: 76, identity: 6, badges: 24, desc: 12 };
+
+    // Measured before anything is drawn, so a listing with one line of text
+    // sits centred in the card instead of leaving a hole above the footer.
     const identity = [b.category, placeLine(b)].filter(Boolean).join("  ·  ");
-    if (identity) y = text(ctx, identity, PAD, y + 4, { size: 32, weight: 500, color: MUTED, maxWidth: maxW });
-    y = trustPills(ctx, b, PAD, y + 18, W - PAD);
+    const area = H - FOOTER_H;
+    const fixed =
+      R * 2 +
+      GAP.logo +
+      textHeight(ctx, b.name, NAME) +
+      (identity ? GAP.identity + textHeight(ctx, identity, IDENTITY) : 0) +
+      badgeHeight(b);
+    const descLines = b.description ? Math.max(0, Math.min(4, Math.floor((area - fixed - 180) / DESC.lineHeight))) : 0;
+    const descH = descLines ? GAP.desc + textHeight(ctx, b.description!, { ...DESC, maxLines: descLines }) : 0;
+    const top = Math.max(70, Math.round((area - fixed - descH) / 2));
 
-    // Products, sized to the room left above the footer. Prices go first when
-    // it is tight, then the strip itself, so text never runs into the footer.
-    const bottom = H - FOOTER_H - 36;
-    const LABEL_H = 44;
-    let showPrices = products.some((x) => x.price != null && x.price > 0);
-    let textH = showPrices ? 84 : 46;
-    let tileH = bottom - y - LABEL_H - textH;
-    if (products.length && showPrices && tileH < 150) {
-      showPrices = false;
-      textH = 46;
-      tileH = bottom - y - LABEL_H - textH;
-    }
-    const drawProducts = products.length > 0 && tileH >= 120;
-    tileH = Math.min(tileH, 240);
-    const stripH = drawProducts ? LABEL_H + tileH + textH : 0;
+    // Logo. The hairline keeps a logo on a white background from bleeding into
+    // the card.
+    const logoCy = top + R;
+    avatar(ctx, logo, b.name, cx, logoCy, R);
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, logoCy, R + 1, 0, Math.PI * 2);
+    ctx.stroke();
 
-    // Description, in whatever room the products leave
-    const room = bottom - y - stripH - (drawProducts ? 16 : 0);
-    const descLines = Math.min(drawProducts ? 2 : 5, Math.floor(room / 42));
-    if (b.description && descLines > 0) {
-      text(ctx, b.description, PAD, y, { size: 32, weight: 400, color: "#334155", maxWidth: maxW, maxLines: descLines, lineHeight: 42 });
-    }
-
-    if (drawProducts) {
-      const top = bottom - stripH;
-      font(ctx, 800, 24);
-      tracking(ctx, 3);
-      ctx.fillStyle = MUTED;
-      ctx.fillText(products.length === 1 ? "FEATURED" : "POPULAR HERE", PAD, top + 24);
-      tracking(ctx, 0);
-      const gap = 24;
-      const tw = (maxW - gap * 2) / 3;
-      products.forEach((p, i) => {
-        const tx = PAD + i * (tw + gap);
-        const ty = top + LABEL_H;
-        ctx.save();
-        roundRect(ctx, tx, ty, tw, tileH, 24);
-        ctx.clip();
-        const img = thumbs[i] ?? null;
-        if (img) drawCover(ctx, img, tx, ty, tw, tileH);
-        else {
-          ctx.fillStyle = SOFT;
-          ctx.fillRect(tx, ty, tw, tileH);
-          font(ctx, 800, 72);
-          ctx.fillStyle = "#cbd5e1";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(initials(p.name), tx + tw / 2, ty + tileH / 2);
-          ctx.textAlign = "left";
-          ctx.textBaseline = "alphabetic";
-        }
-        ctx.restore();
-        const ny = text(ctx, p.name, tx, ty + tileH + 8, { size: 27, weight: 600, maxWidth: tw });
-        if (showPrices && p.price != null && p.price > 0) {
-          text(ctx, formatMoney(p.price, p.currency), tx, ny - 6, { size: 28, weight: 800, color: BRAND, maxWidth: tw });
-        }
-      });
+    let y = text(ctx, b.name, cx, logoCy + R + GAP.logo, { ...NAME, centre: true });
+    if (identity) y = text(ctx, identity, cx, y + GAP.identity, { ...IDENTITY, color: MUTED, centre: true });
+    y = badges(ctx, b, y + GAP.badges, maxW);
+    if (descLines) {
+      text(ctx, b.description!, cx, y + GAP.desc, { ...DESC, color: "#334155", maxLines: descLines, centre: true });
     }
 
     footer(
       ctx,
       icon,
       [`Find ${b.name} on Tijarah Connect`, "Find it on Tijarah Connect"],
-      [`Search “${b.name}” · free on Google Play & App Store`, `Search “${b.name}” in the free app`, storesLine],
+      [`Search “${b.name}” · free on Android & iPhone`, `Search “${b.name}” in the free app`, storesLine],
     );
     return await toJpeg(canvas);
   } catch {
@@ -471,6 +477,11 @@ export async function renderBusinessCard(b: ShareBusiness): Promise<Blob | null>
 
 // ── Product card ─────────────────────────────────────────
 
+/**
+ * A product share is still a share of a business, so the logo and name head the
+ * card and the product photo sits under them. That also makes a product share
+ * and a business share read as the same family at a glance in a chat.
+ */
 export async function renderProductCard(p: ShareProduct): Promise<Blob | null> {
   const made = newCanvas();
   if (!made) return null;
@@ -485,63 +496,72 @@ export async function renderProductCard(p: ShareProduct): Promise<Blob | null> {
       loader.load(APP_ICON),
     ]);
 
+    const maxW = W - PAD * 2;
+
+    // Header: whose shop this is.
+    const AR = 62;
+    const headCy = 44 + AR;
+    avatar(ctx, logo, b.name, PAD + AR, headCy, AR);
+    ctx.strokeStyle = LINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(PAD + AR, headCy, AR + 1, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const hx = PAD + AR * 2 + 26;
+    const hw = W - hx - PAD;
+    const meta = [placeLine(b), b.verified && "Verified", b.womenLed && "Women-led"].filter(Boolean).join("  ·  ");
+    const nameBottom = text(ctx, b.name, hx, headCy - (meta ? 40 : 22), { size: 38, weight: 800, maxWidth: hw });
+    if (meta) text(ctx, meta, hx, nameBottom - 2, { size: 26, weight: 500, color: MUTED, maxWidth: hw });
+
+    const headerBottom = headCy + AR + 44;
+    ctx.fillStyle = LINE;
+    ctx.fillRect(0, headerBottom - 2, W, 2);
+
     // Product photo
-    const PHOTO_H = 720;
-    if (photo) drawCover(ctx, photo, 0, 0, W, PHOTO_H);
+    const PHOTO_H = 600;
+    const photoTop = headerBottom;
+    if (photo) drawCover(ctx, photo, 0, photoTop, W, PHOTO_H);
     else {
-      brandGradient(ctx, 0, 0, W, PHOTO_H);
-      font(ctx, 800, 220);
+      brandGradient(ctx, 0, photoTop, W, PHOTO_H);
+      font(ctx, 800, 200);
       ctx.fillStyle = "rgba(255,255,255,0.9)";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(initials(p.name), W / 2, PHOTO_H / 2);
+      ctx.fillText(initials(p.name), W / 2, photoTop + PHOTO_H / 2);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
     }
-    const shade = ctx.createLinearGradient(0, 0, 0, 220);
-    shade.addColorStop(0, "rgba(0,0,0,0.28)");
+    const shade = ctx.createLinearGradient(0, photoTop, 0, photoTop + 200);
+    shade.addColorStop(0, "rgba(0,0,0,0.3)");
     shade.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = shade;
-    ctx.fillRect(0, 0, W, 220);
+    ctx.fillRect(0, photoTop, W, 200);
 
     let px = PAD;
-    px += pill(ctx, p.kind === "service" ? "SERVICE" : "PRODUCT", px, PAD, { bg: "#ffffff", fg: BRAND, size: 26 }) + 14;
-    if (b.deal) pill(ctx, b.deal.label.toUpperCase(), px, PAD, { bg: "#f59e0b", fg: "#ffffff", size: 26 });
+    px += pill(ctx, p.kind === "service" ? "SERVICE" : "PRODUCT", px, photoTop + 28, { bg: "#ffffff", fg: BRAND, size: 26 }) + 14;
+    if (b.deal) pill(ctx, b.deal.label.toUpperCase(), px, photoTop + 28, { bg: "#f59e0b", fg: "#ffffff", size: 26 });
 
-    // Name and price
-    const maxW = W - PAD * 2;
-    let y = PHOTO_H + 36;
-    y = text(ctx, p.name, PAD, y, { size: 56, weight: 800, maxWidth: maxW, maxLines: 2, lineHeight: 66 });
+    // Name, price, and whatever room is left for the description
+    let y = photoTop + PHOTO_H + 36;
+    y = text(ctx, p.name, PAD, y, { size: 54, weight: 800, maxWidth: maxW, maxLines: 2, lineHeight: 64 });
     if (p.price != null && p.price > 0) {
-      y = text(ctx, formatMoney(p.price, p.currency), PAD, y + 2, { size: 58, weight: 800, color: BRAND, maxWidth: maxW });
+      y = text(ctx, formatMoney(p.price, p.currency), PAD, y + 2, { size: 56, weight: 800, color: BRAND, maxWidth: maxW });
     } else {
-      y = text(ctx, "Price on request", PAD, y + 4, { size: 38, weight: 700, color: MUTED, maxWidth: maxW });
+      y = text(ctx, "Price on request", PAD, y + 4, { size: 36, weight: 700, color: MUTED, maxWidth: maxW });
     }
 
-    // Business strip, pinned above the footer
-    const STRIP_H = 136;
-    const stripTop = H - FOOTER_H - STRIP_H;
-    const room = stripTop - y - 20;
-    const descLines = Math.min(3, Math.floor(room / 40));
+    const bottom = H - FOOTER_H - 32;
+    const descLines = Math.min(3, Math.floor((bottom - y) / 40));
     if (p.description && descLines > 0) {
-      text(ctx, p.description, PAD, y + 6, { size: 30, weight: 400, color: "#334155", maxWidth: maxW, maxLines: descLines, lineHeight: 40 });
+      text(ctx, p.description, PAD, y + 8, { size: 30, weight: 400, color: "#334155", maxWidth: maxW, maxLines: descLines, lineHeight: 40 });
     }
-
-    ctx.fillStyle = LINE;
-    ctx.fillRect(PAD, stripTop, maxW, 2);
-    const ar = 44;
-    avatar(ctx, logo, b.name, PAD + ar, stripTop + STRIP_H / 2, ar);
-    const sx = PAD + ar * 2 + 24;
-    const sw = W - sx - PAD;
-    const nameBottom = text(ctx, b.name, sx, stripTop + 24, { size: 34, weight: 800, maxWidth: sw });
-    const meta = [placeLine(b), b.verified ? "Verified" : null, b.womenLed ? "Women-led" : null].filter(Boolean).join("  ·  ");
-    if (meta) text(ctx, meta, sx, nameBottom - 4, { size: 26, weight: 500, color: MUTED, maxWidth: sw });
 
     footer(
       ctx,
       icon,
       ["Get it on Tijarah Connect"],
-      [`Search “${b.name}” · free on Google Play & App Store`, `Search “${b.name}” on Tijarah Connect`, storesLine],
+      [`Search “${b.name}” · free on Android & iPhone`, `Search “${b.name}” in the free app`, storesLine],
     );
     return await toJpeg(canvas);
   } catch {

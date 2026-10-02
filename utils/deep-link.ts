@@ -23,6 +23,13 @@ export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
     }
   }
 
+  // Short share links: /b/<provider id> and /p/<product id>. These are what
+  // goes out in a shared message, so they are matched before the long routes.
+  const shortBusiness = route.match(/^\/b\/([^/?#]+)$/);
+  if (shortBusiness) return `${ROUTE_PATH.PROVIDER_DETAILS}?id=${encodeURIComponent(shortBusiness[1]!)}`;
+  const shortProduct = route.match(/^\/p\/([^/?#]+)$/);
+  if (shortProduct) return `${ROUTE_PATH.PRODUCT_DETAILS}?id=${encodeURIComponent(shortProduct[1]!)}`;
+
   switch (route) {
     case "/provider-details":
       if (params.id) {
