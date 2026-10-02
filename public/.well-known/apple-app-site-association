@@ -3,8 +3,10 @@
     "apps": [],
     "details": [
       {
-        "appID": "L4RFNR4BM8.com.tijarah.app",
+        "appID": "L4RFNR4BM8.com.tijarah.appstore",
         "paths": [
+          "/b/*",
+          "/p/*",
           "/provider-details*",
           "/product-details*",
           "/search*",
@@ -19,7 +21,7 @@
   },
   "webcredentials": {
     "apps": [
-      "L4RFNR4BM8.com.tijarah.app"
+      "L4RFNR4BM8.com.tijarah.appstore"
     ]
   }
 }

@@ -27,6 +27,11 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Where shared links live. The host must serve
+                     /.well-known/assetlinks.json for autoVerify to pass. -->
+                <data android:scheme="https" android:host="tijarahapp.in" />
+                <data android:scheme="https" android:host="www.tijarahapp.in" />
+
                 <data
           android:scheme="https"
           android:host="develop.tijarahapp.in"
