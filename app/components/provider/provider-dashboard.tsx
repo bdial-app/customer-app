@@ -42,7 +42,7 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import OfflineFallback from "../offline-fallback";
 import { useProviderDetails } from "@/hooks/useProvider";
-import { shareProvider } from "@/utils/sharing";
+import { useShareBusiness } from "@/hooks/useShare";
 import {
   ProviderDetailsPhoto,
   ProviderDetailsProduct,
@@ -462,6 +462,7 @@ const GrowthTips = memo(({
   onNavigate,
   onVerify,
 }: GrowthTipsProps) => {
+  const { share: shareBusiness } = useShareBusiness(provider?.id, { asOwner: true, prefetch: false });
   const totalPhotos = stats.photos.length;
   const totalProducts = stats.products.length;
   const totalOffers = stats.activeOffers.length;
@@ -531,16 +532,10 @@ const GrowthTips = memo(({
     {
       icon: megaphoneOutline,
       title: "Share your profile",
-      desc: "Get 20% more reach with WhatsApp sharing",
+      desc: "Send customers a card with your logo, products and offers",
       priority: "low" as const,
       action: () => {
-        if (provider) {
-          shareProvider({
-            id: provider.id,
-            brandName: provider.brandName || "My Business",
-            description: provider.description,
-          });
-        }
+        if (provider) void shareBusiness();
       },
     },
   ].filter(Boolean) as {
