@@ -76,13 +76,12 @@ export function openDirections(lat: number, lng: number, label?: string) {
 export async function shareContent(data: {
   title: string;
   text: string;
-  url: string;
+  url?: string;
 }): Promise<"shared" | "copied" | "failed"> {
-  // A message that already carries its link is shared as text alone, so share
-  // targets don't append the link a second time after the store links.
-  const linkInText = data.text.includes(data.url);
-  const payload = linkInText ? { title: data.title, text: data.text } : data;
-  const fallbackText = linkInText ? data.text : data.url;
+  // Without a url the message is shared as text alone (share targets would
+  // otherwise append one), and the clipboard fallback copies the whole text.
+  const payload = data.url ? data : { title: data.title, text: data.text };
+  const fallbackText = data.url ?? data.text;
 
   // Native: use Capacitor Share plugin for reliable native share sheet
   if (isNativePlatform()) {
@@ -154,7 +153,6 @@ export async function shareProvider(provider: {
   description?: string | null;
   categoryLabel?: string;
 }): Promise<"shared" | "copied" | "failed"> {
-  const url = buildProviderLink(provider.id);
   const description = provider.description?.replace(/\s+/g, " ").trim();
   const blurb =
     description && description.length > 140
@@ -164,14 +162,12 @@ export async function shareProvider(provider: {
   const lines = [`Check out ${provider.brandName} on Tijarah Connect`];
   if (provider.categoryLabel) lines.push(provider.categoryLabel);
   if (blurb) lines.push("", blurb);
-  lines.push("", `View profile: ${url}`);
   lines.push("", "Find trusted local businesses near you. Get the Tijarah Connect app:");
   for (const store of getStoreLinks()) lines.push(`${store.label}: ${store.url}`);
 
   return shareContent({
     title: `${provider.brandName} on Tijarah Connect`,
     text: lines.join("\n"),
-    url,
   });
 }
 

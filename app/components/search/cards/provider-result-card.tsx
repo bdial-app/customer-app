@@ -80,7 +80,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
           {/* Distance */}
           {distanceLabel(provider) && (
             <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-gray-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-              <IonIcon icon={navigateOutline} className="w-3 h-3 text-amber-500" />
+              <IonIcon icon={isApproximate(provider) ? locationOutline : navigateOutline} className="w-3 h-3 text-amber-500" />
               {distanceLabel(provider)}
             </div>
           )}
