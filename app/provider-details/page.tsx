@@ -47,6 +47,7 @@ import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { useShareBusiness } from "@/hooks/useShare";
+import { facebookUrl, instagramUrl, linkedinUrl, websiteUrl, whatsappUrl, youtubeUrl } from "@/utils/social-links";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { triggerHaptic } from "@/utils/haptics";
 import { useCreateConversation } from "@/hooks/useChat";
@@ -266,6 +267,19 @@ export default function ProviderDetailsPage() {
   };
 
   const provider = data?.provider ?? null;
+  // Owners type these by hand, so a stored value may be a username, a pasted
+  // URL or something unusable. Null means "not added" rather than a dead link.
+  const social = useMemo(
+    () => ({
+      instagram: instagramUrl(provider?.instagramHandle),
+      facebook: facebookUrl(provider?.facebookHandle),
+      youtube: youtubeUrl(provider?.youtubeHandle),
+      whatsapp: whatsappUrl(provider?.whatsappNumber),
+      linkedin: linkedinUrl(provider?.linkedinHandle),
+      website: websiteUrl(provider?.websiteUrl),
+    }),
+    [provider],
+  );
   const isOwnProvider = Boolean(
     user && provider && user.id === provider.userId,
   );
@@ -1019,7 +1033,7 @@ export default function ProviderDetailsPage() {
             </div>
 
             {/* Social / Online Presence */}
-            {(provider.websiteUrl || provider.instagramHandle || provider.facebookHandle || provider.youtubeHandle || provider.whatsappNumber || provider.linkedinHandle) && (
+            {(social.website || social.instagram || social.facebook || social.youtube || social.whatsapp || social.linkedin) && (
               <div className="relative overflow-hidden rounded-2xl border border-slate-100/80 dark:border-slate-700 bg-gradient-to-br from-white via-slate-50/50 to-white dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-800 shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-none">
                 {/* Subtle decorative gradient orb */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br from-indigo-100/40 to-purple-100/30 dark:from-indigo-900/20 dark:to-purple-900/10 blur-2xl pointer-events-none" />
@@ -1037,9 +1051,9 @@ export default function ProviderDetailsPage() {
                     <>
                   {/* Social Icons Row — circular, centered, with brand colors */}
                   <div className="flex items-center justify-center gap-4 mb-3">
-                    {provider.instagramHandle && (
+                    {social.instagram && (
                       <a
-                        href={`https://instagram.com/${provider.instagramHandle}`}
+                        href={social.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-1.5"
@@ -1050,9 +1064,9 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#E4405F] transition-colors">Instagram</span>
                       </a>
                     )}
-                    {provider.facebookHandle && (
+                    {social.facebook && (
                       <a
-                        href={provider.facebookHandle.startsWith("http") ? provider.facebookHandle : `https://facebook.com/${provider.facebookHandle}`}
+                        href={social.facebook}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-1.5"
@@ -1063,9 +1077,9 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#1877F2] transition-colors">Facebook</span>
                       </a>
                     )}
-                    {provider.youtubeHandle && (
+                    {social.youtube && (
                       <a
-                        href={provider.youtubeHandle.startsWith("http") ? provider.youtubeHandle : `https://youtube.com/@${provider.youtubeHandle.replace(/^@/, "")}`}
+                        href={social.youtube}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-1.5"
@@ -1076,9 +1090,9 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#FF0000] transition-colors">YouTube</span>
                       </a>
                     )}
-                    {provider.whatsappNumber && (
+                    {social.whatsapp && (
                       <a
-                        href={`https://wa.me/${provider.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                        href={social.whatsapp}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-1.5"
@@ -1089,9 +1103,9 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-[#25D366] transition-colors">WhatsApp</span>
                       </a>
                     )}
-                    {provider.linkedinHandle && (
+                    {social.linkedin && (
                       <a
-                        href={provider.linkedinHandle.startsWith("http") ? provider.linkedinHandle : `https://linkedin.com/${provider.linkedinHandle}`}
+                        href={social.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-col items-center gap-1.5"
@@ -1103,7 +1117,7 @@ export default function ProviderDetailsPage() {
                       </a>
                     )}
                     {/* Placeholders for links not yet added */}
-                    {!provider.instagramHandle && (
+                    {!social.instagram && (
                       <div className="flex flex-col items-center gap-1.5 opacity-30">
                         <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={logoInstagram} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -1111,7 +1125,7 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">Instagram</span>
                       </div>
                     )}
-                    {!provider.facebookHandle && (
+                    {!social.facebook && (
                       <div className="flex flex-col items-center gap-1.5 opacity-30">
                         <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={logoFacebook} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -1119,7 +1133,7 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">Facebook</span>
                       </div>
                     )}
-                    {!provider.youtubeHandle && (
+                    {!social.youtube && (
                       <div className="flex flex-col items-center gap-1.5 opacity-30">
                         <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={logoYoutube} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -1127,7 +1141,7 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">YouTube</span>
                       </div>
                     )}
-                    {!provider.whatsappNumber && (
+                    {!social.whatsapp && (
                       <div className="flex flex-col items-center gap-1.5 opacity-30">
                         <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={logoWhatsapp} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -1135,7 +1149,7 @@ export default function ProviderDetailsPage() {
                         <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">WhatsApp</span>
                       </div>
                     )}
-                    {!provider.linkedinHandle && (
+                    {!social.linkedin && (
                       <div className="flex flex-col items-center gap-1.5 opacity-30">
                         <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                           <IonIcon icon={logoLinkedin} className="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -1146,9 +1160,9 @@ export default function ProviderDetailsPage() {
                   </div>
 
                   {/* Website — inline elegant link with favicon */}
-                  {provider.websiteUrl && (
+                  {social.website && (
                     <a
-                      href={provider.websiteUrl.startsWith("http") ? provider.websiteUrl : `https://${provider.websiteUrl}`}
+                      href={social.website}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2.5 mt-2 px-3.5 py-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 hover:border-indigo-200 dark:hover:border-indigo-700 active:scale-[0.98] transition-all"
@@ -1161,7 +1175,7 @@ export default function ProviderDetailsPage() {
                         </div>
                       )}
                       <span className="text-[12px] font-medium text-slate-600 dark:text-slate-300 truncate flex-1">
-                        {provider.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                        {social.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                       </span>
                       <svg className="w-3.5 h-3.5 text-slate-300 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
