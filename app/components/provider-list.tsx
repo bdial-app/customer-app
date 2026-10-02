@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
@@ -12,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { distanceLabel, type HasDistance } from "@/utils/distance-label";
+import { ApproximateDivider, shouldShowApproximateDivider } from "@/utils/approximate-divider";
 
 export interface ProviderListItem extends HasDistance {
   id: string;
@@ -35,8 +37,9 @@ const ProviderList = ({ providerList }: { providerList: ProviderListItem[] }) =>
     <div className="px-4 pb-4">
       <div className="grid grid-cols-2 gap-3">
         {providerList.map((provider: ProviderListItem, index: number) => (
+          <Fragment key={provider.id}>
+          {shouldShowApproximateDivider(providerList, index) && <ApproximateDivider item={provider} />}
           <motion.div
-            key={provider.id}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03, duration: 0.3 }}
@@ -117,6 +120,7 @@ const ProviderList = ({ providerList }: { providerList: ProviderListItem[] }) =>
               )}
             </div>
           </motion.div>
+          </Fragment>
         ))}
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -35,6 +35,7 @@ import type {
 import SearchFilterSheet from "./search-filter-sheet";
 import SearchFilterChips from "./search-filter-chips";
 import ProviderResultCard from "./cards/provider-result-card";
+import { ApproximateDivider, shouldShowApproximateDivider } from "@/utils/approximate-divider";
 import ProductResultCard from "./cards/product-result-card";
 import CategoryResultCard from "./cards/category-result-card";
 import InfiniteScroll from "../infinite-scroll";
@@ -299,8 +300,11 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="grid grid-cols-2 gap-3">
-              {(Array.isArray(results.providers?.data) ? results.providers.data : []).map((p, i: number) => (
-                <ProviderResultCard key={p.id} provider={p} index={i} />
+              {(Array.isArray(results.providers?.data) ? results.providers.data : []).map((p, i: number, all) => (
+                <Fragment key={p.id}>
+                  {shouldShowApproximateDivider(all, i) && <ApproximateDivider item={p} />}
+                  <ProviderResultCard provider={p} index={i} />
+                </Fragment>
               ))}
             </div>
           </InfiniteScroll>
