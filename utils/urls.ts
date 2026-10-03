@@ -88,6 +88,12 @@ export const PRODUCT_URLS = {
   UPDATE: (id: string) => `/products/${id}`,
   DELETE: (id: string) => `/products/${id}`,
   UPLOAD_IMAGE: "/products/upload-image",
+  SIMILAR: (id: string) => `/products/${id}/similar`,
+};
+
+export const CATALOG_URLS = {
+  SHELVES: "/products/catalog/shelves",
+  BROWSE: "/products/catalog/browse",
 };
 
 export const HOME_URLS = {

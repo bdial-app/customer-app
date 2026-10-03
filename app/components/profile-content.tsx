@@ -88,10 +88,10 @@ import {
 } from "@/services/bug-report.service";
 import NotificationSettings from "./notification-center/NotificationSettings";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { useInstalledVersion } from "@/hooks/useAppUpdate";
 import { removeItemSync, removeItem } from "@/utils/storage";
 import { checkContent } from "@/utils/content-sanitizer";
 
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
 /** The `message` from an API error response body, if there is one. */
 const apiErrorMessage = (err: unknown): string | undefined =>
@@ -220,6 +220,8 @@ const SlidePage = ({
 
 // ─── Main Profile Content ───────────────────────────────────────────
 const ProfileContent = memo(() => {
+  // The installed build's own version, so support can trust what people read out.
+  const appVersion = useInstalledVersion();
   const {
     providerStatus,
     userMode,
@@ -730,7 +732,7 @@ const ProfileContent = memo(() => {
           {/* App Version */}
           <div className="text-center py-6">
             <p className="text-[11px] text-slate-300 font-medium">
-              Tijarah v{APP_VERSION}
+              Tijarah v{appVersion}
             </p>
             <p className="text-[10px] text-slate-300 mt-0.5">
               Made with ♥ in India
@@ -1243,7 +1245,7 @@ const ProfileContent = memo(() => {
           {/* App Version */}
           <div className="text-center py-6">
             <p className="text-[11px] text-slate-300 font-medium">
-              Tijarah v{APP_VERSION}
+              Tijarah v{appVersion}
             </p>
             <p className="text-[10px] text-slate-300 mt-0.5">
               Made with ♥ in India
@@ -1298,7 +1300,7 @@ const ProfileContent = memo(() => {
               Tijarah
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">BohriConnect</p>
-            <p className="text-[11px] text-slate-400 mt-1">Version {APP_VERSION}</p>
+            <p className="text-[11px] text-slate-400 mt-1">Version {appVersion}</p>
           </div>
 
           {/* Tagline */}

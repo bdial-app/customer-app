@@ -9,12 +9,15 @@ import {
   timeOutline,
   alertCircleOutline,
   warningOutline,
+  helpCircleOutline,
 } from "ionicons/icons";
 import { ProviderData } from "@/services/provider.service";
 import { useUpdateProvider } from "@/hooks/useMyProvider";
 import NotificationBell from "../notification-center/NotificationBell";
 import NotificationDropdown from "../notification-center/NotificationDropdown";
 import { useShareBusiness } from "@/hooks/useShare";
+import { openBusinessTour } from "@/utils/business-tour";
+import ViewModeSwitch from "./view-mode-switch";
 
 interface ProviderHeaderProps {
   provider: ProviderData | null;
@@ -71,17 +74,23 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
 
   return (
     <>
-    <div className="relative overflow-hidden">
+    <div data-tour="home-header" className="relative overflow-hidden">
       {/* Indigo gradient hero — the business skin */}
       <div className="bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-600 px-5 pb-5" style={{ paddingTop: "calc(var(--sat,0px) + 12px)" }}>
         {/* Top bar */}
         <div className="flex items-center justify-between mb-4">
+          {/* Business ⇄ Customer: see the app the way customers do */}
+          <ViewModeSwitch />
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white rounded-full backdrop-blur-sm border border-white/20">
-              Business Dashboard
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => openBusinessTour()}
+              aria-label="How the business side works"
+              data-tour="home-help"
+              className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
+            >
+              <IonIcon icon={helpCircleOutline} className="text-white text-[19px]" />
+            </motion.button>
             <div onClick={(e) => e.stopPropagation()}>
               <NotificationBell
                 onClick={() => setNotifOpen((v) => !v)}
@@ -144,6 +153,7 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
               {/* Availability inline toggle */}
               <motion.button
                 whileTap={{ scale: 0.9 }}
+                data-tour="home-open-toggle"
                 onClick={handleToggleAvailability}
                 disabled={updateMutation.isPending}
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${

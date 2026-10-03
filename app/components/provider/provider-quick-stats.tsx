@@ -29,7 +29,7 @@ const ProviderQuickStats = ({ stats: { photos, products, reviews } }: ProviderQu
 
   return (
     <div className="px-4 py-4">
-      <div className="grid grid-cols-4 gap-2">
+      <div data-tour="home-quick-stats" className="grid grid-cols-4 gap-2">
         {statItems.map((stat, i) => (
           <motion.div
             key={stat.label}

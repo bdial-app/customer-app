@@ -44,6 +44,7 @@ import { useNotification } from "../context/NotificationContext";
 import { useRouter } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { PROVIDER_STATUS_KEY } from "@/hooks/useMyProvider";
 import TimePicker from "../components/time-picker";
 import { Formik, Form, useField, type FormikProps, type FormikTouched } from "formik";
 import * as Yup from "yup";
@@ -1554,6 +1555,9 @@ const UnderReviewBanner = ({
               type="button"
               onClick={() => {
                 setUserMode("provider");
+                try {
+                  sessionStorage.setItem("__active_tab", "home");
+                } catch {}
                 router.replace("/");
               }}
               className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-600 active:bg-emerald-700 transition-colors shadow-md shadow-emerald-200/30"
@@ -1571,13 +1575,31 @@ const UnderReviewBanner = ({
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={onGoBack}
-            className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-[15px] active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
-          >
-            Go Back
-          </button>
+          <div className="w-full flex flex-col gap-2">
+            {/* You can set up your listing while the review runs. */}
+            <button
+              type="button"
+              onClick={() => {
+                setUserMode("provider");
+                try {
+                  sessionStorage.setItem("__active_tab", "home");
+                } catch {}
+                router.replace("/");
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-indigo-600 active:bg-indigo-700 transition-colors shadow-md shadow-indigo-200/30"
+            >
+              <IonIcon icon={storefrontOutline} className="text-white text-xl" />
+              <span className="text-white font-semibold text-[15px]">Open my business dashboard</span>
+              <IonIcon icon={arrowForwardOutline} className="text-white/80 text-base ml-auto" />
+            </button>
+            <button
+              type="button"
+              onClick={onGoBack}
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-medium text-sm active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
         )}
       </div>
     </Page>
@@ -1588,7 +1610,7 @@ const UnderReviewBanner = ({
 // MAIN PAGE
 // ===========================================================================
 const ProviderOnboardingPage = () => {
-  const { providerStatus, setProviderStatus } = useAppContext();
+  const { providerStatus, setProviderStatus, setUserMode } = useAppContext();
   const { notify } = useNotification();
   const router = useRouter();
   const { goBack } = useBackNavigation();
@@ -1904,11 +1926,15 @@ const ProviderOnboardingPage = () => {
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
-      if (values.identity_doc) {
-        setProviderStatus("in_review");
-      } else {
-        router.replace("/");
-      }
+      queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
+      // Straight into business mode: the dashboard — and its guided tour — is
+      // where a new owner starts. Its header and cards show the review status.
+      setProviderStatus(values.identity_doc ? "in_review" : "unverified");
+      setUserMode("provider");
+      try {
+        sessionStorage.setItem("__active_tab", "home");
+      } catch {}
+      router.replace("/");
     } catch (err: unknown) {
       const message =
         (isAxiosError<{ message?: string | string[] }>(err) ? err.response?.data?.message : undefined) ??

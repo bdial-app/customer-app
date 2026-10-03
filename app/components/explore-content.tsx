@@ -23,6 +23,8 @@ import {
   rocketOutline,
 } from "ionicons/icons";
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
+import { storefront, bagHandle, construct } from "ionicons/icons";
+import CatalogStorefront from "@/app/components/catalog/catalog-storefront";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -266,9 +268,9 @@ function BannerCarousel({
   );
 }
 
-/* ── Main Component ── */
+/* ── Businesses segment (the original Explore feed) ── */
 
-const ExploreContent = memo(() => {
+const BusinessesExplore = memo(() => {
   const router = useRouter();
 
   // Prefetch search route so navigation is instant
@@ -785,6 +787,7 @@ const ExploreContent = memo(() => {
     </div>
   );
 });
+BusinessesExplore.displayName = "BusinessesExplore";
 
 /* ── Horizontal Scroll Provider Card (for carousels) ── */
 
@@ -861,6 +864,118 @@ function ExploreCarouselCard({
     </div>
   );
 }
+
+/* ── Explore: Businesses · Products · Services ── */
+
+type ExploreSegment = "businesses" | "products" | "services";
+
+const SEGMENTS: { key: ExploreSegment; label: string; icon: string; active: string }[] = [
+  { key: "businesses", label: "Businesses", icon: storefront, active: "text-slate-900 dark:text-white" },
+  { key: "products", label: "Products", icon: bagHandle, active: "text-amber-600 dark:text-amber-400" },
+  { key: "services", label: "Services", icon: construct, active: "text-indigo-600 dark:text-indigo-400" },
+];
+
+const SEGMENT_KEY = "__explore_segment";
+
+const readSegment = (): ExploreSegment => {
+  try {
+    const v = sessionStorage.getItem(SEGMENT_KEY);
+    if (v === "products" || v === "services" || v === "businesses") return v;
+  } catch {}
+  return "businesses";
+};
+
+const ExploreContent = memo(() => {
+  const [segment, setSegment] = useState<ExploreSegment>(() =>
+    typeof window === "undefined" ? "businesses" : readSegment(),
+  );
+  // Segments stay mounted once opened, so their scroll and loaded pages survive a switch.
+  const [visited, setVisited] = useState<Set<ExploreSegment>>(() => new Set([segment]));
+  const headerRef = useRef<HTMLDivElement>(null);
+  const scrollBySegment = useRef<Partial<Record<ExploreSegment, number>>>({});
+  const pendingRestore = useRef<number | null>(null);
+
+  const switchTo = useCallback(
+    (next: ExploreSegment) => {
+      if (next === segment) {
+        // Tapping the active segment jumps back to its top.
+        headerRef.current?.closest(".tab-panel")?.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      const panel = headerRef.current?.closest(".tab-panel");
+      if (panel) scrollBySegment.current[segment] = panel.scrollTop;
+      pendingRestore.current = scrollBySegment.current[next] ?? 0;
+      triggerHaptic("light");
+      setVisited((v) => (v.has(next) ? v : new Set(v).add(next)));
+      setSegment(next);
+      try {
+        sessionStorage.setItem(SEGMENT_KEY, next);
+      } catch {}
+    },
+    [segment],
+  );
+
+  // Restore the new segment's scroll position once it has rendered.
+  useEffect(() => {
+    if (pendingRestore.current == null) return;
+    const top = pendingRestore.current;
+    pendingRestore.current = null;
+    const panel = headerRef.current?.closest(".tab-panel");
+    if (panel) panel.scrollTop = top;
+  }, [segment]);
+
+  return (
+    <>
+      <div
+        ref={headerRef}
+        className="sticky top-0 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
+        style={{ paddingTop: "calc(var(--sat,0px) + 6px)" }}
+      >
+        <div className="px-4 pt-3 pb-2">
+          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Explore</h1>
+        </div>
+        <div className="px-4 pb-2.5">
+          <div role="tablist" className="relative flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1">
+            {SEGMENTS.map((s) => {
+              const active = s.key === segment;
+              return (
+                <button
+                  key={s.key}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => switchTo(s.key)}
+                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12.5px] font-bold transition-colors ${
+                    active ? s.active : "text-slate-500 dark:text-slate-400"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="explore-segment-pill"
+                      transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                      className="absolute inset-0 rounded-xl bg-white dark:bg-slate-700 shadow-sm"
+                    />
+                  )}
+                  <IonIcon icon={s.icon} className="relative text-[14px]" />
+                  <span className="relative">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: segment === "businesses" ? "block" : "none" }}>
+        {visited.has("businesses") && <BusinessesExplore />}
+      </div>
+      <div style={{ display: segment === "products" ? "block" : "none" }}>
+        {visited.has("products") && <CatalogStorefront type="product" />}
+      </div>
+      <div style={{ display: segment === "services" ? "block" : "none" }}>
+        {visited.has("services") && <CatalogStorefront type="service" />}
+      </div>
+    </>
+  );
+});
 
 ExploreContent.displayName = "ExploreContent";
 
