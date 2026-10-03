@@ -34,6 +34,7 @@ import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 import FeatureGate from "./components/feature-gate";
 import BusinessTourController from "./components/onboarding/business-tour/business-tour-controller";
+import { MAIN_TAB_EVENT } from "@/utils/tour-nav";
 import { ModeSwitchOverlay } from "./components/provider/view-mode-switch";
 import FloatingNotificationPill from "./components/floating-notification-pill";
 import NotificationDropdown from "./components/notification-center/NotificationDropdown";
@@ -208,6 +209,16 @@ export default function Home() {
     }
     setActiveTab(tab);
   }, [user, requireAuth]);
+
+  // A guided tour asks for a tab (the customer tour lives in the app shell).
+  useEffect(() => {
+    const onTab = (e: Event) => {
+      const tab = (e as CustomEvent<string>).detail;
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener(MAIN_TAB_EVENT, onTab);
+    return () => window.removeEventListener(MAIN_TAB_EVENT, onTab);
+  }, [setActiveTab]);
 
   const handleNavigateToListings = (subTab: string) => {
     setListingsSubTab(subTab);

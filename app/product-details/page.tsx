@@ -103,9 +103,11 @@ export default function ProductDetailsPage() {
 
   // ─── Analytics Tracking ─────────────────────────────────────────
   const source = (searchParams.get("src") as ViewSource | null) || "direct";
+  // The guided tour opens a real product as an example — that isn't a real view, so don't count it.
+  const inTour = searchParams.get("tour") === "1";
   useTrackProductView(
-    isOwnProduct ? undefined : provider?.id,
-    isOwnProduct ? undefined : id,
+    isOwnProduct || inTour ? undefined : provider?.id,
+    isOwnProduct || inTour ? undefined : id,
     source,
   );
   const { trackShare, trackSave, trackChat, trackCall } = useTrackAction(
@@ -200,7 +202,7 @@ export default function ProductDetailsPage() {
 
       {/* Top bar stays put while the page scrolls: see-through over the photo,
           solid with the product name once the photo has scrolled away. */}
-      <div
+      <div data-tour="product-topbar"
         className={`absolute top-0 inset-x-0 z-40 transition-colors duration-200 ${
           scrolled ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-[0_1px_0_rgba(0,0,0,0.06)]" : ""
         }`}
@@ -253,7 +255,7 @@ export default function ProductDetailsPage() {
         className="h-full overflow-y-auto overscroll-contain"
       >
       <div className="relative">
-        <div className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
+        <div data-tour="product-gallery" className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
           {/* Swipeable gallery; keyed by product so a new product starts at photo 1 */}
           <div
             key={id}
@@ -329,7 +331,7 @@ export default function ProductDetailsPage() {
       </div>
 
       <div className="px-5 pt-5 pb-28 space-y-4">
-        <div>
+        <div data-tour="product-summary">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
@@ -393,7 +395,7 @@ export default function ProductDetailsPage() {
         </div>
 
         {provider && (
-          <Link
+          <Link data-tour="product-seller"
             href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
             className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
           >
@@ -467,7 +469,7 @@ export default function ProductDetailsPage() {
         )}
 
         {product.description && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div data-tour="product-about" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
             <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
               About this {isService ? "service" : "product"}
             </h3>
@@ -478,7 +480,7 @@ export default function ProductDetailsPage() {
         )}
 
         {provider && related.length > 0 && (
-          <div className="pt-2">
+          <div data-tour="product-more-from-seller" className="pt-2">
             <MoreFromSeller
               related={related}
               provider={provider}
@@ -488,7 +490,7 @@ export default function ProductDetailsPage() {
           </div>
         )}
 
-        <div className="pt-2">
+        <div data-tour="product-similar" className="pt-2">
           <SimilarItems
             productId={product.id}
             type={isService ? "service" : "product"}
@@ -498,7 +500,7 @@ export default function ProductDetailsPage() {
         </div>
       </div>
 
-      <div
+      <div data-tour="product-cta"
         className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
         style={{
           paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",

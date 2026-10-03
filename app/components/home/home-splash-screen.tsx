@@ -5,7 +5,7 @@ import { SPLASH_ICON } from "../splash-icon";
 
 export default function HomeSplashScreen() {
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-b from-[#0f3460] via-[#1a1a2e] to-[#16213e]">
+    <div data-blocks-tour className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-b from-[#0f3460] via-[#1a1a2e] to-[#16213e]">
       {/* Abstract background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-amber-500/[0.04] blur-[100px]" />

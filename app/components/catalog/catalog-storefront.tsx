@@ -41,12 +41,24 @@ const SHELF_STYLE: Record<string, { icon: string; color: string }> = {
 };
 
 /* ── One horizontal shelf ── */
-function Shelf({ shelf, type, actions }: { shelf: CatalogShelf; type: CatalogType; actions: ReturnType<typeof useCatalogCardActions> }) {
+function Shelf({
+  shelf,
+  type,
+  actions,
+  first,
+}: {
+  shelf: CatalogShelf;
+  type: CatalogType;
+  actions: ReturnType<typeof useCatalogCardActions>;
+  /** The top shelf, which the tour points at (which shelves show varies per person). */
+  first?: boolean;
+}) {
   const style = SHELF_STYLE[shelf.key] ?? { icon: sparkles, color: "text-amber-500" };
   const isForYou = shelf.key === "for_you";
 
   return (
     <section
+      data-tour={first ? "store-first-shelf" : `store-shelf-${shelf.key}`}
       className={`mt-6 ${isForYou ? "mx-4 rounded-3xl bg-gradient-to-br from-violet-50 via-fuchsia-50/60 to-amber-50 dark:from-violet-950/40 dark:via-slate-900 dark:to-slate-900 border border-violet-100/80 dark:border-violet-900/40 py-3.5" : ""}`}
       style={isForYou ? undefined : { contentVisibility: "auto", containIntrinsicSize: "auto 280px" }}
     >
@@ -101,7 +113,7 @@ function Shelf({ shelf, type, actions }: { shelf: CatalogShelf; type: CatalogTyp
 function CategoryTiles({ categories, type }: { categories: CatalogCategoryChip[]; type: CatalogType }) {
   if (categories.length === 0) return null;
   return (
-    <section className="mt-5">
+    <section className="mt-5" data-tour="store-categories">
       <h2 className="px-4 mb-2.5 text-[16px] font-extrabold text-slate-900 dark:text-white tracking-tight">
         {type === "service" ? "Browse by category" : "Shop by category"}
       </h2>
@@ -140,6 +152,7 @@ function IntroCard({ type, total, where }: { type: CatalogType; total: number; w
 
   return (
     <div
+      data-tour="store-intro"
       className={`mx-4 mt-3 rounded-3xl p-4 relative overflow-hidden ${
         isService ? "bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500" : "bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500"
       }`}
@@ -201,6 +214,7 @@ const CatalogStorefront = memo(function CatalogStorefront({ type }: { type: Cata
       {/* Search */}
       <div className="px-4 pt-2">
         <button
+          data-tour="store-search"
           onClick={() => router.push(ROUTE_PATH.SEARCH)}
           className="w-full flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm active:scale-[0.98] transition-transform text-left"
         >
@@ -228,7 +242,9 @@ const CatalogStorefront = memo(function CatalogStorefront({ type }: { type: Cata
         <>
           {!isError && <IntroCard type={type} total={data?.totalItems ?? 0} where={where} />}
           {data && <CategoryTiles categories={data.categories} type={type} />}
-          {data?.shelves.map((shelf) => <Shelf key={shelf.key} shelf={shelf} type={type} actions={actions} />)}
+          {data?.shelves.map((shelf, i) => (
+            <Shelf key={shelf.key} shelf={shelf} type={type} actions={actions} first={i === 0} />
+          ))}
 
           <div className="mt-8 border-t-8 border-slate-50 dark:border-slate-950/60" />
           <CatalogResults

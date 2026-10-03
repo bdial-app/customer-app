@@ -34,7 +34,8 @@ import {
   flag,
 } from "ionicons/icons";
 
-export type TourTab = "home" | "listings" | "analytics" | "chats";
+/** Business tabs, then customer tabs. */
+export type TourTab = "home" | "listings" | "analytics" | "chats" | "explore" | "saved" | "profile";
 
 export interface TourStep {
   id: string;
@@ -46,6 +47,8 @@ export interface TourStep {
   subTab?: string;
   /** Analytics view to open. */
   analyticsView?: "overview" | "leads";
+  /** Explore section to open (customer tour). */
+  exploreSegment?: "businesses" | "products" | "services";
   title: string;
   body: string;
   points?: string[];
@@ -57,13 +60,23 @@ export interface TourStep {
   cta?: string;
   /** A second, quieter button that ends the tour (e.g. "Maybe later"). */
   secondary?: string;
-  /** Skip silently if the element isn't on screen (sections that only show sometimes). */
+  /**
+   * Shown instead of `body` when the section isn't on this person's screen
+   * (yet) — so nothing is skipped: they learn what will appear and how.
+   */
+  missing?: string;
+  /** Skip silently if the element isn't on screen and there's no `missing` copy. */
   optional?: boolean;
+  /** Page to open for this step (customer tour: a real business or product page). */
+  route?: string;
+  /** Business page tab to open: Overview, Reviews, Catalogue or Photos. */
+  providerTab?: "Overview" | "Reviews" | "Catalogue" | "Photos";
   scrollBlock?: ScrollLogicalPosition;
 }
 
 export interface TourChapter {
-  id: TourTab | "finale";
+  /** A tab id, "finale", or a page chapter such as "business-page". */
+  id: string;
   title: string;
   /** One line for the chapter picker. */
   summary: string;
@@ -74,9 +87,12 @@ export interface TourChapter {
   steps: TourStep[];
 }
 
+export type VerificationState = "verified" | "in_review" | "rejected" | "not_started";
+
 export interface TourContext {
   firstName: string;
   businessName: string;
+  verification: VerificationState;
   subscriptionsVisible: boolean;
   sponsorshipsEnabled: boolean;
 }
@@ -153,18 +169,7 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
           "Photos, rating, reviews and catalogue size. Each one answers a question a customer has before they message — " +
           "what do you make, is it any good, what does it cost.",
       },
-      {
-        id: "verify",
-        tab: "home",
-        anchor: "home-get-verified",
-        optional: true,
-        icon: shieldCheckmark,
-        title: "Get the green tick",
-        body:
-          "Upload one ID document and our team confirms you're from the community. Verified businesses carry a green " +
-          "tick on search results, your profile and every product.",
-        tip: "It's the single biggest reason a stranger chooses you over a name they don't know.",
-      },
+      verificationStep(ctx.verification),
       {
         id: "completeness",
         tab: "home",
@@ -173,6 +178,9 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         icon: checkmarkDoneCircle,
         title: "Finish your profile",
         body: "Everything still missing is listed here, each with a shortcut straight to where you fix it.",
+        missing:
+          "Your profile is complete — nothing to add right now. If something goes missing later (say, your hours), " +
+          "it reappears here with a shortcut to fix it.",
       },
       {
         id: "growth-tips",
@@ -182,6 +190,7 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         icon: bulb,
         title: "Your to-do list for growth",
         body: "Tips update as you go, most important first. Tap one and it takes you to exactly the right screen.",
+        missing: "No tips right now — you've done the lot. New ones appear here as your listing grows.",
       },
       {
         id: "grow",
@@ -203,6 +212,7 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         scrollBlock: "nearest",
         optional: true,
         icon: bagHandle,
+        missing: "Your catalogue preview shows here once you add your first product or service in the Business tab.",
         title: "What you sell, at a glance",
         body:
           "A preview of your catalogue. Every product and service you add is found in search on its own, and shows on " +
@@ -387,6 +397,9 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         icon: time,
         title: "When people look for you",
         body: "Your busiest hours. Be quick to reply then, and post offers just before the rush.",
+        missing:
+          "No visits to chart yet. Once people start opening your listing, a 24-hour chart shows when they look — " +
+          "so you know when to be quick with replies.",
       },
       {
         id: "top-products",
@@ -397,6 +410,9 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         icon: trophy,
         title: "Your most-viewed items",
         body: "What's catching attention. Keep these well photographed and priced — they're doing your selling.",
+        missing:
+          "Nobody has opened your products in this period yet. Your five most-viewed items appear here, with views " +
+          "and visitors for each.",
       },
       {
         id: "insights",
@@ -407,6 +423,7 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         icon: sparkles,
         title: "Insights in plain words",
         body: "Growth, conversion, hot leads and rating — summed up so you don't have to read charts.",
+        missing: "Insights appear here once there's a little activity on your listing to summarise.",
       },
       {
         id: "leads-switch",
@@ -443,6 +460,7 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         title: "Unlocking a lead",
         body:
           "Tap Unlock on a lead to see their name and how to reach them. What you have available this month is shown here.",
+        missing: "Your unlock allowance appears here once you have leads to unlock.",
       },
       {
         id: "list",
@@ -457,6 +475,7 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
           "Each card shows the score, what they searched for, which products they viewed and how long they stayed. " +
           "Open one for the full visit timeline.",
         tip: "Mention the product they looked at when you reach out — it shows you're paying attention.",
+        missing: "No leads yet. As people spend time on your listing, they appear here with a score — hot ones first.",
       },
     ],
   };
@@ -507,11 +526,52 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         title: "Every conversation",
         body:
           "Tap one to reply. The badge tells you what it's about — a quote request, a booking or a general chat.",
+        missing: "No conversations yet. When a customer sends an enquiry, it appears here — and you'll get a notification.",
       },
     ],
   };
 
   return [homeChapter, businessChapter, analyticsChapter, chatsChapter];
+}
+
+/** The verification card says something different at each stage — so does the tour. */
+function verificationStep(state: VerificationState): TourStep {
+  const base = { id: "verify", tab: "home" as const, anchor: "home-verification", icon: shieldCheckmark };
+  switch (state) {
+    case "verified":
+      return {
+        ...base,
+        title: "You're verified ✓",
+        body:
+          "Our team has confirmed you're from the community. Your tick now shows on search results, your profile " +
+          "and every product — the single biggest reason a stranger chooses you.",
+        tip: "Keep your name and photos matching your real shop, so the tick keeps meaning what customers think it means.",
+      };
+    case "in_review":
+      return {
+        ...base,
+        title: "Verification in progress",
+        body:
+          "We've got your document and the team is checking it — this usually takes 1–2 business days, and you'll get " +
+          "a notification the moment it's done. Use the time to add photos and products, so you're ready when it's approved.",
+      };
+    case "rejected":
+      return {
+        ...base,
+        title: "Verification needs another try",
+        body:
+          "We couldn't confirm the document you sent. Tap Resubmit Document here and upload a clearer photo of a valid ID.",
+      };
+    default:
+      return {
+        ...base,
+        title: "Get the green tick",
+        body:
+          "Upload one ID document and our team confirms you're from the community. Verified businesses carry a tick on " +
+          "search results, your profile and every product.",
+        tip: "It's the single biggest reason a stranger chooses you over a name they don't know.",
+      };
+  }
 }
 
 /** The closing card after the full tour. */

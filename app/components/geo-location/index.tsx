@@ -388,7 +388,7 @@ const GeoLocation = () => {
           onClick={() => setOpen(true)}
           className="flex items-center justify-between gap-3 px-4 py-2.5 pb-3 cursor-pointer active:bg-white/[0.04] transition-colors"
         >
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div data-tour="home-location" className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="shrink-0 w-9 h-9 rounded-2xl bg-amber-400/15 border border-amber-400/20 flex items-center justify-center">
               <IonIcon icon={locationSharp} className="text-amber-400 text-[17px]" />
             </div>
@@ -403,7 +403,7 @@ const GeoLocation = () => {
             {/* Straight to your business — or to starting one. Hidden while the
                 dashboard is already on screen. */}
             {userMode !== "provider" && (
-              <button
+              <button data-tour="home-business-button"
                 onClick={openBusiness}
                 aria-label={hasBusiness ? "Go to my business" : "List my business"}
                 title={hasBusiness ? "Go to my business" : "List my business"}

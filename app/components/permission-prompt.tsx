@@ -50,6 +50,7 @@ export default function PermissionPrompt() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        data-blocks-tour
         className="fixed inset-0 z-[200] bg-white dark:bg-slate-900 flex flex-col"
         style={{
           paddingTop: "max(var(--sat,0px), 20px)",

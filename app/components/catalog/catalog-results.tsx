@@ -98,7 +98,7 @@ export default function CatalogResults({ type, filters, onFiltersChange, heading
     <div>
       {heading}
 
-      <div className={toolbarClassName} style={toolbarStyle}>
+      <div className={toolbarClassName} style={toolbarStyle} data-tour="store-toolbar">
         <div className="flex items-center gap-2 px-4 py-2">
           <button
             onClick={() => setSheetOpen(true)}

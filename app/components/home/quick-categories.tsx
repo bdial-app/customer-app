@@ -71,7 +71,7 @@ const QuickCategories = ({ personalizedCategories }: { personalizedCategories?: 
 
   return (
     <div className="pb-5">
-      <motion.div
+      <motion.div data-tour="home-categories"
         variants={container}
         initial="hidden"
         animate="show"

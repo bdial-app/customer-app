@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { arrowBack, arrowForward, close, checkmark } from "ionicons/icons";
+import { arrowBack, arrowForward, close, checkmark, eyeOffOutline } from "ionicons/icons";
 import { useIsClient } from "@/hooks/useIsClient";
 import { triggerHaptic } from "@/utils/haptics";
 import type { TourChapter, TourStep } from "./tour-content";
@@ -12,8 +12,12 @@ import type { TourChapter, TourStep } from "./tour-content";
 const PAD = 8;
 const GAP = 14;
 const EDGE = 12;
-/** How long to wait for a step's element to appear before showing the card alone. */
+/** How long to wait for a step's element before showing the card on its own. */
 const FIND_TIMEOUT_MS = 4000;
+/** A section that may simply not exist for this person — don't keep them waiting. */
+const MISSING_TIMEOUT_MS = 2000;
+/** The step just opened another page, which has to load first. */
+const NEW_PAGE_TIMEOUT_MS = 9000;
 
 interface Rect {
   top: number;
@@ -47,8 +51,8 @@ const unionRect = (els: HTMLElement[]): Rect => {
 
 interface Props {
   chapters: TourChapter[];
-  /** Opens the tab (and Business sub-tab) a step lives on. */
-  onNavigate: (step: TourStep) => void;
+  /** Opens the tab, sub-tab or page a step lives on. Returns true when a new page has to load. */
+  onNavigate: (step: TourStep) => boolean | void;
   /** Called with the chapter ids the person got through, and whether they finished. */
   onClose: (result: { completedChapters: string[]; finished: boolean }) => void;
 }
@@ -86,7 +90,7 @@ export default function SpotlightTour({ chapters, onNavigate, onClose }: Props) 
   // Open the right tab, then find, scroll to and keep measuring the anchor.
   useEffect(() => {
     if (!step) return;
-    onNavigate(step);
+    const openedPage = onNavigate(step) === true;
     setRect(null);
     if (!step.anchor) {
       setSearching(false);
@@ -108,10 +112,13 @@ export default function SpotlightTour({ chapters, onNavigate, onClose }: Props) 
         const next = unionRect(els);
         setRect((prev) => (sameRect(prev, next) ? prev : next));
         setSearching(false);
-      } else if (performance.now() - started > (step.optional ? 1500 : FIND_TIMEOUT_MS)) {
+      } else if (
+        performance.now() - started >
+        (openedPage ? NEW_PAGE_TIMEOUT_MS : step.missing ? MISSING_TIMEOUT_MS : step.optional ? 1500 : FIND_TIMEOUT_MS)
+      ) {
         // This section isn't showing for this business — move past it quietly.
         const target = Math.min(Math.max(index + direction.current, 0), steps.length - 1);
-        if (step.optional && target !== index) {
+        if (step.optional && !step.missing && target !== index) {
           setIndex(target);
           return;
         }
@@ -219,6 +226,10 @@ export default function SpotlightTour({ chapters, onNavigate, onClose }: Props) 
 
   const accent = step.chapter.color;
   const centred = !step.anchor || (!rect && !searching);
+  // Still looking for the section: hold the card back rather than flash it mid-screen.
+  const looking = !!step.anchor && !rect && searching;
+  // Looked, and it isn't on this person's screen.
+  const absent = !!step.anchor && !rect && !searching;
 
   return createPortal(
     <div className="fixed inset-0 z-[400]" role="dialog" aria-modal="true" aria-label={`${step.chapter.title} tour`}>
@@ -260,13 +271,34 @@ export default function SpotlightTour({ chapters, onNavigate, onClose }: Props) 
         </motion.div>
       )}
 
+      {looking && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <span className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="w-2 h-2 rounded-full"
+                style={{ background: accent }}
+                animate={{ opacity: [0.25, 1, 0.25], y: [0, -4, 0] }}
+                transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+              />
+            ))}
+          </span>
+        </motion.div>
+      )}
+
       {/* Card */}
       <AnimatePresence mode="wait">
         <motion.div
           key={index}
           ref={cardRef}
           initial={{ opacity: 0, y: arrow?.side === "bottom" ? -8 : 8, scale: 0.97 }}
-          animate={{ opacity: cardH ? 1 : 0, y: 0, scale: 1 }}
+          animate={{ opacity: cardH && !looking ? 1 : 0, y: 0, scale: 1 }}
           exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.12 } }}
           transition={{ duration: 0.22, ease: "easeOut" }}
           className="absolute"
@@ -316,9 +348,23 @@ export default function SpotlightTour({ chapters, onNavigate, onClose }: Props) 
               <h3 className={`mt-2.5 font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight ${step.hero ? "text-[21px]" : "text-[17px]"}`}>
                 {step.title}
               </h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">{step.body}</p>
+              {absent && step.missing ? (
+                <>
+                  <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-dashed px-3 py-2.5" style={{ borderColor: `${accent}66`, background: `${accent}0D` }}>
+                    <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${accent}1F`, color: accent }}>
+                      <IonIcon icon={eyeOffOutline} className="text-[16px]" />
+                    </span>
+                    <span className="text-[12px] font-bold leading-tight" style={{ color: accent }}>
+                      Not on your screen yet
+                    </span>
+                  </div>
+                  <p className="mt-2.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">{step.missing}</p>
+                </>
+              ) : (
+                <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">{step.body}</p>
+              )}
 
-              {step.points && (
+              {step.points && !absent && (
                 <ul className="mt-3 space-y-1.5">
                   {step.points.map((p) => (
                     <li key={p} className="flex gap-2 text-[12.5px] leading-snug text-slate-600 dark:text-slate-300">
@@ -344,7 +390,8 @@ export default function SpotlightTour({ chapters, onNavigate, onClose }: Props) 
 
             {/* Footer: overall progress and controls */}
             <div className="flex items-center gap-2 px-4 pb-4">
-              <div className="flex-1 flex gap-1">
+              {/* The opening card has two buttons; the bar would be squeezed to dots there. */}
+              <div className={`flex-1 flex gap-1 ${step.secondary ? "invisible" : ""}`}>
                 {chapters.filter((c) => c.id !== "finale").map((c) => {
                   const cs = steps.filter((s) => s.chapter.id === c.id);
                   const first = steps.indexOf(cs[0]);

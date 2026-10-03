@@ -92,7 +92,7 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
     <div className="flex flex-col pb-20">
       {/* Search bar */}
       <div className="px-4 pt-2 pb-1">
-        <div className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3.5 py-2.5">
+        <div data-tour="cust-chats-filters" className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3.5 py-2.5">
           <IonIcon icon={searchOutline} className="text-base text-slate-400" />
           <input
             type="text"
@@ -105,7 +105,7 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 px-4 py-2">
+      <div data-tour="cust-chats-filters" className="flex gap-2 px-4 py-2">
         {(["all", "unread"] as const).map((f) => (
           <motion.button
             key={f}
@@ -139,7 +139,7 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
 
       {/* Chat list */}
       {!isLoading && (
-        <motion.div
+        <motion.div data-tour="cust-chats-list"
           variants={container}
           initial="hidden"
           animate="show"
@@ -147,7 +147,7 @@ const MessagesContent = memo(({ onChatClick }: MessagesContentProps) => {
         >
           <AnimatePresence>
             {conversations.length === 0 ? (
-              <motion.div
+              <motion.div data-tour="cust-chats-list"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-16 px-4"

@@ -65,7 +65,7 @@ const PicksForYouProducts = ({
   }
 
   return (
-    <div className="px-4 pt-4 pb-4">
+    <div data-tour="home-just-for-you" className="px-4 pt-4 pb-4">
       {/* Header */}
       <div className="flex items-end justify-between mb-3">
         <div className="flex items-center gap-2.5">

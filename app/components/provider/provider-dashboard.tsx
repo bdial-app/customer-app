@@ -237,7 +237,7 @@ const WarningsBanner = ({
 
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
   <div className="px-4 mb-4">
-    <motion.div data-tour="home-get-verified"
+    <motion.div data-tour="home-verification"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 p-5"
@@ -346,7 +346,7 @@ const VerificationStatusCard = ({ status, onResubmit }: { status: string | null;
 
   return (
     <div className="px-4 mb-4">
-      <div className={`${cfg.bg} ${cfg.border} border rounded-2xl p-4`}>
+      <div data-tour="home-verification" className={`${cfg.bg} ${cfg.border} border rounded-2xl p-4`}>
         <div className="flex items-start gap-3">
           <div
             className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}
