@@ -56,6 +56,7 @@ export function getOptimizedImageUrl(
 export const IMAGE_SIZES = {
   thumbnail: { width: 80, height: 80, quality: 60 },
   card: { width: 300, height: 200, quality: 70 },
+  product: { width: 400, height: 400, quality: 72 },
   banner: { width: 600, height: 300, quality: 75 },
   avatar: { width: 100, height: 100, quality: 70 },
   hero: { width: 800, height: 400, quality: 80 },

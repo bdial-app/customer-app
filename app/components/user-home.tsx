@@ -19,6 +19,9 @@ import SponsoredCarousel from "./home/sponsored-carousel";
 import ProviderCardSlider from "./home/provider-card-slider";
 import PicksForYou from "./home/picks-for-you";
 import PicksForYouProducts from "./home/picks-for-you-products";
+import ProductsAroundYou from "./home/products-around-you";
+import ServicesAroundYou from "./home/services-around-you";
+import TrendingProducts from "./home/trending-products";
 import GreetingCard from "./home/greeting-card";
 import LiveActivityPulse from "./home/live-activity-pulse";
 import TrendingServices from "./home/trending-services";
@@ -114,7 +117,10 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
 
   // Pull-to-refresh handler — invalidates home feed queries
   const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ["home-feed"] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
+      queryClient.invalidateQueries({ queryKey: ["home-catalog"] }),
+    ]);
   }, [queryClient]);
 
   // Memoize mapped providers to avoid re-creating on every render
@@ -294,6 +300,9 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               isLoading={isLoading}
             />
 
+            {/* 🛍️ Products Around You — two-row shop window, nearest first */}
+            <ProductsAroundYou />
+
             {/* ♀ Women-Led Businesses — purple themed section */}
             {womenLedProviders.length > 0 && (
               <>
@@ -318,6 +327,8 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               isLoading={isLoading}
             />
 
+            {/* 🛠️ Services Around You — nearby services widget with one-tap chat */}
+            <ServicesAroundYou />
 
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
@@ -327,6 +338,9 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               categories={feed?.trendingCategories}
               isLoading={isLoading}
             />
+
+            {/* 📈 Trending Products — ranked top chart by recent views */}
+            <TrendingProducts />
 
             {/* Divider */}
             <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />

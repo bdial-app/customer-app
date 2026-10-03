@@ -275,7 +275,7 @@ export default function Home() {
       </TabPanel>
 
       <LazyTabPanel id="explore" activeTab={activeTab}>
-        <TabHeader title="Explore" />
+        {/* Explore renders its own sticky header with the Businesses · Products · Services switch */}
         <ExploreContent />
       </LazyTabPanel>
 
