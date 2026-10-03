@@ -4,12 +4,13 @@ import { useIsClient } from "@/hooks/useIsClient";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { logoApple, logoGooglePlaystore, globeOutline, storefront, bagHandle, checkmarkCircle } from "ionicons/icons";
+import { logoApple, logoGooglePlaystore, globeOutline, storefront, bagHandle, checkmarkCircle, book } from "ionicons/icons";
 import { isNativePlatform } from "@/utils/platform";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/utils/store-links";
 import { detailsRouteFor, readShareLink, type ShareLinkKind } from "@/utils/share-links";
 import { getProviderById } from "@/services/provider.service";
 import { getProductById } from "@/services/product.service";
+import { getSellerCatalogue } from "@/services/catalog.service";
 
 type Device = "android" | "ios" | "desktop";
 
@@ -20,8 +21,8 @@ interface Preview {
   verified: boolean;
 }
 
-/** How long the page shows itself before handing over to the app or the store. */
-const HANDOFF_MS = 1800;
+/** On iPhone, how long the page shows itself (and its "Open in the app" button) before the App Store. */
+const IOS_HANDOFF_MS = 2400;
 const ANDROID_PACKAGE = "com.pronttera.tijarah";
 
 const detectDevice = (): Device => {
@@ -46,8 +47,31 @@ const androidIntentUrl = (deepPath: string) => {
   );
 };
 
+/** tijarah://b/<id> etc. — opens the installed app straight on the listing (registered in both apps). */
+const appSchemeUrl = (link: { kind: ShareLinkKind; id: string }) =>
+  `tijarah://${link.kind === "business" ? "b" : link.kind === "catalogue" ? "c" : "p"}/${encodeURIComponent(link.id)}`;
+
+const GENERIC_TITLE: Record<ShareLinkKind, string> = {
+  business: "A business on Tijarah Connect",
+  product: "A listing on Tijarah Connect",
+  catalogue: "A catalogue on Tijarah Connect",
+};
+
 async function loadPreview(kind: ShareLinkKind, id: string): Promise<Preview | null> {
   try {
+    if (kind === "catalogue") {
+      const c = await getSellerCatalogue(id);
+      const counts = [
+        c.counts.products > 0 && `${c.counts.products} ${c.counts.products === 1 ? "product" : "products"}`,
+        c.counts.services > 0 && `${c.counts.services} ${c.counts.services === 1 ? "service" : "services"}`,
+      ].filter(Boolean);
+      return {
+        title: `${c.provider.name} — catalogue`,
+        subtitle: [counts.join(" · "), [c.provider.area, c.provider.city].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || null,
+        imageUrl: c.items.find((i) => i.photoUrl)?.photoUrl ?? c.provider.logoUrl,
+        verified: c.provider.verified,
+      };
+    }
     if (kind === "business") {
       const p = await getProviderById(id);
       return {
@@ -98,6 +122,8 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
   }, [isClient, fallbackKind]);
 
   const [preview, setPreview] = useState<Preview | null>(null);
+  // The API can be slow or down; never leave the card loading forever.
+  const [previewFailed, setPreviewFailed] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -115,14 +141,26 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
     }
     if (!link) return;
     let alive = true;
-    void loadPreview(link.kind, link.id).then((p) => alive && setPreview(p));
+    void loadPreview(link.kind, link.id).then((p) => {
+      if (!alive) return;
+      if (p) setPreview(p);
+      else setPreviewFailed(true);
+    });
     if (!where.handedOffBefore) {
       try {
         sessionStorage.setItem(`share-handoff:${where.deepPath}`, "1");
       } catch {}
-      timer.current = setTimeout(() => {
-        window.location.href = where.device === "android" ? androidIntentUrl(where.deepPath) : APP_STORE_URL;
-      }, HANDOFF_MS);
+      if (where.device === "android") {
+        // Straight away, while the tap that opened the link still counts: Chrome
+        // opens the installed app on this listing, or goes to Google Play.
+        window.location.href = androidIntentUrl(where.deepPath);
+      } else {
+        // An iPhone with the app installed opens these links in the app before
+        // this page ever loads, so whoever is here most likely needs the app.
+        timer.current = setTimeout(() => {
+          window.location.href = APP_STORE_URL;
+        }, IOS_HANDOFF_MS);
+      }
     }
     return () => {
       alive = false;
@@ -135,10 +173,17 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
     setCancelled(true);
   };
 
+  /** Open the installed app on this listing (Android also falls back to Google Play). */
   const openApp = () => {
     cancel();
+    if (!link) return;
     const deepPath = `${window.location.pathname}${window.location.search}`;
-    window.location.href = device === "android" ? androidIntentUrl(deepPath) : APP_STORE_URL;
+    window.location.href = device === "android" ? androidIntentUrl(deepPath) : appSchemeUrl(link);
+  };
+
+  const getApp = () => {
+    cancel();
+    window.location.href = device === "android" ? PLAY_STORE_URL : APP_STORE_URL;
   };
 
   if (!where || redirectNow || !device || !link) {
@@ -146,7 +191,7 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
   }
 
   const isIOS = device === "ios";
-  const KindIcon = link.kind === "business" ? storefront : bagHandle;
+  const KindIcon = link.kind === "business" ? storefront : link.kind === "catalogue" ? book : bagHandle;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-indigo-50 via-white to-amber-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
@@ -174,7 +219,12 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
             )}
           </div>
           <div className="p-4">
-            {preview ? (
+            {previewFailed && !preview ? (
+              <>
+                <h1 className="text-[18px] font-extrabold text-slate-900 dark:text-white leading-tight">{GENERIC_TITLE[link.kind]}</h1>
+                <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400">Open it in the app to see everything.</p>
+              </>
+            ) : preview ? (
               <>
                 <div className="flex items-center gap-1.5">
                   <h1 className="text-[18px] font-extrabold text-slate-900 dark:text-white leading-tight line-clamp-2">{preview.title}</h1>
@@ -193,19 +243,24 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
 
         {/* What happens next */}
         <div className="w-full max-w-sm mt-6">
-          {handoff === "pending" ? (
+          {isIOS && handoff === "pending" ? (
             <div className="text-center">
-              <p className="text-[14px] font-semibold text-slate-700 dark:text-slate-200">
-                {isIOS ? "Taking you to the App Store…" : "Opening Tijarah Connect…"}
-              </p>
+              <p className="text-[14px] font-semibold text-slate-700 dark:text-slate-200">Taking you to the App Store…</p>
               <div className="mt-3 h-1 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                 <motion.div
                   className="h-full bg-indigo-600"
                   initial={{ width: "0%" }}
                   animate={{ width: "100%" }}
-                  transition={{ duration: HANDOFF_MS / 1000, ease: "linear" }}
+                  transition={{ duration: IOS_HANDOFF_MS / 1000, ease: "linear" }}
                 />
               </div>
+              <button
+                onClick={openApp}
+                className="mt-4 w-full flex items-center justify-center gap-2 h-12 rounded-2xl text-white font-bold text-[15px] shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition-transform"
+                style={{ background: "linear-gradient(135deg, #4F46E5, #312E81)" }}
+              >
+                Already have the app? Open it
+              </button>
               <button onClick={cancel} className="mt-3 text-[12px] font-semibold text-slate-400">
                 Stay here instead
               </button>
@@ -217,26 +272,23 @@ export default function OpenInApp({ kind: fallbackKind }: { kind: ShareLinkKind 
                 className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl text-white font-bold text-[15px] shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition-transform"
                 style={{ background: "linear-gradient(135deg, #4F46E5, #312E81)" }}
               >
-                <IonIcon icon={isIOS ? logoApple : logoGooglePlaystore} className="text-lg" />
-                {isIOS ? "Get it on the App Store" : "Open in the app"}
+                <IonIcon icon={KindIcon} className="text-lg" />
+                Open in the Tijarah app
               </button>
-              {isIOS && (
-                <p className="text-center text-[11.5px] text-slate-400">
-                  Already have the app? Tap <span className="font-semibold">Open</span> on the banner at the top of the screen.
-                </p>
-              )}
+              <button
+                onClick={getApp}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-[13.5px] active:scale-[0.98] transition-transform"
+              >
+                <IonIcon icon={isIOS ? logoApple : logoGooglePlaystore} className="text-base" />
+                {isIOS ? "Get it on the App Store" : "Get it on Google Play"}
+              </button>
               <button
                 onClick={() => window.location.assign(detailsRouteFor(link))}
-                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-[13.5px] active:scale-[0.98] transition-transform"
+                className="w-full flex items-center justify-center gap-2 h-10 text-slate-500 dark:text-slate-400 font-semibold text-[13px]"
               >
                 <IonIcon icon={globeOutline} className="text-base" />
                 Continue in the browser
               </button>
-              {!isIOS && (
-                <a href={PLAY_STORE_URL} className="block text-center text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 pt-1">
-                  Don&apos;t have it yet? Get it on Google Play
-                </a>
-              )}
             </div>
           )}
         </div>

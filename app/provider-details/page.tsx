@@ -47,7 +47,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
-import { useShareBusiness } from "@/hooks/useShare";
+import { useShareBusiness, useShareCatalogue } from "@/hooks/useShare";
 import { facebookUrl, instagramUrl, linkedinUrl, websiteUrl, whatsappUrl, youtubeUrl } from "@/utils/social-links";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { triggerHaptic } from "@/utils/haptics";
@@ -305,6 +305,8 @@ export default function ProviderDetailsPage() {
   useTrackProviderView(isOwnProvider || inTour ? undefined : id, source);
   // Built in the background once the page has data, so the tap shares at once.
   const { share: shareBusiness, busy: sharing } = useShareBusiness(id, { asOwner: isOwnProvider });
+  // The whole catalogue as one link; built only when asked for.
+  const { share: shareCatalogue, busy: sharingCatalogue } = useShareCatalogue(id, { asOwner: isOwnProvider, prefetch: false });
   const {
     trackChat,
     trackCall,
@@ -1643,10 +1645,28 @@ export default function ProviderDetailsPage() {
         {/* === PRODUCTS === */}
         {activeTab === "Catalogue" && (
           <div data-tour="biz-page-catalogue" className="px-5 pt-5 pb-28">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-2 mb-4">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
                 {products.length} {products.length === 1 ? 'Item' : 'Items'}
               </h3>
+              {products.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => void shareCatalogue()}
+                    disabled={sharingCatalogue}
+                    className={`flex items-center gap-1 h-8 px-3 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[12px] font-bold active:scale-95 transition-transform ${sharingCatalogue ? "opacity-60 animate-pulse" : ""}`}
+                  >
+                    <IonIcon icon={shareSocial} className="text-[13px]" />
+                    Share
+                  </button>
+                  <Link
+                    href={`${ROUTE_PATH.SHOP}?id=${id}`}
+                    className="flex items-center h-8 px-3 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-[12px] font-bold active:scale-95 transition-transform"
+                  >
+                    View all
+                  </Link>
+                </div>
+              )}
             </div>
             {products.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">

@@ -48,6 +48,14 @@
     {
       "source": "/p/:id/",
       "destination": "/p/"
+    },
+    {
+      "source": "/c/:id",
+      "destination": "/c/"
+    },
+    {
+      "source": "/c/:id/",
+      "destination": "/c/"
     }
   ]
 }

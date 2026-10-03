@@ -125,3 +125,30 @@ export const getSimilarItems = async (
   const { data } = await apiClient.get(PRODUCT_URLS.SIMILAR(id), { params: clean(params) });
   return data;
 };
+
+/** One business's whole catalogue — what a shared /c/<id> link opens. */
+export interface SellerCatalogue {
+  provider: {
+    id: string;
+    userId: string;
+    name: string;
+    logoUrl: string | null;
+    bannerUrl: string | null;
+    city: string | null;
+    area: string | null;
+    verified: boolean;
+    isWomenLed: boolean;
+    isOpen: boolean;
+    rating: number;
+    reviewCount: number;
+  };
+  counts: { products: number; services: number };
+  /** Group labels with counts, biggest first; "Other" last. */
+  categories: { name: string; count: number }[];
+  items: CatalogItem[];
+}
+
+export const getSellerCatalogue = async (providerId: string): Promise<SellerCatalogue> => {
+  const { data } = await apiClient.get(CATALOG_URLS.SELLER(providerId));
+  return data;
+};
