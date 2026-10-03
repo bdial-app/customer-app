@@ -36,6 +36,7 @@ import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import WelcomeTour from "./components/onboarding/welcome-tour";
+import CustomerTourController from "./components/onboarding/customer-tour/customer-tour-controller";
 import { hasSeenWelcomeTour, subscribeWelcomeTour } from "@/utils/welcome-tour";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import LocationDeniedSheet from "./components/location-denied-sheet";
@@ -492,6 +493,8 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <PwaHistoryGuard />
               <NativeBackButtonHandler />
               <WelcomeTour />
+              {/* Customer tour lives here, not on the home screen, so it can walk through business and product pages */}
+              <CustomerTourController />
               {isNativePlatform() && <PermissionPromptAfterTour />}
               <NotificationProvider>
                 <App theme="ios">

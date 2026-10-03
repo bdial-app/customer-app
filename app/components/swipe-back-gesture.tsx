@@ -40,6 +40,8 @@ export default function SwipeBackGesture({ onBack }: { onBack: () => void }) {
     const onStart = (e: TouchEvent) => {
       const t = e.touches[0];
       if (e.touches.length !== 1 || t.clientX > EDGE_PX) return;
+      // A guided tour is showing this page — let it drive.
+      if (document.querySelector('[aria-modal="true"][aria-label$=" tour"]')) return;
       start.current = { x: t.clientX, y: t.clientY };
       active.current = false;
     };

@@ -28,7 +28,7 @@ const ServicesAroundYou = () => {
 
   return (
     <section className="px-4 pt-5 pb-4">
-      <div className="rounded-3xl overflow-hidden border border-indigo-100 dark:border-indigo-900/50 bg-gradient-to-br from-indigo-50 via-white to-sky-50 dark:from-indigo-950/50 dark:via-slate-900 dark:to-slate-900">
+      <div data-tour="home-services-around" className="rounded-3xl overflow-hidden border border-indigo-100 dark:border-indigo-900/50 bg-gradient-to-br from-indigo-50 via-white to-sky-50 dark:from-indigo-950/50 dark:via-slate-900 dark:to-slate-900">
         {/* Header */}
         <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
           <div

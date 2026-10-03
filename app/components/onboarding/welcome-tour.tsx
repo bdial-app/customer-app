@@ -144,6 +144,7 @@ export default function WelcomeTour() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        data-blocks-tour
         className="fixed inset-0 z-[300] flex flex-col bg-white dark:bg-slate-900"
         style={{
           paddingTop: "max(var(--sat,0px), 16px)",

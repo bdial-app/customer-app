@@ -25,6 +25,7 @@ import {
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { storefront, bagHandle, construct } from "ionicons/icons";
 import CatalogStorefront from "@/app/components/catalog/catalog-storefront";
+import { EXPLORE_SEGMENT_EVENT, EXPLORE_SEGMENT_KEY } from "@/utils/tour-nav";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -388,6 +389,7 @@ const BusinessesExplore = memo(() => {
       {/* ── 1. Search Bar ── */}
       <div className="px-4 pt-2 pb-1">
         <div
+          data-tour="explore-search"
           onClick={() => router.push(ROUTE_PATH.SEARCH)}
           className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
         >
@@ -475,7 +477,7 @@ const BusinessesExplore = memo(() => {
         </div>
       )}
       {!feedLoading && (feed?.activeOffers?.length ?? 0) > 0 && (
-        <div className="mt-5" ref={offersRef}>
+        <div className="mt-5" ref={offersRef} data-tour="explore-deals">
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={pricetagOutline} className="text-base text-rose-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Deals & Offers</h2>
@@ -532,8 +534,8 @@ const BusinessesExplore = memo(() => {
 
       {/* ── 5. Quick Categories — discovery grid ── */}
       <div className="mt-5">
-        <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
-        <div className="grid grid-cols-2 gap-2.5 px-4">
+        <h2 data-tour="explore-collections" className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
+        <div data-tour="explore-collections" className="grid grid-cols-2 gap-2.5 px-4">
           {collections.slice(0, 4).map((col, i) => (
             <div
               key={col.id}
@@ -580,7 +582,7 @@ const BusinessesExplore = memo(() => {
 
       {/* ── 7. Popular Nearby — core discovery ── */}
       {(feed?.popularNearby?.length ?? 0) > 0 && (
-        <div className="mt-5">
+        <div className="mt-5" data-tour="explore-nearby">
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
               <IonIcon icon={locationOutline} className="text-sm text-blue-500" />
@@ -625,7 +627,7 @@ const BusinessesExplore = memo(() => {
 
       {/* ── 9. Top Rated ── */}
       {(feed?.topRated?.length ?? 0) > 0 && (
-        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
+        <div className="mt-5" data-tour="explore-top-rated" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
               <IonIcon icon={star} className="text-sm text-amber-500" />
@@ -875,7 +877,8 @@ const SEGMENTS: { key: ExploreSegment; label: string; icon: string; active: stri
   { key: "services", label: "Services", icon: construct, active: "text-indigo-600 dark:text-indigo-400" },
 ];
 
-const SEGMENT_KEY = "__explore_segment";
+const SEGMENT_KEY = EXPLORE_SEGMENT_KEY;
+const SEGMENT_EVENT = EXPLORE_SEGMENT_EVENT;
 
 const readSegment = (): ExploreSegment => {
   try {
@@ -915,6 +918,16 @@ const ExploreContent = memo(() => {
     [segment],
   );
 
+  // The tour asks for a section; unlike a tap on the active one, this never scrolls.
+  useEffect(() => {
+    const onRequest = (e: Event) => {
+      const next = (e as CustomEvent<ExploreSegment>).detail;
+      if (next && next !== segment) switchTo(next);
+    };
+    window.addEventListener(SEGMENT_EVENT, onRequest);
+    return () => window.removeEventListener(SEGMENT_EVENT, onRequest);
+  }, [segment, switchTo]);
+
   // Restore the new segment's scroll position once it has rendered.
   useEffect(() => {
     if (pendingRestore.current == null) return;
@@ -935,13 +948,14 @@ const ExploreContent = memo(() => {
           <h1 className="text-xl font-bold text-slate-800 dark:text-white">Explore</h1>
         </div>
         <div className="px-4 pb-2.5">
-          <div role="tablist" className="relative flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1">
+          <div role="tablist" data-tour="explore-segments" className="relative flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1">
             {SEGMENTS.map((s) => {
               const active = s.key === segment;
               return (
                 <button
                   key={s.key}
                   role="tab"
+                  data-tour={`explore-segment-${s.key}`}
                   aria-selected={active}
                   onClick={() => switchTo(s.key)}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12.5px] font-bold transition-colors ${

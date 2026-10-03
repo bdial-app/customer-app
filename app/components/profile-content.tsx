@@ -43,6 +43,7 @@ import {
   eyeOffOutline,
   eyeOutline,
   powerOutline,
+  navigateCircleOutline,
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
@@ -52,6 +53,7 @@ import { LanguageSelector, LanguageMenuButton } from "./language-selector";
 import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
 import { resetWelcomeTour } from "@/utils/welcome-tour";
+import { openCustomerTour } from "@/utils/customer-tour";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import {
@@ -149,9 +151,12 @@ const MenuRow = ({
 const MenuSection = ({
   title,
   children,
+  tourId,
 }: {
   title?: string;
   children: React.ReactNode;
+  /** `data-tour` anchor for the guided tour. */
+  tourId?: string;
 }) => (
   <div className="mb-2">
     {title && (
@@ -161,7 +166,10 @@ const MenuSection = ({
         </span>
       </div>
     )}
-    <div className="mx-4 bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-700">
+    <div
+      data-tour={tourId}
+      className="mx-4 bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-700"
+    >
       {children}
     </div>
   </div>
@@ -573,7 +581,7 @@ const ProfileContent = memo(() => {
       {!user ? (
         <>
           {/* Guest Header */}
-          <motion.div
+          <motion.div data-tour="profile-account"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -621,7 +629,7 @@ const ProfileContent = memo(() => {
           </MenuSection>
 
           {/* Preferences — theme & language work without login */}
-          <MenuSection title="Preferences">
+          <MenuSection title="Preferences" tourId="profile-preferences">
             <MenuRow
               icon={notificationsOutline}
               iconColor="text-amber-500"
@@ -663,7 +671,7 @@ const ProfileContent = memo(() => {
           </MenuSection>
 
           {/* Support */}
-          <MenuSection title="Support">
+          <MenuSection title="Support" tourId="profile-support">
             <MenuRow
               icon={sparklesOutline}
               iconColor="text-amber-500"
@@ -671,6 +679,14 @@ const ProfileContent = memo(() => {
               label="How Tijarah works"
               sublabel="Watch the 30-second tour again"
               onClick={() => { resetWelcomeTour(); router.push(ROUTE_PATH.HOME); }}
+            />
+            <MenuRow
+              icon={navigateCircleOutline}
+              iconColor="text-sky-600"
+              iconBg="bg-sky-50"
+              label="Take the app tour"
+              sublabel="A guided walk through every screen"
+              onClick={() => openCustomerTour()}
             />
             <MenuRow
               icon={helpCircleOutline}
@@ -742,7 +758,7 @@ const ProfileContent = memo(() => {
       ) : (
         <>
           {/* Profile Header Card */}
-          <motion.div
+          <motion.div data-tour="profile-account"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -851,7 +867,7 @@ const ProfileContent = memo(() => {
             providerStatus === "unverified" ||
             providerStatus === "rejected") && (
             <div className="mx-4 mb-3">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
+              <div data-tour="profile-business" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 flex gap-4 justify-between items-center">
                 <div>
                   <div className="text-sm font-bold text-slate-800 dark:text-white">
                     Business Mode
@@ -878,7 +894,7 @@ const ProfileContent = memo(() => {
               animate={{ opacity: 1, y: 0 }}
               className="mx-4 mb-3"
             >
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
+              <div data-tour="profile-business" className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 p-4">
                 <div className="relative z-10">
                   <h3 className="text-white font-bold text-sm">
                     List your business
@@ -1081,7 +1097,7 @@ const ProfileContent = memo(() => {
           </MenuSection>
 
           {/* ── Preferences Section ──────────────────────────────── */}
-          <MenuSection title="Preferences">
+          <MenuSection title="Preferences" tourId="profile-preferences">
             <MenuRow
               icon={notificationsOutline}
               iconColor="text-amber-500"
@@ -1123,7 +1139,7 @@ const ProfileContent = memo(() => {
           </MenuSection>
 
           {/* ── Support Section ──────────────────────────────────── */}
-          <MenuSection title="Support">
+          <MenuSection title="Support" tourId="profile-support">
             <MenuRow
               icon={sparklesOutline}
               iconColor="text-amber-500"
@@ -1131,6 +1147,14 @@ const ProfileContent = memo(() => {
               label="How Tijarah works"
               sublabel="Watch the 30-second tour again"
               onClick={() => { resetWelcomeTour(); router.push(ROUTE_PATH.HOME); }}
+            />
+            <MenuRow
+              icon={navigateCircleOutline}
+              iconColor="text-sky-600"
+              iconBg="bg-sky-50"
+              label="Take the app tour"
+              sublabel="A guided walk through every screen"
+              onClick={() => openCustomerTour()}
             />
             <MenuRow
               icon={helpCircleOutline}

@@ -2,6 +2,7 @@
 import { Page } from "konsta/react";
 import { BottomSheet } from "../components/bottom-sheet";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { PROVIDER_TAB_EVENT } from "@/utils/tour-nav";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
@@ -209,6 +210,15 @@ export default function ProviderDetailsPage() {
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
+  // The guided tour switches tabs to show each one.
+  useEffect(() => {
+    const onTab = (e: Event) => {
+      const tab = (e as CustomEvent<string>).detail;
+      if ((TABS as readonly string[]).includes(tab)) setActiveTab(tab as Tab);
+    };
+    window.addEventListener(PROVIDER_TAB_EVENT, onTab);
+    return () => window.removeEventListener(PROVIDER_TAB_EVENT, onTab);
+  }, []);
   const [headerVisible, setHeaderVisible] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const handleScroll = useCallback(() => {
@@ -290,7 +300,9 @@ export default function ProviderDetailsPage() {
 
   // ─── Analytics Tracking ─────────────────────────────────────────
   const source = (searchParams.get("src") as ViewSource | null) || "direct";
-  useTrackProviderView(isOwnProvider ? undefined : id, source);
+  // The guided tour opens a real listing as an example — that isn't a real visit, so don't count it.
+  const inTour = searchParams.get("tour") === "1";
+  useTrackProviderView(isOwnProvider || inTour ? undefined : id, source);
   // Built in the background once the page has data, so the tap shares at once.
   const { share: shareBusiness, busy: sharing } = useShareBusiness(id, { asOwner: isOwnProvider });
   const {
@@ -555,7 +567,7 @@ export default function ProviderDetailsPage() {
         className="h-full overflow-y-auto overscroll-contain"
       >
         {/* Hero */}
-        <div
+        <div data-tour="biz-page-hero"
           className="relative"
           style={{ display: isLightboxOpen ? "none" : "block" }}
         >
@@ -608,7 +620,7 @@ export default function ProviderDetailsPage() {
             )}
 
             {/* Top Actions */}
-            <div
+            <div data-tour="biz-page-actions"
               className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pb-3"
               style={{
                 paddingTop: isSponsored
@@ -715,7 +727,7 @@ export default function ProviderDetailsPage() {
           </div>
 
           {/* Quick Stats */}
-          <div
+          <div data-tour="biz-page-stats"
             className={`flex items-center justify-between px-5 py-3 border-b ${
               isSponsored
                 ? "bg-gradient-to-r from-amber-50/50 to-white dark:from-amber-950/20 dark:to-slate-800 border-amber-100/80 dark:border-amber-900/40"
@@ -762,7 +774,7 @@ export default function ProviderDetailsPage() {
         </div>
 
         {/* Tab Bar — direct child of scroll container so sticky works across full scroll height */}
-        <div
+        <div data-tour="biz-page-tabs"
           className={`sticky z-40 border-b overflow-x-auto no-scrollbar backdrop-blur-md transition-[top] duration-200 shadow-sm ${
             headerVisible ? "top-14" : "top-0"
           } ${
@@ -895,7 +907,7 @@ export default function ProviderDetailsPage() {
             {id && <InstagramGrid providerId={id} />}
 
             {/* Info Chips */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div data-tour="biz-page-chips" className="grid grid-cols-2 gap-2.5">
               <InfoChip
                 icon={ribbonOutline}
                 label="Catalogue"
@@ -916,7 +928,7 @@ export default function ProviderDetailsPage() {
 
             {/* Active Offers */}
             {activeOffers.length > 0 && (
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40">
+              <div data-tour="biz-page-offers" className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40">
                 <div className="flex items-center gap-2 mb-3">
                   <IonIcon icon={pricetag} className="w-4 h-4 text-amber-600" />
                   <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
@@ -1023,7 +1035,7 @@ export default function ProviderDetailsPage() {
             </AnimatePresence>
 
             {/* About */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+            <div data-tour="biz-page-about" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
                 About
               </h3>
@@ -1239,7 +1251,7 @@ export default function ProviderDetailsPage() {
 
             {/* Address */}
             {(provider.address || provider.area || provider.city) && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <div data-tour="biz-page-address" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
                   Location
                 </h3>
@@ -1400,7 +1412,7 @@ export default function ProviderDetailsPage() {
 
         {/* === REVIEWS === */}
         {activeTab === "Reviews" && (
-          <div className="px-5 pt-5 pb-28 space-y-4">
+          <div data-tour="biz-page-reviews" className="px-5 pt-5 pb-28 space-y-4">
             {/* Combined Rating Summary */}
             {(reviewCount > 0 || (combinedData?.aggregates?.googleReviewCount ?? 0) > 0) ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
@@ -1630,7 +1642,7 @@ export default function ProviderDetailsPage() {
 
         {/* === PRODUCTS === */}
         {activeTab === "Catalogue" && (
-          <div className="px-5 pt-5 pb-28">
+          <div data-tour="biz-page-catalogue" className="px-5 pt-5 pb-28">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
                 {products.length} {products.length === 1 ? 'Item' : 'Items'}
@@ -1803,7 +1815,7 @@ export default function ProviderDetailsPage() {
         )}
 
         {/* Floating CTA */}
-        <div
+        <div data-tour="biz-page-cta"
           className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
           style={{
             paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",

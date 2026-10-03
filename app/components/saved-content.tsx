@@ -155,7 +155,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
 
       {/* ── Filter Tabs ── */}
       <div className="px-4 mb-4">
-        <div className="flex gap-2">
+        <div data-tour="saved-filters" className="flex gap-2">
           {[
             { key: "all" as FilterTab, label: "All", count: counts.all },
             {
@@ -219,7 +219,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
         /* ── Saved Items ── */
         <AnimatePresence>
           {items.length === 0 ? (
-            <motion.div
+            <motion.div data-tour="saved-list"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center justify-center py-20 px-4"
@@ -240,7 +240,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
               </p>
             </motion.div>
           ) : viewMode === "list" ? (
-            <div className="flex flex-col gap-2.5 px-4">
+            <div data-tour="saved-list" className="flex flex-col gap-2.5 px-4">
               {items.map((item: SavedItemData, i: number) => (
                 <motion.div
                   key={item.id}
@@ -382,7 +382,7 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
             </div>
           ) : (
             /* Grid View */
-            <div className="grid grid-cols-2 gap-2.5 px-4">
+            <div data-tour="saved-list" className="grid grid-cols-2 gap-2.5 px-4">
               {items.map((item: SavedItemData, i: number) => (
                 <motion.div
                   key={item.id}

@@ -28,7 +28,7 @@ const TrendingProducts = () => {
   for (let i = 0; i < ranked.length; i += PER_COLUMN) columns.push(ranked.slice(i, i + PER_COLUMN));
 
   return (
-    <section className="pt-5 pb-4">
+    <section data-tour="home-trending-products" className="pt-5 pb-4">
       <div className="flex items-end justify-between px-4 mb-3">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-rose-500 to-orange-400 shadow-md shadow-rose-200 dark:shadow-none">

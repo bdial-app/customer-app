@@ -51,7 +51,7 @@ const HeroSearchBar = ({ onTap, prompts, scrolled }: { onTap?: () => void; promp
       onClick={handleTap}
       className="mx-4 mt-1 mb-3"
     >
-      <div
+      <div data-tour="home-search"
         className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-colors ${
           scrolled
             ? "border-slate-900/[0.08] dark:border-white/15 active:bg-slate-900/[0.06] dark:active:bg-white/20"

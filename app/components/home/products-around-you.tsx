@@ -26,7 +26,7 @@ const ProductsAroundYou = () => {
   const seeAll = catalogHref("product", { title: "Products around you", filters: { sort, area } });
 
   return (
-    <section className="pt-5 pb-4">
+    <section data-tour="home-products-around" className="pt-5 pb-4">
       <div className="flex items-end justify-between px-4 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-100 dark:bg-amber-900/30 shrink-0">

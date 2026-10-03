@@ -44,7 +44,7 @@ const DealsCarousel = ({
   if (!isLoading && (!deals || deals.length === 0)) return null;
 
   return (
-    <div className="mb-2">
+    <div data-tour="home-deals" className="mb-2">
       {/* Section Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
