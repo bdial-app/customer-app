@@ -49,6 +49,8 @@
 	<string>Tijarah needs camera access to take photos for your business profile</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tijarah needs your location to show nearby services and providers</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Tijarah uses your location to show nearby services and providers. It is only used while you are using the app.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Tijarah may need microphone access when recording video for your business profile</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -58,7 +60,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>bluetooth-peripheral</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
