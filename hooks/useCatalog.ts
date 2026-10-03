@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
+  getSellerCatalogue,
   browseCatalog,
   getCatalogShelves,
   getSimilarItems,
@@ -125,3 +126,12 @@ export const useSavedProducts = () => {
 
   return { isSaved, toggle };
 };
+
+/** One business's whole catalogue (the /shop page and catalogue shares). */
+export const useSellerCatalogue = (providerId: string) =>
+  useQuery({
+    queryKey: ["seller-catalogue", providerId],
+    queryFn: () => getSellerCatalogue(providerId),
+    enabled: !!providerId,
+    staleTime: 2 * 60 * 1000,
+  });

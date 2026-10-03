@@ -94,6 +94,7 @@ export const PRODUCT_URLS = {
 export const CATALOG_URLS = {
   SHELVES: "/products/catalog/shelves",
   BROWSE: "/products/catalog/browse",
+  SELLER: (providerId: string) => `/products/catalog/seller/${providerId}`,
 };
 
 export const HOME_URLS = {

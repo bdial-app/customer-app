@@ -16,21 +16,29 @@ export const businessShareUrl = (id: string) => `${SHARE_ORIGIN}/b/${encodeURICo
 /** https://…/p/<id> — a product or service. */
 export const productShareUrl = (id: string) => `${SHARE_ORIGIN}/p/${encodeURIComponent(id)}`;
 
-export type ShareLinkKind = "business" | "product";
+/** https://…/c/<business id> — a business's whole catalogue. */
+export const catalogueShareUrl = (providerId: string) => `${SHARE_ORIGIN}/c/${encodeURIComponent(providerId)}`;
+
+export type ShareLinkKind = "business" | "product" | "catalogue";
+
+const KIND_BY_LETTER: Record<string, ShareLinkKind> = { b: "business", p: "product", c: "catalogue" };
 
 /**
  * The listing a share link points at, from the address it was opened on.
- * Accepts /b/<id> and /b/?id=<id> (and the same for /p).
+ * Accepts /b/<id> and /b/?id=<id> (and the same for /p and /c).
  */
 export function readShareLink(pathname: string, search: string): { kind: ShareLinkKind; id: string } | null {
-  const path = pathname.match(/^\/(b|p)\/([^/?#]+)\/?$/);
-  if (path) return { kind: path[1] === "b" ? "business" : "product", id: decodeURIComponent(path[2]!) };
-  const bare = pathname.match(/^\/(b|p)\/?$/);
+  const path = pathname.match(/^\/(b|p|c)\/([^/?#]+)\/?$/);
+  if (path) return { kind: KIND_BY_LETTER[path[1]!]!, id: decodeURIComponent(path[2]!) };
+  const bare = pathname.match(/^\/(b|p|c)\/?$/);
   const id = new URLSearchParams(search).get("id");
-  if (bare && id) return { kind: bare[1] === "b" ? "business" : "product", id };
+  if (bare && id) return { kind: KIND_BY_LETTER[bare[1]!]!, id };
   return null;
 }
 
 /** The in-app / web page a share link opens. */
-export const detailsRouteFor = (link: { kind: ShareLinkKind; id: string }) =>
-  `${link.kind === "business" ? ROUTE_PATH.PROVIDER_DETAILS : ROUTE_PATH.PRODUCT_DETAILS}?id=${encodeURIComponent(link.id)}&src=product_link`;
+export const detailsRouteFor = (link: { kind: ShareLinkKind; id: string }) => {
+  const page =
+    link.kind === "business" ? ROUTE_PATH.PROVIDER_DETAILS : link.kind === "catalogue" ? ROUTE_PATH.SHOP : ROUTE_PATH.PRODUCT_DETAILS;
+  return `${page}?id=${encodeURIComponent(link.id)}&src=product_link`;
+};

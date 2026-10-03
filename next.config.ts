@@ -14,15 +14,12 @@ const supabaseHostname = (() => {
   }
 })();
 
-// Where shared /b and /p links point: NEXT_APP_BASE_URL from .env. For now
-// that's the UAT web app — the domain that serves the app-link files the
-// installed apps check — so builds without the variable (e.g. on Vercel) use
-// it too. NEXT_PUBLIC_SHARE_ORIGIN overrides both.
-const shareOrigin = (
-  process.env.NEXT_PUBLIC_SHARE_ORIGIN ||
-  process.env.NEXT_APP_BASE_URL ||
-  "https://uat.tijarahapp.in"
-).trim();
+// Where shared /b, /p and /c links point: the NEXT_APP_BASE_URL value from
+// .env — the UAT web app for now. Hard-set here on purpose: Vercel builds don't
+// see .env and each environment's own NEXT_APP_BASE_URL (e.g. develop's) would
+// otherwise put a different domain in every share. Change it here, or set
+// NEXT_PUBLIC_SHARE_ORIGIN, when links move to the production domain.
+const shareOrigin = (process.env.NEXT_PUBLIC_SHARE_ORIGIN || "https://uat.tijarahapp.in").trim();
 
 const nextConfig: NextConfig = {
   output: "export",

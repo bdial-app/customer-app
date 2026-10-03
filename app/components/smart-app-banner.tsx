@@ -35,7 +35,7 @@ export default function SmartAppBanner() {
     if (typeof window === "undefined") return;
     if (isNativePlatform()) return;
     // Shared-link pages (/b, /p) are themselves the "get the app" page.
-    if (/^\/(b|p)(\/|$)/.test(window.location.pathname)) return;
+    if (/^\/(b|p|c)(\/|$)/.test(window.location.pathname)) return;
 
     const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(
       navigator.userAgent
