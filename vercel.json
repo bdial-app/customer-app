@@ -3,21 +3,51 @@
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
       ]
     },
     {
       "source": "/manifest.json",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/.well-known/apple-app-site-association",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/b/:id",
+      "destination": "/b/"
+    },
+    {
+      "source": "/b/:id/",
+      "destination": "/b/"
+    },
+    {
+      "source": "/p/:id",
+      "destination": "/p/"
+    },
+    {
+      "source": "/p/:id/",
+      "destination": "/p/"
     }
   ]
 }

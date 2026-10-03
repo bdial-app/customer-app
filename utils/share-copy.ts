@@ -1,4 +1,4 @@
-import { storeLinksText } from "./store-links";
+import { businessShareUrl, productShareUrl } from "./share-links";
 
 /**
  * Everything a share needs to know about a business, already shaped for
@@ -95,11 +95,11 @@ const lines = (...parts: (string | false | null | undefined)[]) =>
     .trim();
 
 /**
- * How every share ends: the name to search for, then both store links. Both,
- * because the sender cannot know which phone the person reading it uses.
+ * How every share ends: one link. On a phone with the app it opens the listing
+ * in the app; without it, the link offers the right store for that phone (and a
+ * computer gets the web page) — so the sender never has to guess.
  */
-const findUs = (who: "them" | "us", name: string) =>
-  `Find ${who} on Tijarah Connect — search “${name}”.\n${storeLinksText()}`;
+const openLink = (url: string) => `👉 Open on Tijarah Connect:\n${url}`;
 
 // ── Captions ─────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       b.hours && `🕒 Open ${b.hours}`,
       "",
-      findUs("us", b.name),
+      openLink(businessShareUrl(b.id)),
     );
   }
 
@@ -144,7 +144,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
     b.deal && `🎁 Running now: ${dealLine(b.deal)}`,
     b.hours && `🕒 Open ${b.hours}`,
     "",
-    findUs("them", b.name),
+    openLink(businessShareUrl(b.id)),
   );
 }
 
@@ -167,7 +167,7 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
       where && `📍 ${where}`,
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       "",
-      findUs("us", b.name),
+      openLink(productShareUrl(p.id)),
     );
   }
 
@@ -183,6 +183,6 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
     `From *${b.name}*${where ? ` · ${where}` : ""}${trust ? ` · ✅ ${trust}` : ""}`,
     b.deal && `🎁 This shop is running ${dealLine(b.deal)}`,
     "",
-    findUs("them", b.name),
+    openLink(productShareUrl(p.id)),
   );
 }
