@@ -237,7 +237,7 @@ const WarningsBanner = ({
 
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
   <div className="px-4 mb-4">
-    <motion.div
+    <motion.div data-tour="home-get-verified"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 p-5"
@@ -558,7 +558,7 @@ const GrowthTips = memo(({
   const urgentCount = tips.filter((t) => t.priority === "high").length;
 
   return (
-    <div className="px-4 mb-4">
+    <div data-tour="home-growth-tips" className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
@@ -712,7 +712,7 @@ const RecentReviewsList = memo(({ stats, loading }: { stats: ProviderStats; load
 const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loading?: boolean }) => {
   if (loading) {
     return (
-      <div className="px-4 mb-4">
+      <div data-tour="home-catalogue" className="px-4 mb-4">
         <div className="flex items-center justify-between mb-2.5">
           <div className="h-4 w-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
           <div className="h-3 w-12 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
@@ -734,7 +734,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
 
   if (stats.products.length === 0) {
     return (
-      <div className="px-4 mb-4">
+      <div data-tour="home-catalogue" className="px-4 mb-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 text-center">
           <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <IonIcon icon={ribbonOutline} className="text-2xl text-indigo-400" />
@@ -751,7 +751,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
   }
 
   return (
-    <div className="px-4 mb-4">
+    <div data-tour="home-catalogue" className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
           My Catalogue
@@ -936,7 +936,7 @@ const ProfileCompleteness = memo(({
 
   return (
     <div className="px-4 mb-4">
-      <div className="bg-gradient-to-br from-indigo-800 to-indigo-600 rounded-2xl p-4 text-white relative overflow-hidden">
+      <div data-tour="home-profile-completeness" className="bg-gradient-to-br from-indigo-800 to-indigo-600 rounded-2xl p-4 text-white relative overflow-hidden">
         <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/5" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-3">
@@ -1131,7 +1131,7 @@ const RevenueBoosters = memo(({
   ];
 
   return (
-    <div className="px-4 mb-4">
+    <div data-tour="home-grow" className="px-4 mb-4">
       <div className="flex items-center gap-1.5 mb-2.5">
         <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">

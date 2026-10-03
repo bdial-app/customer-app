@@ -407,9 +407,15 @@ const GeoLocation = () => {
                 onClick={openBusiness}
                 aria-label={hasBusiness ? "Go to my business" : "List my business"}
                 title={hasBusiness ? "Go to my business" : "List my business"}
-                className="relative w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:scale-90 transition-transform"
+                className={`relative h-9 rounded-2xl flex items-center justify-center active:scale-90 transition-transform ${
+                  hasBusiness
+                    ? "gap-1.5 pl-2.5 pr-3 bg-indigo-500/90 border border-indigo-300/30 shadow-sm shadow-indigo-900/30"
+                    : "w-9 bg-white/[0.07] border border-white/[0.08]"
+                }`}
               >
-                <IonIcon icon={storefrontOutline} className="text-[17px] text-white/75" />
+                <IonIcon icon={storefrontOutline} className={`text-[17px] ${hasBusiness ? "text-white" : "text-white/75"}`} />
+                {/* Owners get a label: it's their way back to the dashboard. */}
+                {hasBusiness && <span className="text-[12px] font-bold text-white">Business</span>}
                 {businessPending && (
                   <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
                 )}

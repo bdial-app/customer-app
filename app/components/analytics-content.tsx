@@ -552,7 +552,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           >
             Overview
           </button>
-          <button
+          <button data-tour="analytics-view-switch"
             onClick={() => setView("leads")}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all relative ${
               view === "leads" ? "bg-white text-slate-800" : "bg-white/10 text-white/60"
@@ -673,7 +673,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           </div>
 
           {/* ═══ PERIOD SELECTOR ═══ */}
-          <div className="px-4 mb-4">
+          <div data-tour="analytics-period" className="px-4 mb-4">
             <div className="flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 gap-1">
               {([
                 { value: "7d" as Period, label: "7 Days", icon: todayOutline },
@@ -706,7 +706,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               </div>
             </div>
           ) : (
-            <div className="px-4 mb-4">
+            <div data-tour="analytics-kpis" className="px-4 mb-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={period}
@@ -830,7 +830,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           {/* ═══ PEAK HOURS ═══ */}
           {peakHoursData.length > 0 && peakMax > 0 && (
-            <div className="px-4 mb-4">
+            <div data-tour="analytics-peak-hours" className="px-4 mb-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-bold text-slate-800 dark:text-white">Peak Hours</h3>
@@ -864,7 +864,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           {/* ═══ TOP PRODUCTS ═══ */}
           {topProducts && topProducts.length > 0 && (
-            <div className="px-4 mb-4">
+            <div data-tour="analytics-top-products" className="px-4 mb-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-1.5 mb-2.5">
                   <IonIcon icon={cubeOutline} className="text-sm text-indigo-500" />
@@ -893,7 +893,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           )}
 
           {/* ═══ SMART INSIGHTS ═══ */}
-          <div className="px-4 mb-4">
+          <div data-tour="analytics-insights" className="px-4 mb-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-slate-800 dark:text-white">Smart Insights</h3>
               <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
@@ -1260,7 +1260,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           {/* Quota indicator */}
           {leadUnlockInfo && monetizationConfig?.flags.leadsMonetizationEnabled && (
-            <div className="flex items-center justify-between mb-2">
+            <div data-tour="leads-quota" className="flex items-center justify-between mb-2">
               <QuotaIndicator
                 used={leadUnlockInfo.freeUsedThisMonth}
                 total={monetizationConfig.freeQuotas.leadsPerMonth}
@@ -1275,7 +1275,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             </div>
           )}
           {leadUnlockInfo && !monetizationConfig?.flags.leadsMonetizationEnabled && (
-            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+            <div data-tour="leads-quota" className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
               <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
                 All lead unlocks are free during launch
               </span>
@@ -1323,7 +1323,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             </div>
 
             {/* Tier pills row */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            <div data-tour="leads-tiers" className="flex gap-2 overflow-x-auto no-scrollbar">
               {([
                 { key: undefined as string | undefined, label: "All" },
                 { key: "hot", label: "🔥 Hot" },
@@ -1569,7 +1569,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               ))}
             </div>
           ) : !leadsData?.data.length ? (
-            <div className="text-center py-12">
+            <div data-tour="leads-list" className="text-center py-12">
               <IonIcon icon={activeFilterCount > 0 ? funnelOutline : personOutline} className="text-4xl text-slate-300 mb-3" />
               <p className="text-sm font-semibold text-slate-400">
                 {activeFilterCount > 0 ? "No leads match your filters" : "No leads yet"}
@@ -1598,7 +1598,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div data-tour="leads-list" className="space-y-3">
               {leadsData.data.map((lead) => {
                 const badge = TIER_BADGE[lead.tier] || TIER_BADGE.cold;
                 return (

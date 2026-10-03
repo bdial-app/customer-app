@@ -33,6 +33,8 @@ import { useUnreadCount } from "@/hooks/useNotifications";
 import { useNotification } from "./context/NotificationContext";
 import { TabPanel, LazyTabPanel } from "./components/tab-keep-alive";
 import FeatureGate from "./components/feature-gate";
+import BusinessTourController from "./components/onboarding/business-tour/business-tour-controller";
+import { ModeSwitchOverlay } from "./components/provider/view-mode-switch";
 import FloatingNotificationPill from "./components/floating-notification-pill";
 import NotificationDropdown from "./components/notification-center/NotificationDropdown";
 import { useCheckServiceability } from "@/hooks/useServiceableCities";
@@ -365,6 +367,15 @@ export default function Home() {
       )}
 
       <BottomBar activeTab={activeTab} setActiveTab={handleTabChange} />
+
+      {/* Guided tour of the business side — auto-opens once for a new business, replayable from the ? button */}
+      <BusinessTourController
+        active={!!user && userMode === "provider" && providerStatus !== "suspended" && !activeChat}
+        goToTab={setActiveTab}
+        openBusinessSubTab={handleNavigateToListings}
+        openAnalyticsView={handleNavigateToAnalytics}
+      />
+      <ModeSwitchOverlay />
     </Page>
   );
 }

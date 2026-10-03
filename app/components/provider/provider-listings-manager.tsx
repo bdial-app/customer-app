@@ -134,6 +134,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
         {/* Scrollable tab bar */}
         <div
           ref={scrollRef}
+          data-tour="biz-tabbar"
           className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
@@ -143,6 +144,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
               <button
                 key={tab.id}
                 data-tab={tab.id}
+                data-tour={`biz-tab-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative flex items-center gap-1.5 shrink-0 rounded-full transition-all duration-200 ${
                   isActive
