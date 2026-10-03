@@ -8,8 +8,8 @@
 	<array>
 		<string>applinks:tijarahapp.in</string>
 		<string>applinks:www.tijarahapp.in</string>
-		<string>applinks:www.uat.tijarahapp.in</string>
-		<string>applinks:www.develop.tijarahapp.in</string>
+		<string>applinks:uat.tijarahapp.in</string>
+		<string>applinks:develop.tijarahapp.in</string>
 	</array>
 </dict>
 </plist>
