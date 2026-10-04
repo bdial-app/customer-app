@@ -12,7 +12,8 @@
     "cap:open": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "cap:run": "npx cap run android",
-    "cap:run:ios": "npx cap sync ios && ./scripts/patch-ios-spm.sh && npx cap run ios --no-sync"
+    "cap:run:ios": "npx cap sync ios && ./scripts/patch-ios-spm.sh && npx cap run ios --no-sync",
+    "capacitor:update:after": "if [ \"$CAPACITOR_PLATFORM_NAME\" = \"ios\" ]; then ./scripts/patch-ios-spm.sh; fi"
   },
   "dependencies": {
     "@capacitor-firebase/app": "^8.2.0",
