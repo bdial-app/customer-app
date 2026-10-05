@@ -18,11 +18,14 @@ import NotificationDropdown from "../notification-center/NotificationDropdown";
 import { useShareBusiness } from "@/hooks/useShare";
 import { openBusinessTour } from "@/utils/business-tour";
 import ViewModeSwitch from "./view-mode-switch";
+import { GoogleLogo } from "./google-reviews-link-card";
 
 interface ProviderHeaderProps {
   provider: ProviderData | null;
   verificationStatus: string | null;
   warningCount?: number;
+  /** Shown when the owner can connect Google: opens the Connect card. */
+  onConnectGoogle?: () => void;
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
@@ -36,7 +39,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
   disabled: { label: "Disabled", color: "text-red-700 dark:text-white", bg: "bg-red-50 dark:bg-red-500/25 border-red-200 dark:border-red-400/40", icon: alertCircleOutline },
 };
 
-const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: ProviderHeaderProps) => {
+const ProviderHeader = ({ provider, verificationStatus, warningCount = 0, onConnectGoogle }: ProviderHeaderProps) => {
   const updateMutation = useUpdateProvider();
   const [notifOpen, setNotifOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -144,6 +147,26 @@ const ProviderHeader = ({ provider, verificationStatus, warningCount = 0 }: Prov
                 <IonIcon icon={status.icon} className="text-xs" />
                 {status.label}
               </span>
+              {/* Google Verified: the listing was confirmed as theirs by phone */}
+              {provider.googlePlaceId ? (
+                <span className="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-slate-800 border border-white">
+                  <span className="w-3.5 h-3.5 flex items-center justify-center"><GoogleLogo size={11} /></span>
+                  Google Verified
+                  {provider.googleRating != null && (
+                    <span className="font-semibold text-slate-500">· ★ {Number(provider.googleRating).toFixed(1)}</span>
+                  )}
+                </span>
+              ) : onConnectGoogle ? (
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  onClick={onConnectGoogle}
+                  className="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/85 border border-dashed border-white/40"
+                >
+                  <span className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center"><GoogleLogo size={9} /></span>
+                  Not Google verified
+                  <span className="text-white font-bold">· Verify</span>
+                </motion.button>
+              ) : null}
               {warningCount > 0 && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-200 border border-amber-400/30">
                   <IonIcon icon={warningOutline} className="text-xs" />

@@ -64,29 +64,47 @@ export const getGoogleReviews = async (
 };
 
 // ─── Provider Self-Service (Linking Flow) ───────────────────────────
+// An owner never picks a listing: the server finds the one Google has under
+// the business's phone number, and links it once the owner has shown they
+// control that number (their login number, or a code sent to the listing's).
 
-export interface GooglePlaceCandidate {
-  placeId: string;
+export interface GooglePlacePreview {
   name: string;
   address: string;
+  rating: number | null;
+  userRatingCount: number | null;
 }
 
-export const verifyGooglePlace = async (
+export type GoogleConnectResult =
+  | { status: "linked"; via: "login_number" | "code" }
+  | { status: "already_linked" }
+  | {
+      status: "otp_required";
+      maskedPhone: string;
+      expiresInSeconds: number;
+      devCode?: string;
+      place: GooglePlacePreview | null;
+    }
+  | { status: "not_found"; numbersChecked: string[] }
+  | { status: "ambiguous" }
+  | { status: "taken" };
+
+export const connectGoogleBusiness = async (
   providerId: string,
-  phoneNumber?: string,
-): Promise<GooglePlaceCandidate[]> => {
-  const { data } = await apiClient.post(
-    `/google-reviews/verify/${providerId}`,
-    phoneNumber ? { phoneNumber } : {},
-  );
+): Promise<GoogleConnectResult> => {
+  const { data } = await apiClient.post(`/google-reviews/connect/${providerId}`);
   return data;
 };
 
-export const confirmGooglePlace = async (
+export const verifyGoogleConnectCode = async (
   providerId: string,
-  placeId: string,
-): Promise<void> => {
-  await apiClient.post(`/google-reviews/confirm/${providerId}`, { placeId });
+  code: string,
+): Promise<GoogleConnectResult> => {
+  const { data } = await apiClient.post(
+    `/google-reviews/connect/${providerId}/verify`,
+    { code },
+  );
+  return data;
 };
 
 export const unlinkGooglePlace = async (

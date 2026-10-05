@@ -1809,10 +1809,10 @@ export default function ProviderDetailsPage() {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = product.productType === "service";
                         return (
-                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-200/70 dark:border-amber-700/40 shadow-[0_0_16px_rgba(251,191,36,0.18)] dark:shadow-[0_0_16px_rgba(251,191,36,0.12)] active:scale-[0.97] transition-transform">
+                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`} className="block h-full">
+                            <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-200/70 dark:border-amber-700/40 shadow-[0_0_16px_rgba(251,191,36,0.18)] dark:shadow-[0_0_16px_rgba(251,191,36,0.12)] active:scale-[0.97] transition-transform">
                               {/* Image */}
-                              <div className="relative aspect-[4/3] bg-gray-50 dark:bg-slate-700 overflow-hidden">
+                              <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
                                   <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -1835,17 +1835,16 @@ export default function ProviderDetailsPage() {
                                   )}
                                 </div>
                               </div>
-                              {/* Body */}
-                              <div className="p-3.5">
-                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 mb-1">
+                              {/* Body — title and description each keep two lines of room, so
+                                  the price row lines up across every card in the grid. */}
+                              <div className="p-3.5 flex-1 flex flex-col">
+                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 min-h-[2.75em] mb-1">
                                   {product.name}
                                 </h4>
-                                {product.description && (
-                                  <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-2 mb-2.5">
-                                    {product.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
+                                <p className="text-[10px] leading-[1.4] text-gray-400 dark:text-slate-500 line-clamp-2 min-h-[2.8em] mb-2.5">
+                                  {product.description}
+                                </p>
+                                <div className="mt-auto flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
                                   <span className="text-[13px] font-extrabold text-gray-900 dark:text-white">
                                     {product.price !== null
                                       ? `${currencySymbol}${Number(product.price).toLocaleString()}`
@@ -1883,10 +1882,10 @@ export default function ProviderDetailsPage() {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = product.productType === "service";
                         return (
-                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] active:scale-[0.97] transition-transform">
+                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`} className="block h-full">
+                            <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] active:scale-[0.97] transition-transform">
                               {/* Image */}
-                              <div className="relative aspect-[4/3] bg-gray-50 dark:bg-slate-700 overflow-hidden">
+                              <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
                                   <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -1909,17 +1908,16 @@ export default function ProviderDetailsPage() {
                                   )}
                                 </div>
                               </div>
-                              {/* Body */}
-                              <div className="p-3.5">
-                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 mb-1">
+                              {/* Body — title and description each keep two lines of room, so
+                                  the price row lines up across every card in the grid. */}
+                              <div className="p-3.5 flex-1 flex flex-col">
+                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 min-h-[2.75em] mb-1">
                                   {product.name}
                                 </h4>
-                                {product.description && (
-                                  <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-2 mb-2.5">
-                                    {product.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
+                                <p className="text-[10px] leading-[1.4] text-gray-400 dark:text-slate-500 line-clamp-2 min-h-[2.8em] mb-2.5">
+                                  {product.description}
+                                </p>
+                                <div className="mt-auto flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
                                   <span className="text-[13px] font-extrabold text-gray-900 dark:text-white">
                                     {product.price !== null
                                       ? `${currencySymbol}${Number(product.price).toLocaleString()}`
