@@ -1,22 +1,26 @@
 "use client";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
 import { memo } from "react";
+import { Sheet } from "@/app/components/ui/sheet";
 
 const AppUpdatePrompt = memo(function AppUpdatePrompt() {
   const { showUpdatePrompt, isForceUpdate, updateInfo, dismiss } = useAppUpdate();
 
-  if (!showUpdatePrompt || !updateInfo) return null;
-
+  // A sheet on phones (drag down for "later"), a dialog on wide screens.
+  // A required update can't be dismissed.
   return (
-    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className={`absolute inset-0 bg-black/50 transition-opacity ${isForceUpdate ? "" : "cursor-pointer"}`}
-        onClick={isForceUpdate ? undefined : dismiss}
-      />
-
-      {/* Dialog */}
-      <div className="relative w-full max-w-sm mx-4 mb-6 sm:mb-0 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl animate-fade-in-up">
+    <Sheet
+      open={showUpdatePrompt && !!updateInfo}
+      onClose={dismiss}
+      label={isForceUpdate ? "Update required" : "Update available"}
+      zIndex={10000}
+      wideWidth="max-w-sm"
+      dismissible={!isForceUpdate}
+      handle={!isForceUpdate}
+      className="bg-white dark:bg-slate-800"
+    >
+      {updateInfo && (
+      <div className="px-6 pt-3 pb-6 sm:pt-6">
         {/* Icon */}
         <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
           <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,7 +64,8 @@ const AppUpdatePrompt = memo(function AppUpdatePrompt() {
           )}
         </div>
       </div>
-    </div>
+      )}
+    </Sheet>
   );
 });
 

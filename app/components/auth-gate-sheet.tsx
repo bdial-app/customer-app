@@ -27,7 +27,7 @@ import {
 import { CITY_NAMES } from "@/app/data/locations";
 import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/geocode.service";
 import type { SearchGeocodeResult } from "@/services/geocode.service";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { Sheet } from "@/app/components/ui/sheet";
 import { isAxiosError } from "axios";
 
 // ─── Constants ──────────────────────────────────────────────────
@@ -840,39 +840,14 @@ function AuthGateSheetContent() {
 export default function AuthGateSheet() {
   const { isAuthGateOpen, closeAuthGate } = useAuthGateContext();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-  const keyboardOffset = useKeyboardOffset();
-
   return (
-    <AnimatePresence>
-      {isAuthGateOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="auth-gate-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-[2px]"
-            onClick={closeAuthGate}
-          />
-
-          {/* Bottom sheet */}
-          <motion.div
-            key="auth-gate-sheet"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="fixed inset-x-0 z-[9999] rounded-t-3xl shadow-2xl overflow-hidden"
-            style={{
-              bottom: keyboardOffset,
-              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
-              paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 12px)",
-              background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #1e3a5f 100%)",
-              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out, padding-bottom 0.15s ease-out",
-            }}
-          >
+    <Sheet
+      open={isAuthGateOpen}
+      onClose={closeAuthGate}
+      label="Sign in"
+      className="bg-[linear-gradient(160deg,#0f172a_0%,#1e1b4b_55%,#1e3a5f_100%)]"
+      backdropClassName="bg-black/40 backdrop-blur-[2px]"
+    >
             {/* Abstract background decorations */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
               <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-amber-500/[0.06] blur-3xl" />
@@ -882,10 +857,8 @@ export default function AuthGateSheet() {
               <svg className="absolute bottom-20 left-6 w-16 h-16 text-white/[0.04]" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="20" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
             </div>
 
-            {/* Handle bar + close */}
-            <div className="flex items-center justify-between px-5 pt-3 pb-1 relative z-10">
-              <div className="w-8" />
-              <div className="w-10 h-1 bg-white/[0.12] rounded-full" />
+            {/* Close */}
+            <div className="absolute top-2.5 right-4 sm:top-4 z-20">
               <button
                 onClick={closeAuthGate}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.08] active:scale-90 transition-transform"
@@ -894,14 +867,11 @@ export default function AuthGateSheet() {
               </button>
             </div>
 
-            <div className="overflow-y-auto relative" style={{ maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset + 52}px)` : "calc(92vh - 52px)" }}>
+            <div className="relative pt-6 sm:pt-10">
               <GoogleOAuthProvider clientId={clientId}>
                 <AuthGateSheetContent />
               </GoogleOAuthProvider>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </Sheet>
   );
 }

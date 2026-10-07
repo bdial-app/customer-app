@@ -1,4 +1,5 @@
 "use client";
+import { useStorageReady } from "@/hooks/useStorageReady";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -85,6 +86,9 @@ export default function CustomerTourController() {
 
   const [running, setRunning] = useState<TourChapter[] | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Opened as the one-time offer (vs from a help button): shows "Not now".
+  const [inviting, setInviting] = useState(false);
+  const storageReady = useStorageReady();
   const [starting, setStarting] = useState(false);
 
   // The picker lists chapters before a sample is chosen; titles don't depend on it.
@@ -110,26 +114,36 @@ export default function CustomerTourController() {
     [starting, location, ctx],
   );
 
-  // Offer it once, on the home screen, as soon as the screen is clear (it stays clear for a beat first).
+  // Offer it once, on the home screen, once the screen is clear for a beat.
+  // An offer, not a takeover: it opens the menu (full tour or one part, or
+  // "Not now"), and counts as offered the moment it appears, so quitting the
+  // app mid-way never brings it back. Guests are offered it once per device;
+  // signing in doesn't repeat it (their guest record counts). Waits for saved
+  // settings to be restored, or a cleared WebView would offer it every launch.
   useEffect(() => {
-    if (!active || running || starting || seenBefore || pathname !== "/") return;
+    if (!storageReady || !active || running || starting || pickerOpen || seenBefore || pathname !== "/") return;
     let clearTicks = 0;
     const timer = setInterval(() => {
       clearTicks = screenIsClear() ? clearTicks + 1 : 0;
       if (clearTicks >= 3) {
         clearInterval(timer);
-        void start();
+        recordCustomerTour(owner, [], true);
+        setInviting(true);
+        setPickerOpen(true);
       }
     }, 500);
     return () => clearInterval(timer);
-  }, [active, running, starting, seenBefore, pathname, start]);
+  }, [storageReady, active, running, starting, pickerOpen, seenBefore, pathname, owner]);
 
   useEffect(
     () =>
       onOpenCustomerTour((chapterId) => {
         if (chapterId === "all") void start();
         else if (chapterId) void start(chapterId);
-        else setPickerOpen(true);
+        else {
+          setInviting(false);
+          setPickerOpen(true);
+        }
       }),
     [start],
   );
@@ -176,13 +190,24 @@ export default function CustomerTourController() {
       {running && <SpotlightTour chapters={running} onNavigate={navigate} onClose={close} />}
       <TourPicker
         opened={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => {
+          setPickerOpen(false);
+          setInviting(false);
+        }}
         chapters={pickerChapters}
         done={new Set([...(mine?.chapters ?? []), ...(asGuest?.chapters ?? [])])}
         onStartAll={() => void start()}
         onStartChapter={(id) => void start(id)}
         fullTourBlurb="Every screen, plus a real business and product page"
         gradient="linear-gradient(135deg, #F59E0B, #F97316 50%, #6366F1)"
+        invite={
+          inviting
+            ? {
+                title: ctx.firstName ? `Welcome, ${ctx.firstName}! Want a quick look around?` : "New here? Take a quick look around",
+                body: "A short guided walk through the app. Take it all, pick one part, or skip — it won't ask again.",
+              }
+            : undefined
+        }
       />
     </>
   );

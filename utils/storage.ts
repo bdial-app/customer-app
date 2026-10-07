@@ -126,14 +126,46 @@ export function setUserCache(user: string | null): void {
 // Preferences key into localStorage so sync readers see them immediately.
 
 export async function hydrateStorageCache(): Promise<void> {
-  if (!isNative()) return;
-  const { keys } = await Preferences.keys();
-  for (const key of keys) {
-    const { value } = await Preferences.get({ key });
-    if (value !== null) {
-      try { localStorage.setItem(key, value); } catch {}
-    }
-    if (key === "token") tokenCache = value;
-    if (key === "user") userCache = value;
+  if (!isNative()) {
+    markStorageReady();
+    return;
   }
+  try {
+    const { keys } = await Preferences.keys();
+    for (const key of keys) {
+      const { value } = await Preferences.get({ key });
+      if (value !== null) {
+        try { localStorage.setItem(key, value); } catch {}
+      }
+      if (key === "token") tokenCache = value;
+      if (key === "user") userCache = value;
+    }
+  } finally {
+    markStorageReady();
+  }
+}
+
+// ── Ready signal ─────────────────────────────────────────────────────
+// On native, sync reads before hydrateStorageCache finishes can miss values
+// the OS cleared from the WebView (e.g. "tour already seen"), so one-time
+// prompts wait for this. On web, localStorage is the source and is ready now.
+
+let storageReady = false;
+const readyListeners = new Set<() => void>();
+
+function markStorageReady() {
+  if (storageReady) return;
+  storageReady = true;
+  readyListeners.forEach((l) => l());
+}
+
+export function isStorageReady(): boolean {
+  return storageReady || !isNative();
+}
+
+export function subscribeStorageReady(listener: () => void): () => void {
+  readyListeners.add(listener);
+  return () => {
+    readyListeners.delete(listener);
+  };
 }

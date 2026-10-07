@@ -59,6 +59,14 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Apply the saved theme before first paint (mirrors ThemeContext:
+            light/dark as chosen; auto = phone setting, else dark 7 PM–7 AM),
+            so a dark-mode user never sees a white flash on launch. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem("bohri_theme");if(m!=="light"&&m!=="dark")m="auto";var h=new Date().getHours();var d=m==="dark"||(m==="auto"&&(window.matchMedia("(prefers-color-scheme: dark)").matches||h>=19||h<7));if(d)document.documentElement.classList.add("dark");}catch(e){}})();`,
+          }}
+        />
         <meta
           name="theme-color"
           content="#F59E0B"

@@ -85,6 +85,7 @@ export const REVIEW_URLS = {
 export const PRODUCT_URLS = {
   BY_ID: (id: string) => `/products/${id}`,
   CREATE: "/products",
+  MINE: "/products/mine",
   UPDATE: (id: string) => `/products/${id}`,
   DELETE: (id: string) => `/products/${id}`,
   UPLOAD_IMAGE: "/products/upload-image",

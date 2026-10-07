@@ -1,7 +1,7 @@
 import apiClient from "@/utils/axios";
 import { PHOTO_URLS } from "@/utils/urls";
 import { ProviderDetailsPhoto } from "./provider.service";
-import { compressImageFile, compressImageFiles, COMPRESS_PRESETS } from "@/utils/compress-image";
+import { optimizeImage, optimizeImages } from "@/utils/compress-image";
 
 // ─── API Functions ──────────────────────────────────────────────────
 
@@ -9,7 +9,7 @@ export const uploadProviderPhotos = async (
   providerId: string,
   files: File[],
 ): Promise<ProviderDetailsPhoto[]> => {
-  const compressed = await compressImageFiles(files, COMPRESS_PRESETS.product);
+  const compressed = await optimizeImages(files, "gallery");
   const formData = new FormData();
   compressed.forEach((file) => formData.append("files", file));
 
@@ -37,7 +37,7 @@ export const uploadProviderProfileImage = async (
   file: File,
   field: "bannerImageUrl" | "profilePhotoUrl",
 ): Promise<{ url: string; field: string }> => {
-  const compressed = await compressImageFile(file, COMPRESS_PRESETS.profile);
+  const compressed = await optimizeImage(file, field === "bannerImageUrl" ? "banner" : "avatar");
   const formData = new FormData();
   formData.append("file", compressed);
   formData.append("field", field);

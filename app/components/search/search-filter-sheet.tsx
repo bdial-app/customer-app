@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
   () => import("@ionic/react").then((m) => m.IonIcon),
@@ -28,7 +26,7 @@ import {
   setListingType,
   resetFilters,
 } from "@/store/slices/searchSlice";
-import { useIsClient } from "@/hooks/useIsClient";
+import { Sheet } from "@/app/components/ui/sheet";
 
 interface Props {
   opened: boolean;
@@ -121,33 +119,10 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
     (tempWomenLed ? 1 : 0) +
     (tempListingType !== "all" ? 1 : 0);
 
-  const mounted = useIsClient();
-
-  const content = (
-    <AnimatePresence>
-      {opened && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9998] bg-black/40"
-            onClick={onClose}
-          />
-
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-slate-800 rounded-t-3xl overflow-hidden"
-            style={{ maxHeight: "85vh", paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 0px)" }}
-          >
+  return (
+    <Sheet open={opened} onClose={onClose} label="Filters" maxHeight="85dvh" className="bg-white dark:bg-slate-800">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-slate-700">
+      <div className="shrink-0 flex items-center justify-between px-4 pt-1 pb-3.5 sm:pt-3.5 border-b border-gray-100 dark:border-slate-700">
         <div className="flex items-center gap-2.5">
           <button
             onClick={onClose}
@@ -168,8 +143,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       </div>
 
       <div
-        className="overflow-auto px-4 pt-4 pb-4"
-        style={{ maxHeight: "calc(85vh - 140px)" }}
+        className="flex-1 min-h-0 overflow-auto overscroll-contain px-4 pt-4 pb-4"
       >        {/* ── Listing Type ─────────────────── */}
         <section className="mb-6">
           <h3 className="text-[13px] font-bold text-gray-800 dark:text-white mb-3">
@@ -394,7 +368,7 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
       </div>
 
       {/* Apply button */}
-      <div className="px-4 pb-4 pt-3 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <div className="shrink-0 px-4 pb-4 pt-3 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <button
           onClick={handleApply}
           className="w-full h-12 rounded-2xl bg-amber-500 text-white text-[15px] font-bold active:bg-amber-600 transition-colors shadow-sm shadow-amber-200"
@@ -404,14 +378,8 @@ const SearchFilterSheet = ({ opened, onClose }: Props) => {
             : "Show All Results"}
         </button>
       </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </Sheet>
   );
-
-  if (!mounted) return null;
-  return createPortal(content, document.body);
 };
 
 export default SearchFilterSheet;

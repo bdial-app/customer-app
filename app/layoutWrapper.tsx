@@ -39,6 +39,7 @@ import DeepLinkLoadingScreen from "./components/deep-link-loading-screen";
 import WelcomeTour from "./components/onboarding/welcome-tour";
 import CustomerTourController from "./components/onboarding/customer-tour/customer-tour-controller";
 import { hasSeenWelcomeTour, subscribeWelcomeTour } from "@/utils/welcome-tour";
+import { useStorageReady } from "@/hooks/useStorageReady";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import LocationDeniedSheet from "./components/location-denied-sheet";
 import SmartAppBanner from "./components/smart-app-banner";
@@ -71,11 +72,13 @@ if (typeof window !== "undefined" && (window as CapacitorWindow).Capacitor?.isNa
 /** True once the welcome tour is out of the way, so prompts can queue behind it. */
 function useTourFinished(): boolean {
   const [done, setDone] = useState(false);
+  const storageReady = useStorageReady();
   useEffect(() => {
+    if (!storageReady) return;
     const read = () => setDone(hasSeenWelcomeTour());
     read();
     return subscribeWelcomeTour(read);
-  }, []);
+  }, [storageReady]);
   return done;
 }
 

@@ -24,8 +24,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { PROVIDER_STATUS_KEY } from "@/hooks/useMyProvider";
 import PrivateRoute from "@/app/components/private-route";
+import { checkPickedFile } from "@/utils/compress-image";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
 
 const formatFileSize = (bytes: number) => {
@@ -87,8 +87,9 @@ function VerifyContent() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
     if (selected) {
-      if (selected.size > MAX_FILE_SIZE) {
-        setSubmitError("File must be less than 5 MB");
+      const tooBig = checkPickedFile(selected);
+      if (tooBig) {
+        setSubmitError(tooBig);
         return;
       }
       if (!ALLOWED_FILE_TYPES.includes(selected.type)) {
@@ -494,7 +495,7 @@ function VerifyContent() {
                     </span>
                   ))}
                   <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 rounded-full font-medium">
-                    Max 5 MB
+                    Any photo size
                   </span>
                 </div>
               </div>
@@ -513,7 +514,7 @@ function VerifyContent() {
                 "Upload any ONE document — that's all we need",
                 "Document should be clearly visible and not blurred",
                 "All four corners of the document must be visible",
-                "File size should not exceed 5 MB",
+                "Photos of any size are fine; PDFs up to 25 MB",
                 "Accepted: Aadhaar, PAN, E-Jamaat Card, Passport, Voter ID",
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-2.5">
