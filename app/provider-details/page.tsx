@@ -11,7 +11,6 @@ const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
 });
 import {
   arrowBack,
-  star,
   locationOutline,
   shareSocial,
   time,
@@ -47,7 +46,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
-import { useShareBusiness } from "@/hooks/useShare";
+import { useShareBusiness, useShareCatalogue } from "@/hooks/useShare";
 import { facebookUrl, instagramUrl, linkedinUrl, websiteUrl, whatsappUrl, youtubeUrl } from "@/utils/social-links";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { triggerHaptic } from "@/utils/haptics";
@@ -137,6 +136,32 @@ function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
       ))}
     </div>
   );
+}
+
+/** Google's four-colour "G", for anything that comes from Google. */
+function GoogleMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-label="Google">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
+/** Tijarah's mark, so a review written here is recognisable at a glance. */
+function TijarahMark({ className }: { className?: string }) {
+  // A static export with image optimisation off, so next/image would add nothing here.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/icons/48.png" alt="Tijarah" className={`${className ?? ""} rounded-[4px] object-cover`} />;
+}
+
+/** 3546 → "3.5k", for counts that sit in tight places. */
+function compactCount(n: number): string {
+  if (n >= 100000) return `${Math.round(n / 1000)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
 }
 
 function RatingBar({
@@ -229,6 +254,8 @@ export default function ProviderDetailsPage() {
   const [sheetOpened, setSheetOpened] = useState(false);
   const [callSheetOpened, setCallSheetOpened] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewSource, setReviewSource] = useState<"all" | "tijarah" | "google">("all");
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
   const [reviewComment, setReviewComment] = useState("");
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
@@ -246,6 +273,8 @@ export default function ProviderDetailsPage() {
     setSheetOpened(false);
     setCallSheetOpened(false);
     setReviewRating(5);
+    setReviewSource("all");
+    setExpandedReviews(new Set());
     setReviewComment("");
     setReviewError("");
     setReviewSuccess(false);
@@ -305,6 +334,8 @@ export default function ProviderDetailsPage() {
   useTrackProviderView(isOwnProvider || inTour ? undefined : id, source);
   // Built in the background once the page has data, so the tap shares at once.
   const { share: shareBusiness, busy: sharing } = useShareBusiness(id, { asOwner: isOwnProvider });
+  // The whole catalogue as one link; built only when asked for.
+  const { share: shareCatalogue, busy: sharingCatalogue } = useShareCatalogue(id, { asOwner: isOwnProvider, prefetch: false });
   const {
     trackChat,
     trackCall,
@@ -722,6 +753,21 @@ export default function ProviderDetailsPage() {
                       {b.type.replace(/_/g, " ")}
                     </span>
                   ))}
+                {/* Google's verdict up front, so a well-reviewed shop reads as one
+                    before anyone opens the Reviews tab. */}
+                {(provider.googleReviewCount ?? 0) > 0 && Number(provider.googleRating) > 0 && (
+                  <button
+                    onClick={() => setActiveTab("Reviews")}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold pl-1 pr-2 py-0.5 rounded-full bg-white text-gray-800 shadow-sm shrink-0 active:scale-95 transition-transform"
+                  >
+                    <GoogleMark className="w-3.5 h-3.5" />
+                    <span>{Number(provider.googleRating).toFixed(1)}</span>
+                    <svg width={10} height={10} viewBox="0 0 20 20" fill="#FBBF24" aria-hidden>
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+                    </svg>
+                    <span className="font-semibold text-gray-500">· {compactCount(provider.googleReviewCount ?? 0)} on Google</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -750,6 +796,16 @@ export default function ProviderDetailsPage() {
                   </span>
                   <span className="text-xs text-gray-400 dark:text-slate-500">
                     ({reviewCount})
+                  </span>
+                </>
+              ) : (provider.googleReviewCount ?? 0) > 0 && Number(provider.googleRating) > 0 ? (
+                <>
+                  <GoogleMark className="w-4 h-4" />
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    {Number(provider.googleRating).toFixed(1)}
+                  </span>
+                  <span className="text-xs text-gray-400 dark:text-slate-500">
+                    ({compactCount(provider.googleReviewCount ?? 0)})
                   </span>
                 </>
               ) : (
@@ -1413,240 +1469,328 @@ export default function ProviderDetailsPage() {
         {/* === REVIEWS === */}
         {activeTab === "Reviews" && (
           <div data-tour="biz-page-reviews" className="px-5 pt-5 pb-28 space-y-4">
-            {/* Combined Rating Summary */}
-            {(reviewCount > 0 || (combinedData?.aggregates?.googleReviewCount ?? 0) > 0) ? (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
-                {/* Trust Badge */}
-                {combinedData?.aggregates?.trustLevel && combinedData.aggregates.trustLevel !== "unverified" && (
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                      combinedData.aggregates.trustLevel === "trusted"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : combinedData.aggregates.trustLevel === "verified"
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                        : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400"
-                    }`}>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      {combinedData.aggregates.trustLevel === "trusted" ? "Trusted" : combinedData.aggregates.trustLevel === "verified" ? "Verified" : "Basic"}
-                    </span>
-                    {(combinedData.aggregates.googleReviewCount ?? 0) > 0 && (
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500">
-                        Google verified
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="flex gap-5">
-                  <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100 dark:border-slate-700">
-                    <span className="text-4xl font-extrabold text-gray-900 dark:text-white leading-none">
-                      {Number(combinedData?.aggregates?.combinedRating ?? rating).toFixed(1)}
-                    </span>
-                    <StarRow rating={Math.round(Number(combinedData?.aggregates?.combinedRating ?? rating))} size={13} />
-                    <span className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">
-                      {combinedData?.aggregates?.combinedReviewCount ?? reviewCount} reviews
-                    </span>
-                    {(combinedData?.aggregates?.googleReviewCount ?? 0) > 0 && (
-                      <span className="text-[9px] text-gray-300 dark:text-slate-600 mt-0.5">
-                        (incl. Google)
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1.5 justify-center">
-                    {[5, 4, 3, 2, 1].map((s) => (
-                      <RatingBar
-                        key={s}
-                        starCount={s}
-                        count={ratingDist[s - 1] ?? 0}
-                        total={reviewCount}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100/80 dark:border-slate-700 text-center">
-                <p className="text-lg font-bold text-indigo-600 mb-1">
-                  New Business
-                </p>
-                <p className="text-xs text-gray-400 dark:text-slate-500">
-                  No ratings yet — be the first to review!
-                </p>
-              </div>
-            )}
+            {(() => {
+              const googleRating = Number(combinedData?.aggregates?.googleRating ?? provider.googleRating) || 0;
+              const googleCount = combinedData?.aggregates?.googleReviewCount ?? provider.googleReviewCount ?? 0;
+              const hasGoogle = googleCount > 0 && googleRating > 0;
+              const googleReviews: GoogleReview[] = combinedData?.googleReviews ?? [];
+              const googleUrl = provider.googlePlaceId
+                ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(provider.googlePlaceId)}`
+                : null;
+              const bothSources = reviews.length > 0 && googleReviews.length > 0;
+              const showTijarah = reviewSource !== "google";
+              const showGoogle = reviewSource !== "tijarah";
+              const openReview = (stars?: number) =>
+                requireAuth(() => {
+                  if (stars) setReviewRating(stars);
+                  setReviewError("");
+                  setReviewSuccess(false);
+                  setSheetOpened(true);
+                });
+              const toggleExpanded = (key: string) =>
+                setExpandedReviews((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(key)) next.delete(key);
+                  else next.add(key);
+                  return next;
+                });
 
-            {/* Write Review — before the list */}
-            {!isOwnProvider && !hasAlreadyReviewed && (
-              <button
-                onClick={() =>
-                  requireAuth(() => {
-                    setReviewError("");
-                    setReviewSuccess(false);
-                    setSheetOpened(true);
-                  })
-                }
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-white dark:bg-slate-800 border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-600 rounded-2xl text-sm font-semibold active:bg-amber-50 dark:active:bg-amber-900/20 transition-colors"
-              >
-                <IonIcon icon={star} className="w-4 h-4" />
-                Write a Review
-              </button>
-            )}
-            {!isOwnProvider && hasAlreadyReviewed && (
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-3 border border-green-100 dark:border-green-800/40 text-center">
-                <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  You&apos;ve reviewed this business
-                </p>
-              </div>
-            )}
-
-            {/* Review Cards */}
-            {reviews.length === 0 ? (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
-                <p className="text-sm text-gray-500 dark:text-slate-400">
-                  No reviews yet. Be the first to share your experience!
-                </p>
-              </div>
-            ) : (
-              reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
-                >
-                  <div className="flex items-start justify-between mb-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">
-                        {initialsOf(review.reviewer?.name)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[13px] font-semibold text-gray-900 dark:text-white">
-                            {review.reviewer?.name || "Anonymous"}
+              return (
+                <>
+                  {/* ── Ratings: Tijarah first, Google beside it — labelled, never blended.
+                      Blended, a shop with 3,000 Google reviews would drown out every
+                      review written here. ── */}
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TijarahMark className="w-5 h-5" />
+                        <span className="text-[13px] font-bold text-gray-900 dark:text-white">Tijarah reviews</span>
+                        {reviewCount > 0 && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                            Shown first
                           </span>
-                          <IonIcon
-                            icon={checkmarkCircle}
-                            className="w-3.5 h-3.5 text-blue-500"
-                          />
-                        </div>
-                        <span className="text-[11px] text-gray-400">
-                          {formatRelative(review.postedAt)}
-                        </span>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StarRow rating={review.starRating} size={12} />
-                      {user && user.id !== review.reviewerId && (
-                        <button
-                          onClick={() => requireAuth(() => setReportSheetOpen(true))}
-                          className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
-                        >
-                          <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
-                        </button>
+                      {reviewCount > 0 ? (
+                        <div className="flex gap-5">
+                          <div className="flex flex-col items-center justify-center pr-5 border-r border-gray-100 dark:border-slate-700">
+                            <span className="text-4xl font-extrabold text-gray-900 dark:text-white leading-none">{rating.toFixed(1)}</span>
+                            <div className="mt-1.5"><StarRow rating={Math.round(rating)} size={13} /></div>
+                            <span className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">
+                              {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
+                            </span>
+                          </div>
+                          <div className="flex-1 flex flex-col gap-1.5 justify-center">
+                            {[5, 4, 3, 2, 1].map((st) => (
+                              <RatingBar key={st} starCount={st} count={ratingDist[st - 1] ?? 0} total={reviewCount} />
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[13px] text-gray-500 dark:text-slate-400">
+                          No reviews on Tijarah yet{hasGoogle ? " — yours would be the first, and shown above Google's." : " — be the first."}
+                        </p>
                       )}
                     </div>
-                  </div>
-                  {review.reviewText && (
-                    <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
-                      {review.reviewText}
-                    </p>
-                  )}
-                  {review.photos && review.photos.length > 0 && (
-                    <div className="flex gap-1.5 mb-3">
-                      {review.photos
-                        .slice(0, 3)
-                        .map((p) =>
-                          p.imageUrl ? (
-                            <img
-                              key={p.id}
-                              src={p.imageUrl}
-                              alt=""
-                              className="w-14 h-14 rounded-lg object-cover"
-                            />
-                          ) : null,
-                        )}
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
 
-            {/* Google Reviews Section */}
-            {combinedData?.googleReviews && combinedData.googleReviews.length > 0 && (
-              <>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
-                  <span className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    Google Reviews
-                  </span>
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
-                </div>
-                {combinedData.googleReviews.map((gr: GoogleReview, idx: number) => (
-                  <div
-                    key={`google-${idx}`}
-                    className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
-                  >
-                    <div className="flex items-start justify-between mb-2.5">
-                      <div className="flex items-center gap-2.5">
-                        {gr.authorPhotoUrl ? (
-                          <img
-                            src={gr.authorPhotoUrl}
-                            alt=""
-                            className="w-10 h-10 rounded-full object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-bold text-blue-500 shrink-0">
-                            {gr.authorName?.charAt(0) || "G"}
-                          </div>
-                        )}
-                        <div>
+                    {hasGoogle && (
+                      <div className="px-5 py-3.5 bg-gray-50/80 dark:bg-slate-900/40 border-t border-gray-100 dark:border-slate-700 flex items-center gap-2.5">
+                        <GoogleMark className="w-5 h-5 shrink-0" />
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[13px] font-semibold text-gray-900 dark:text-white">
-                              {gr.authorName}
-                            </span>
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                              Google
-                            </span>
+                            <span className="text-[15px] font-bold text-gray-900 dark:text-white">{googleRating.toFixed(1)}</span>
+                            <StarRow rating={Math.round(googleRating)} size={11} />
                           </div>
-                          <span className="text-[11px] text-gray-400">
-                            {gr.relativeTimeDescription}
-                          </span>
+                          <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                            {googleCount.toLocaleString("en-IN")} {googleCount === 1 ? "review" : "reviews"} on Google
+                          </p>
                         </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50 shrink-0">
+                          <IonIcon icon={checkmarkCircle} className="w-3.5 h-3.5" />
+                          Verified on Google
+                        </span>
                       </div>
-                      <StarRow rating={gr.rating} size={12} />
-                    </div>
-                    {gr.text && (
-                      <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed">
-                        {gr.text}
-                      </p>
                     )}
                   </div>
-                ))}
-              </>
-            )}
 
-            {!isOwnProvider && hasAlreadyReviewed && (
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-100 dark:border-green-800/40 text-center">
-                <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  You&apos;ve reviewed this business
-                </p>
-              </div>
-            )}
+                  {/* ── Write a review: tap a star to start, already at that rating ── */}
+                  {!isOwnProvider && !hasAlreadyReviewed && (
+                    <div className="bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-slate-800 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/40">
+                      <p className="text-[14px] font-bold text-gray-900 dark:text-white">Been here? Rate {provider.brandName}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
+                        {hasGoogle
+                          ? "Tap a star to start — reviews on Tijarah are shown before Google's."
+                          : "Tap a star to start — it takes a minute and helps others choose."}
+                      </p>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5].map((st) => (
+                            <button
+                              key={st}
+                              onClick={() => openReview(st)}
+                              aria-label={`Rate ${st} star${st > 1 ? "s" : ""}`}
+                              className="p-0.5 active:scale-90 transition-transform"
+                            >
+                              <svg width={30} height={30} viewBox="0 0 20 20" fill="none" stroke="#F59E0B" strokeWidth={1.3}>
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+                              </svg>
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => openReview()}
+                          className="text-[12px] font-semibold text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-full bg-white/80 dark:bg-slate-800 border border-amber-200 dark:border-amber-800 active:scale-95 transition-transform"
+                        >
+                          Write a review
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!isOwnProvider && hasAlreadyReviewed && (
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-3 border border-green-100 dark:border-green-800/40 text-center">
+                      <p className="text-sm text-green-700 dark:text-green-400 font-medium">You&apos;ve reviewed this business — thank you</p>
+                    </div>
+                  )}
+
+                  {/* ── Source filter, when there is more than one source ── */}
+                  {bothSources && (
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                      {([
+                        { key: "all", label: `All (${reviews.length + googleReviews.length})`, mark: null },
+                        { key: "tijarah", label: `Tijarah (${reviews.length})`, mark: <TijarahMark className="w-3.5 h-3.5" /> },
+                        { key: "google", label: `Google (${googleReviews.length})`, mark: <GoogleMark className="w-3.5 h-3.5" /> },
+                      ] as const).map((f) => (
+                        <button
+                          key={f.key}
+                          onClick={() => setReviewSource(f.key)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border shrink-0 transition-colors ${
+                            reviewSource === f.key
+                              ? "bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white"
+                              : "bg-white text-gray-600 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                          }`}
+                        >
+                          {f.mark}
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── Tijarah reviews ── */}
+                  {showTijarah && reviews.length === 0 && googleReviews.length === 0 && (
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
+                      <p className="text-sm text-gray-500 dark:text-slate-400">No reviews yet. Be the first to share your experience!</p>
+                    </div>
+                  )}
+                  {showTijarah && reviews.map((review) => {
+                    const key = `t-${review.id}`;
+                    const long = (review.reviewText?.length ?? 0) > 280;
+                    const open = expandedReviews.has(key);
+                    return (
+                      <div
+                        key={review.id}
+                        className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-indigo-100/70 dark:border-indigo-900/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
+                      >
+                        <div className="flex items-start justify-between mb-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/40 dark:to-indigo-800/40 flex items-center justify-center text-sm font-bold text-indigo-600 dark:text-indigo-300 shrink-0">
+                              {initialsOf(review.reviewer?.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
+                                  {review.reviewer?.name || "Anonymous"}
+                                </span>
+                                <span className="inline-flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shrink-0">
+                                  <TijarahMark className="w-3 h-3" />
+                                  Tijarah
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-gray-400">{formatRelative(review.postedAt)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <StarRow rating={review.starRating} size={12} />
+                            {user && user.id !== review.reviewerId && (
+                              <button
+                                onClick={() => requireAuth(() => setReportSheetOpen(true))}
+                                aria-label="Report review"
+                                className="w-7 h-7 rounded-full flex items-center justify-center active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
+                              >
+                                <IonIcon icon={flagOutline} className="w-3.5 h-3.5 text-slate-400" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {review.reviewText && (
+                          <p className={`text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed ${long && !open ? "line-clamp-5" : ""}`}>
+                            {review.reviewText}
+                          </p>
+                        )}
+                        {long && (
+                          <button onClick={() => toggleExpanded(key)} className="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">
+                            {open ? "Show less" : "Read more"}
+                          </button>
+                        )}
+                        {review.photos && review.photos.length > 0 && (
+                          <div className="flex gap-1.5 mt-3">
+                            {review.photos.slice(0, 3).map((ph) =>
+                              ph.imageUrl ? <img key={ph.id} src={ph.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover" /> : null,
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* ── Google reviews ── */}
+                  {showGoogle && googleReviews.length > 0 && (
+                    <>
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <GoogleMark className="w-4 h-4 shrink-0" />
+                          <span className="text-[13px] font-bold text-gray-900 dark:text-white">From Google</span>
+                          <span className="text-[11px] text-gray-400 dark:text-slate-500 truncate">
+                            {googleReviews.length} of {googleCount.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                        {googleUrl && (
+                          <a
+                            href={googleUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[12px] font-semibold text-blue-600 dark:text-blue-400 shrink-0"
+                          >
+                            See all on Google ↗
+                          </a>
+                        )}
+                      </div>
+                      {googleReviews.map((gr, idx) => {
+                        const key = `g-${gr.time}-${idx}`;
+                        const long = (gr.text?.length ?? 0) > 280;
+                        const open = expandedReviews.has(key);
+                        return (
+                          <div
+                            key={key}
+                            className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
+                          >
+                            <div className="flex items-start justify-between mb-2.5">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {gr.authorPhotoUrl ? (
+                                  <img src={gr.authorPhotoUrl} alt="" referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-sm font-bold text-blue-500 shrink-0">
+                                    {gr.authorName?.charAt(0) || "G"}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    {gr.authorUrl ? (
+                                      <a href={gr.authorUrl} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
+                                        {gr.authorName}
+                                      </a>
+                                    ) : (
+                                      <span className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">{gr.authorName}</span>
+                                    )}
+                                    <span className="inline-flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300 shrink-0">
+                                      <GoogleMark className="w-3 h-3" />
+                                      Google
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-gray-400">{gr.relativeTimeDescription}</span>
+                                </div>
+                              </div>
+                              <div className="shrink-0"><StarRow rating={gr.rating} size={12} /></div>
+                            </div>
+                            {gr.text && (
+                              <p className={`text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line ${long && !open ? "line-clamp-5" : ""}`}>
+                                {gr.text}
+                              </p>
+                            )}
+                            {long && (
+                              <button onClick={() => toggleExpanded(key)} className="text-[12px] font-semibold text-blue-600 dark:text-blue-400 mt-1">
+                                {open ? "Show less" : "Read more"}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <p className="text-[10px] text-center text-gray-400 dark:text-slate-500">
+                        Reviews from Google, shown as Google shares them.
+                      </p>
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 
         {/* === PRODUCTS === */}
         {activeTab === "Catalogue" && (
           <div data-tour="biz-page-catalogue" className="px-5 pt-5 pb-28">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-2 mb-4">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
                 {products.length} {products.length === 1 ? 'Item' : 'Items'}
               </h3>
+              {products.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => void shareCatalogue()}
+                    disabled={sharingCatalogue}
+                    className={`flex items-center gap-1 h-8 px-3 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[12px] font-bold active:scale-95 transition-transform ${sharingCatalogue ? "opacity-60 animate-pulse" : ""}`}
+                  >
+                    <IonIcon icon={shareSocial} className="text-[13px]" />
+                    Share
+                  </button>
+                  <Link
+                    href={`${ROUTE_PATH.SHOP}?id=${id}`}
+                    className="flex items-center h-8 px-3 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-[12px] font-bold active:scale-95 transition-transform"
+                  >
+                    View all
+                  </Link>
+                </div>
+              )}
             </div>
             {products.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100/80 dark:border-slate-700 text-center">
@@ -1665,10 +1809,10 @@ export default function ProviderDetailsPage() {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = product.productType === "service";
                         return (
-                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-200/70 dark:border-amber-700/40 shadow-[0_0_16px_rgba(251,191,36,0.18)] dark:shadow-[0_0_16px_rgba(251,191,36,0.12)] active:scale-[0.97] transition-transform">
+                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`} className="block h-full">
+                            <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-200/70 dark:border-amber-700/40 shadow-[0_0_16px_rgba(251,191,36,0.18)] dark:shadow-[0_0_16px_rgba(251,191,36,0.12)] active:scale-[0.97] transition-transform">
                               {/* Image */}
-                              <div className="relative aspect-[4/3] bg-gray-50 dark:bg-slate-700 overflow-hidden">
+                              <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
                                   <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -1691,17 +1835,16 @@ export default function ProviderDetailsPage() {
                                   )}
                                 </div>
                               </div>
-                              {/* Body */}
-                              <div className="p-3.5">
-                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 mb-1">
+                              {/* Body — title and description each keep two lines of room, so
+                                  the price row lines up across every card in the grid. */}
+                              <div className="p-3.5 flex-1 flex flex-col">
+                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 min-h-[2.75em] mb-1">
                                   {product.name}
                                 </h4>
-                                {product.description && (
-                                  <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-2 mb-2.5">
-                                    {product.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
+                                <p className="text-[10px] leading-[1.4] text-gray-400 dark:text-slate-500 line-clamp-2 min-h-[2.8em] mb-2.5">
+                                  {product.description}
+                                </p>
+                                <div className="mt-auto flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
                                   <span className="text-[13px] font-extrabold text-gray-900 dark:text-white">
                                     {product.price !== null
                                       ? `${currencySymbol}${Number(product.price).toLocaleString()}`
@@ -1739,10 +1882,10 @@ export default function ProviderDetailsPage() {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = product.productType === "service";
                         return (
-                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`}>
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] active:scale-[0.97] transition-transform">
+                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`} className="block h-full">
+                            <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] active:scale-[0.97] transition-transform">
                               {/* Image */}
-                              <div className="relative aspect-[4/3] bg-gray-50 dark:bg-slate-700 overflow-hidden">
+                              <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
                                   <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -1765,17 +1908,16 @@ export default function ProviderDetailsPage() {
                                   )}
                                 </div>
                               </div>
-                              {/* Body */}
-                              <div className="p-3.5">
-                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 mb-1">
+                              {/* Body — title and description each keep two lines of room, so
+                                  the price row lines up across every card in the grid. */}
+                              <div className="p-3.5 flex-1 flex flex-col">
+                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 min-h-[2.75em] mb-1">
                                   {product.name}
                                 </h4>
-                                {product.description && (
-                                  <p className="text-[10px] text-gray-400 dark:text-slate-500 line-clamp-2 mb-2.5">
-                                    {product.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
+                                <p className="text-[10px] leading-[1.4] text-gray-400 dark:text-slate-500 line-clamp-2 min-h-[2.8em] mb-2.5">
+                                  {product.description}
+                                </p>
+                                <div className="mt-auto flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-slate-700">
                                   <span className="text-[13px] font-extrabold text-gray-900 dark:text-white">
                                     {product.price !== null
                                       ? `${currencySymbol}${Number(product.price).toLocaleString()}`

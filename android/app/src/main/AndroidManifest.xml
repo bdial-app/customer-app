@@ -22,6 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- tijarah://b/<id>, /p/<id>, /c/<id> — the "Open in the app" button on shared-link pages -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tijarah" />
+            </intent-filter>
+
             <!-- Deep link / App Links support -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

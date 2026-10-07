@@ -29,6 +29,14 @@ export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
   if (shortBusiness) return `${ROUTE_PATH.PROVIDER_DETAILS}?id=${encodeURIComponent(shortBusiness[1]!)}`;
   const shortProduct = route.match(/^\/p\/([^/?#]+)$/);
   if (shortProduct) return `${ROUTE_PATH.PRODUCT_DETAILS}?id=${encodeURIComponent(shortProduct[1]!)}`;
+  // A whole catalogue: /c/<provider id>.
+  const shortCatalogue = route.match(/^\/c\/([^/?#]+)$/);
+  if (shortCatalogue) return `${ROUTE_PATH.SHOP}?id=${encodeURIComponent(shortCatalogue[1]!)}`;
+  // The same links in their /b/?id= form.
+  if ((route === "/b" || route === "/p" || route === "/c") && params.id) {
+    const page = route === "/b" ? ROUTE_PATH.PROVIDER_DETAILS : route === "/c" ? ROUTE_PATH.SHOP : ROUTE_PATH.PRODUCT_DETAILS;
+    return `${page}?id=${encodeURIComponent(params.id)}`;
+  }
 
   switch (route) {
     case "/provider-details":

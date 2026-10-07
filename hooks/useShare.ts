@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/app/context/NotificationContext";
 import { getProviderDetails } from "@/services/provider.service";
 import { getProductById } from "@/services/product.service";
-import { businessCaption, productCaption } from "@/utils/share-copy";
+import { businessCaption, catalogueCaption, productCaption } from "@/utils/share-copy";
+import { getSellerCatalogue } from "@/services/catalog.service";
 import { toShareBusiness, toShareProduct } from "@/utils/share-data";
 import { renderBusinessCard, renderProductCard } from "@/utils/share-card";
 import { shareFilename, shareRich, type RichShare, type RichShareResult } from "@/utils/sharing";
@@ -120,4 +121,50 @@ export function useShareProduct(productId: string | undefined, opts: { asOwner?:
   }, [productId, asOwner, qc]);
 
   return usePreparedShare(["share-card", "product", productId, asOwner], build, prefetch && !!productId);
+}
+
+/**
+ * Share a business's whole catalogue: the shop's card plus a message listing
+ * what it sells, ending in the /c/<id> link that opens every item.
+ */
+export function useShareCatalogue(providerId: string | undefined, opts: { asOwner?: boolean; prefetch?: boolean } = {}) {
+  const { asOwner = false, prefetch = true } = opts;
+  const qc = useQueryClient();
+
+  const build = useCallback(async (): Promise<RichShare> => {
+    if (!providerId) throw new Error("No catalogue to share");
+    const [catalogue, details] = await Promise.all([
+      qc.fetchQuery({
+        queryKey: ["seller-catalogue", providerId],
+        queryFn: () => getSellerCatalogue(providerId),
+        staleTime: DETAILS_STALE_MS,
+      }),
+      qc.fetchQuery({
+        queryKey: ["provider-details", providerId],
+        queryFn: () => getProviderDetails(providerId),
+        staleTime: DETAILS_STALE_MS,
+      }),
+    ]);
+    const business = toShareBusiness(details);
+    return {
+      title: `${catalogue.provider.name} — catalogue on Tijarah Connect`,
+      caption: catalogueCaption(
+        {
+          providerId,
+          name: catalogue.provider.name,
+          area: catalogue.provider.area,
+          city: catalogue.provider.city,
+          products: catalogue.counts.products,
+          services: catalogue.counts.services,
+          categories: catalogue.categories,
+          highlights: catalogue.items.map((i) => ({ name: i.name, price: i.price, currency: i.currency })),
+        },
+        asOwner,
+      ),
+      image: await renderBusinessCard(business),
+      filename: shareFilename(`${catalogue.provider.name}-catalogue`),
+    };
+  }, [providerId, asOwner, qc]);
+
+  return usePreparedShare(["share-card", "catalogue", providerId, asOwner], build, prefetch && !!providerId);
 }

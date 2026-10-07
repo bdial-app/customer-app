@@ -1,5 +1,6 @@
 "use client";
 import { memo, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -71,11 +72,13 @@ const WarningModal = ({
   onClose: () => void;
   onViewAll: () => void;
 }) => {
-  if (totalWarnings <= 0) return null;
+  // Warning counts load in the browser, so document exists by the time this renders.
+  if (totalWarnings <= 0 || typeof document === "undefined") return null;
 
   const isEscalation = totalWarnings >= 3;
 
-  return (
+  // On document.body: inside the tab panel the bottom bar would cover it.
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -178,7 +181,8 @@ const WarningModal = ({
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 
@@ -453,6 +457,27 @@ interface GrowthTipsProps {
   verificationStatus: string | null;
   onNavigate: (subTab: string) => void;
   onVerify: () => void;
+  /** Whether the Google link card is on the page for this business. */
+  canLinkGoogle: boolean;
+}
+
+/**
+ * Bring the Google link card to the middle of the screen and pulse it, so a tap
+ * on the tip visibly lands somewhere.
+ */
+function revealGoogleLinkCard() {
+  const el = document.getElementById("google-link-card");
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  const card = (el.firstElementChild as HTMLElement | null) ?? el;
+  card.animate?.(
+    [
+      { boxShadow: "0 0 0 0 rgba(59,130,246,0)" },
+      { boxShadow: "0 0 0 6px rgba(59,130,246,0.45)" },
+      { boxShadow: "0 0 0 0 rgba(59,130,246,0)" },
+    ],
+    { duration: 900, iterations: 2, delay: 350 },
+  );
 }
 
 const GrowthTips = memo(({
@@ -461,6 +486,7 @@ const GrowthTips = memo(({
   verificationStatus,
   onNavigate,
   onVerify,
+  canLinkGoogle,
 }: GrowthTipsProps) => {
   const { share: shareBusiness } = useShareBusiness(provider?.id, { asOwner: true, prefetch: false });
   const totalPhotos = stats.photos.length;
@@ -519,15 +545,14 @@ const GrowthTips = memo(({
       priority: "medium" as const,
       action: onVerify,
     },
-    !provider?.googlePlaceId && {
+    // Only offered when the link card is actually on the page — it used to show
+    // for businesses still in review, whose card was hidden, so a tap did nothing.
+    canLinkGoogle && !provider?.googlePlaceId && {
       icon: logoGoogle,
       title: "Link Google Reviews",
       desc: "Show your Google reviews to build trust faster",
       priority: "medium" as const,
-      action: () => {
-        // Scroll to the Google link card
-        document.getElementById("google-link-card")?.scrollIntoView({ behavior: "smooth" });
-      },
+      action: revealGoogleLinkCard,
     },
     {
       icon: megaphoneOutline,
@@ -1389,6 +1414,10 @@ const ProviderDashboard = ({
   // If providerStatus is "approved", the provider is fully approved by admin
   // regardless of the document verification record status
   const isApproved = providerStatus === "approved";
+  // Linking Google needs no admin approval (admins already link unverified
+  // businesses by phone), so any owner who can still edit their listing can do it.
+  const canLinkGoogle =
+    !!providerId && !["suspended", "disabled", "deleted", "not_applied"].includes(providerStatus ?? "not_applied");
 
   const providerStats = useMemo<ProviderStats>(() => ({
     photos: details?.photos ?? [],
@@ -1496,6 +1525,7 @@ const ProviderDashboard = ({
         provider={provider}
         verificationStatus={isApproved ? "approved" : verificationStatus}
         warningCount={unreadWarningCount}
+        onConnectGoogle={canLinkGoogle ? revealGoogleLinkCard : undefined}
       />
       <ProviderQuickStats stats={providerStats} />
       {showWarningBanner && (
@@ -1545,13 +1575,13 @@ const ProviderDashboard = ({
         verificationStatus={isApproved ? "approved" : verificationStatus}
         onNavigate={handleNavigate}
         onVerify={handleVerify}
+        canLinkGoogle={canLinkGoogle}
       />
-      {/* Google Reviews Link — show for approved providers */}
-      {isApproved && (
+      {/* Google Reviews link — for any owner who can still edit their listing */}
+      {canLinkGoogle && (
         <div id="google-link-card" className="px-4 mt-4 pb-4">
           <GoogleReviewsLinkCard
             providerId={providerId}
-            providerPhone={provider?.contactNumber}
             googlePlaceId={provider?.googlePlaceId}
             trustLevel={provider?.trustLevel}
             googleRating={provider?.googleRating}

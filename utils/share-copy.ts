@@ -1,4 +1,4 @@
-import { storeLinksText } from "./store-links";
+import { businessShareUrl, catalogueShareUrl, productShareUrl } from "./share-links";
 
 /**
  * Everything a share needs to know about a business, already shaped for
@@ -95,11 +95,11 @@ const lines = (...parts: (string | false | null | undefined)[]) =>
     .trim();
 
 /**
- * How every share ends: the name to search for, then both store links. Both,
- * because the sender cannot know which phone the person reading it uses.
+ * How every share ends: one link. On a phone with the app it opens the listing
+ * in the app; without it, the link offers the right store for that phone (and a
+ * computer gets the web page) — so the sender never has to guess.
  */
-const findUs = (who: "them" | "us", name: string) =>
-  `Find ${who} on Tijarah Connect — search “${name}”.\n${storeLinksText()}`;
+const openLink = (url: string) => `👉 Open on Tijarah Connect:\n${url}`;
 
 // ── Captions ─────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       b.hours && `🕒 Open ${b.hours}`,
       "",
-      findUs("us", b.name),
+      openLink(businessShareUrl(b.id)),
     );
   }
 
@@ -144,7 +144,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
     b.deal && `🎁 Running now: ${dealLine(b.deal)}`,
     b.hours && `🕒 Open ${b.hours}`,
     "",
-    findUs("them", b.name),
+    openLink(businessShareUrl(b.id)),
   );
 }
 
@@ -167,7 +167,7 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
       where && `📍 ${where}`,
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       "",
-      findUs("us", b.name),
+      openLink(productShareUrl(p.id)),
     );
   }
 
@@ -183,6 +183,60 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
     `From *${b.name}*${where ? ` · ${where}` : ""}${trust ? ` · ✅ ${trust}` : ""}`,
     b.deal && `🎁 This shop is running ${dealLine(b.deal)}`,
     "",
-    findUs("them", b.name),
+    openLink(productShareUrl(p.id)),
+  );
+}
+
+/** Everything a catalogue share needs, already shaped for display. */
+export interface ShareCatalogue {
+  providerId: string;
+  name: string;
+  area?: string | null;
+  city?: string | null;
+  products: number;
+  services: number;
+  /** Group labels with counts, biggest first. */
+  categories: { name: string; count: number }[];
+  /** Featured first — the few worth naming in the message. */
+  highlights: { name: string; price?: number | null; currency?: string | null }[];
+}
+
+const countLine = (c: ShareCatalogue) =>
+  [
+    c.products > 0 && `${c.products} ${c.products === 1 ? "product" : "products"}`,
+    c.services > 0 && `${c.services} ${c.services === 1 ? "service" : "services"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+/**
+ * What goes with a catalogue share: the shop, what kinds of things it sells,
+ * a few named items with prices, and the one link that opens all of it.
+ */
+export function catalogueCaption(c: ShareCatalogue, asOwner = false): string {
+  const where = [c.area, c.city].filter(Boolean).join(", ");
+  const groups = c.categories
+    .filter((g) => g.name !== "Other")
+    .slice(0, 4)
+    .map((g) => `${g.name} (${g.count})`)
+    .join(" · ");
+  const picks = c.highlights
+    .slice(0, 5)
+    .map((h) => `• ${h.name}${h.price != null && h.price > 0 ? ` — ${formatMoney(h.price, h.currency)}` : ""}`)
+    .join("\n");
+
+  return lines(
+    asOwner ? "📒 Our full catalogue is on Tijarah Connect" : "📒 Have a look at this catalogue on Tijarah Connect 👇",
+    "",
+    `*${c.name}*`,
+    where && `📍 ${where}`,
+    "",
+    countLine(c) && `🛍️ ${countLine(c)}`,
+    groups && `🗂️ ${groups}`,
+    "",
+    picks && (asOwner ? "A few favourites:" : "A few from the list:"),
+    picks,
+    "",
+    `👉 See everything${asOwner ? " we offer" : ""}, with prices:\n${catalogueShareUrl(c.providerId)}`,
   );
 }
