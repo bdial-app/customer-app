@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import { Sheet } from "@/app/components/ui/sheet";
 import { IonIcon } from "@ionic/react";
 import {
   closeOutline,
@@ -11,7 +11,7 @@ import {
   sparklesOutline,
   starOutline,
 } from "ionicons/icons";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { getNativePlatform } from "@/utils/platform";
 
 const IS_IOS = getNativePlatform() === "ios";
@@ -70,26 +70,10 @@ export function PricingModal({
 
   const paidPlans = plans.filter((p) => p.slug !== "free");
 
-  const content = (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9990] flex items-center justify-center p-4"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-2xl flex flex-col"
-          >
+  return (
+    <Sheet open={open} onClose={onClose} label="Upgrade your plan" zIndex={9990} wideWidth="max-w-md" maxHeight="90dvh" handle={false} className="bg-white dark:bg-slate-800">
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-500 to-emerald-500 p-5 pb-6 relative">
+            <div className="shrink-0 bg-gradient-to-r from-indigo-500 to-emerald-500 p-5 pb-6 relative">
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
@@ -222,14 +206,8 @@ export function PricingModal({
                   : "Cancel anytime • 7-day money-back guarantee • Secure payment via Razorpay"}
               </p>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </Sheet>
   );
-
-  if (typeof document === "undefined") return null;
-  return createPortal(content, document.body);
 }
 
 function FeatureChip({ label, highlight }: { label: string; highlight: boolean }) {

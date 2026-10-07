@@ -1,6 +1,7 @@
 "use client";
 import { Page } from "konsta/react";
 import { BottomSheet } from "../components/bottom-sheet";
+import { Sheet } from "@/app/components/ui/sheet";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { PROVIDER_TAB_EVENT } from "@/utils/tour-nav";
 import Link from "next/link";
@@ -261,6 +262,9 @@ export default function ProviderDetailsPage() {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<typeof activeOffers[number] | null>(null);
+  // The deal stays on screen while its sheet slides away.
+  const [shownDeal, setShownDeal] = useState(selectedDeal);
+  if (selectedDeal && selectedDeal !== shownDeal) setShownDeal(selectedDeal);
 
   // Reset local UI state when navigating to a different provider. State is
   // reset during render so the new provider never paints with the old one's
@@ -1024,50 +1028,30 @@ export default function ProviderDetailsPage() {
             )}
 
             {/* Deal Detail Bottom Sheet */}
-            <AnimatePresence>
-              {selectedDeal && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 backdrop-blur-sm"
-                  onClick={() => setSelectedDeal(null)}
-                >
-                  <motion.div
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    exit={{ y: "100%" }}
-                    transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl overflow-hidden max-h-[80vh]"
-                  >
-                    {/* Handle */}
-                    <div className="flex justify-center pt-3 pb-1">
-                      <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
-                    </div>
-
-                    <div className="px-5 pb-6 pt-2 overflow-y-auto max-h-[70vh]">
+            <Sheet open={!!selectedDeal} onClose={() => setSelectedDeal(null)} label="Offer" zIndex={9999} maxHeight="80dvh" className="bg-white dark:bg-slate-800">
+              {shownDeal && (
+                    <div className="px-5 pb-6 pt-1 sm:pt-6">
                       {/* Discount badge */}
-                      {selectedDeal.discountValue && (
+                      {shownDeal.discountValue && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 mb-3">
                           <IonIcon icon={pricetag} className="text-red-500 text-sm" />
                           <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                            {selectedDeal.discountType === "percentage"
-                              ? `${Number(selectedDeal.discountValue)}% OFF`
-                              : `₹${Number(selectedDeal.discountValue)} OFF`}
+                            {shownDeal.discountType === "percentage"
+                              ? `${Number(shownDeal.discountValue)}% OFF`
+                              : `₹${Number(shownDeal.discountValue)} OFF`}
                           </span>
                         </div>
                       )}
 
                       {/* Title */}
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                        {selectedDeal.title}
+                        {shownDeal.title}
                       </h3>
 
                       {/* Description */}
-                      {selectedDeal.description && (
+                      {shownDeal.description && (
                         <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-4 whitespace-pre-line">
-                          {selectedDeal.description}
+                          {shownDeal.description}
                         </p>
                       )}
 
@@ -1076,7 +1060,7 @@ export default function ProviderDetailsPage() {
                         <IonIcon icon={time} className="text-amber-500 text-sm" />
                         <span>
                           Valid until{" "}
-                          {new Date(selectedDeal.endsAt).toLocaleDateString(undefined, {
+                          {new Date(shownDeal.endsAt).toLocaleDateString(undefined, {
                             weekday: "short",
                             month: "long",
                             day: "numeric",
@@ -1085,10 +1069,8 @@ export default function ProviderDetailsPage() {
                         </span>
                       </div>
                     </div>
-                  </motion.div>
-                </motion.div>
               )}
-            </AnimatePresence>
+            </Sheet>
 
             {/* About */}
             <div data-tour="biz-page-about" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">

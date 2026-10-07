@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { IonIcon } from "@ionic/react";
 import {
   callOutline,
@@ -24,23 +23,11 @@ import {
 } from "@/services/google-reviews.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { PROVIDER_STATUS_KEY } from "@/hooks/useMyProvider";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { Sheet } from "@/app/components/ui/sheet";
 import { useNotification } from "@/app/context/NotificationContext";
 
 const SUPPORT_WHATSAPP = "https://wa.me/919834174885?text=" +
   encodeURIComponent("Hi Tijarah, I need help connecting my Google Business listing.");
-
-/**
- * Sheets and dialogs render on document.body: inside the dashboard they sit
- * in the tab panel's stacking context, under the bottom bar, and get cut off.
- */
-const noSubscribe = () => () => {};
-
-function Overlay({ children }: { children: ReactNode }) {
-  // false while prerendering (no document), true in the browser
-  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
-  return mounted ? createPortal(children, document.body) : null;
-}
 
 const apiMessage = (err: unknown, fallback: string) =>
   (isAxiosError<{ message?: string | string[] }>(err) &&
@@ -219,24 +206,15 @@ export default function GoogleReviewsLinkCard({
           </div>
         </motion.div>
 
-        <Overlay>
-          <AnimatePresence>
-            {confirmUnlink && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9998] bg-black/40 flex items-center justify-center px-6"
-                onClick={() => setConfirmUnlink(false)}
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.92, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.92, y: 10 }}
-                  transition={{ type: "spring", stiffness: 420, damping: 30 }}
-                  className="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-xl border border-gray-100 dark:border-slate-700"
-                  onClick={(e) => e.stopPropagation()}
-                >
+        <Sheet
+          open={confirmUnlink}
+          onClose={() => setConfirmUnlink(false)}
+          label="Remove Google link"
+          wideWidth="max-w-sm"
+          dismissible={!unlinking}
+          className="bg-white dark:bg-slate-800"
+        >
+          <div className="px-5 pt-2 pb-5 sm:pt-5">
                   <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-3">
                     <IonIcon icon={trashOutline} className="w-5 h-5 text-red-500" />
                   </div>
@@ -265,11 +243,8 @@ export default function GoogleReviewsLinkCard({
                       )}
                     </button>
                   </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Overlay>
+          </div>
+        </Sheet>
       </>
     );
   }
@@ -358,24 +333,17 @@ export default function GoogleReviewsLinkCard({
         </div>
       </motion.div>
 
-      <Overlay>
-        <AnimatePresence>
-          {codeStep && (
-            <CodeSheet
-              key="code"
-              providerId={providerId}
-              step={codeStep}
-              onResent={setCodeStep}
-              onLinked={onLinked}
-              onClose={() => setCodeStep(null)}
-              onNotMine={() => {
-                setCodeStep(null);
-                setNotice({ status: "taken" });
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </Overlay>
+      <CodeSheetHost
+        providerId={providerId}
+        step={codeStep}
+        onResent={setCodeStep}
+        onLinked={onLinked}
+        onClose={() => setCodeStep(null)}
+        onNotMine={() => {
+          setCodeStep(null);
+          setNotice({ status: "taken" });
+        }}
+      />
     </>
   );
 }
@@ -430,6 +398,26 @@ function ConnectNotice({ notice, onClose }: { notice: Notice; onClose: () => voi
 }
 
 /* ── Confirm with the code sent to the listing's number ─────────────── */
+type CodeSheetProps = {
+  providerId: string;
+  step: CodeStep;
+  onResent: (s: CodeStep) => void;
+  onLinked: () => void;
+  onClose: () => void;
+  onNotMine: () => void;
+};
+
+/** Keeps the last step on screen while the sheet slides away. */
+function CodeSheetHost({ step, ...rest }: Omit<CodeSheetProps, "step"> & { step: CodeStep | null }) {
+  const [shown, setShown] = useState(step);
+  if (step && step !== shown) setShown(step);
+  return (
+    <Sheet open={!!step} onClose={rest.onClose} label="Confirm it is your business" maxHeight="90dvh">
+      {shown && <CodeSheet step={shown} {...rest} />}
+    </Sheet>
+  );
+}
+
 function CodeSheet({
   providerId,
   step,
@@ -437,21 +425,13 @@ function CodeSheet({
   onLinked,
   onClose,
   onNotMine,
-}: {
-  providerId: string;
-  step: CodeStep;
-  onResent: (s: CodeStep) => void;
-  onLinked: () => void;
-  onClose: () => void;
-  onNotMine: () => void;
-}) {
+}: CodeSheetProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const inputRef = useRef<HTMLInputElement>(null);
-  const keyboardOffset = useKeyboardOffset();
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -500,31 +480,8 @@ function CodeSheet({
 
   const place = step.place;
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[9998] bg-black/50"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", stiffness: 380, damping: 34 }}
-        className="fixed inset-x-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl overflow-y-auto"
-        style={{
-          bottom: keyboardOffset,
-          maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "90vh",
-          paddingBottom: keyboardOffset > 0 ? 16 : "max(env(safe-area-inset-bottom), 20px)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="pt-3 pb-1">
-          <div className="w-9 h-1 rounded-full bg-gray-200 dark:bg-slate-700 mx-auto" />
-        </div>
-        <div className="px-5 pt-3">
+    <div className="pb-5">
+        <div className="px-5 pt-1 sm:pt-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-[17px] font-bold text-gray-900 dark:text-white">We found your business</h3>
@@ -632,7 +589,6 @@ function CodeSheet({
             </button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+    </div>
   );
 }

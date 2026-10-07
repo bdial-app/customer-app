@@ -1,7 +1,6 @@
 "use client";
 import { memo, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
   sparklesOutline,
@@ -54,6 +53,7 @@ import {
 import { useCurrentSubscription } from "@/hooks/useSubscription";
 import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
+import { Sheet } from "@/app/components/ui/sheet";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import AddCatalogueCard from "./manage/add-catalogue-card";
@@ -65,41 +65,33 @@ import { useNow } from "@/hooks/useNow";
 
 // ─── Warning Modal ──────────────────────────────────────────────────
 const WarningModal = ({
+  open,
   totalWarnings,
   onClose,
   onViewAll,
 }: {
+  open: boolean;
   totalWarnings: number;
   onClose: () => void;
   onViewAll: () => void;
 }) => {
-  // Warning counts load in the browser, so document exists by the time this renders.
-  if (totalWarnings <= 0 || typeof document === "undefined") return null;
-
   const isEscalation = totalWarnings >= 3;
 
-  // On document.body: inside the tab panel the bottom bar would cover it.
-  return createPortal(
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center px-6"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          onClick={(e) => e.stopPropagation()}
-          className={`w-full max-w-sm rounded-3xl overflow-hidden ${
-            isEscalation
-              ? "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950"
-              : "bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-950 dark:to-amber-950"
-          }`}
-        >
+  // A sheet on phones (drag down to dismiss), a dialog on wide screens.
+  return (
+    <Sheet
+      open={open && totalWarnings > 0}
+      onClose={onClose}
+      label={isEscalation ? "Action required" : "Account warning"}
+      zIndex={200}
+      wideWidth="max-w-sm"
+      handle={false}
+      className={
+        isEscalation
+          ? "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950"
+          : "bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-950 dark:to-amber-950"
+      }
+    >
           {/* Header */}
           <div
             className={`px-6 pt-6 pb-4 text-center ${
@@ -180,10 +172,7 @@ const WarningModal = ({
               </motion.button>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>,
-    document.body,
+    </Sheet>
   );
 };
 
@@ -1611,16 +1600,15 @@ const ProviderDashboard = ({
         onClose={() => setWarningsSheetOpen(false)}
         onRead={() => refetchWarnings()}
       />
-      {showWarningModal && (
-        <WarningModal
-          totalWarnings={totalWarningCount}
-          onClose={dismissWarningModal}
-          onViewAll={() => {
-            dismissWarningModal();
-            setWarningsSheetOpen(true);
-          }}
-        />
-      )}
+      <WarningModal
+        open={showWarningModal}
+        totalWarnings={totalWarningCount}
+        onClose={dismissWarningModal}
+        onViewAll={() => {
+          dismissWarningModal();
+          setWarningsSheetOpen(true);
+        }}
+      />
     </div>
     </PullToRefresh>
   );

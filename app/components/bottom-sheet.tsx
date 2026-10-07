@@ -1,9 +1,6 @@
 "use client";
 import { type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { useIsClient } from "@/hooks/useIsClient";
+import { Sheet } from "@/app/components/ui/sheet";
 
 interface BottomSheetProps {
   opened: boolean;
@@ -18,6 +15,7 @@ interface BottomSheetProps {
   headerRight?: ReactNode;
 }
 
+/** A sheet with an optional title bar; drags to close on phones, a dialog on wide screens. */
 export const BottomSheet = ({
   opened,
   onClose,
@@ -26,63 +24,17 @@ export const BottomSheet = ({
   title,
   headerLeft,
   headerRight,
-}: BottomSheetProps) => {
-  const mounted = useIsClient();
-  const keyboardOffset = useKeyboardOffset();
-
-  const content = (
-    <AnimatePresence>
-      {opened && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9998] bg-black/40"
-            onClick={onClose}
-          />
-
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className={`fixed inset-x-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl overflow-hidden flex flex-col ${className}`}
-            style={{
-              bottom: keyboardOffset,
-              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "92vh",
-              paddingBottom: keyboardOffset > 0 ? 0 : "max(var(--sab, env(safe-area-inset-bottom)), 0px)",
-              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
-            }}
-          >
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full" />
-            </div>
-
-            {/* Optional header */}
-            {title && (
-              <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-100 dark:border-slate-700">
-                <div className="w-10 flex justify-start">{headerLeft}</div>
-                <h3 className="text-[15px] font-bold text-gray-900 dark:text-white flex-1 text-center">
-                  {title}
-                </h3>
-                <div className="w-10 flex justify-end">{headerRight}</div>
-              </div>
-            )}
-
-            {children}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-
-  if (!mounted) return null;
-  return createPortal(content, document.body);
-};
+}: BottomSheetProps) => (
+  <Sheet open={opened} onClose={onClose} label={title} className={`bg-white dark:bg-slate-900 ${className}`}>
+    {title && (
+      <div className="shrink-0 flex items-center justify-between px-4 pb-3 sm:pt-4 border-b border-gray-100 dark:border-slate-700">
+        <div className="w-10 flex justify-start">{headerLeft}</div>
+        <h3 className="text-[15px] font-bold text-gray-900 dark:text-white flex-1 text-center">{title}</h3>
+        <div className="w-10 flex justify-end">{headerRight}</div>
+      </div>
+    )}
+    {children}
+  </Sheet>
+);
 
 export default BottomSheet;
