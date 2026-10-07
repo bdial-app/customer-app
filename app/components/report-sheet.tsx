@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Sheet } from "@/app/components/ui/sheet";
 import dynamic from "next/dynamic";
 import {
   type ReportEntityType,
@@ -56,7 +55,6 @@ export default function ReportSheet({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notify } = useNotification();
-  const keyboardOffset = useKeyboardOffset();
 
   const reasons = REASONS_BY_TYPE[entityType] || [];
 
@@ -123,39 +121,10 @@ export default function ReportSheet({
               ? "customer"
               : "message";
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
-  const content = (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-100"
-            onClick={handleClose}
-          />
-
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 z-101 bg-white dark:bg-slate-900 rounded-t-2xl flex flex-col safe-area-bottom"
-            style={{
-              bottom: keyboardOffset,
-              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "85vh",
-              paddingBottom: keyboardOffset > 0 ? 0 : undefined,
-              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
-            }}
-          >
+  return (
+    <Sheet open={isOpen} onClose={handleClose} label={`Report ${entityLabel}`} zIndex={100} maxHeight="85dvh">
             {/* Handle + Header */}
-            <div className="shrink-0 px-5 pt-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4" />
+            <div className="shrink-0 px-5 pt-1 sm:pt-5 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
@@ -239,12 +208,6 @@ export default function ReportSheet({
                 {isSubmitting ? "Submitting…" : "Submit Report"}
               </button>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </Sheet>
   );
-
-  if (!mounted) return null;
-  return createPortal(content, document.body);
 }

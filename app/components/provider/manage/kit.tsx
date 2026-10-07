@@ -6,12 +6,11 @@
  * its tab and covered other screens), one bottom sheet and one set of inputs.
  */
 import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { bulbOutline, chevronDownOutline, closeOutline } from "ionicons/icons";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { useIsClient } from "@/hooks/useIsClient";
+import { Sheet } from "@/app/components/ui/sheet";
 
 /** Space the bottom navigation (and its Business Mode pill) takes up. */
 export const BOTTOM_NAV_SPACE = "calc(6.5rem + var(--sab, 0px))";
@@ -306,62 +305,29 @@ export function ManageSheet({
   footer?: ReactNode;
   children: ReactNode;
 }) {
-  const mounted = useIsClient();
   const keyboard = useKeyboardOffset();
-  if (!mounted) return null;
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9996] bg-slate-950/50 backdrop-blur-[2px]"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 36 }}
-            className="fixed inset-x-0 z-[9997] mx-auto max-w-lg bg-white dark:bg-slate-900 rounded-t-[28px] flex flex-col shadow-2xl"
-            style={{
-              bottom: keyboard,
-              maxHeight: keyboard > 0 ? `calc(100vh - ${keyboard}px)` : "92vh",
-              transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
-            }}
-            role="dialog"
-            aria-modal="true"
-            aria-label={title}
-          >
-            <div className="flex justify-center pt-2.5">
-              <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-            </div>
-            <div className="flex items-start gap-3 px-5 pt-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-[17px] font-extrabold text-slate-900 dark:text-white">{title}</h3>
-                {subtitle && <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
-              </div>
-              {headerRight}
-              <button type="button" onClick={onClose} aria-label="Close" className="w-9 h-9 -mr-1 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                <IonIcon icon={closeOutline} className="text-xl text-slate-500" />
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
-            {footer && (
-              <div
-                className="px-5 pt-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
-                style={{ paddingBottom: keyboard > 0 ? 12 : "max(var(--sab, env(safe-area-inset-bottom)), 14px)" }}
-              >
-                {footer}
-              </div>
-            )}
-          </motion.div>
-        </>
+  return (
+    <Sheet open={open} onClose={onClose} zIndex={9996} label={title} safeArea={!footer}>
+      <div className="shrink-0 flex items-start gap-3 px-5 pt-1 sm:pt-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-[17px] font-extrabold text-slate-900 dark:text-white">{title}</h3>
+          {subtitle && <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+        </div>
+        {headerRight}
+        <button type="button" onClick={onClose} aria-label="Close" className="w-9 h-9 -mr-1 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+          <IonIcon icon={closeOutline} className="text-xl text-slate-500" />
+        </button>
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+      {footer && (
+        <div
+          className="shrink-0 px-5 pt-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
+          style={{ paddingBottom: keyboard > 0 ? 12 : "max(var(--sab, env(safe-area-inset-bottom)), 14px)" }}
+        >
+          {footer}
+        </div>
       )}
-    </AnimatePresence>,
-    document.body,
+    </Sheet>
   );
 }
 

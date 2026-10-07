@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sheet } from "@/app/components/ui/sheet";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { useReverseGeocode, useSearchGeocode } from "@/hooks/useGeocode";
 import { useUpdateUser } from "@/hooks/useUser";
@@ -40,7 +41,6 @@ import {
   storefrontOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, LOCATION_UNAVAILABLE, openAppSettings } from "@/utils/geolocation";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
@@ -65,8 +65,6 @@ const GeoLocation = () => {
   const mapSearchInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const dragControls = useDragControls();
-  const keyboardOffset = useKeyboardOffset();
 
   const { isLoaded: isMapLoaded } = useGoogleMapsLoader();
 
@@ -221,12 +219,6 @@ const GeoLocation = () => {
       }
     } finally {
       setIsLocating(false);
-    }
-  };
-
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.y > 100 || info.velocity.y > 500) {
-      setOpen(false);
     }
   };
 
@@ -439,50 +431,9 @@ const GeoLocation = () => {
       <NotificationDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
 
       {/* ── Bottom Sheet ── */}
-      {typeof document !== "undefined" && createPortal(
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-[2px]"
-            />
-
-            {/* Sheet */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              drag="y"
-              dragControls={dragControls}
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.4 }}
-              onDragEnd={handleDragEnd}
-              className="fixed inset-x-0 bottom-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl flex flex-col shadow-2xl"
-              style={{
-                bottom: keyboardOffset,
-                minHeight: isSearching ? "60dvh" : undefined,
-                maxHeight: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px)` : "92dvh",
-                paddingBottom: keyboardOffset > 0 ? 0 : "var(--sab, env(safe-area-inset-bottom))",
-                transition: "bottom 0.15s ease-out, max-height 0.15s ease-out",
-              }}
-            >
-              {/* Drag handle */}
-              <div
-                className="flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0"
-                onPointerDown={(e) => dragControls.start(e)}
-              >
-                <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-              </div>
-
+      <Sheet open={open} onClose={() => setOpen(false)} label="Select location" minHeight={isSearching ? "60dvh" : undefined}>
               {/* Header */}
-              <div className="flex items-center justify-between px-4 pb-3 shrink-0">
+              <div className="flex items-center justify-between px-4 pb-3 sm:pt-4 shrink-0">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Select Location</h2>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
@@ -717,12 +668,7 @@ const GeoLocation = () => {
                   </div>
                 )}
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>,
-      document.body
-      )}
+      </Sheet>
 
       {/* ── Map Picker Overlay ── */}
       {typeof document !== "undefined" && createPortal(

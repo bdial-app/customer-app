@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createPortal } from "react-dom";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { Sheet } from "@/app/components/ui/sheet";
 import { IonIcon } from "@ionic/react";
 import {
   pricetagsOutline,
@@ -12,7 +11,7 @@ import {
   checkmarkCircleOutline,
   informationCircleOutline,
 } from "ionicons/icons";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { validateVoucher } from "@/services/payment.service";
 import { getNativePlatform } from "@/utils/platform";
 
@@ -57,7 +56,6 @@ export function DealPaymentSheet({
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherResult, setVoucherResult] = useState<{ valid: boolean; discount?: number; finalAmount?: number; message: string } | null>(null);
   const [applyingVoucher, setApplyingVoucher] = useState(false);
-  const keyboardOffset = useKeyboardOffset();
 
   const isFree = !monetizationEnabled || isProSubscriber || freeRemaining > 0;
   const finalPrice = voucherResult?.valid ? voucherResult.finalAmount! : price;
@@ -75,35 +73,9 @@ export function DealPaymentSheet({
     }
   };
 
-  const content = (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9990] flex items-end justify-center"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 400, damping: 35 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-w-lg p-6 shadow-xl overflow-y-auto"
-            style={{
-              marginBottom: keyboardOffset,
-              maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "90vh",
-              paddingBottom: keyboardOffset > 0 ? 12 : 32,
-              transition: "margin-bottom 0.15s ease-out, max-height 0.15s ease-out",
-            }}
-          >
-            {/* Handle */}
-            <div className="flex justify-center mb-4">
-              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
-            </div>
-
+  return (
+    <Sheet open={open} onClose={onClose} label="Create an offer" zIndex={9990} maxHeight="90dvh" dismissible={!isLoading} className="bg-white dark:bg-slate-800">
+      <div className="px-6 pt-2 sm:pt-6 pb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
@@ -258,12 +230,7 @@ export function DealPaymentSheet({
                 `Pay ₹${finalPrice} & Create Offer`
               )}
             </motion.button>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </div>
+    </Sheet>
   );
-
-  if (typeof document === "undefined") return null;
-  return createPortal(content, document.body);
 }

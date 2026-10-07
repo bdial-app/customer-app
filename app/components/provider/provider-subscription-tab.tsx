@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import { Sheet } from "@/app/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -341,25 +341,17 @@ const ProviderSubscriptionTab = () => {
       </div>
 
       {/* Checkout Confirm Sheet */}
-      {typeof document !== "undefined" && createPortal(
-      <AnimatePresence>
-        {showConfirm && selectedPlan && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-end justify-center"
-            onClick={() => setShowConfirm(false)}
-          >
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mb-6" />
+      <Sheet
+        open={showConfirm && !!selectedPlan}
+        onClose={() => setShowConfirm(false)}
+        label="Confirm plan"
+        zIndex={9999}
+        wideWidth="max-w-md"
+        dismissible={!paymentLoading}
+        className="bg-white dark:bg-slate-800"
+      >
+        {selectedPlan && (
+            <div className="px-6 pb-6 pt-3 sm:pt-6">
 
               <div className="text-center mb-6">
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${planColors[selectedPlan.slug] ?? planColors.starter} flex items-center justify-center mx-auto mb-3`}>
@@ -448,11 +440,9 @@ const ProviderSubscriptionTab = () => {
                   )}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
         )}
-      </AnimatePresence>
-      , document.body)}
+      </Sheet>
     </div>
   );
 };

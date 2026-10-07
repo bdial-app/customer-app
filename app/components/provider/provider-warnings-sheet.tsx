@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { Sheet } from "@/app/components/ui/sheet";
+import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
   getMyWarnings,
@@ -85,34 +85,10 @@ export default function ProviderWarningsSheet({
     }
   };
 
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-[9998]"
-          />
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[9999] bg-white dark:bg-slate-900 rounded-t-3xl max-h-[80vh] flex flex-col"
-            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-          >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-            </div>
-
+  return (
+    <Sheet open={isOpen} onClose={onClose} label="Warnings" maxHeight="80dvh">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="shrink-0 flex items-center justify-between px-5 pb-3 sm:pt-5 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
                   <IonIcon
@@ -142,7 +118,7 @@ export default function ProviderWarningsSheet({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4">
               {loading && (
                 <div className="flex flex-col items-center py-10">
                   <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -241,10 +217,6 @@ export default function ProviderWarningsSheet({
                 </div>
               )}
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>,
-    document.body,
+    </Sheet>
   );
 }
