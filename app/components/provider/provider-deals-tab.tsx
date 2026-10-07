@@ -1,21 +1,16 @@
 "use client";
-import { useState } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, type ReactNode } from "react";
 import { IonIcon } from "@ionic/react";
 import {
   addOutline,
   trashOutline,
-  closeOutline,
   pricetagOutline,
-  calendarOutline,
-  timeOutline,
-  flashOutline,
   lockClosedOutline,
   diamondOutline,
   alertCircleOutline,
+  informationCircleOutline,
 } from "ionicons/icons";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, type FormikErrors, type FormikTouched } from "formik";
 import * as Yup from "yup";
 import { AppDialog } from "../app-dialog";
 import {
@@ -30,12 +25,34 @@ import {
   useDealCreationInfo,
   useMonetizationConfig,
 } from "@/hooks/useMonetizationConfig";
-import { QuotaIndicator } from "@/app/components/monetization/quota-indicator";
 import { usePayment } from "@/hooks/usePayment";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useNotification } from "@/app/context/NotificationContext";
 import { isAxiosError } from "axios";
+import {
+  ManagePage,
+  SectionHeader,
+  Card,
+  HowItWorks,
+  EmptyState,
+  PrimaryButton,
+  StickyActionBar,
+  Segmented,
+  ManageSheet,
+  FieldBlock,
+  inputCls,
+  textareaCls,
+} from "./manage/kit";
+import {
+  OfferTicket,
+  UsageMeter,
+  CouponStub,
+  isOfferActive,
+  isOfferExpired,
+  isOfferUpcoming,
+  formatDate,
+} from "./manage/offers-ticket";
+import { BoostNudge } from "./manage/boost";
 
 /** The API's `message` from a failed request, if it sent one. */
 function apiErrorMessage(err: unknown): string | undefined {
@@ -72,34 +89,31 @@ const offerSchema = Yup.object({
   usageLimit: Yup.number().transform(emptyToUndef).typeError("Enter a whole number").integer("Must be a whole number").positive("Must be greater than 0").nullable(),
 });
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
-const isOfferActive = (offer: ProviderOfferFull) => {
-  const now = new Date();
-  return (
-    offer.isActive &&
-    new Date(offer.startsAt) <= now &&
-    new Date(offer.endsAt) > now
-  );
+type OfferForm = {
+  title: string;
+  description: string;
+  discountType: "percentage" | "flat";
+  discountValue: string;
+  minOrderAmount: string;
+  maxDiscount: string;
+  startsAt: string;
+  endsAt: string;
+  usageLimit: string;
 };
 
-const isOfferExpired = (offer: ProviderOfferFull) => {
-  return new Date(offer.endsAt) <= new Date();
-};
+type Filter = "current" | "ended";
 
-const isOfferUpcoming = (offer: ProviderOfferFull) => {
-  return offer.isActive && new Date(offer.startsAt) > new Date();
-};
+/** YYYY-MM-DD in the device's time zone (toISOString is UTC: before 5:30 am IST it gave yesterday). */
+const localDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const ProviderDealsTab = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<ProviderOfferFull | null>(null);
+  // Remounts the form each time the sheet opens so it starts from fresh values.
+  const [formSession, setFormSession] = useState(0);
+  const [filter, setFilter] = useState<Filter>("current");
   // Pay-on-publish: a successful payment in the current create session. Lets a
   // retry after a failed save skip re-charging, and only resets once an offer
   // is actually created — so closing the form before publishing never charges.
@@ -115,14 +129,14 @@ const ProviderDealsTab = () => {
   const updateMutation = useUpdateOffer();
   const deleteMutation = useDeleteOffer();
   const { purchaseDealCreation } = usePayment();
-  const keyboardOffset = useKeyboardOffset();
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const monetizationEnabled =
     monetizationConfig?.flags.dealsMonetizationEnabled ?? false;
+  // -1 means unlimited live offers.
   const canCreateActive = limits
-    ? limits.activeDeals < limits.maxActiveDeals
+    ? limits.maxActiveDeals === -1 || limits.activeDeals < limits.maxActiveDeals
     : true;
 
   // At the hard total-offer cap, no payment can create a new offer — the provider
@@ -147,12 +161,20 @@ const ProviderDealsTab = () => {
   // before. This way closing the form without publishing never charges.
   const handleAdd = () => {
     setEditing(null);
+    setFormSession((n) => n + 1);
     setSheetOpen(true);
   };
 
   const handleEdit = (offer: ProviderOfferFull) => {
     setEditing(offer);
+    setFormSession((n) => n + 1);
     setSheetOpen(true);
+  };
+
+  // Quick "Delete" on a card: same confirmation + mutation as inside the sheet.
+  const handleAskDelete = (offer: ProviderOfferFull) => {
+    setEditing(offer);
+    setDeleteOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -165,617 +187,481 @@ const ProviderDealsTab = () => {
     });
   };
 
+  const closeSheet = () => !isSaving && setSheetOpen(false);
+
   const activeOffers = offers.filter(isOfferActive);
   const upcomingOffers = offers.filter(isOfferUpcoming);
   const expiredOffers = offers.filter(isOfferExpired);
+  // Switched off by the owner/admin but not yet ended — shown as "Paused".
+  const pausedOffers = offers.filter(
+    (o) => !isOfferActive(o) && !isOfferUpcoming(o) && !isOfferExpired(o),
+  );
+  const currentOffers = [...activeOffers, ...upcomingOffers, ...pausedOffers];
+  const shown = filter === "current" ? currentOffers : expiredOffers;
+
+  // Display-only numbers for the plan card.
+  const activeUsed = limits?.activeDeals ?? 0;
+  const activeMax = limits?.maxActiveDeals ?? 0;
+  const totalUsed = limits?.totalDeals ?? 0;
+  const totalMax = limits?.maxTotalDeals ?? 0;
+  const limitWarn =
+    !!limits && ((limits.requiresPayment && monetizationEnabled) || !canCreateActive);
+
+  const header = (
+    <>
+      <SectionHeader
+        title="Offers"
+        subtitle="Offers show on your page and in the app's Deals section — a simple way to win new customers."
+      />
+      <HowItWorks
+        id="offers"
+        title="How offers work"
+        steps={[
+          <>Tap <b>Create an offer</b> and give it a short title, like &ldquo;20% off your first visit&rdquo;.</>,
+          <>Choose the discount — a percentage (%) or a fixed amount (₹).</>,
+          <>Pick the start and end dates. It goes live on the start date and ends on its own.</>,
+          <>Customers see it on your page and in Deals. Edit or delete it any time.</>,
+        ]}
+      />
+    </>
+  );
 
   if (isLoading) {
     return (
-      <div className="px-4 space-y-3">
+      <ManagePage>
+        {header}
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 animate-pulse"
+            className="h-[112px] bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 animate-pulse"
           />
         ))}
-      </div>
+      </ManagePage>
     );
   }
 
   return (
-    <div className="min-h-[60vh]">
-      {/* Limits Banner */}
+    <ManagePage>
+      {header}
+
+      {/* Plan usage */}
       {limits && (
-        <div className="px-4 mt-3 mb-3">
-          <div
-            className={`rounded-2xl p-3.5 border ${
-              (limits.requiresPayment && monetizationEnabled) ||
-              !canCreateActive
-                ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700"
-                : "bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                  (limits.requiresPayment && monetizationEnabled) ||
-                  !canCreateActive
-                    ? "bg-amber-100 dark:bg-amber-900/50"
-                    : "bg-white dark:bg-slate-800"
-                }`}
-              >
-                <IonIcon
-                  icon={
-                    (limits.requiresPayment && monetizationEnabled) ||
-                    !canCreateActive
-                      ? lockClosedOutline
-                      : pricetagOutline
-                  }
-                  className={`text-base ${
-                    (limits.requiresPayment && monetizationEnabled) ||
-                    !canCreateActive
-                      ? "text-amber-600"
-                      : "text-slate-500"
-                  }`}
-                />
+        <Card className={limitWarn ? "!ring-amber-300/80 dark:!ring-amber-700/70" : ""}>
+          <div className="flex items-center gap-3">
+            <span
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                limitWarn
+                  ? "bg-amber-50 dark:bg-amber-900/40"
+                  : "bg-gradient-to-br from-amber-50 to-rose-50 dark:from-amber-900/30 dark:to-rose-900/30"
+              }`}
+            >
+              <IonIcon
+                icon={limitWarn ? lockClosedOutline : pricetagOutline}
+                className={`text-[19px] ${limitWarn ? "text-amber-600 dark:text-amber-300" : "text-orange-500 dark:text-orange-300"}`}
+              />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-[14px] font-bold text-slate-900 dark:text-white">Your offer slots</p>
+                {dealInfo && !monetizationEnabled && (
+                  <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    Free tier
+                  </span>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {limits.totalDeals}/{limits.maxTotalDeals}
-                    </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      total
-                    </span>
-                  </div>
-                  <div className="w-px h-3 bg-slate-200" />
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {limits.activeDeals}/{limits.maxActiveDeals}
-                    </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      active
-                    </span>
-                  </div>
-                  {dealInfo && !monetizationEnabled && (
-                    <>
-                      <div className="w-px h-3 bg-slate-200" />
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        Free tier
-                      </span>
-                    </>
-                  )}
-                </div>
-                {/* Progress bars */}
-                <div className="flex gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        limits.totalDeals >= limits.maxTotalDeals
-                          ? "bg-amber-500"
-                          : "bg-indigo-500"
-                      }`}
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          (limits.totalDeals / limits.maxTotalDeals) * 100,
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        limits.activeDeals >= limits.maxActiveDeals
-                          ? "bg-red-400"
-                          : "bg-emerald-500"
-                      }`}
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          (limits.activeDeals / limits.maxActiveDeals) * 100,
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                {activeMax === -1
+                  ? "No limit on how many offers can be live."
+                  : `Up to ${activeMax} offer${activeMax === 1 ? "" : "s"} can be live at the same time.`}
+              </p>
             </div>
-            {/* Monetization enabled + limit reached: show buy CTA */}
-            {limits.requiresPayment && monetizationEnabled && (
-              <button
-                onClick={handleAdd}
-                className="mt-3 w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
-              >
-                <IonIcon icon={diamondOutline} className="text-sm" />
-                {dealInfo?.freeRemaining === 0
-                  ? `Create Offer ₹${
-                      monetizationConfig?.dealPricing.price ?? 149
-                    }`
-                  : "Upgrade to Add More Offers"}
-              </button>
-            )}
-            {/* Monetization disabled but total limit reached */}
-            {!monetizationEnabled &&
-              limits.totalDeals >= limits.maxTotalDeals && (
-                <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-amber-100/60 dark:bg-amber-900/30 rounded-xl">
-                  <IonIcon
-                    icon={alertCircleOutline}
-                    className="text-amber-600 dark:text-amber-400 text-sm mt-0.5 shrink-0"
-                  />
-                  <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
-                    You&apos;ve reached the maximum of{" "}
-                    <span className="font-bold">
-                      {limits.maxTotalDeals} total offers
-                    </span>
-                    . Delete an expired or inactive offer to free up a slot.
-                  </p>
-                </div>
-              )}
-            {/* Active limit reached (regardless of monetization) */}
-            {!canCreateActive && limits.totalDeals < limits.maxTotalDeals && (
-              <div className="mt-2.5 flex items-start gap-2 p-2.5 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                <IonIcon
-                  icon={alertCircleOutline}
-                  className="text-red-500 dark:text-red-400 text-sm mt-0.5 shrink-0"
-                />
-                <p className="text-[11px] text-red-600 dark:text-red-300 leading-relaxed">
-                  All{" "}
-                  <span className="font-bold">
-                    {limits.maxActiveDeals} active offer slots
-                  </span>{" "}
-                  are in use. Deactivate or delete an active offer, or wait for
-                  one to expire.
-                </p>
-              </div>
-            )}
           </div>
-        </div>
+          <div className="grid grid-cols-2 gap-4 mt-3.5">
+            <UsageMeter label="Live now" used={activeUsed} max={activeMax} tone="warm" />
+            <UsageMeter label="Created" used={totalUsed} max={totalMax} tone="brand" />
+          </div>
+
+          {/* Monetization enabled + limit reached: show buy CTA */}
+          {limits.requiresPayment && monetizationEnabled && (
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="mt-4 w-full h-11 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-[13.5px] font-bold flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25"
+            >
+              <IonIcon icon={diamondOutline} className="text-[16px]" />
+              {dealInfo?.freeRemaining === 0
+                ? `Create Offer ₹${monetizationConfig?.dealPricing.price ?? 149}`
+                : "Upgrade to Add More Offers"}
+            </button>
+          )}
+          {/* Monetization disabled but total limit reached */}
+          {!monetizationEnabled && limits.totalDeals >= limits.maxTotalDeals && (
+            <Notice tone="amber">
+              You&apos;ve reached the maximum of <b>{limits.maxTotalDeals} offers</b>. Delete an expired or paused
+              offer to free up a slot.
+            </Notice>
+          )}
+          {/* Active limit reached (regardless of monetization) */}
+          {!canCreateActive && limits.totalDeals < limits.maxTotalDeals && (
+            <Notice tone="rose">
+              All <b>{limits.maxActiveDeals} live slots</b> are in use. Delete a live offer, or wait for one to end,
+              before another can go live.
+            </Notice>
+          )}
+        </Card>
       )}
 
       {offers.length === 0 ? (
-        <div className="px-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-100 dark:border-slate-700 text-center">
-            <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <IonIcon
-                icon={pricetagOutline}
-                className="text-3xl text-amber-400"
+        <EmptyState
+          icon={pricetagOutline}
+          title="No offers yet"
+          body="Create your first offer — like “10% off this week” — and it will show on your page and in Deals."
+          action={
+            <PrimaryButton icon={addOutline} onClick={handleAdd}>
+              Create your first offer
+            </PrimaryButton>
+          }
+        />
+      ) : (
+        <>
+          <Segmented<Filter>
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "current", label: `Live & upcoming (${currentOffers.length})` },
+              { value: "ended", label: `Ended (${expiredOffers.length})` },
+            ]}
+          />
+
+          {shown.length === 0 ? (
+            <Card className="!text-center !py-7">
+              <p className="text-[14px] font-bold text-slate-800 dark:text-white">
+                {filter === "current" ? "Nothing live right now" : "No ended offers"}
+              </p>
+              <p className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-1 max-w-[260px] mx-auto leading-relaxed">
+                {filter === "current"
+                  ? "Create a new offer to start bringing in customers again."
+                  : "Offers move here automatically after their end date."}
+              </p>
+            </Card>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {shown.map((offer, i) => (
+                <OfferTicket
+                  key={offer.id}
+                  offer={offer}
+                  index={i}
+                  onEdit={handleEdit}
+                  onDelete={handleAskDelete}
+                />
+              ))}
+            </div>
+          )}
+
+          {currentOffers.length > 0 && (
+            <div className="mt-4">
+              <BoostNudge
+                id="offers"
+                title="Get more people to see your offer"
+                body="An offer only works if people see it. Boost shows your business first to customers nearby."
               />
             </div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
-              No offers yet
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Create your first offer to attract more customers
-            </p>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleAdd}
-              className="mx-auto flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold"
-            >
-              <IonIcon icon={addOutline} className="text-sm" />
-              Create Offer
-            </motion.button>
-          </div>
-        </div>
-      ) : (
-        <div className="px-4 space-y-4">
-          {/* Active Deals */}
-          {activeOffers.length > 0 && (
-            <div>
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  Active ({activeOffers.length})
-                </h4>
-              </div>
-              <div className="space-y-2">
-                {activeOffers.map((offer, i) => (
-                  <OfferCard
-                    key={offer.id}
-                    offer={offer}
-                    index={i}
-                    onEdit={handleEdit}
-                  />
-                ))}
-              </div>
-            </div>
           )}
 
-          {/* Upcoming Deals */}
-          {upcomingOffers.length > 0 && (
-            <div>
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  Upcoming ({upcomingOffers.length})
-                </h4>
-              </div>
-              <div className="space-y-2">
-                {upcomingOffers.map((offer, i) => (
-                  <OfferCard
-                    key={offer.id}
-                    offer={offer}
-                    index={i}
-                    onEdit={handleEdit}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Expired Deals */}
-          {expiredOffers.length > 0 && (
-            <div>
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="w-2 h-2 rounded-full bg-slate-300" />
-                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  Expired ({expiredOffers.length})
-                </h4>
-              </div>
-              <div className="space-y-2 opacity-60">
-                {expiredOffers.map((offer, i) => (
-                  <OfferCard
-                    key={offer.id}
-                    offer={offer}
-                    index={i}
-                    onEdit={handleEdit}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          <StickyActionBar>
+            <PrimaryButton icon={addOutline} onClick={handleAdd} full>
+              Create an offer
+            </PrimaryButton>
+          </StickyActionBar>
+        </>
       )}
 
-      {/* FAB — rendered via portal for true fixed positioning */}
-      {offers.length > 0 &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={handleAdd}
-            className="fixed bottom-28 right-5 z-[60] w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30"
-          >
-            <IonIcon icon={addOutline} className="text-2xl" />
-          </motion.button>,
-          document.body,
-        )}
+      {/* Create / edit sheet */}
+      <Formik<OfferForm>
+        key={formSession}
+        initialValues={{
+          title: editing?.title ?? "",
+          description: editing?.description ?? "",
+          discountType: editing?.discountType ?? "percentage",
+          discountValue: editing?.discountValue?.toString() ?? "",
+          minOrderAmount: editing?.minOrderAmount?.toString() ?? "",
+          maxDiscount: editing?.maxDiscount?.toString() ?? "",
+          startsAt: localDay(editing ? new Date(editing.startsAt) : new Date()),
+          endsAt: editing ? localDay(new Date(editing.endsAt)) : "",
+          usageLimit: editing?.usageLimit?.toString() ?? "",
+        }}
+        validationSchema={offerSchema}
+        onSubmit={async (values) => {
+          // Content sanitization
+          const titleCheck = checkContent(values.title);
+          const descCheck = checkContent(values.description || "");
+          if (titleCheck.flagged || descCheck.flagged) {
+            notify({
+              title: "Inappropriate content",
+              subtitle: "Please revise your offer title or description.",
+              variant: "error",
+            });
+            return;
+          }
 
-      {/* Full-screen Form Modal */}
-      {typeof document !== "undefined" &&
-        createPortal(
-          <AnimatePresence>
-            {sheetOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9990] flex items-end justify-center"
-                onClick={() => !isSaving && setSheetOpen(false)}
-              >
-                <motion.div
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                  className="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl overflow-y-auto overflow-x-hidden"
-                  style={{
-                    // Lift the bottom-anchored sheet above the keyboard and cap
-                    // its height to the remaining space so the focused field can
-                    // scroll into view instead of hiding behind the keyboard.
-                    marginBottom: keyboardOffset,
-                    maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset}px)` : "90vh",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Modal Header */}
-                  <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between rounded-t-3xl">
-                    <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                      {editing ? "Edit Offer" : "New Offer"}
-                    </h3>
-                    <button
-                      onClick={() => !isSaving && setSheetOpen(false)}
-                      className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
-                    >
-                      <IonIcon
-                        icon={closeOutline}
-                        className="text-lg text-slate-500 dark:text-slate-400"
-                      />
-                    </button>
-                  </div>
+          // Pay-on-publish: only charge when actually publishing a new
+          // offer, and only once per session — so closing the form
+          // before publishing never charges, and a failed save after
+          // doesn't double-charge.
+          if (!editing && needsDealPayment && !paidThisSession) {
+            try {
+              setDealPaying(true);
+              await purchaseDealCreation();
+              setPaidThisSession(true);
+            } catch (err: unknown) {
+              notify({
+                title: "Payment required",
+                subtitle:
+                  (err instanceof Error && err.message) ||
+                  "Payment was cancelled. No charge was made.",
+                variant: "error",
+              });
+              return; // keep form open; nothing created, no charge kept
+            } finally {
+              setDealPaying(false);
+            }
+          }
 
-                  <Formik
-                    initialValues={{
-                      title: editing?.title ?? "",
-                      description: editing?.description ?? "",
-                      discountType:
-                        editing?.discountType ??
-                        ("percentage" as "percentage" | "flat"),
-                      discountValue: editing?.discountValue?.toString() ?? "",
-                      minOrderAmount: editing?.minOrderAmount?.toString() ?? "",
-                      maxDiscount: editing?.maxDiscount?.toString() ?? "",
-                      startsAt: editing
-                        ? new Date(editing.startsAt).toISOString().slice(0, 10)
-                        : new Date().toISOString().slice(0, 10),
-                      endsAt: editing
-                        ? new Date(editing.endsAt).toISOString().slice(0, 10)
-                        : "",
-                      usageLimit: editing?.usageLimit?.toString() ?? "",
-                    }}
-                    validationSchema={offerSchema}
-                    onSubmit={async (values) => {
-                      // Content sanitization
-                      const titleCheck = checkContent(values.title);
-                      const descCheck = checkContent(values.description || "");
-                      if (titleCheck.flagged || descCheck.flagged) {
-                        notify({
-                          title: "Inappropriate content",
-                          subtitle: "Please revise your offer title or description.",
-                          variant: "error",
-                        });
-                        return;
-                      }
+          const payload = {
+            title: values.title.trim(),
+            description: values.description?.trim() || undefined,
+            discountType: values.discountType,
+            discountValue: parseFloat(values.discountValue),
+            minOrderAmount: values.minOrderAmount
+              ? parseFloat(values.minOrderAmount)
+              : undefined,
+            maxDiscount: values.maxDiscount
+              ? parseFloat(values.maxDiscount)
+              : undefined,
+            startsAt: new Date(values.startsAt).toISOString(),
+            endsAt: new Date(values.endsAt).toISOString(),
+            usageLimit: values.usageLimit
+              ? parseInt(values.usageLimit, 10)
+              : undefined,
+          };
 
-                      // Pay-on-publish: only charge when actually publishing a new
-                      // offer, and only once per session — so closing the form
-                      // before publishing never charges, and a failed save after
-                      // doesn't double-charge.
-                      if (!editing && needsDealPayment && !paidThisSession) {
-                        try {
-                          setDealPaying(true);
-                          await purchaseDealCreation();
-                          setPaidThisSession(true);
-                        } catch (err: unknown) {
-                          notify({
-                            title: "Payment required",
-                            subtitle:
-                              (err instanceof Error && err.message) ||
-                              "Payment was cancelled. No charge was made.",
-                            variant: "error",
-                          });
-                          return; // keep form open; nothing created, no charge kept
-                        } finally {
-                          setDealPaying(false);
-                        }
-                      }
-
-                      const payload = {
-                        title: values.title.trim(),
-                        description: values.description?.trim() || undefined,
-                        discountType: values.discountType,
-                        discountValue: parseFloat(values.discountValue),
-                        minOrderAmount: values.minOrderAmount
-                          ? parseFloat(values.minOrderAmount)
-                          : undefined,
-                        maxDiscount: values.maxDiscount
-                          ? parseFloat(values.maxDiscount)
-                          : undefined,
-                        startsAt: new Date(values.startsAt).toISOString(),
-                        endsAt: new Date(values.endsAt).toISOString(),
-                        usageLimit: values.usageLimit
-                          ? parseInt(values.usageLimit, 10)
-                          : undefined,
-                      };
-
-                      if (editing) {
-                        await updateMutation.mutateAsync({
-                          offerId: editing.id,
-                          payload,
-                        });
-                      } else {
-                        await createMutation.mutateAsync(payload);
-                      }
-                      // Offer created — consume the paid session so the next new
-                      // offer is charged again as expected.
-                      setPaidThisSession(false);
-                      setSheetOpen(false);
-                      setEditing(null);
-                    }}
-                  >
-                    {({ values, setFieldValue }) => (
-                      <Form
-                        className="p-5 space-y-5"
-                        style={{ paddingBottom: keyboardOffset > 0 ? 32 : undefined }}
+          if (editing) {
+            await updateMutation.mutateAsync({
+              offerId: editing.id,
+              payload,
+            });
+          } else {
+            await createMutation.mutateAsync(payload);
+          }
+          // Offer created — consume the paid session so the next new
+          // offer is charged again as expected.
+          setPaidThisSession(false);
+          setSheetOpen(false);
+          setEditing(null);
+        }}
+      >
+        {({ values, errors, touched, setFieldValue, submitForm }) => {
+          const err = (k: keyof OfferForm) => fieldError(errors, touched, k);
+          const pct = values.discountType === "percentage";
+          return (
+            <ManageSheet
+              open={sheetOpen}
+              onClose={closeSheet}
+              title={editing ? "Edit offer" : "New offer"}
+              subtitle={editing ? "Changes show to customers right away." : "Takes about a minute."}
+              footer={
+                <div className="flex flex-col gap-2">
+                  {(createMutation.isError || updateMutation.isError) && (
+                    <p className="text-[12px] font-medium text-rose-500 text-center">
+                      {apiErrorMessage(createMutation.error || updateMutation.error) ||
+                        "Something went wrong. Please try again."}
+                    </p>
+                  )}
+                  <div className="flex gap-2.5">
+                    {editing && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteOpen(true)}
+                        aria-label="Delete offer"
+                        className="w-12 h-12 shrink-0 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 ring-1 ring-rose-100 dark:ring-rose-900/60 flex items-center justify-center"
                       >
-                        {/* One-time fee notice (pay-on-publish) */}
-                        {!editing && needsDealPayment && (
-                          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2.5">
-                            <IonIcon
-                              icon={diamondOutline}
-                              className="text-amber-500 text-base mt-0.5 shrink-0"
-                            />
-                            <div>
-                              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
-                                One-time fee: ₹{dealFee ?? ""}
-                              </p>
-                              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
-                                You&apos;ve used your free offers. You&apos;re only charged when you publish — close this form anytime before publishing and you won&apos;t be charged.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Active deals limit warning */}
-                        {!editing && !canCreateActive && (
-                          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-start gap-2.5">
-                            <IonIcon
-                              icon={alertCircleOutline}
-                              className="text-red-500 dark:text-red-400 text-base mt-0.5 shrink-0"
-                            />
-                            <div>
-                              <p className="text-xs font-semibold text-red-700 dark:text-red-300">
-                                Active limit reached
-                              </p>
-                              <p className="text-[10px] text-red-500 dark:text-red-400 mt-0.5">
-                                You already have {limits?.maxActiveDeals ?? 3} active offers. Your new offer
-                                will be created but only goes live when another
-                                expires or is deactivated.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Title */}
-                        <DealFormField
-                          name="title"
-                          label="Offer Title"
-                          placeholder="e.g. 20% off all services"
-                        />
-
-                        {/* Description */}
-                        <DealFormField
-                          name="description"
-                          label="Description"
-                          placeholder="e.g. Valid on weekends only, for orders above ₹500…"
-                          multiline
-                          rows={3}
-                        />
-
-                        {/* Discount Type Toggle */}
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            Discount Type
-                          </label>
-                          <div className="flex bg-slate-100 dark:bg-slate-700 rounded-xl p-1 gap-1">
-                            {(["percentage", "flat"] as const).map((type) => (
-                              <button
-                                key={type}
-                                type="button"
-                                onClick={() =>
-                                  setFieldValue("discountType", type)
-                                }
-                                className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                                  values.discountType === type
-                                    ? "bg-white dark:bg-slate-600 text-indigo-700 dark:text-indigo-300 shadow-sm"
-                                    : "text-slate-500 dark:text-slate-400"
-                                }`}
-                              >
-                                {type === "percentage"
-                                  ? "Percentage (%)"
-                                  : "Flat Amount (₹)"}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Discount Value */}
-                        <DealFormField
-                          name="discountValue"
-                          label={
-                            values.discountType === "percentage"
-                              ? "Discount Percentage"
-                              : "Discount Amount (₹)"
-                          }
-                          placeholder={
-                            values.discountType === "percentage"
-                              ? "e.g. 20"
-                              : "e.g. 100"
-                          }
-                          type="number"
-                        />
-
-                        {/* Min Order + Max Discount Row */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <DealFormField
-                            name="minOrderAmount"
-                            label="Min Order"
-                            placeholder="500"
-                            type="number"
-                            prefix="₹"
-                          />
-                          {values.discountType === "percentage" ? (
-                            <DealFormField
-                              name="maxDiscount"
-                              label="Max Discount"
-                              placeholder="200"
-                              type="number"
-                              prefix="₹"
-                            />
-                          ) : (
-                            <div />
-                          )}
-                        </div>
-
-                        {/* Dates Row — slightly larger gap so the two native
-                            date controls don't visually touch on iOS */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <DealFormField
-                            name="startsAt"
-                            label="Start Date"
-                            type="date"
-                          />
-                          <DealFormField
-                            name="endsAt"
-                            label="End Date"
-                            type="date"
-                          />
-                        </div>
-
-                        {/* Usage Limit */}
-                        <DealFormField
-                          name="usageLimit"
-                          label="Usage Limit"
-                          placeholder="e.g. 50 (unlimited if blank)"
-                          type="number"
-                        />
-
-                        {/* Actions */}
-                        <div className="space-y-2 pt-2 pb-4">
-                          <button
-                            type="submit"
-                            disabled={isSaving || dealPaying}
-                            className="w-full py-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                          >
-                            {dealPaying ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Processing payment…
-                              </>
-                            ) : isSaving ? (
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : editing ? (
-                              "Update Offer"
-                            ) : needsDealPayment && !paidThisSession ? (
-                              `Pay ₹${dealFee ?? ""} & Publish`
-                            ) : (
-                              "Publish Offer"
-                            )}
-                          </button>
-
-                          {editing && (
-                            <button
-                              type="button"
-                              onClick={() => setDeleteOpen(true)}
-                              className="w-full py-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
-                            >
-                              <IonIcon
-                                icon={trashOutline}
-                                className="text-sm"
-                              />
-                              Delete Offer
-                            </button>
-                          )}
-
-                          {(createMutation.isError ||
-                            updateMutation.isError) && (
-                            <p className="text-xs text-red-500 text-center mt-1">
-                              {apiErrorMessage(
-                                createMutation.error || updateMutation.error,
-                              ) || "Something went wrong. Please try again."}
-                            </p>
-                          )}
-                        </div>
-                      </Form>
+                        <IonIcon icon={trashOutline} className="text-[19px]" />
+                      </button>
                     )}
-                  </Formik>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
+                    <PrimaryButton
+                      full
+                      onClick={submitForm}
+                      loading={isSaving || dealPaying}
+                      className="flex-1"
+                    >
+                      {dealPaying
+                        ? "Processing payment…"
+                        : isSaving
+                        ? editing
+                          ? "Saving…"
+                          : "Publishing…"
+                        : editing
+                        ? "Save changes"
+                        : needsDealPayment && !paidThisSession
+                        ? `Pay ₹${dealFee ?? ""} & Publish`
+                        : "Publish offer"}
+                    </PrimaryButton>
+                  </div>
+                </div>
+              }
+            >
+              <Form className="flex flex-col gap-5" noValidate>
+                {/* Live preview of the coupon customers will see */}
+                <div className="flex items-stretch rounded-2xl overflow-hidden ring-1 ring-slate-200/70 dark:ring-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                  <CouponStub status="live" type={values.discountType} value={values.discountValue} compact />
+                  <div className="flex-1 min-w-0 px-3.5 py-3 flex flex-col justify-center border-l-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      Preview
+                    </p>
+                    <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 mt-0.5">
+                      {values.title.trim() || "Your offer title"}
+                    </p>
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {values.endsAt ? `Valid till ${formatDate(values.endsAt)}` : "Pick an end date below"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* One-time fee notice (pay-on-publish) */}
+                {!editing && needsDealPayment && (
+                  <Notice tone="amber" icon={diamondOutline} title={`One-time fee: ₹${dealFee ?? ""}`} flush>
+                    You&apos;ve used your free offers. You&apos;re only charged when you publish — close this form
+                    anytime before publishing and you won&apos;t be charged.
+                  </Notice>
+                )}
+
+                {/* Active deals limit warning */}
+                {!editing && !canCreateActive && (
+                  <Notice tone="rose" title="Live limit reached" flush>
+                    You already have {limits?.maxActiveDeals ?? 3} live offers. Your new offer will be created but
+                    only goes live when another ends or is switched off.
+                  </Notice>
+                )}
+
+                <FieldBlock label="Offer title" hint="Short and clear works best, e.g. “20% off all services”." error={err("title")}>
+                  <Field id="title" name="title" placeholder="e.g. 20% off all services" className={inputCls} />
+                </FieldBlock>
+
+                <FieldBlock label="Type of discount">
+                  <Segmented<"percentage" | "flat">
+                    value={values.discountType}
+                    onChange={(v) => setFieldValue("discountType", v)}
+                    options={[
+                      { value: "percentage", label: "Percent off (%)" },
+                      { value: "flat", label: "Amount off (₹)" },
+                    ]}
+                  />
+                </FieldBlock>
+
+                <FieldBlock
+                  label={pct ? "How much off?" : "How many rupees off?"}
+                  hint={pct ? "Enter a number from 1 to 100." : "The amount taken off the bill."}
+                  error={err("discountValue")}
+                >
+                  <Affix prefix={pct ? undefined : "₹"} suffix={pct ? "%" : undefined}>
+                    <Field
+                      id="discountValue"
+                      name="discountValue"
+                      type="number"
+                      inputMode="decimal"
+                      placeholder={pct ? "e.g. 20" : "e.g. 100"}
+                      className={`${inputCls} ${pct ? "pr-9" : "pl-8"}`}
+                    />
+                  </Affix>
+                </FieldBlock>
+
+                {/* Dates — gap keeps the two native date controls apart on iOS */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FieldBlock label="Starts on" error={err("startsAt")}>
+                    <Field id="startsAt" name="startsAt" type="date" className={dateCls} />
+                  </FieldBlock>
+                  <FieldBlock label="Ends on" error={err("endsAt")}>
+                    <Field id="endsAt" name="endsAt" type="date" className={dateCls} />
+                  </FieldBlock>
+                </div>
+
+                <FieldBlock
+                  label="Details"
+                  optional
+                  hint="Any conditions customers should know, e.g. “Weekends only”."
+                  error={err("description")}
+                >
+                  <Field
+                    id="description"
+                    name="description"
+                    as="textarea"
+                    rows={3}
+                    placeholder="e.g. Valid on weekends only, for orders above ₹500…"
+                    className={textareaCls}
+                  />
+                </FieldBlock>
+
+                {/* Extra rules */}
+                <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-200/70 dark:ring-slate-800 p-4 flex flex-col gap-4">
+                  <div className="flex items-start gap-2">
+                    <IonIcon icon={informationCircleOutline} className="text-[16px] text-slate-400 mt-px shrink-0" />
+                    <p className="text-[12.5px] text-slate-500 dark:text-slate-400 leading-snug">
+                      <b className="text-slate-700 dark:text-slate-200">Extra rules · optional.</b> Leave these empty
+                      if the offer has no conditions.
+                    </p>
+                  </div>
+                  <div className={`grid gap-3 ${pct ? "grid-cols-2" : "grid-cols-1"}`}>
+                    <FieldBlock label="Minimum bill" error={err("minOrderAmount")}>
+                      <Affix prefix="₹">
+                        <Field
+                          id="minOrderAmount"
+                          name="minOrderAmount"
+                          type="number"
+                          inputMode="decimal"
+                          placeholder="500"
+                          className={`${inputCls} pl-8 bg-white dark:bg-slate-900`}
+                        />
+                      </Affix>
+                    </FieldBlock>
+                    {pct && (
+                      <FieldBlock label="Max discount" error={err("maxDiscount")}>
+                        <Affix prefix="₹">
+                          <Field
+                            id="maxDiscount"
+                            name="maxDiscount"
+                            type="number"
+                            inputMode="decimal"
+                            placeholder="200"
+                            className={`${inputCls} pl-8 bg-white dark:bg-slate-900`}
+                          />
+                        </Affix>
+                      </FieldBlock>
+                    )}
+                  </div>
+                  <FieldBlock
+                    label="How many times can it be used?"
+                    hint={
+                      editing && editing.usageCount > 0
+                        ? `Used ${editing.usageCount} time${editing.usageCount === 1 ? "" : "s"} so far. Leave empty for no limit.`
+                        : "Leave empty for no limit."
+                    }
+                    error={err("usageLimit")}
+                  >
+                    <Field
+                      id="usageLimit"
+                      name="usageLimit"
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="e.g. 50"
+                      className={`${inputCls} bg-white dark:bg-slate-900`}
+                    />
+                  </FieldBlock>
+                </div>
+              </Form>
+            </ManageSheet>
+          );
+        }}
+      </Formik>
 
       {/* Delete Confirmation Dialog */}
       <AppDialog
@@ -790,158 +676,87 @@ const ProviderDealsTab = () => {
         loadingLabel="Deleting..."
         onConfirm={() => editing && handleDelete(editing.id)}
       />
-    </div>
-  );
-};
-
-// ─── Offer Card ─────────────────────────────────────────────────────
-
-const OfferCard = ({
-  offer,
-  index,
-  onEdit,
-}: {
-  offer: ProviderOfferFull;
-  index: number;
-  onEdit: (offer: ProviderOfferFull) => void;
-}) => {
-  const active = isOfferActive(offer);
-  const expired = isOfferExpired(offer);
-  const upcoming = isOfferUpcoming(offer);
-
-  const discountLabel =
-    offer.discountType === "percentage"
-      ? `${Number(offer.discountValue)}% OFF`
-      : `₹${Number(offer.discountValue)} OFF`;
-
-  const statusBadge = active
-    ? { label: "Active", bg: "bg-emerald-50", text: "text-emerald-700" }
-    : upcoming
-    ? { label: "Upcoming", bg: "bg-blue-50", text: "text-blue-700" }
-    : { label: "Expired", bg: "bg-slate-100", text: "text-slate-500" };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04 }}
-      onClick={() => onEdit(offer)}
-      className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
-    >
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              active
-                ? "bg-amber-50 dark:bg-amber-900/30"
-                : "bg-slate-50 dark:bg-slate-700"
-            }`}
-          >
-            <IonIcon
-              icon={active ? flashOutline : pricetagOutline}
-              className={`text-lg ${
-                active ? "text-amber-500" : "text-slate-400"
-              }`}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                {offer.title}
-              </p>
-              <span
-                className={`shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase ${statusBadge.bg} ${statusBadge.text}`}
-              >
-                {statusBadge.label}
-              </span>
-            </div>
-            {offer.description && (
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                {offer.description}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="shrink-0 ml-2">
-          <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-lg">
-            {discountLabel}
-          </span>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
-        <div className="flex items-center gap-1">
-          <IonIcon icon={calendarOutline} className="text-xs" />
-          {formatDate(offer.startsAt)} – {formatDate(offer.endsAt)}
-        </div>
-        {offer.usageLimit && (
-          <div className="flex items-center gap-1">
-            <IonIcon icon={timeOutline} className="text-xs" />
-            {offer.usageCount}/{offer.usageLimit} used
-          </div>
-        )}
-        {offer.minOrderAmount && (
-          <span>Min ₹{Number(offer.minOrderAmount)}</span>
-        )}
-      </div>
-    </motion.div>
+    </ManagePage>
   );
 };
 
 export default ProviderDealsTab;
 
-// ─── Form Field Component ───────────────────────────────────────────
+// ─── Small pieces ───────────────────────────────────────────────────────
 
-const DealFormField = ({
-  name,
-  label,
-  placeholder,
-  type = "text",
-  multiline = false,
-  rows = 3,
+// min-w-0 + max-w-full keep native date inputs from forcing the field wider
+// than its grid cell (which caused horizontal scroll & overlap on iOS).
+const dateCls = `${inputCls} min-w-0 max-w-full box-border appearance-none px-3 text-[13.5px]`;
+
+function fieldError(
+  errors: FormikErrors<OfferForm>,
+  touched: FormikTouched<OfferForm>,
+  k: keyof OfferForm,
+) {
+  return touched[k] && errors[k] ? errors[k] : undefined;
+}
+
+/** An input with a fixed "₹" in front or "%" behind it. */
+function Affix({
   prefix,
+  suffix,
+  children,
 }: {
-  name: string;
-  label: string;
-  placeholder?: string;
-  type?: string;
-  multiline?: boolean;
-  rows?: number;
   prefix?: string;
-}) => {
-  // min-w-0 + max-w-full + box-border keep native date/number inputs from forcing
-  // the field wider than its grid cell (which caused horizontal scroll & overlap).
-  const inputCls =
-    "w-full min-w-0 max-w-full box-border px-3.5 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-colors";
+  suffix?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="min-w-0">
-      <label
-        htmlFor={name}
-        className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
-      >
-        {label}
-      </label>
-      <div className="relative">
-        {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">
-            {prefix}
-          </span>
-        )}
-        <Field
-          id={name}
-          name={name}
-          as={multiline ? "textarea" : "input"}
-          rows={multiline ? rows : undefined}
-          type={multiline ? undefined : type}
-          inputMode={type === "number" ? "decimal" : undefined}
-          placeholder={placeholder}
-          className={prefix ? `${inputCls} pl-7` : inputCls}
-        />
-      </div>
-      <ErrorMessage
-        name={name}
-        component="p"
-        className="text-[10px] text-red-500 mt-1"
-      />
+    <div className="relative min-w-0">
+      {prefix && (
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-slate-400 dark:text-slate-500 pointer-events-none">
+          {prefix}
+        </span>
+      )}
+      {children}
+      {suffix && (
+        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-slate-400 dark:text-slate-500 pointer-events-none">
+          {suffix}
+        </span>
+      )}
     </div>
   );
-};
+}
+
+function Notice({
+  tone,
+  icon = alertCircleOutline,
+  title,
+  flush,
+  children,
+}: {
+  tone: "amber" | "rose";
+  icon?: string;
+  title?: string;
+  flush?: boolean;
+  children: ReactNode;
+}) {
+  const t =
+    tone === "amber"
+      ? {
+          box: "bg-amber-50 dark:bg-amber-900/25 ring-amber-200/80 dark:ring-amber-800/60",
+          icon: "text-amber-500 dark:text-amber-400",
+          title: "text-amber-900 dark:text-amber-200",
+          body: "text-amber-800/90 dark:text-amber-200/80",
+        }
+      : {
+          box: "bg-rose-50 dark:bg-rose-950/40 ring-rose-200/80 dark:ring-rose-900/60",
+          icon: "text-rose-500 dark:text-rose-400",
+          title: "text-rose-800 dark:text-rose-200",
+          body: "text-rose-700/90 dark:text-rose-200/80",
+        };
+  return (
+    <div className={`${flush ? "" : "mt-3.5"} flex items-start gap-2.5 p-3 rounded-xl ring-1 ${t.box}`}>
+      <IonIcon icon={icon} className={`text-[17px] mt-px shrink-0 ${t.icon}`} />
+      <div className="min-w-0">
+        {title && <p className={`text-[13px] font-bold ${t.title}`}>{title}</p>}
+        <p className={`text-[12.5px] leading-relaxed ${t.body} ${title ? "mt-0.5" : ""}`}>{children}</p>
+      </div>
+    </div>
+  );
+}

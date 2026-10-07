@@ -137,8 +137,8 @@ export async function uploadChatMedia(
   conversationId: string,
   file: File
 ): Promise<{ url: string; storageKey: string }> {
-  const { compressImageFile, COMPRESS_PRESETS } = await import("@/utils/compress-image");
-  const compressed = await compressImageFile(file, COMPRESS_PRESETS.chat);
+  const { optimizeImage } = await import("@/utils/compress-image");
+  const compressed = await optimizeImage(file, "chat");
   const formData = new FormData();
   formData.append("file", compressed);
   const res = await apiClient.post(CHAT_URLS.UPLOAD_MEDIA(conversationId), formData, {

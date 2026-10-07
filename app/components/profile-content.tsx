@@ -54,6 +54,7 @@ import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
 import { resetWelcomeTour } from "@/utils/welcome-tour";
 import { openCustomerTour } from "@/utils/customer-tour";
+import { openBusinessTour } from "@/utils/business-tour";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
 import {
@@ -100,6 +101,61 @@ const apiErrorMessage = (err: unknown): string | undefined =>
   isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined;
 
 // ─── Reusable Menu Row ──────────────────────────────────────────────
+/**
+ * Light / Dark / Auto. A labelled three-way switch with real tap targets; the
+ * row itself does nothing on tap (it used to cycle modes, so a near-miss on a
+ * tiny button jumped to the wrong one). Auto says what it is doing right now.
+ */
+const AppearanceRow = () => {
+  const { mode, isDark, setTheme } = useTheme();
+  const options = [
+    { key: "light" as const, icon: sunnyOutline, label: "Light" },
+    { key: "dark" as const, icon: moonOutline, label: "Dark" },
+    { key: "auto" as const, icon: contrastOutline, label: "Auto" },
+  ];
+  const sublabel =
+    mode === "auto"
+      ? `Auto · ${isDark ? "dark" : "light"} right now, follows your phone and the time`
+      : mode === "dark"
+        ? "Dark, always"
+        : "Light, always";
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-indigo-50 dark:bg-slate-700">
+          <IonIcon icon={isDark ? moonOutline : sunnyOutline} className={`text-lg ${isDark ? "text-indigo-400" : "text-amber-500"}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium text-slate-800 dark:text-white">Appearance</span>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">{sublabel}</p>
+        </div>
+      </div>
+      <div role="radiogroup" aria-label="Appearance" className="mt-3 grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/60">
+        {options.map((o) => {
+          const on = mode === o.key;
+          return (
+            <button
+              key={o.key}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setTheme(o.key)}
+              className={`h-10 rounded-lg flex items-center justify-center gap-1.5 text-[13px] font-semibold transition-colors ${
+                on
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 active:bg-white/60 dark:active:bg-slate-700/50"
+              }`}
+            >
+              <IonIcon icon={o.icon} className="text-[15px]" />
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const MenuRow = ({
   icon,
   iconColor = "text-slate-500",
@@ -246,7 +302,6 @@ const ProfileContent = memo(() => {
   const updateUserMutation = useUpdateUser();
   const { notify } = useNotification();
   const queryClient = useQueryClient();
-  const { isDark, toggleTheme, mode: themeMode, setTheme: setThemeMode } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [logoutActionSheetOpen, setLogoutActionSheetOpen] = useState(false);
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
@@ -638,35 +693,7 @@ const ProfileContent = memo(() => {
               sublabel="Push & in-app alerts"
               onClick={guestAction}
             />
-            <MenuRow
-              icon={themeMode === "dark" ? moonOutline : themeMode === "light" ? sunnyOutline : contrastOutline}
-              iconColor={themeMode === "dark" ? "text-indigo-400" : themeMode === "light" ? "text-amber-500" : "text-violet-500"}
-              iconBg={themeMode === "dark" ? "bg-indigo-50" : themeMode === "light" ? "bg-amber-50" : "bg-violet-50"}
-              label="Appearance"
-              sublabel={themeMode === "dark" ? "Dark" : themeMode === "light" ? "Light" : "Auto"}
-              trailing={
-                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-full p-0.5 gap-0.5">
-                  {([
-                    { key: "light" as const, icon: sunnyOutline },
-                    { key: "dark" as const, icon: moonOutline },
-                    { key: "auto" as const, icon: contrastOutline },
-                  ]).map(({ key, icon }) => (
-                    <button
-                      key={key}
-                      onClick={(e) => { e.stopPropagation(); setThemeMode(key); }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                        themeMode === key
-                          ? "bg-white dark:bg-slate-600 shadow-sm"
-                          : "opacity-50"
-                      }`}
-                    >
-                      <IonIcon icon={icon} className="text-sm" />
-                    </button>
-                  ))}
-                </div>
-              }
-              onClick={toggleTheme}
-            />
+            <AppearanceRow />
             {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
@@ -1106,35 +1133,7 @@ const ProfileContent = memo(() => {
               sublabel="Push & in-app alerts"
               onClick={() => setActivePage("notificationSettings")}
             />
-            <MenuRow
-              icon={themeMode === "dark" ? moonOutline : themeMode === "light" ? sunnyOutline : contrastOutline}
-              iconColor={themeMode === "dark" ? "text-indigo-400" : themeMode === "light" ? "text-amber-500" : "text-violet-500"}
-              iconBg={themeMode === "dark" ? "bg-indigo-50" : themeMode === "light" ? "bg-amber-50" : "bg-violet-50"}
-              label="Appearance"
-              sublabel={themeMode === "dark" ? "Dark" : themeMode === "light" ? "Light" : "Auto"}
-              trailing={
-                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-full p-0.5 gap-0.5">
-                  {([
-                    { key: "light" as const, icon: sunnyOutline },
-                    { key: "dark" as const, icon: moonOutline },
-                    { key: "auto" as const, icon: contrastOutline },
-                  ]).map(({ key, icon }) => (
-                    <button
-                      key={key}
-                      onClick={(e) => { e.stopPropagation(); setThemeMode(key); }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                        themeMode === key
-                          ? "bg-white dark:bg-slate-600 shadow-sm"
-                          : "opacity-50"
-                      }`}
-                    >
-                      <IonIcon icon={icon} className="text-sm" />
-                    </button>
-                  ))}
-                </div>
-              }
-              onClick={toggleTheme}
-            />
+            <AppearanceRow />
             {/* <LanguageMenuButton onClick={() => setActivePage("language")} /> */}
           </MenuSection>
 
@@ -1152,9 +1151,10 @@ const ProfileContent = memo(() => {
               icon={navigateCircleOutline}
               iconColor="text-sky-600"
               iconBg="bg-sky-50"
-              label="Take the app tour"
-              sublabel="A guided walk through every screen"
-              onClick={() => openCustomerTour()}
+              label={userMode === "provider" ? "Take the business tour" : "Take the app tour"}
+              sublabel={userMode === "provider" ? "A guided walk through managing your shop" : "A guided walk through every screen"}
+              // In Business mode the customer tour can't run; show the business one.
+              onClick={() => (userMode === "provider" ? openBusinessTour() : openCustomerTour())}
             />
             <MenuRow
               icon={helpCircleOutline}

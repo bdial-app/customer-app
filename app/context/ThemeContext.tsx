@@ -62,8 +62,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (mode !== "auto") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => {
-      const r: ResolvedTheme = e.matches ? "dark" : "light";
+    const handler = () => {
+      const r = resolveTheme("auto");
       setResolved(r);
       applyTheme(r);
     };
@@ -108,10 +108,9 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       root.classList.remove("dark");
     }
     // Update meta theme-color for PWA
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
       meta.setAttribute("content", t === "dark" ? "#0f172a" : "#F59E0B");
-    }
+    });
   };
 
   const setTheme = useCallback((t: ThemeMode) => {

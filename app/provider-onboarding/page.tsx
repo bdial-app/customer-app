@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { List, Button, Block, Navbar, Page } from "konsta/react";
 import { IonIcon } from "@ionic/react";
 import {
@@ -38,6 +38,7 @@ import {
   logoInstagram,
   logoFacebook,
   logoYoutube,
+  refreshOutline,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -53,7 +54,6 @@ import WhatsAppPhoneInput from "../components/whatsapp-phone-input";
 import LinkedInInput from "../components/linkedin-input";
 import { useAppSelector } from "@/hooks/useAppStore";
 import {
-  becomeProvider,
   getMyProviderStatus,
   sendProviderOtp,
   verifyProviderOtp,
@@ -68,13 +68,17 @@ import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import PrivateRoute from "@/app/components/private-route";
 import FeatureGate from "@/app/components/feature-gate";
 import { checkContent } from "@/utils/content-sanitizer";
-import { useObjectUrl, useObjectUrls } from "@/hooks/useObjectUrl";
+import { useOnboardingUploads, type UploadItem, type MediaRef } from "@/hooks/useOnboardingUploads";
+import { useOnboardingDraft } from "@/hooks/useOnboardingDraft";
+import { submitListing, type SubmitListingPayload } from "@/services/onboarding.service";
+import { withDeadline } from "@/utils/onboarding-media";
+import { checkPickedFile } from "@/utils/compress-image";
+import { UploadOverlay, UploadSummary } from "./upload-ui";
 import { isAxiosError } from "axios";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // Accept up to 15MB — we compress client-side before upload
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -104,7 +108,8 @@ interface OnboardingFormValues {
   city: string;
   area: string;
   pincode: string;
-  identity_doc: File | null;
+  /** Upload id of the identity document (uploaded as soon as it is picked). */
+  identity_doc: string | null;
   website_url: string;
   instagram_handle: string;
   facebook_handle: string;
@@ -151,15 +156,10 @@ const step2Schema = Yup.object({
 
 const step3Schema = Yup.object({});
 const step4Schema = Yup.object({});
+// The document is checked when it is picked (type and size) and uploads at
+// once; the form only holds its upload id.
 const step5Schema = Yup.object({
-  identity_doc: Yup.mixed<File>()
-    .nullable()
-    .test("fileSize", "File must be less than 15 MB", (val) =>
-      !val || (val instanceof File && val.size <= MAX_FILE_SIZE),
-    )
-    .test("fileType", "Only JPEG, PNG or PDF allowed", (val) =>
-      !val || (val instanceof File && ALLOWED_FILE_TYPES.includes(val.type)),
-    ),
+  identity_doc: Yup.string().nullable(),
 });
 
 const schemaForStep: Record<StepId, Yup.ObjectSchema<Yup.AnyObject>> = {
@@ -168,14 +168,6 @@ const schemaForStep: Record<StepId, Yup.ObjectSchema<Yup.AnyObject>> = {
   3: step3Schema,
   4: step4Schema,
   5: step5Schema,
-};
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-const formatFileSize = (bytes: number) => {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 // ---------------------------------------------------------------------------
@@ -850,23 +842,32 @@ const CategorySelector = ({
 const PhotoFileUpload = ({
   label,
   icon,
-  file,
-  onChange,
+  item,
+  onPick,
+  onRemove,
+  onRetry,
   hint,
 }: {
   label: string;
   icon: string;
-  file: File | null;
-  onChange: (file: File | null) => void;
+  item: UploadItem | undefined;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+  onRetry: () => void;
   hint: string;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const preview = useObjectUrl(file);
+  const [pickError, setPickError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f && ALLOWED_IMAGE_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE) onChange(f);
     e.target.value = "";
+    if (!f) return;
+    if (!ALLOWED_IMAGE_TYPES.includes(f.type)) return setPickError("Please choose a JPG, PNG or WebP photo.");
+    const tooBig = checkPickedFile(f);
+    if (tooBig) return setPickError(tooBig);
+    setPickError(null);
+    onPick(f);
   };
 
   return (
@@ -875,19 +876,23 @@ const PhotoFileUpload = ({
         {label}
       </label>
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleChange} />
-      {file && preview ? (
-        <div className="relative rounded-xl overflow-hidden border border-green-200 bg-green-50/30 shadow-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt={label} className="w-full h-32 object-cover" />
-          <div className="absolute top-2 left-2 bg-green-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <IonIcon icon={checkmarkCircle} className="text-xs" /> Selected
-          </div>
-          <button type="button" onClick={() => onChange(null)} className="absolute top-2 right-2 w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center">
-            <IonIcon icon={closeCircle} className="text-white text-sm" />
+      {item ? (
+        <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 shadow-sm">
+          {item.previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.previewUrl} alt={label} className="w-full h-32 object-cover" />
+          ) : (
+            <div className="w-full h-32" />
+          )}
+          <UploadOverlay item={item} onRetry={onRetry} />
+          <button type="button" onClick={onRemove} aria-label={`Remove ${label}`} className="absolute top-2 right-2 w-8 h-8 bg-black/45 backdrop-blur-sm rounded-full flex items-center justify-center z-10">
+            <IonIcon icon={closeCircle} className="text-white text-base" />
           </button>
-          <div className="flex items-center justify-between p-2 border-t border-green-100 bg-white/80">
-            <p className="text-[10px] text-slate-500 truncate flex-1">{file.name} &bull; {formatFileSize(file.size)}</p>
-            <button type="button" onClick={() => inputRef.current?.click()} className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5 ml-2 shrink-0">Replace</button>
+          <div className="flex items-center justify-between p-2 border-t border-slate-100 dark:border-slate-700 bg-white/90 dark:bg-slate-900/80">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate flex-1">
+              {item.status === "done" ? "Saved to your listing" : item.status === "error" ? "Not uploaded yet" : "Uploading in the background…"}
+            </p>
+            <button type="button" onClick={() => inputRef.current?.click()} className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-full px-2.5 py-1 ml-2 shrink-0">Replace</button>
           </div>
         </div>
       ) : (
@@ -902,6 +907,7 @@ const PhotoFileUpload = ({
           <IonIcon icon={cloudUploadOutline} className="text-slate-300 text-xl shrink-0" />
         </button>
       )}
+      {pickError && <p className="text-[11px] text-rose-500 mt-1.5 ml-1">{pickError}</p>}
     </div>
   );
 };
@@ -910,43 +916,57 @@ const PhotoFileUpload = ({
 // Product form item
 // ---------------------------------------------------------------------------
 interface ProductItem {
+  /** Stable across edits and drafts (list keys, upload ownership). */
+  key: string;
   name: string;
   description: string;
   price: string;
-  images: File[];
+  /** Upload ids of this item's photos, in order. */
+  photoIds: string[];
   productType: 'product' | 'service';
 }
 
-const emptyProduct = (): ProductItem => ({ name: "", description: "", price: "", images: [], productType: "product" });
+const emptyProduct = (): ProductItem => ({
+  key: `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+  name: "",
+  description: "",
+  price: "",
+  photoIds: [],
+  productType: "product",
+});
 
 const MAX_PRODUCT_IMAGES = 5;
 
 const ProductFormCard = ({
   product,
   index,
+  items,
   onUpdate,
   onRemove,
+  onAddPhotos,
+  onRemovePhoto,
+  onRetryPhoto,
 }: {
   product: ProductItem;
   index: number;
+  /** Upload state of each of product.photoIds, in order. */
+  items: (UploadItem | undefined)[];
   onUpdate: (p: ProductItem) => void;
   onRemove: () => void;
+  onAddPhotos: (files: File[]) => void;
+  onRemovePhoto: (id: string) => void;
+  onRetryPhoto: (id: string) => void;
 }) => {
   const imgRef = useRef<HTMLInputElement>(null);
-  const previews = useObjectUrls(product.images);
+  const [pickError, setPickError] = useState<string | null>(null);
 
   const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const valid = files.filter((f) => ALLOWED_IMAGE_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
-    const remaining = MAX_PRODUCT_IMAGES - product.images.length;
-    if (remaining > 0 && valid.length > 0) {
-      onUpdate({ ...product, images: [...product.images, ...valid.slice(0, remaining)] });
-    }
     e.target.value = "";
-  };
-
-  const removeImage = (idx: number) => {
-    onUpdate({ ...product, images: product.images.filter((_, i) => i !== idx) });
+    const valid = files.filter((f) => ALLOWED_IMAGE_TYPES.includes(f.type) && !checkPickedFile(f));
+    setPickError(valid.length < files.length ? "Some photos were skipped — use JPG, PNG or WebP photos." : null);
+    const remaining = MAX_PRODUCT_IMAGES - product.photoIds.length;
+    if (remaining > 0 && valid.length > 0) onAddPhotos(valid.slice(0, remaining));
   };
 
   return (
@@ -994,20 +1014,26 @@ const ProductFormCard = ({
         <input ref={imgRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Photos ({product.images.length}/{MAX_PRODUCT_IMAGES})</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Photos ({product.photoIds.length}/{MAX_PRODUCT_IMAGES})</label>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {previews.map((url, i) => (
-              <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-100 shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => removeImage(i)}
-                  className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-                  <IonIcon icon={closeCircle} className="text-white text-xs" />
-                </button>
-              </div>
-            ))}
-            {product.images.length < MAX_PRODUCT_IMAGES && (
+            {product.photoIds.map((id, i) => {
+              const item = items[i];
+              return (
+                <div key={id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0">
+                  {item?.previewUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
+                  )}
+                  <UploadOverlay item={item} onRetry={() => onRetryPhoto(id)} compact />
+                  <button type="button" onClick={() => onRemovePhoto(id)} aria-label="Remove photo"
+                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/55 rounded-full flex items-center justify-center shadow-sm z-10">
+                    <IonIcon icon={closeCircle} className="text-white text-xs" />
+                  </button>
+                </div>
+              );
+            })}
+            {product.photoIds.length < MAX_PRODUCT_IMAGES && (
               <button type="button" onClick={() => imgRef.current?.click()}
                 className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:border-indigo-200 transition-all shrink-0">
                 <IonIcon icon={cameraOutline} className="text-sm" />
@@ -1015,6 +1041,7 @@ const ProductFormCard = ({
               </button>
             )}
           </div>
+          {pickError && <p className="text-[11px] text-rose-500 mt-1.5">{pickError}</p>}
         </div>
 
         {/* Name */}
@@ -1151,111 +1178,68 @@ const DocumentTypeSelector = ({
 // Document file picker
 // ---------------------------------------------------------------------------
 const DocFilePicker = ({
-  file,
-  error,
-  touched,
+  item,
   docType,
-  onChange,
+  onPick,
+  onRemove,
+  onRetry,
 }: {
-  file: File | null;
-  error?: string;
-  touched?: boolean;
+  item: UploadItem | undefined;
   docType: DocTypeId;
-  onChange: (file: File | null) => void;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+  onRetry: () => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const hasError = touched && !!error;
-  const docLabel =
-    DOC_TYPES.find((d) => d.id === docType)?.label ?? "Document";
-
-  // Only images get an inline preview; PDFs show the file name instead.
-  const preview = useObjectUrl(file && file.type.startsWith("image/") ? file : null);
+  const [pickError, setPickError] = useState<string | null>(null);
+  const docLabel = DOC_TYPES.find((d) => d.id === docType)?.label ?? "Document";
+  const isPdf = item?.mime === "application/pdf";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0] ?? null;
-    onChange(selected);
+    const f = e.target.files?.[0];
     e.target.value = "";
+    if (!f) return;
+    if (!ALLOWED_FILE_TYPES.includes(f.type)) return setPickError("Please choose a JPG, PNG or PDF file.");
+    const tooBig = checkPickedFile(f);
+    if (tooBig) return setPickError(tooBig);
+    setPickError(null);
+    onPick(f);
   };
 
   return (
     <div className="px-4 py-2">
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".jpg,.jpeg,.png,.pdf"
-        className="hidden"
-        onChange={handleChange}
-      />
+      <input ref={inputRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={handleChange} />
 
-      {file ? (
-        <div className="rounded-2xl border border-green-200 bg-gradient-to-b from-green-50/60 to-white overflow-hidden shadow-sm">
-          {preview ? (
-            <div className="relative w-full h-44 bg-slate-100 overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview}
-                alt={`${docLabel} preview`}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-2 left-2 bg-green-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                <IonIcon icon={checkmarkCircle} className="text-sm" />
-                Uploaded
-              </div>
-              <button
-                type="button"
-                onClick={() => onChange(null)}
-                className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-90 transition-transform"
-              >
-                <IonIcon
-                  icon={closeCircle}
-                  className="text-white text-lg"
-                />
-              </button>
-            </div>
-          ) : (
-            <div className="relative w-full h-32 bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+      {item ? (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+          <div className="relative w-full h-44 bg-slate-100 dark:bg-slate-900 overflow-hidden flex items-center justify-center">
+            {item.previewUrl && !isPdf ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={item.previewUrl} alt={`${docLabel} preview`} className="w-full h-full object-cover" />
+            ) : (
               <div className="flex flex-col items-center gap-1.5 text-slate-400">
                 <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                  <IonIcon
-                    icon={documentTextOutline}
-                    className="text-3xl text-indigo-400"
-                  />
+                  <IonIcon icon={documentTextOutline} className="text-3xl text-indigo-400" />
                 </div>
-                <span className="text-xs font-semibold text-slate-500">
-                  PDF Document
-                </span>
+                <span className="text-xs font-semibold text-slate-500">PDF document</span>
               </div>
-              <div className="absolute top-2 left-2 bg-green-600/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                <IonIcon icon={checkmarkCircle} className="text-sm" />
-                Uploaded
-              </div>
-              <button
-                type="button"
-                onClick={() => onChange(null)}
-                className="absolute top-2 right-2 w-7 h-7 bg-black/20 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-              >
-                <IonIcon
-                  icon={closeCircle}
-                  className="text-slate-600 text-lg"
-                />
-              </button>
-            </div>
-          )}
-          <div className="flex items-center gap-3 p-3 border-t border-green-100">
-            <div className="p-1.5 bg-green-100 rounded-lg shrink-0">
-              <IonIcon
-                icon={checkmarkCircle}
-                className="text-green-600 text-lg"
-              />
-            </div>
+            )}
+            <UploadOverlay item={item} onRetry={onRetry} />
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label="Remove document"
+              className="absolute top-2 right-2 w-8 h-8 bg-black/45 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-90 transition-transform z-10"
+            >
+              <IonIcon icon={closeCircle} className="text-white text-lg" />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 p-3 border-t border-slate-100 dark:border-slate-700">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-800 truncate">
-                {file.name}
-              </p>
-              <p className="text-[10px] text-slate-500">
-                {formatFileSize(file.size)} &bull;{" "}
-                {file.type === "application/pdf" ? "PDF" : "Image"} &bull;{" "}
-                {docLabel}
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{item.name || docLabel}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {docLabel} &bull;{" "}
+                {item.status === "done" ? "Uploaded" : item.status === "error" ? "Not uploaded yet" : "Uploading…"}
               </p>
             </div>
             <button
@@ -1268,61 +1252,31 @@ const DocFilePicker = ({
           </div>
         </div>
       ) : (
-        <label
-          className={`relative flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer group ${
-            hasError
-              ? "border-red-300 bg-red-50/40 min-h-[180px]"
-              : "border-slate-200 bg-gradient-to-b from-slate-50/50 to-white hover:border-indigo-300 min-h-[180px]"
-          }`}
-        >
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.pdf"
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            onChange={handleChange}
-          />
+        <label className="relative flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer group border-slate-200 dark:border-slate-600 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-800 dark:to-slate-900 hover:border-indigo-300 min-h-[180px]">
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleChange} />
           <div className="flex flex-col items-center gap-3 p-6 pointer-events-none">
-            <div
-              className={`p-4 rounded-2xl border transition-all duration-200 group-hover:scale-105 group-hover:shadow-md ${
-                hasError
-                  ? "bg-red-50 border-red-200 text-red-400"
-                  : "bg-white border-slate-100 text-indigo-500 shadow-sm"
-              }`}
-            >
+            <div className="p-4 rounded-2xl border bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-indigo-500 shadow-sm">
               <IonIcon icon={cloudUploadOutline} className="text-4xl" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
-                Upload {docLabel}
-              </p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Take a photo or upload a scanned copy
-              </p>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Upload {docLabel}</p>
+              <p className="text-[11px] text-slate-400 mt-1">Take a photo or upload a scanned copy</p>
             </div>
             <div className="flex flex-wrap justify-center gap-1.5 mt-1">
-              {["JPEG", "PNG", "PDF"].map((f) => (
-                <span
-                  key={f}
-                  className="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-medium"
-                >
+              {["JPEG", "PNG", "PDF", "Any photo size"].map((f) => (
+                <span key={f} className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 px-2.5 py-0.5 rounded-full font-medium">
                   {f}
                 </span>
               ))}
-              <span className="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-medium">
-                Max 5 MB
-              </span>
             </div>
           </div>
         </label>
       )}
 
-      {hasError && (
+      {pickError && (
         <div className="flex items-center gap-1.5 mt-2 px-1">
-          <IonIcon
-            icon={alertCircleOutline}
-            className="text-red-500 text-sm shrink-0"
-          />
-          <p className="text-xs text-red-500 font-medium">{error}</p>
+          <IonIcon icon={alertCircleOutline} className="text-red-500 text-sm shrink-0" />
+          <p className="text-xs text-red-500 font-medium">{pickError}</p>
         </div>
       )}
     </div>
@@ -1342,7 +1296,7 @@ const DocumentGuidelines = () => (
         {[
           "Document should be clearly visible and not blurred",
           "All four corners of the document must be visible",
-          "File size should not exceed 5 MB",
+          "Photos of any size are fine; PDFs up to 25 MB",
           "Accepted: Aadhaar Card, PAN Card, Passport, Voter ID",
         ].map((text, i) => (
           <div key={i} className="flex items-start gap-2.5">
@@ -1607,6 +1561,67 @@ const UnderReviewBanner = ({
 };
 
 // ===========================================================================
+// DRAFT — what "save as you go" keeps (text, picks, and URLs of uploaded files)
+// ===========================================================================
+interface OnboardingDraft {
+  v: 1;
+  values: Omit<OnboardingFormValues, "identity_doc">;
+  completedSteps: number[];
+  docType: DocTypeId;
+  categoryIds: string[];
+  isWomenLed: boolean;
+  coords: { lat: number; lng: number } | null;
+  locationLabel: string | null;
+  /** The contact number already confirmed by OTP (so a resume doesn't re-ask). */
+  verifiedPhone: string | null;
+  banner: MediaRef | null;
+  profile: MediaRef | null;
+  doc: MediaRef | null;
+  products: Array<Omit<ProductItem, "photoIds"> & { photos: MediaRef[] }>;
+}
+
+const EMPTY_VALUES: OnboardingFormValues = {
+  brand_name: "",
+  description: "",
+  contact_number: "",
+  open_time: "",
+  close_time: "",
+  address: "",
+  city: "",
+  area: "",
+  pincode: "",
+  identity_doc: null,
+  website_url: "",
+  instagram_handle: "",
+  facebook_handle: "",
+  youtube_handle: "",
+  whatsapp_number: "",
+  linkedin_handle: "",
+};
+
+/** True when a draft holds something worth offering to resume. */
+const draftHasContent = (d: OnboardingDraft | null | undefined) =>
+  !!d &&
+  (Object.entries(d.values ?? {}).some(([, v]) => typeof v === "string" && v.trim()) ||
+    d.products?.some((p) => p.name.trim()) ||
+    !!d.banner || !!d.profile || !!d.doc || (d.categoryIds?.length ?? 0) > 0);
+
+const isRetryableSubmitError = (err: unknown) => {
+  if (!isAxiosError(err)) return /timeout|deadline/i.test(err instanceof Error ? err.message : "");
+  const status = err.response?.status;
+  return !err.response || status === 408 || status === 429 || (status != null && status >= 500);
+};
+
+/** Saves form values into the draft whenever they (or the rest of the page) change. */
+const DraftAutosave = ({ values, deps, onSave }: { values: OnboardingFormValues; deps: string; onSave: (v: OnboardingFormValues) => void }) => {
+  useEffect(() => {
+    onSave(values);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, deps]);
+  return null;
+};
+
+// ===========================================================================
 // MAIN PAGE
 // ===========================================================================
 const ProviderOnboardingPage = () => {
@@ -1633,9 +1648,23 @@ const ProviderOnboardingPage = () => {
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
-  const [profileFile, setProfileFile] = useState<File | null>(null);
-  const [productItems, setProductItems] = useState<ProductItem[]>([emptyProduct()]);
+  // Photos upload on their own as soon as they're picked; state holds upload ids.
+  const uploads = useOnboardingUploads();
+  const [bannerId, setBannerId] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [productItems, setProductItems] = useState<ProductItem[]>(() => [emptyProduct()]);
+  // Submitting is a sequence with an end: finish uploads → create listing.
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploads" | "creating">("idle");
+  const [slowSubmit, setSlowSubmit] = useState(false);
+  const [uploadIssue, setUploadIssue] = useState<number | null>(null);
+  const skipFailedRef = useRef(false);
+  // Save as you go.
+  const draft = useOnboardingDraft<OnboardingDraft>(user?.id);
+  const [hydrated, setHydrated] = useState(false);
+  const [resumed, setResumed] = useState(false);
+  const [restoreRefs, setRestoreRefs] = useState<MediaRef[]>([]);
+  const [showStartOver, setShowStartOver] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
@@ -1657,6 +1686,104 @@ const ProviderOnboardingPage = () => {
   } | null>(null);
   const pendingSubmitRef = useRef<(() => void) | null>(null);
   const formikRef = useRef<FormikProps<OnboardingFormValues>>(null);
+
+  // Restore saved progress once the draft has loaded. State is adopted during
+  // render (not in an effect); finished uploads are re-registered just after.
+  if (!hydrated && !draft.loading) {
+    setHydrated(true);
+    const d = draft.initial?.data;
+    if (d && d.v === 1 && draftHasContent(d)) {
+      setResumed(true);
+      setCurrentStep(Math.min(Math.max(draft.initial?.step ?? 1, 1), 5) as StepId);
+      setCompletedSteps(new Set(d.completedSteps ?? []));
+      setDocType(d.docType ?? "aadhaar");
+      setSelectedCategoryIds(d.categoryIds ?? []);
+      setIsWomenLed(!!d.isWomenLed);
+      setDetectedCoords(d.coords ?? null);
+      setDetectedLocationLabel(d.locationLabel ?? null);
+      if (d.verifiedPhone) {
+        setOtpVerified(true);
+        setVerifiedPhone(d.verifiedPhone);
+      }
+      setBannerId(d.banner?.id ?? null);
+      setProfileId(d.profile?.id ?? null);
+      setProductItems(
+        d.products?.length
+          ? d.products.map(({ photos, ...rest }) => ({ ...rest, key: rest.key || emptyProduct().key, photoIds: (photos ?? []).map((ph) => ph.id) }))
+          : [emptyProduct()],
+      );
+      setRestoreRefs(
+        [d.banner, d.profile, d.doc, ...(d.products ?? []).flatMap((pr) => pr.photos ?? [])].filter(
+          (r): r is MediaRef => !!r,
+        ),
+      );
+    }
+  }
+  useEffect(() => {
+    restoreRefs.forEach((r) => uploads.restore(r));
+  }, [restoreRefs, uploads]);
+
+  const initialFormValues = useMemo<OnboardingFormValues>(() => {
+    const d = draft.initial?.data;
+    return d && d.v === 1 && draftHasContent(d)
+      ? { ...EMPTY_VALUES, ...d.values, identity_doc: d.doc?.id ?? null }
+      : EMPTY_VALUES;
+    // Only the first load seeds the form; "Start over" remounts it with blanks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, formKey]);
+
+  /** Everything worth keeping, with uploaded files as URLs. */
+  const buildDraft = (values: OnboardingFormValues): OnboardingDraft => {
+    const { identity_doc, ...rest } = values;
+    return {
+      v: 1,
+      values: rest,
+      completedSteps: [...completedSteps],
+      docType,
+      categoryIds: selectedCategoryIds,
+      isWomenLed,
+      coords: detectedCoords,
+      locationLabel: detectedLocationLabel,
+      verifiedPhone: otpVerified && verifiedPhone ? verifiedPhone : null,
+      banner: uploads.ref(bannerId),
+      profile: uploads.ref(profileId),
+      doc: uploads.ref(identity_doc),
+      products: productItems.map(({ photoIds, ...pr }) => ({
+        ...pr,
+        photos: photoIds.map((id) => uploads.ref(id)).filter((r): r is MediaRef => !!r),
+      })),
+    };
+  };
+  // Changes outside the form that should also be saved.
+  const autosaveDeps = JSON.stringify([buildDraft(EMPTY_VALUES), currentStep]);
+  const autosave = (values: OnboardingFormValues) => {
+    if (!hydrated || submitPhase !== "idle") return;
+    const d = buildDraft(values);
+    if (draftHasContent(d)) draft.save(d, currentStep);
+  };
+
+  const startOver = async () => {
+    setShowStartOver(false);
+    await draft.clear();
+    [bannerId, profileId, formikRef.current?.values.identity_doc, ...productItems.flatMap((pr) => pr.photoIds)].forEach((id) =>
+      uploads.remove(id),
+    );
+    setBannerId(null);
+    setProfileId(null);
+    setProductItems([emptyProduct()]);
+    setSelectedCategoryIds([]);
+    setIsWomenLed(false);
+    setDetectedCoords(null);
+    setDetectedLocationLabel(null);
+    setDocType("aadhaar");
+    setCompletedSteps(new Set());
+    setCurrentStep(1);
+    setSubmitError(null);
+    setResumed(false);
+    resetOtpState();
+    draft.reset();
+    setFormKey((k) => k + 1);
+  };
 
   // Fetch categories
   useEffect(() => {
@@ -1847,6 +1974,13 @@ const ProviderOnboardingPage = () => {
     }
   };
 
+  /**
+   * Submit, as a sequence that always ends: finish any photo uploads (each has
+   * its own deadline), then create the listing with one small request that is
+   * retried automatically and is safe to repeat — the server returns the
+   * business if an earlier attempt already created it. Progress stays saved
+   * as a draft until it succeeds.
+   */
   const handleSubmit = async (values: OnboardingFormValues) => {
     if (!user?.id) {
       setSubmitError("You must be logged in to list your business.");
@@ -1863,6 +1997,8 @@ const ProviderOnboardingPage = () => {
 
     setIsSubmitting(true);
     setSubmitError(null);
+    setUploadIssue(null);
+    const slowTimer = setTimeout(() => setSlowSubmit(true), 8000);
 
     let latitude: string | undefined;
     let longitude: string | undefined;
@@ -1875,25 +2011,27 @@ const ProviderOnboardingPage = () => {
     }
 
     try {
-      // Build products array (only ones with a name)
-      const validProducts = productItems
-        .filter((p) => p.name.trim())
-        .map((p, i) => ({
-          name: p.name.trim(),
-          description: p.description.trim() || undefined,
-          price: p.price ? parseFloat(p.price) : undefined,
-          imageCount: p.images.length,
-          productType: p.productType || "product",
-        }));
+      const namedProducts = productItems.filter((pr) => pr.name.trim());
+      const mediaIds = [bannerId, profileId, values.identity_doc, ...namedProducts.flatMap((pr) => pr.photoIds)].filter(
+        (id): id is string => !!id,
+      );
 
-      // Collect all product images as a flat array
-      const allProductImages: File[] = [];
-      productItems.filter((p) => p.name.trim()).forEach((p) => {
-        p.images.forEach((img) => allProductImages.push(img));
-      });
+      // 1. Let photos still uploading finish (each upload has its own deadline).
+      if (uploads.busyCount(mediaIds) > 0) {
+        setSubmitPhase("uploads");
+        await uploads.waitForIdle(4 * 60_000);
+      }
+      const notUploaded = uploads.failedCount(mediaIds) + uploads.busyCount(mediaIds);
+      if (notUploaded > 0 && !skipFailedRef.current) {
+        setUploadIssue(notUploaded);
+        return;
+      }
+      skipFailedRef.current = false;
 
-      await becomeProvider({
-        userId: user.id,
+      // 2. Create the listing: small, safe to repeat, retried on bad networks.
+      setSubmitPhase("creating");
+      const urlOf = (id: string | null | undefined) => uploads.ref(id)?.url;
+      const payload: SubmitListingPayload = {
         brandName: values.brand_name.trim(),
         description: values.description.trim(),
         contactNumber: `+91${values.contact_number.trim()}`,
@@ -1903,18 +2041,21 @@ const ProviderOnboardingPage = () => {
         pincode: values.pincode.trim(),
         openTime: values.open_time?.slice(0, 5) || undefined,
         closeTime: values.close_time?.slice(0, 5) || undefined,
-        aadhaarFile: values.identity_doc || undefined,
         latitude,
         longitude,
         isWomenLed,
-        categoryIds: selectedCategoryIds.length
-          ? selectedCategoryIds
-          : undefined,
-        bannerImage: bannerFile || undefined,
-        profileImage: profileFile || undefined,
-        products: validProducts.length ? validProducts : undefined,
-        productImages: allProductImages.length
-          ? allProductImages
+        categoryIds: selectedCategoryIds.length ? selectedCategoryIds : undefined,
+        bannerImageUrl: urlOf(bannerId),
+        profilePhotoUrl: urlOf(profileId),
+        aadhaarDocUrl: urlOf(values.identity_doc),
+        products: namedProducts.length
+          ? namedProducts.map((pr) => ({
+              name: pr.name.trim(),
+              description: pr.description.trim() || undefined,
+              price: pr.price ? parseFloat(pr.price) : undefined,
+              productType: pr.productType || "product",
+              photoUrls: pr.photoIds.map(urlOf).filter((u): u is string => !!u),
+            }))
           : undefined,
         websiteUrl: values.website_url?.trim() || undefined,
         instagramHandle: values.instagram_handle?.trim().replace(/^@/, "") || undefined,
@@ -1922,34 +2063,54 @@ const ProviderOnboardingPage = () => {
         youtubeHandle: values.youtube_handle?.trim() || undefined,
         whatsappNumber: values.whatsapp_number?.trim() || undefined,
         linkedinHandle: values.linkedin_handle?.trim() || undefined,
-      });
+      };
+
+      let result: Awaited<ReturnType<typeof submitListing>> | null = null;
+      for (let attempt = 1; attempt <= 3 && !result; attempt++) {
+        try {
+          // Our own deadline as well: some phones' native HTTP ignores axios' timeout.
+          result = await withDeadline(submitListing(payload), 50_000, "submit-timeout");
+        } catch (err) {
+          if (!isRetryableSubmitError(err) || attempt === 3) throw err;
+          await new Promise((r) => setTimeout(r, attempt === 1 ? 2000 : 5000));
+        }
+      }
+
+      await draft.clear();
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
       queryClient.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
       // Straight into business mode: the dashboard — and its guided tour — is
       // where a new owner starts. Its header and cards show the review status.
-      setProviderStatus(values.identity_doc ? "in_review" : "unverified");
+      setProviderStatus(result?.verification?.status === "in_review" || payload.aadhaarDocUrl ? "in_review" : "unverified");
       setUserMode("provider");
       try {
         sessionStorage.setItem("__active_tab", "home");
       } catch {}
       router.replace("/");
     } catch (err: unknown) {
-      const message =
-        (isAxiosError<{ message?: string | string[] }>(err) ? err.response?.data?.message : undefined) ??
-        (err instanceof Error ? err.message : undefined) ??
-        "Something went wrong. Please try again.";
-      setSubmitError(
-        Array.isArray(message) ? message.join(", ") : message,
-      );
+      if (isRetryableSubmitError(err)) {
+        setSubmitError(
+          "We couldn't reach Tijarah — the connection may be weak. Your details are saved; tap Submit again when you have signal.",
+        );
+      } else {
+        const message =
+          (isAxiosError<{ message?: string | string[] }>(err) ? err.response?.data?.message : undefined) ??
+          (err instanceof Error ? err.message : undefined) ??
+          "Something went wrong. Please try again.";
+        setSubmitError(Array.isArray(message) ? message.join(", ") : message);
+      }
     } finally {
+      clearTimeout(slowTimer);
+      setSlowSubmit(false);
       setIsSubmitting(false);
+      setSubmitPhase("idle");
     }
   };
 
-  // Loading
-  if (statusLoading) {
+  // Loading (status and any saved draft)
+  if (statusLoading || !hydrated) {
     return (
       <Page>
         <Navbar title="List your business" />
@@ -2035,25 +2196,9 @@ const ProviderOnboardingPage = () => {
       />
 
       <Formik
+        key={formKey}
         innerRef={formikRef}
-        initialValues={{
-          brand_name: "",
-          description: "",
-          contact_number: "",
-          open_time: "",
-          close_time: "",
-          address: "",
-          city: "",
-          area: "",
-          pincode: "",
-          identity_doc: null as File | null,
-          website_url: "",
-          instagram_handle: "",
-          facebook_handle: "",
-          youtube_handle: "",
-          whatsapp_number: "",
-          linkedin_handle: "",
-        }}
+        initialValues={initialFormValues}
         validationSchema={schemaForStep[currentStep]}
         onSubmit={handleSubmit}
         validateOnChange={false}
@@ -2065,7 +2210,6 @@ const ProviderOnboardingPage = () => {
           validateForm,
           setTouched,
           errors,
-          touched,
           submitForm,
         }) => {
           // OTP is only valid if the verified number matches the current contact number
@@ -2082,7 +2226,7 @@ const ProviderOnboardingPage = () => {
               values.area.trim() &&
               values.pincode.trim(),
           );
-          const isStep5HasDoc = values.identity_doc instanceof File;
+          const isStep5HasDoc = !!values.identity_doc;
 
           const hasTimeOverlap = Boolean(
             values.open_time && values.close_time && values.close_time <= values.open_time
@@ -2098,6 +2242,7 @@ const ProviderOnboardingPage = () => {
 
           return (
             <Form className="contents">
+              <DraftAutosave values={values} deps={autosaveDeps} onSave={autosave} />
               <StepIndicator
                 current={currentStep}
                 completedSteps={completedSteps}
@@ -2106,6 +2251,47 @@ const ProviderOnboardingPage = () => {
               />
 
               <div ref={stepScrollRef} className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
+                {/* Saved progress: welcome back, and how saving is going */}
+                {resumed && (
+                  <div className="mx-4 mt-3 mb-1 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 flex items-start gap-2.5">
+                    <IonIcon icon={checkmarkCircle} className="text-emerald-500 text-lg shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-emerald-800 dark:text-emerald-200">Welcome back — your progress is saved</p>
+                      <p className="text-[11.5px] text-emerald-700/80 dark:text-emerald-300/80 mt-0.5">Pick up where you left off. Nothing you entered was lost.</p>
+                    </div>
+                    <button type="button" onClick={() => setShowStartOver(true)} className="text-[11.5px] font-semibold text-emerald-800 dark:text-emerald-200 underline underline-offset-2 shrink-0">
+                      Start over
+                    </button>
+                  </div>
+                )}
+                <div className="flex justify-end px-4 pt-2 -mb-1 h-6">
+                  {draft.status !== "idle" && (
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${draft.status === "local" ? "text-amber-600 dark:text-amber-400" : "text-slate-400 dark:text-slate-500"}`}>
+                      {draft.status === "saving" ? (
+                        <span className="w-3 h-3 rounded-full border-2 border-slate-300 border-t-slate-500 animate-spin" />
+                      ) : (
+                        <IonIcon icon={checkmarkCircle} className="text-[13px]" />
+                      )}
+                      {draft.status === "saving" ? "Saving…" : draft.status === "saved" ? "Progress saved" : "Saved on this phone — will sync when online"}
+                    </span>
+                  )}
+                </div>
+                {currentStep >= 3 && (() => {
+                  const stepIds =
+                    currentStep === 3
+                      ? [bannerId, profileId]
+                      : currentStep === 4
+                        ? productItems.flatMap((pr) => pr.photoIds)
+                        : [values.identity_doc];
+                  const ids = stepIds.filter((id): id is string => !!id);
+                  return (
+                    <UploadSummary
+                      busy={uploads.busyCount(ids)}
+                      failed={uploads.failedCount(ids)}
+                      onRetryAll={() => ids.forEach((id) => uploads.retry(id))}
+                    />
+                  );
+                })()}
                 {/* ======================================================= */}
                 {/* STEP 1 — Business Information                           */}
                 {/* ======================================================= */}
@@ -2495,15 +2681,31 @@ const ProviderOnboardingPage = () => {
                     <PhotoFileUpload
                       label="Banner Image"
                       icon={imageOutline}
-                      file={bannerFile}
-                      onChange={setBannerFile}
+                      item={uploads.get(bannerId)}
+                      onPick={(f) => {
+                        uploads.remove(bannerId);
+                        setBannerId(uploads.add("banner", f));
+                      }}
+                      onRemove={() => {
+                        uploads.remove(bannerId);
+                        setBannerId(null);
+                      }}
+                      onRetry={() => bannerId && uploads.retry(bannerId)}
                       hint="Wide cover photo for your profile (JPEG, PNG, WebP)"
                     />
                     <PhotoFileUpload
                       label="Profile Photo"
                       icon={cameraOutline}
-                      file={profileFile}
-                      onChange={setProfileFile}
+                      item={uploads.get(profileId)}
+                      onPick={(f) => {
+                        uploads.remove(profileId);
+                        setProfileId(uploads.add("profile", f));
+                      }}
+                      onRemove={() => {
+                        uploads.remove(profileId);
+                        setProfileId(null);
+                      }}
+                      onRetry={() => profileId && uploads.retry(profileId)}
                       hint="Your logo or shop photo (JPEG, PNG, WebP)"
                     />
                   </>
@@ -2527,21 +2729,32 @@ const ProviderOnboardingPage = () => {
                     <div className="px-4 space-y-3 pb-2">
                       {productItems.map((item, idx) => (
                         <ProductFormCard
-                          key={idx}
+                          key={item.key}
                           product={item}
                           index={idx}
+                          items={item.photoIds.map((id) => uploads.get(id))}
                           onUpdate={(p) => {
-                            const next = [...productItems];
-                            next[idx] = p;
-                            setProductItems(next);
+                            setProductItems((prev) => prev.map((x) => (x.key === p.key ? p : x)));
                           }}
                           onRemove={() => {
-                            if (productItems.length <= 1) {
-                              setProductItems([emptyProduct()]);
-                            } else {
-                              setProductItems(productItems.filter((_, i) => i !== idx));
-                            }
+                            item.photoIds.forEach((id) => uploads.remove(id));
+                            setProductItems((prev) =>
+                              prev.length <= 1 ? [emptyProduct()] : prev.filter((x) => x.key !== item.key),
+                            );
                           }}
+                          onAddPhotos={(files) => {
+                            const ids = files.map((f) => uploads.add("product", f));
+                            setProductItems((prev) =>
+                              prev.map((x) => (x.key === item.key ? { ...x, photoIds: [...x.photoIds, ...ids].slice(0, MAX_PRODUCT_IMAGES) } : x)),
+                            );
+                          }}
+                          onRemovePhoto={(id) => {
+                            uploads.remove(id);
+                            setProductItems((prev) =>
+                              prev.map((x) => (x.key === item.key ? { ...x, photoIds: x.photoIds.filter((pid) => pid !== id) } : x)),
+                            );
+                          }}
+                          onRetryPhoto={(id) => uploads.retry(id)}
                         />
                       ))}
 
@@ -2590,18 +2803,24 @@ const ProviderOnboardingPage = () => {
                       selected={docType}
                       onChange={(id) => {
                         setDocType(id);
-                        if (values.identity_doc)
+                        if (values.identity_doc) {
+                          uploads.remove(values.identity_doc);
                           setFieldValue("identity_doc", null);
+                        }
                       }}
                     />
                     <DocFilePicker
-                      file={values.identity_doc}
-                      error={errors.identity_doc as string}
-                      touched={touched.identity_doc as boolean}
+                      item={uploads.get(values.identity_doc)}
                       docType={docType}
-                      onChange={(file) =>
-                        setFieldValue("identity_doc", file)
-                      }
+                      onPick={(file) => {
+                        uploads.remove(values.identity_doc);
+                        setFieldValue("identity_doc", uploads.add("verification", file));
+                      }}
+                      onRemove={() => {
+                        uploads.remove(values.identity_doc);
+                        setFieldValue("identity_doc", null);
+                      }}
+                      onRetry={() => values.identity_doc && uploads.retry(values.identity_doc)}
                     />
                     <DocumentGuidelines />
                     <WhatHappensNext />
@@ -2616,9 +2835,12 @@ const ProviderOnboardingPage = () => {
                         icon={alertCircleOutline}
                         className="text-red-500 text-lg shrink-0 mt-0.5"
                       />
-                      <p className="text-xs text-red-600 font-medium leading-relaxed">
-                        {submitError}
-                      </p>
+                      <div className="flex-1">
+                        <p className="text-xs text-red-600 font-medium leading-relaxed">
+                          {submitError}
+                        </p>
+                        <p className="text-[11px] text-red-500/80 mt-1">Your progress is saved — nothing is lost.</p>
+                      </div>
                     </div>
                   </Block>
                 )}
@@ -2677,7 +2899,11 @@ const ProviderOnboardingPage = () => {
                       {isSubmitting ? (
                         <>
                           <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                          Submitting...
+                          {submitPhase === "uploads"
+                            ? "Finishing photo uploads…"
+                            : slowSubmit
+                              ? "Still working — hang on…"
+                              : "Creating your listing…"}
                         </>
                       ) : (
                         <>
@@ -2699,7 +2925,11 @@ const ProviderOnboardingPage = () => {
                       {isSubmitting ? (
                         <>
                           <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                          Submitting...
+                          {submitPhase === "uploads"
+                            ? "Finishing photo uploads…"
+                            : slowSubmit
+                              ? "Still working — hang on…"
+                              : "Creating your listing…"}
                         </>
                       ) : (
                         <>
@@ -2715,6 +2945,55 @@ const ProviderOnboardingPage = () => {
           );
         }}
       </Formik>
+
+      {/* Photos that didn't upload: retry, or list now and add them later */}
+      <AppDialog
+        open={uploadIssue != null}
+        onClose={() => setUploadIssue(null)}
+        icon={alertCircleOutline}
+        iconColor="text-rose-600"
+        iconBg="bg-rose-50"
+        title={`${uploadIssue ?? 0} ${uploadIssue === 1 ? "photo didn't" : "photos didn't"} upload`}
+        description="Your connection dropped while uploading. Retry them, or submit now and add photos later from your business dashboard."
+      >
+        <div className="flex flex-col gap-2 mt-4">
+          <button
+            type="button"
+            onClick={() => {
+              setUploadIssue(null);
+              uploads.retryAllFailed();
+            }}
+            className="w-full h-12 rounded-xl bg-violet-600 text-white font-bold text-sm active:bg-violet-700"
+          >
+            Retry uploads
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setUploadIssue(null);
+              skipFailedRef.current = true;
+              void formikRef.current?.submitForm();
+            }}
+            className="w-full h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm"
+          >
+            Submit without them
+          </button>
+        </div>
+      </AppDialog>
+
+      <AppDialog
+        open={showStartOver}
+        onClose={() => setShowStartOver(false)}
+        icon={refreshOutline}
+        iconColor="text-slate-600"
+        iconBg="bg-slate-100"
+        title="Start over?"
+        description="This clears everything you've entered so far, including uploaded photos. It can't be undone."
+        confirmLabel="Start over"
+        cancelLabel="Keep my progress"
+        onConfirm={() => void startOver()}
+        confirmColor="red"
+      />
 
       {/* Skip Verification Confirmation */}
       <AppDialog

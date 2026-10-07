@@ -15,6 +15,11 @@ interface Props {
   onStartChapter: (id: string) => void;
   /** One line under "Take the full tour". */
   fullTourBlurb: string;
+  /**
+   * Shown as a one-time offer (not opened from a help button): a welcoming
+   * heading and a clear "Not now", so it reads as an invitation, not a block.
+   */
+  invite?: { title: string; body: string };
   /** Gradient for the full-tour button. */
   gradient: string;
 }
@@ -22,15 +27,28 @@ interface Props {
 const stepCount = (c: TourChapter) => c.steps.filter((s) => !s.secondary).length;
 
 /** "Learn your way around": take the whole tour, or replay one part of it. */
-export default function TourPicker({ opened, onClose, chapters, done, onStartAll, onStartChapter, fullTourBlurb, gradient }: Props) {
+export default function TourPicker({ opened, onClose, chapters, done, onStartAll, onStartChapter, fullTourBlurb, gradient, invite }: Props) {
   const totalMinutes = chapters.reduce((n, c) => n + c.minutes, 0);
 
   return (
     <BottomSheet opened={opened} onClose={onClose}>
       <div className="px-5 pt-2 pb-5 overflow-y-auto">
-        <h2 className="text-[20px] font-extrabold tracking-tight text-slate-900 dark:text-white">Learn your way around</h2>
+        <div className="flex items-start gap-3">
+          <h2 className="flex-1 text-[20px] font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {invite?.title ?? "Learn your way around"}
+          </h2>
+          {invite && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 h-9 px-3.5 mt-0.5 rounded-full text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700"
+            >
+              Not now
+            </button>
+          )}
+        </div>
         <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
-          Pick a part of the app, or take the whole tour — about {totalMinutes} minutes.
+          {invite?.body ?? `Pick a part of the app, or take the whole tour — about ${totalMinutes} minutes.`}
         </p>
 
         <motion.button
@@ -80,6 +98,21 @@ export default function TourPicker({ opened, onClose, chapters, done, onStartAll
             </motion.button>
           ))}
         </div>
+
+        {invite && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 w-full h-12 rounded-xl text-[14px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700"
+          >
+            Not now — I&apos;ll explore myself
+          </button>
+        )}
+        {invite && (
+          <p className="mt-2 text-center text-[11.5px] text-slate-400 dark:text-slate-500">
+            You can take the tour any time from Profile → Take the app tour.
+          </p>
+        )}
       </div>
     </BottomSheet>
   );

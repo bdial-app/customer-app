@@ -40,6 +40,7 @@ import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 import ReportSheet from "./report-sheet";
 import type { ReportEntityType } from "@/services/report.service";
+import { checkPickedFile } from "@/utils/compress-image";
 
 interface MessagesPageProps {
   onBack: () => void;
@@ -389,8 +390,10 @@ export default function MessagesPage({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be under 5MB");
+    // Photos of any size are fine (they're shrunk before sending); PDFs up to 25 MB.
+    const tooBig = checkPickedFile(file);
+    if (tooBig) {
+      alert(tooBig);
       return;
     }
     setAttachedFile(file);
