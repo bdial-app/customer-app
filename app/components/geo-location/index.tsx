@@ -75,7 +75,7 @@ const GeoLocation = () => {
   const updateUserMutation = useUpdateUser();
   const { data: savedLocations } = useSavedLocations();
   const { recentLocations, guestCoords } = useAppSelector((state) => state.location);
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const { requireAuth } = useAuthGate();
   // Read from context rather than re-fetching: layoutWrapper already resolves
   // the provider status once per session.
@@ -204,8 +204,9 @@ const GeoLocation = () => {
         dispatch(setSelectedCity(geo.city || null));
       }).catch(() => {});
       setOpen(false);
-    } catch (err: any) {
-      const code = err?.code;
+    } catch (err: unknown) {
+      const code =
+        typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
       if (code === LOCATION_PERMISSION_DENIED) {
         setLocationDenied(true);
         setLocationError("Location permission denied. Please allow location access in app settings.");
@@ -214,14 +215,16 @@ const GeoLocation = () => {
       } else if (code === LOCATION_TIMEOUT) {
         setLocationError("Could not get your location. Please try again in an open area with better GPS signal.");
       } else {
-        setLocationError(err?.message || "Unable to get your location. Please try again.");
+        setLocationError(
+          (err instanceof Error && err.message) || "Unable to get your location. Please try again.",
+        );
       }
     } finally {
       setIsLocating(false);
     }
   };
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.y > 100 || info.velocity.y > 500) {
       setOpen(false);
     }
@@ -385,7 +388,7 @@ const GeoLocation = () => {
           onClick={() => setOpen(true)}
           className="flex items-center justify-between gap-3 px-4 py-2.5 pb-3 cursor-pointer active:bg-white/[0.04] transition-colors"
         >
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div data-tour="home-location" className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="shrink-0 w-9 h-9 rounded-2xl bg-amber-400/15 border border-amber-400/20 flex items-center justify-center">
               <IonIcon icon={locationSharp} className="text-amber-400 text-[17px]" />
             </div>
@@ -400,13 +403,19 @@ const GeoLocation = () => {
             {/* Straight to your business — or to starting one. Hidden while the
                 dashboard is already on screen. */}
             {userMode !== "provider" && (
-              <button
+              <button data-tour="home-business-button"
                 onClick={openBusiness}
                 aria-label={hasBusiness ? "Go to my business" : "List my business"}
                 title={hasBusiness ? "Go to my business" : "List my business"}
-                className="relative w-9 h-9 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center active:scale-90 transition-transform"
+                className={`relative h-9 rounded-2xl flex items-center justify-center active:scale-90 transition-transform ${
+                  hasBusiness
+                    ? "gap-1.5 pl-2.5 pr-3 bg-indigo-500/90 border border-indigo-300/30 shadow-sm shadow-indigo-900/30"
+                    : "w-9 bg-white/[0.07] border border-white/[0.08]"
+                }`}
               >
-                <IonIcon icon={storefrontOutline} className="text-[17px] text-white/75" />
+                <IonIcon icon={storefrontOutline} className={`text-[17px] ${hasBusiness ? "text-white" : "text-white/75"}`} />
+                {/* Owners get a label: it's their way back to the dashboard. */}
+                {hasBusiness && <span className="text-[12px] font-bold text-white">Business</span>}
                 {businessPending && (
                   <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
                 )}

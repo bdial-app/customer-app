@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
+  type Category,
   getTopLevelCategories,
   getAllCategories,
   searchCategoriesAPI,
@@ -16,7 +17,7 @@ export const useTopLevelCategories = () => {
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
-    placeholderData: (prev: any) => prev, // Show cached data instantly
+    placeholderData: (prev: Category[] | undefined) => prev, // Show cached data instantly
   });
 };
 

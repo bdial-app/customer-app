@@ -20,7 +20,11 @@ import {
   closeCircle,
   checkmarkCircle,
   layersOutline,
+  shareSocialOutline,
 } from "ionicons/icons";
+import Link from "next/link";
+import { ROUTE_PATH } from "@/utils/contants";
+import { useShareCatalogue } from "@/hooks/useShare";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { ProviderDetailsProduct } from "@/services/provider.service";
@@ -39,6 +43,9 @@ interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
   providerId: string | null;
 }
+
+/** A product being edited; the API also returns its search keywords. */
+type EditableProduct = ProviderDetailsProduct & { keywords?: string[] };
 
 const productSchema = Yup.object({
   name: Yup.string().required("Product name is required").max(150),
@@ -330,9 +337,14 @@ const ProviderProductsTab = ({
   products,
   providerId,
 }: ProviderProductsTabProps) => {
+  // Your whole catalogue as one link (built only when you tap Share).
+  const { share: shareCatalogue, busy: sharingCatalogue } = useShareCatalogue(providerId ?? undefined, {
+    asOwner: true,
+    prefetch: false,
+  });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editing, setEditing] = useState<ProviderDetailsProduct | null>(null);
+  const [editing, setEditing] = useState<EditableProduct | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -439,6 +451,24 @@ const ProviderProductsTab = ({
           <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium">
             Set up your provider profile first
           </span>
+        )}
+        {providerId && activeCount > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Link
+              href={`${ROUTE_PATH.SHOP}?id=${providerId}`}
+              className="h-8 px-3 flex items-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11.5px] font-bold active:scale-95 transition-transform"
+            >
+              Preview
+            </Link>
+            <button
+              onClick={() => void shareCatalogue()}
+              disabled={sharingCatalogue}
+              className={`h-8 px-3 flex items-center gap-1 rounded-full bg-indigo-600 text-white text-[11.5px] font-bold shadow-sm shadow-indigo-200 dark:shadow-none active:scale-95 transition-transform ${sharingCatalogue ? "opacity-60 animate-pulse" : ""}`}
+            >
+              <IonIcon icon={shareSocialOutline} className="text-[13px]" />
+              Share catalogue
+            </button>
+          </div>
         )}
       </div>
 
@@ -654,7 +684,7 @@ const ProviderProductsTab = ({
                   productType: editing?.productType || "product",
                   categoryId: editing?.categoryId || "",
                   subcategoryId: editing?.subcategoryId || "",
-                  keywords: (editing as any)?.keywords?.join(", ") || "",
+                  keywords: editing?.keywords?.join(", ") || "",
                 }}
                 validationSchema={productSchema}
                 enableReinitialize

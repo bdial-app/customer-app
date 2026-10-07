@@ -30,6 +30,7 @@ import { getTopLevelCategories } from "@/services/category.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { ProviderWithOffer } from "@/services/explore.service";
 import { distanceLabel } from "@/utils/distance-label";
+import { useNow } from "@/hooks/useNow";
 
 type SortOption = "discount" | "ending_soon" | "distance" | "newest";
 type DiscountFilter = "all" | "percentage" | "flat";
@@ -221,6 +222,7 @@ const DealCard = ({
 };
 
 const DealsPageContent = () => {
+  const now = useNow();
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
   const [sort, setSort] = useState<SortOption>("discount");
@@ -276,12 +278,12 @@ const DealsPageContent = () => {
     if (deals.length === 0) return null;
     const maxDiscount = Math.max(...deals.map((d) => d.discountValue));
     const endingSoonCount = deals.filter((d) => {
-      const diff = new Date(d.offerEndsAt).getTime() - Date.now();
+      const diff = new Date(d.offerEndsAt).getTime() - now;
       return diff > 0 && diff <= 7 * 24 * 60 * 60 * 1000;
     }).length;
     const verifiedCount = deals.filter((d) => d.verified).length;
     return { maxDiscount, endingSoonCount, verifiedCount };
-  }, [deals]);
+  }, [deals, now]);
 
   // Active filter count for badge
   const activeFilterCount = useMemo(() => {

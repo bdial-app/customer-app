@@ -71,7 +71,7 @@ import { ActivePlanBanner, ActiveBoostBanner } from "@/app/components/provider/a
 import PageSplashScreen from "./page-splash-screen";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
-import type { StatWithTrend } from "@/services/analytics.service";
+import type { StatWithTrend, LeadFilters } from "@/services/analytics.service";
 
 type Period = "7d" | "30d" | "90d";
 type View = "overview" | "leads" | "lead-detail";
@@ -87,12 +87,18 @@ const kpi = (stat: StatWithTrend | undefined, label: string, icon: string, accen
 });
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────
-const ChartTooltip = ({ active, payload, label }: any) => {
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: ReadonlyArray<{ dataKey?: string | number; color?: string; value?: string | number }>;
+  label?: string | number;
+}
+
+const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-slate-800 text-white rounded-lg px-2.5 py-1.5 text-[10px] shadow-lg">
       <div className="font-bold mb-0.5">{label}</div>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: p.color }} />
           <span className="capitalize">{p.dataKey}: {p.value}</span>
@@ -232,7 +238,9 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
             {detail.visitor.userId && (
               <div className="flex items-center gap-2">
                 <IonIcon icon={callOutline} className="text-slate-400 text-sm" />
-                <span className="text-sm text-slate-600 dark:text-slate-400 font-mono">+91 •••••• ••{Math.floor(Math.random() * 90 + 10)}</span>
+                {/* Fully masked. Random trailing digits read as part of the real
+                    number and changed on every render. */}
+                <span className="text-sm text-slate-600 dark:text-slate-400 font-mono">+91 •••••• ••••</span>
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -351,14 +359,21 @@ interface AnalyticsContentProps {
 const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: AnalyticsContentProps) => {
   const { isOnline } = useNetworkStatus();
   const [period, setPeriod] = useState<Period>("7d");
-  const [view, setView] = useState<View>("overview");
-
+  const requestedView: View | null =
+    initialView === "overview" || initialView === "leads" ? initialView : null;
+  const [view, setView] = useState<View>(requestedView ?? "overview");
+  // Jump to a view the parent asks for: applied during render, and the parent
+  // told it was consumed from an effect (which updates the parent).
+  const [appliedView, setAppliedView] = useState<View | null>(requestedView);
+  if (requestedView && requestedView !== appliedView) {
+    setAppliedView(requestedView);
+    setView(requestedView);
+  } else if (!requestedView && appliedView !== null) {
+    setAppliedView(null);
+  }
   useEffect(() => {
-    if (initialView && (initialView === "overview" || initialView === "leads")) {
-      setView(initialView);
-      onViewConsumed?.();
-    }
-  }, [initialView, onViewConsumed]);
+    if (requestedView) onViewConsumed?.();
+  }, [requestedView, onViewConsumed]);
   const [leadTier, setLeadTier] = useState<string | undefined>(undefined);
   const [leadPage, setLeadPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -371,7 +386,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
   const [showFilters, setShowFilters] = useState(false);
 
   const leadFilters = useMemo(() => {
-    const f: Record<string, any> = {
+    const f: LeadFilters = {
       tier: leadTier,
       page: leadPage,
       limit: 20,
@@ -537,7 +552,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           >
             Overview
           </button>
-          <button
+          <button data-tour="analytics-view-switch"
             onClick={() => setView("leads")}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all relative ${
               view === "leads" ? "bg-white text-slate-800" : "bg-white/10 text-white/60"
@@ -658,7 +673,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           </div>
 
           {/* ═══ PERIOD SELECTOR ═══ */}
-          <div className="px-4 mb-4">
+          <div data-tour="analytics-period" className="px-4 mb-4">
             <div className="flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 gap-1">
               {([
                 { value: "7d" as Period, label: "7 Days", icon: todayOutline },
@@ -691,7 +706,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               </div>
             </div>
           ) : (
-            <div className="px-4 mb-4">
+            <div data-tour="analytics-kpis" className="px-4 mb-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={period}
@@ -815,7 +830,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           {/* ═══ PEAK HOURS ═══ */}
           {peakHoursData.length > 0 && peakMax > 0 && (
-            <div className="px-4 mb-4">
+            <div data-tour="analytics-peak-hours" className="px-4 mb-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-bold text-slate-800 dark:text-white">Peak Hours</h3>
@@ -849,7 +864,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           {/* ═══ TOP PRODUCTS ═══ */}
           {topProducts && topProducts.length > 0 && (
-            <div className="px-4 mb-4">
+            <div data-tour="analytics-top-products" className="px-4 mb-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-1.5 mb-2.5">
                   <IonIcon icon={cubeOutline} className="text-sm text-indigo-500" />
@@ -878,7 +893,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           )}
 
           {/* ═══ SMART INSIGHTS ═══ */}
-          <div className="px-4 mb-4">
+          <div data-tour="analytics-insights" className="px-4 mb-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-slate-800 dark:text-white">Smart Insights</h3>
               <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
@@ -1245,7 +1260,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           {/* Quota indicator */}
           {leadUnlockInfo && monetizationConfig?.flags.leadsMonetizationEnabled && (
-            <div className="flex items-center justify-between mb-2">
+            <div data-tour="leads-quota" className="flex items-center justify-between mb-2">
               <QuotaIndicator
                 used={leadUnlockInfo.freeUsedThisMonth}
                 total={monetizationConfig.freeQuotas.leadsPerMonth}
@@ -1260,7 +1275,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             </div>
           )}
           {leadUnlockInfo && !monetizationConfig?.flags.leadsMonetizationEnabled && (
-            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+            <div data-tour="leads-quota" className="flex items-center gap-1.5 mb-2 px-2 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
               <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
                 All lead unlocks are free during launch
               </span>
@@ -1308,7 +1323,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             </div>
 
             {/* Tier pills row */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            <div data-tour="leads-tiers" className="flex gap-2 overflow-x-auto no-scrollbar">
               {([
                 { key: undefined as string | undefined, label: "All" },
                 { key: "hot", label: "🔥 Hot" },
@@ -1554,7 +1569,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               ))}
             </div>
           ) : !leadsData?.data.length ? (
-            <div className="text-center py-12">
+            <div data-tour="leads-list" className="text-center py-12">
               <IonIcon icon={activeFilterCount > 0 ? funnelOutline : personOutline} className="text-4xl text-slate-300 mb-3" />
               <p className="text-sm font-semibold text-slate-400">
                 {activeFilterCount > 0 ? "No leads match your filters" : "No leads yet"}
@@ -1583,7 +1598,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div data-tour="leads-list" className="space-y-3">
               {leadsData.data.map((lead) => {
                 const badge = TIER_BADGE[lead.tier] || TIER_BADGE.cold;
                 return (

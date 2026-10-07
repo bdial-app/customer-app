@@ -106,9 +106,10 @@ async function _doRequestNativePushToken(): Promise<NativePushTokenResult> {
     }
 
     return { token, error: null };
-  } catch (error: any) {
-    console.error('[NativePush] requestNativePushToken FAILED:', error?.message || error);
-    return { token: null, error: error?.message || 'Native push setup failed' };
+  } catch (error: unknown) {
+    const message = (error as { message?: string } | null | undefined)?.message;
+    console.error('[NativePush] requestNativePushToken FAILED:', message || error);
+    return { token: null, error: message || 'Native push setup failed' };
   }
 }
 

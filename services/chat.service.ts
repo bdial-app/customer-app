@@ -32,6 +32,16 @@ export interface ConversationDetail extends ConversationListItem {
   myRole: "customer" | "provider" | null;
 }
 
+/** Free-form message metadata; known keys are used by image and enquiry messages. */
+export interface ChatMessageMetadata {
+  url?: string;
+  storageKey?: string;
+  productName?: string;
+  productPrice?: string | number;
+  currency?: string;
+  [key: string]: unknown;
+}
+
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -39,7 +49,7 @@ export interface ChatMessage {
   senderName: string;
   content: string | null;
   messageType: "text" | "image" | "enquiry" | "system" | "quote_request";
-  metadata: Record<string, any> | null;
+  metadata: ChatMessageMetadata | null;
   status: "sent" | "delivered" | "read";
   createdAt: string;
   clientMessageId?: string | null;
@@ -65,7 +75,7 @@ export async function createConversation(data: {
   contextType?: "product" | "provider";
   contextId?: string;
   initialMessage?: string;
-  initialMessageMetadata?: Record<string, any>;
+  initialMessageMetadata?: Record<string, unknown>;
 }): Promise<ConversationDetail> {
   const res = await apiClient.post(CHAT_URLS.CONVERSATIONS, data);
   return res.data;
@@ -100,7 +110,7 @@ export async function sendMessage(
   data: {
     content?: string;
     messageType?: "text" | "image" | "enquiry" | "quote_request";
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     clientMessageId?: string;
   }
 ): Promise<ChatMessage> {

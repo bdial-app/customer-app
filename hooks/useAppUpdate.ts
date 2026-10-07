@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import apiClient from "@/utils/axios";
-import { useNativePlatform } from "./useNativePlatform";
+import { getNativePlatform, isNativePlatform } from "@/utils/platform";
 import { getItemSync, setItemSync } from "@/utils/storage";
 
 interface AppVersionInfo {
@@ -14,42 +14,99 @@ interface AppVersionInfo {
   releaseNotes: string | null;
 }
 
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
+const FALLBACK_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 const CHECK_INTERVAL = 60 * 60 * 1000; // Check every hour
+// Switching back to the app is the moment a forced update most needs to land —
+// people leave it in the background for days — but not on every app switch.
+const RESUME_MIN_GAP = 10 * 60 * 1000;
 const DISMISS_KEY = "update-dismissed-version";
 
+/**
+ * The version of the installed binary: what the store actually shipped.
+ *
+ * NEXT_PUBLIC_APP_VERSION was used before, but it is set by hand and was 1.0.0
+ * in every build while the stores shipped 1.0.03 and 1.0.2, so every install
+ * reported 1.0.0. A minimum version above that would have blocked people who
+ * had already updated, and kept blocking them after they updated again.
+ */
+export async function getInstalledVersion(): Promise<string> {
+  if (!isNativePlatform()) return FALLBACK_VERSION;
+  try {
+    const { App } = await import("@capacitor/app");
+    const info = await App.getInfo();
+    return info.version || FALLBACK_VERSION;
+  } catch {
+    return FALLBACK_VERSION;
+  }
+}
+
+/** The installed version for display; the build-time value until it resolves. */
+export function useInstalledVersion(): string {
+  const [version, setVersion] = useState(FALLBACK_VERSION);
+  useEffect(() => {
+    let live = true;
+    getInstalledVersion().then((v) => live && setVersion(v));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return version;
+}
+
 export function useAppUpdate() {
-  const { platform } = useNativePlatform();
   const [updateInfo, setUpdateInfo] = useState<AppVersionInfo | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
+  const lastCheck = useRef(0);
 
   const checkForUpdate = useCallback(async () => {
+    // Only an installed app updates from a store. A browser already runs the
+    // newest web build, and its user agent would otherwise pass for a phone.
+    if (!isNativePlatform()) return;
+    const platform = getNativePlatform();
+    if (platform === "web") return;
+    lastCheck.current = Date.now();
     try {
+      const currentVersion = await getInstalledVersion();
       const { data } = await apiClient.get<AppVersionInfo>("/health/app-version", {
-        params: { platform, currentVersion: APP_VERSION },
+        params: { platform, currentVersion },
       });
       setUpdateInfo(data);
 
-      // Check if user already dismissed this version
+      // A dismissed prompt stays dismissed for that version, unless it has
+      // since become required.
       const dismissed = getItemSync(DISMISS_KEY);
-      if (dismissed === data.latestVersion && !data.forceUpdate) {
-        setIsDismissed(true);
-      } else {
-        setIsDismissed(false);
-      }
+      setIsDismissed(dismissed === data.latestVersion && !data.forceUpdate);
     } catch {
       // Silently fail — update check is non-critical
     }
-  }, [platform]);
+  }, []);
 
   useEffect(() => {
     // Initial check after short delay (don't block app startup)
     const timeout = setTimeout(checkForUpdate, 5000);
-    // Periodic check
     const interval = setInterval(checkForUpdate, CHECK_INTERVAL);
+
+    let removeResume: (() => void) | null = null;
+    let cancelled = false;
+    if (isNativePlatform()) {
+      import("@capacitor/app")
+        .then(({ App }) =>
+          App.addListener("appStateChange", ({ isActive }) => {
+            if (isActive && Date.now() - lastCheck.current > RESUME_MIN_GAP) checkForUpdate();
+          }),
+        )
+        .then((handle) => {
+          if (cancelled) handle.remove();
+          else removeResume = () => handle.remove();
+        })
+        .catch(() => {});
+    }
+
     return () => {
+      cancelled = true;
       clearTimeout(timeout);
       clearInterval(interval);
+      removeResume?.();
     };
   }, [checkForUpdate]);
 
@@ -69,6 +126,5 @@ export function useAppUpdate() {
     showUpdatePrompt,
     isForceUpdate,
     dismiss,
-    currentVersion: APP_VERSION,
   };
 }

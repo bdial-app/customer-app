@@ -23,6 +23,9 @@ import {
   rocketOutline,
 } from "ionicons/icons";
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
+import { storefront, bagHandle, construct } from "ionicons/icons";
+import CatalogStorefront from "@/app/components/catalog/catalog-storefront";
+import { EXPLORE_SEGMENT_EVENT, EXPLORE_SEGMENT_KEY } from "@/utils/tour-nav";
 import { useRouter } from "next/navigation";
 import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector } from "@/hooks/useAppStore";
@@ -50,7 +53,16 @@ const COLLECTION_GRADIENTS = [
 
 const COLLECTION_ICONS = [ribbonOutline, flashOutline, sparklesOutline, trendingUpOutline, diamondOutline, megaphoneOutline];
 
-const STATIC_COLLECTIONS = [
+interface Collection {
+  id: string;
+  title: string;
+  count: string;
+  gradient: string;
+  icon: string;
+  categoryId?: string;
+}
+
+const STATIC_COLLECTIONS: Collection[] = [
   { id: "wedding", title: "Wedding Season", count: "24+", gradient: "from-amber-400 to-orange-600", icon: ribbonOutline },
   { id: "budget", title: "Under ₹500", count: "45+", gradient: "from-emerald-400 to-indigo-600", icon: flashOutline },
   { id: "new", title: "New Arrivals", count: "12+", gradient: "from-blue-400 to-indigo-600", icon: sparklesOutline },
@@ -257,9 +269,9 @@ function BannerCarousel({
   );
 }
 
-/* ── Main Component ── */
+/* ── Businesses segment (the original Explore feed) ── */
 
-const ExploreContent = memo(() => {
+const BusinessesExplore = memo(() => {
   const router = useRouter();
 
   // Prefetch search route so navigation is instant
@@ -267,7 +279,7 @@ const ExploreContent = memo(() => {
     router.prefetch(ROUTE_PATH.SEARCH);
   }, [router]);
 
-  const user = useAppSelector((state) => state.auth.user as any);
+  const user = useAppSelector((state) => state.auth.user);
   const feedParams = {
     lat: user?.latitude ?? undefined,
     lng: user?.longitude ?? undefined,
@@ -308,7 +320,7 @@ const ExploreContent = memo(() => {
   );
 
   // Collections from quick categories or static fallback
-  const collections = useMemo(() => {
+  const collections = useMemo((): Collection[] => {
     const cats = feed?.quickCategories ?? [];
     if (cats.length >= 4) {
       return cats.slice(0, 6).map((cat, i) => ({
@@ -377,6 +389,7 @@ const ExploreContent = memo(() => {
       {/* ── 1. Search Bar ── */}
       <div className="px-4 pt-2 pb-1">
         <div
+          data-tour="explore-search"
           onClick={() => router.push(ROUTE_PATH.SEARCH)}
           className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-3 shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
         >
@@ -464,7 +477,7 @@ const ExploreContent = memo(() => {
         </div>
       )}
       {!feedLoading && (feed?.activeOffers?.length ?? 0) > 0 && (
-        <div className="mt-5" ref={offersRef}>
+        <div className="mt-5" ref={offersRef} data-tour="explore-deals">
           <div className="flex items-center gap-2 px-4 mb-2.5">
             <IonIcon icon={pricetagOutline} className="text-base text-rose-500" />
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Deals & Offers</h2>
@@ -521,9 +534,9 @@ const ExploreContent = memo(() => {
 
       {/* ── 5. Quick Categories — discovery grid ── */}
       <div className="mt-5">
-        <h2 className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
-        <div className="grid grid-cols-2 gap-2.5 px-4">
-          {collections.slice(0, 4).map((col: any, i: number) => (
+        <h2 data-tour="explore-collections" className="text-[15px] font-bold text-slate-800 dark:text-white px-4 mb-2.5">Curated Collections</h2>
+        <div data-tour="explore-collections" className="grid grid-cols-2 gap-2.5 px-4">
+          {collections.slice(0, 4).map((col, i) => (
             <div
               key={col.id}
               onClick={() =>
@@ -569,7 +582,7 @@ const ExploreContent = memo(() => {
 
       {/* ── 7. Popular Nearby — core discovery ── */}
       {(feed?.popularNearby?.length ?? 0) > 0 && (
-        <div className="mt-5">
+        <div className="mt-5" data-tour="explore-nearby">
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
               <IonIcon icon={locationOutline} className="text-sm text-blue-500" />
@@ -614,7 +627,7 @@ const ExploreContent = memo(() => {
 
       {/* ── 9. Top Rated ── */}
       {(feed?.topRated?.length ?? 0) > 0 && (
-        <div className="mt-5" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
+        <div className="mt-5" data-tour="explore-top-rated" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 250px" }}>
           <div className="flex items-center justify-between px-4 mb-2.5">
             <div className="flex items-center gap-2">
               <IonIcon icon={star} className="text-sm text-amber-500" />
@@ -776,6 +789,7 @@ const ExploreContent = memo(() => {
     </div>
   );
 });
+BusinessesExplore.displayName = "BusinessesExplore";
 
 /* ── Horizontal Scroll Provider Card (for carousels) ── */
 
@@ -852,6 +866,130 @@ function ExploreCarouselCard({
     </div>
   );
 }
+
+/* ── Explore: Businesses · Products · Services ── */
+
+type ExploreSegment = "businesses" | "products" | "services";
+
+const SEGMENTS: { key: ExploreSegment; label: string; icon: string; active: string }[] = [
+  { key: "businesses", label: "Businesses", icon: storefront, active: "text-slate-900 dark:text-white" },
+  { key: "products", label: "Products", icon: bagHandle, active: "text-amber-600 dark:text-amber-400" },
+  { key: "services", label: "Services", icon: construct, active: "text-indigo-600 dark:text-indigo-400" },
+];
+
+const SEGMENT_KEY = EXPLORE_SEGMENT_KEY;
+const SEGMENT_EVENT = EXPLORE_SEGMENT_EVENT;
+
+const readSegment = (): ExploreSegment => {
+  try {
+    const v = sessionStorage.getItem(SEGMENT_KEY);
+    if (v === "products" || v === "services" || v === "businesses") return v;
+  } catch {}
+  return "businesses";
+};
+
+const ExploreContent = memo(() => {
+  const [segment, setSegment] = useState<ExploreSegment>(() =>
+    typeof window === "undefined" ? "businesses" : readSegment(),
+  );
+  // Segments stay mounted once opened, so their scroll and loaded pages survive a switch.
+  const [visited, setVisited] = useState<Set<ExploreSegment>>(() => new Set([segment]));
+  const headerRef = useRef<HTMLDivElement>(null);
+  const scrollBySegment = useRef<Partial<Record<ExploreSegment, number>>>({});
+  const pendingRestore = useRef<number | null>(null);
+
+  const switchTo = useCallback(
+    (next: ExploreSegment) => {
+      if (next === segment) {
+        // Tapping the active segment jumps back to its top.
+        headerRef.current?.closest(".tab-panel")?.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      const panel = headerRef.current?.closest(".tab-panel");
+      if (panel) scrollBySegment.current[segment] = panel.scrollTop;
+      pendingRestore.current = scrollBySegment.current[next] ?? 0;
+      triggerHaptic("light");
+      setVisited((v) => (v.has(next) ? v : new Set(v).add(next)));
+      setSegment(next);
+      try {
+        sessionStorage.setItem(SEGMENT_KEY, next);
+      } catch {}
+    },
+    [segment],
+  );
+
+  // The tour asks for a section; unlike a tap on the active one, this never scrolls.
+  useEffect(() => {
+    const onRequest = (e: Event) => {
+      const next = (e as CustomEvent<ExploreSegment>).detail;
+      if (next && next !== segment) switchTo(next);
+    };
+    window.addEventListener(SEGMENT_EVENT, onRequest);
+    return () => window.removeEventListener(SEGMENT_EVENT, onRequest);
+  }, [segment, switchTo]);
+
+  // Restore the new segment's scroll position once it has rendered.
+  useEffect(() => {
+    if (pendingRestore.current == null) return;
+    const top = pendingRestore.current;
+    pendingRestore.current = null;
+    const panel = headerRef.current?.closest(".tab-panel");
+    if (panel) panel.scrollTop = top;
+  }, [segment]);
+
+  return (
+    <>
+      <div
+        ref={headerRef}
+        className="sticky top-0 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-100/60 dark:border-slate-800/60"
+        style={{ paddingTop: "calc(var(--sat,0px) + 6px)" }}
+      >
+        <div className="px-4 pt-3 pb-2">
+          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Explore</h1>
+        </div>
+        <div className="px-4 pb-2.5">
+          <div role="tablist" data-tour="explore-segments" className="relative flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1">
+            {SEGMENTS.map((s) => {
+              const active = s.key === segment;
+              return (
+                <button
+                  key={s.key}
+                  role="tab"
+                  data-tour={`explore-segment-${s.key}`}
+                  aria-selected={active}
+                  onClick={() => switchTo(s.key)}
+                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12.5px] font-bold transition-colors ${
+                    active ? s.active : "text-slate-500 dark:text-slate-400"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="explore-segment-pill"
+                      transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                      className="absolute inset-0 rounded-xl bg-white dark:bg-slate-700 shadow-sm"
+                    />
+                  )}
+                  <IonIcon icon={s.icon} className="relative text-[14px]" />
+                  <span className="relative">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: segment === "businesses" ? "block" : "none" }}>
+        {visited.has("businesses") && <BusinessesExplore />}
+      </div>
+      <div style={{ display: segment === "products" ? "block" : "none" }}>
+        {visited.has("products") && <CatalogStorefront type="product" />}
+      </div>
+      <div style={{ display: segment === "services" ? "block" : "none" }}>
+        {visited.has("services") && <CatalogStorefront type="service" />}
+      </div>
+    </>
+  );
+});
 
 ExploreContent.displayName = "ExploreContent";
 

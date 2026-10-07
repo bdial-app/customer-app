@@ -70,12 +70,14 @@ export default function WhatsAppPhoneInput({ value, onChange, error, touched }: 
 
   const selectedCountry = COUNTRY_CODES.find((c) => c.code === selectedCode) || COUNTRY_CODES[0];
 
-  // Sync from external value changes
-  useEffect(() => {
+  // Sync from external value changes (adjusted during render, not in an effect)
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
     const p = parsePhoneValue(value);
     setSelectedCode(p.countryCode);
     setPhoneNumber(p.number);
-  }, [value]);
+  }
 
   // Close dropdown on outside click
   useEffect(() => {

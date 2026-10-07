@@ -10,7 +10,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 // causing the home feed to silently fall back to {}. Going through
 // CapacitorHttp.request directly with responseType: 'json' guarantees the
 // native plugin parses the body before returning it to JS.
-async function nativeGet(path: string, params?: Record<string, any>): Promise<any> {
+async function nativeGet(path: string, params?: Record<string, unknown>): Promise<unknown> {
   const token = getTokenSync();
   const res = await CapacitorHttp.request({
     method: "GET",
@@ -34,7 +34,7 @@ async function nativeGet(path: string, params?: Record<string, any>): Promise<an
     console.error(`[nativeGet] ${path} → HTTP ${res.status}`, body);
     throw new Error(`HTTP ${res.status} from ${path}`);
   }
-  let data: any = res.data;
+  let data: unknown = res.data;
   if (typeof data === "string") {
     const t = data.trim();
     if (t && (t[0] === "{" || t[0] === "[")) {
@@ -217,7 +217,7 @@ export interface HomeFeedResponse {
 // CapacitorHttp's native adapter sometimes hands back the response body as a
 // raw string instead of parsed JSON, bypassing axios's transformResponse.
 // Normalize at the call site so the home page renders regardless of adapter.
-function normalizeBody(data: unknown): any {
+function normalizeBody(data: unknown): unknown {
   if (data == null) return data;
   if (typeof data === 'string') {
     const trimmed = data.trim();

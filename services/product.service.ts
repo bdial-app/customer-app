@@ -13,6 +13,18 @@ export interface ProductDetail {
   isActive: boolean;
   displayOrder: number;
   isHero: boolean;
+  productType?: "product" | "service";
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  /** Loaded on the detail endpoint only. */
+  category?: ProductCategoryRef | null;
+  subcategory?: ProductCategoryRef | null;
+}
+
+export interface ProductCategoryRef {
+  id: string;
+  name: string;
+  parentId: string | null;
 }
 
 export interface ProductProviderSummary {

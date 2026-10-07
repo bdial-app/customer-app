@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { IonIcon } from "@ionic/react";
 import { lockClosedOutline, logInOutline } from "ionicons/icons";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { useIsClient } from "@/hooks/useIsClient";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -24,13 +25,9 @@ export default function PrivateRoute({
   title = "Sign in required",
   description = "Please sign in to access this page.",
 }: PrivateRouteProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const { isAuthenticated, requireAuth } = useAuthGate();
 
-  // Only run on the client — avoids hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Open auth gate automatically when the wall appears
   useEffect(() => {

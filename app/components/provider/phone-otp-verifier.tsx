@@ -5,6 +5,7 @@ import { shieldCheckmarkOutline, refreshOutline, lockClosedOutline } from "ionic
 import { motion, AnimatePresence } from "framer-motion";
 import { useSendProviderOtp } from "@/hooks/useMyProvider";
 import { useNotification } from "@/app/context/NotificationContext";
+import { isAxiosError } from "axios";
 
 interface PhoneOtpVerifierProps {
   phoneNumber: string;
@@ -49,13 +50,16 @@ export function PhoneOtpVerifier({
     };
   }, [countdown]);
 
-  // Reset when phone number changes
-  useEffect(() => {
+  // Reset when the phone number changes (during render, so a stale code for
+  // the old number is never shown against the new one)
+  const [shownPhone, setShownPhone] = useState(phoneNumber);
+  if (phoneNumber !== shownPhone) {
+    setShownPhone(phoneNumber);
     setStep("idle");
     setOtp("");
     setDevOtp("");
     setCountdown(0);
-  }, [phoneNumber]);
+  }
 
   const handleSendOtp = useCallback(async () => {
     const phone = phoneNumber.replace(/\D/g, "").slice(-10);
@@ -72,9 +76,12 @@ export function PhoneOtpVerifier({
       notify({ title: "OTP Sent", subtitle: `Verification code sent to ${phone}`, variant: "success" });
       // Focus first input
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to send OTP";
-      const retryAfter = err?.response?.data?.retryAfterSeconds;
+    } catch (err: unknown) {
+      const data = isAxiosError<{ message?: string; retryAfterSeconds?: number }>(err)
+        ? err.response?.data
+        : undefined;
+      const msg = data?.message || "Failed to send OTP";
+      const retryAfter = data?.retryAfterSeconds;
       if (retryAfter) setCountdown(retryAfter);
       notify({ title: "Error", subtitle: msg, variant: "error" });
     }

@@ -15,24 +15,15 @@ import {
   logInOutline,
 } from "ionicons/icons";
 import { useState, useEffect } from "react";
-import {
-  shareInvite,
-  buildInviteLink,
-  openWhatsApp,
-  getAppDownloadLink,
-} from "@/utils/sharing";
+import { shareInvite, openWhatsApp, inviteMessage } from "@/utils/sharing";
 import { trackInvite } from "@/services/invite.service";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import { isNativePlatform } from "@/utils/platform";
+import { useIsClient } from "@/hooks/useIsClient";
 
 function InviteFriendsContent() {
   const router = useRouter();
   const { goBack } = useBackNavigation();
   const [copied, setCopied] = useState(false);
-
-  // On native, share store link; on web, share website link
-  const getShareableLink = () =>
-    isNativePlatform() ? getAppDownloadLink() : buildInviteLink();
 
   const handleShare = async (method: string) => {
     const result = await shareInvite();
@@ -50,9 +41,10 @@ function InviteFriendsContent() {
   };
 
   const handleCopyLink = async () => {
-    const link = getShareableLink();
     try {
-      await navigator.clipboard.writeText(link);
+      // The whole invite, not a bare link: it carries both store links, since
+      // the friend may not use the same kind of phone.
+      await navigator.clipboard.writeText(inviteMessage());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       try {
@@ -66,10 +58,7 @@ function InviteFriendsContent() {
   };
 
   const handleWhatsApp = async () => {
-    const link = getShareableLink();
-    openWhatsApp(
-      `Hey! Check out Tijarah Connect — discover amazing local businesses near you!\n\nDownload the app: ${link}`,
-    );
+    openWhatsApp(`Hey! ${inviteMessage()}`);
     try {
       await trackInvite("whatsapp");
     } catch {
@@ -226,12 +215,12 @@ function InviteFriendsContent() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {copied ? "Link Copied!" : "Copy Invite Link"}
+                  {copied ? "Invite copied!" : "Copy invite message"}
                 </p>
                 <p className="text-[12px] text-gray-500 dark:text-slate-400">
                   {copied
                     ? "Paste it anywhere to share"
-                    : "Copy link to share manually"}
+                    : "With the Google Play and App Store links"}
                 </p>
               </div>
             </button>
@@ -243,13 +232,10 @@ function InviteFriendsContent() {
 }
 
 export default function InviteFriendsPage() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const { isAuthenticated, requireAuth } = useAuthGate();
   const { goBack } = useBackNavigation();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (mounted && !isAuthenticated) {

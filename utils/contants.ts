@@ -6,6 +6,8 @@ export const ROUTE_PATH = {
     PROVIDER_DETAILS: "/provider-details",
     GALLERY: "/gallery",
     PRODUCT_DETAILS: "/product-details",
+    CATALOG: "/catalog",
+    SHOP: "/shop",
     HOME: "/",
     SEARCH: "/search",
     DEALS: "/deals",

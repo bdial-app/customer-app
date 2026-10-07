@@ -42,8 +42,20 @@ export interface AuthResponse {
   };
 }
 
+export interface SendOtpResponse {
+  userExists?: boolean;
+  message?: string;
+  data?: {
+    otp?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 // Step 1 — send OTP to mobile
-export const sendOtp = async (payload: SendOtpPayload): Promise<any> => {
+export const sendOtp = async (
+  payload: SendOtpPayload,
+): Promise<SendOtpResponse> => {
   const { data } = await apiClient.post(AUTH_URLS.SEND_OTP, payload);
   return data;
 };
@@ -81,7 +93,7 @@ export const googleSignIn = async (
 // Send OTP for registration (bypasses user-existence check)
 export const sendRegistrationOtp = async (
   payload: SendOtpPayload,
-): Promise<any> => {
+): Promise<SendOtpResponse> => {
   const { data } = await apiClient.post(AUTH_URLS.REGISTER_SEND_OTP, payload);
   return data;
 };

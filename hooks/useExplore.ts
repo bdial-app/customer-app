@@ -13,7 +13,7 @@ export const useExploreFeed = (params?: {
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    placeholderData: (prev: any) => prev,
+    placeholderData: (prev) => prev,
   });
 };
 

@@ -87,7 +87,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
   const { isOnline } = useNetworkStatus();
 
   const apiFilter = filter === "quotes" ? "enquiries" : filter === "unread" ? "unread" : "all";
-  const { data, isLoading } = useConversations(apiFilter as any, search || undefined, "provider");
+  const { data, isLoading } = useConversations(apiFilter, search || undefined, "provider");
 
   const conversations = data?.conversations || [];
   const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);
@@ -101,7 +101,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
   return (
     <div className="flex flex-col">
       {/* Stats strip */}
-      <div className="px-4 pt-2 pb-1 flex gap-2">
+      <div data-tour="chats-stats" className="px-4 pt-2 pb-1 flex gap-2">
         <div className="flex-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl px-3 py-2 flex items-center gap-2">
           <IonIcon icon={chatbubbleOutline} className="text-indigo-600 dark:text-indigo-400 text-sm" />
           <div>
@@ -126,7 +126,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
       </div>
 
       {/* Search */}
-      <div className="px-4 pt-2 pb-1">
+      <div data-tour="chats-filters" className="px-4 pt-2 pb-1">
         <div className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3.5 py-2.5">
           <IonIcon icon={searchOutline} className="text-base text-slate-400" />
           <input
@@ -140,7 +140,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 px-4 py-2">
+      <div data-tour="chats-filters" className="flex gap-2 px-4 py-2">
         {([
           { key: "all" as const, label: "All" },
           { key: "unread" as const, label: `Unread (${totalUnread})` },
@@ -178,7 +178,7 @@ const ProviderMessagesContent = ({ onChatClick }: ProviderMessagesContentProps) 
 
       {/* Chat list */}
       {!isLoading && (
-        <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col">
+        <motion.div data-tour="chats-list" variants={container} initial="hidden" animate="show" className="flex flex-col">
           <AnimatePresence>
             {conversations.length === 0 ? (
               <motion.div

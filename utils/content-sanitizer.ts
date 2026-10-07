@@ -22,6 +22,10 @@ const ENGLISH_FALLBACK = new Set([
 
 // ── Initialise leo-profanity with custom words ─────────────────────
 
+/** The module namespace, which may wrap the real export under `default` (CJS interop) */
+type LeoProfanity = typeof leoProfanity;
+const leoModule: LeoProfanity & { default?: LeoProfanity } = leoProfanity;
+
 let _initialised = false;
 let _leoAvailable = false;
 
@@ -31,7 +35,7 @@ function ensureInit() {
 
   try {
     // Resolve the actual export — handle CJS default export wrapping
-    const lib = (leoProfanity as any).default || leoProfanity;
+    const lib = leoModule.default || leoModule;
     if (typeof lib.loadDictionary === 'function') {
       lib.loadDictionary('en');
       lib.add(SOUTH_ASIAN_PROFANITY);
@@ -48,7 +52,7 @@ function ensureInit() {
 
 /** Get the resolved leo-profanity instance */
 function leo(): typeof leoProfanity {
-  return (leoProfanity as any).default || leoProfanity;
+  return leoModule.default || leoModule;
 }
 
 // ── Exported API ────────────────────────────────────────────────────

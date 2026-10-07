@@ -164,7 +164,7 @@ const ProviderHome = () => {
 
   // Photos State
   const photoGalleryRef = useRef<PhotoGalleryRef>(null);
-  const [providerPhotos, setProviderPhotos] = useState<any[]>([1]); // Mock data: [1] means has photos. [] means empty.
+  const [providerPhotos, setProviderPhotos] = useState<unknown[]>([1]); // Mock data: [1] means has photos. [] means empty.
 
   const handleAddProduct = () => {
     setEditingProduct(null);
@@ -574,7 +574,7 @@ const ProviderHome = () => {
             ))}
             {products.length === 0 && (
               <div className="p-8 text-center text-slate-500">
-                You haven't added any products yet.
+                You haven&apos;t added any products yet.
               </div>
             )}
           </List>

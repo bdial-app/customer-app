@@ -1,6 +1,6 @@
 "use client";
 import { Page } from "konsta/react";
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ROUTE_PATH } from "@/utils/contants";
 import { getPendingDeepLinkTarget, endDeepLinkLoading } from "@/utils/deep-link";
@@ -26,18 +26,28 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useProduct } from "@/hooks/useProduct";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
-import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { useAppSelector } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import { useCreateConversation } from "@/hooks/useChat";
-import { openChat } from "@/store/slices/chatSlice";
-import { store } from "@/store";
+import { useProductEnquiry } from "@/hooks/useProductEnquiry";
 import { useAppContext } from "@/app/context/AppContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { storefrontOutline, createOutline, eyeOutline } from "ionicons/icons";
-import { shareContent, openDirections } from "@/utils/sharing";
+import { openDirections } from "@/utils/sharing";
+import { useShareProduct } from "@/hooks/useShare";
 import { triggerHaptic } from "@/utils/haptics";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
+import SwipeBackGesture from "../components/swipe-back-gesture";
+import type { ProductDetail, ProductProviderSummary } from "@/services/product.service";
+import { MoreFromSeller, SimilarItems } from "../components/catalog/product-related-sections";
+import { catalogHref } from "../components/catalog/catalog-utils";
+
+// Fields the product API returns that the shared service types don't declare.
+type ProviderWithCoords = ProductProviderSummary & {
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+};
+type ViewSource = NonNullable<Parameters<typeof useTrackProductView>[2]>;
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800";
@@ -52,12 +62,23 @@ export default function ProductDetailsPage() {
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const showPhoto = useCallback((i: number) => {
+    const el = galleryRef.current;
+    if (el) el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+    setCurrentPhoto(i);
+  }, []);
 
-  // Reset local UI state when navigating to a different product
-  useEffect(() => {
+  // Reset local UI state when navigating to a different product (during
+  // render, so the new product never paints on the old one's photo index)
+  const [shownId, setShownId] = useState(id);
+  if (id !== shownId) {
+    setShownId(id);
     setCurrentPhoto(0);
     setReportSheetOpen(false);
-  }, [id]);
+    setScrolled(false);
+  }
 
   // Hand the cold-start deep-link loader off to real content once this page has
   // loaded (success or error), so the branded loader fades straight to the
@@ -67,15 +88,13 @@ export default function ProductDetailsPage() {
   }, [isLoading]);
 
   const user = useAppSelector((state) => state.auth.user);
-  const dispatch = useAppDispatch();
   const { requireAuth } = useAuthGate();
   const { setUserMode } = useAppContext();
   const { data: savedData } = useIsSaved(id, "product");
   const toggleSaved = useToggleSaved();
   const liked = savedData?.saved ?? false;
   const { isDark } = useTheme();
-  const { mutate: createConversation, isPending: isCreatingChat } =
-    useCreateConversation();
+  const { enquire, isPending: isCreatingChat } = useProductEnquiry();
 
   const handleToggleSaved = () => {
     requireAuth(() => {
@@ -84,36 +103,51 @@ export default function ProductDetailsPage() {
     });
   };
 
-  const product = data?.product;
-  const provider = data?.provider ?? null;
+  const product: ProductDetail | undefined = data?.product;
+  const provider: ProviderWithCoords | null = data?.provider ?? null;
   const isOwnProduct = Boolean(user && provider && user.id === provider.userId);
   const stats = data?.stats;
   const related = data?.related ?? [];
 
   // ─── Analytics Tracking ─────────────────────────────────────────
-  const source = (searchParams.get("src") as any) || "direct";
+  const source = (searchParams.get("src") as ViewSource | null) || "direct";
+  // The guided tour opens a real product as an example — that isn't a real view, so don't count it.
+  const inTour = searchParams.get("tour") === "1";
   useTrackProductView(
-    isOwnProduct ? undefined : provider?.id,
-    isOwnProduct ? undefined : id,
+    isOwnProduct || inTour ? undefined : provider?.id,
+    isOwnProduct || inTour ? undefined : id,
     source,
   );
   const { trackShare, trackSave, trackChat, trackCall } = useTrackAction(
     isOwnProduct ? undefined : provider?.id,
   );
+  // Built in the background once the page has data, so the tap shares at once.
+  const { share: shareProduct, busy: sharing } = useShareProduct(id, { asOwner: isOwnProduct });
 
+  // Read into locals so the memo's inputs are exactly what it depends on.
+  const photoUrls = product?.photoUrls;
+  const photoUrl = product?.photoUrl;
   const photos = useMemo(() => {
-    if (product?.photoUrls?.length) {
-      const valid = product.photoUrls.filter((u: string) => !!u);
+    if (photoUrls?.length) {
+      const valid = photoUrls.filter((u: string) => !!u);
       if (valid.length) return valid;
     }
-    if (product?.photoUrl) return [product.photoUrl];
+    if (photoUrl) return [photoUrl];
     return [FALLBACK_IMAGE];
-  }, [product?.photoUrls, product?.photoUrl]);
+  }, [photoUrls, photoUrl]);
 
   if (!id) {
     return (
       <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-        <div className="p-10 text-center text-sm text-gray-500">
+        <SwipeBackGesture onBack={() => goBack("/")} />
+        <button
+          onClick={() => goBack("/")}
+          aria-label="Back"
+          className="absolute z-40 left-4 top-[calc(var(--sat,0px)+12px)] w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
+        >
+          <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
+        </button>
+        <div className="p-10 pt-24 text-center text-sm text-gray-500">
           Product not found.
         </div>
       </Page>
@@ -123,6 +157,14 @@ export default function ProductDetailsPage() {
   if (isLoading) {
     return (
       <Page className="!bg-gray-50/80 dark:!bg-slate-900">
+        <SwipeBackGesture onBack={() => goBack("/")} />
+        <button
+          onClick={() => goBack("/")}
+          aria-label="Back"
+          className="absolute z-40 left-4 top-[calc(var(--sat,0px)+12px)] w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
+        >
+          <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
+        </button>
         <div className="h-80 bg-gray-200 dark:bg-slate-700 animate-pulse" />
         <div className="px-5 pt-5 space-y-4">
           <div className="h-5 w-2/3 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
@@ -137,7 +179,15 @@ export default function ProductDetailsPage() {
   if (isError || !product) {
     return (
       <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-        <div className="p-10 text-center text-sm text-gray-500">
+        <SwipeBackGesture onBack={() => goBack("/")} />
+        <button
+          onClick={() => goBack("/")}
+          aria-label="Back"
+          className="absolute z-40 left-4 top-[calc(var(--sat,0px)+12px)] w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
+        >
+          <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
+        </button>
+        <div className="p-10 pt-24 text-center text-sm text-gray-500">
           Could not load this product.
         </div>
       </Page>
@@ -145,58 +195,95 @@ export default function ProductDetailsPage() {
   }
 
   const price = product.price !== null ? Number(product.price) : null;
+  const isService = product.productType === "service";
+  // The most specific category the seller tagged, for the chip and "See all".
+  const productCategory = product.subcategory ?? product.category ?? null;
   const currency = product.currency === "INR" ? "₹" : product.currency;
+  const iconBtn = `w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all ${
+    scrolled ? "bg-gray-100 dark:bg-slate-800" : "bg-black/30 backdrop-blur-md"
+  }`;
+  const iconColor = scrolled ? "text-gray-800 dark:text-white" : "text-white";
 
   return (
     <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-      <div className="h-full overflow-y-auto overscroll-contain">
-      <div className="relative">
-        <div className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
-          <img
-            src={photos[currentPhoto]}
-            alt={product.name}
-            className="w-full h-full object-cover transition-opacity duration-300"
-          />
+      <SwipeBackGesture onBack={() => goBack("/")} />
 
-          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(var(--sat,0px)+12px)] pb-3">
-            <button
-              onClick={() => goBack("/")}
-              className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
-            >
-              <IonIcon icon={arrowBack} className="w-5 h-5 text-white" />
+      {/* Top bar stays put while the page scrolls: see-through over the photo,
+          solid with the product name once the photo has scrolled away. */}
+      <div data-tour="product-topbar"
+        className={`absolute top-0 inset-x-0 z-40 transition-colors duration-200 ${
+          scrolled ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-[0_1px_0_rgba(0,0,0,0.06)]" : ""
+        }`}
+      >
+        <div className="flex items-center gap-2 px-4 pt-[calc(var(--sat,0px)+12px)] pb-3">
+          <button
+            onClick={() => goBack("/")}
+            aria-label="Back"
+            className={`${iconBtn} shrink-0`}
+          >
+            <IonIcon icon={arrowBack} className={`w-5 h-5 ${iconColor}`} />
+          </button>
+          <p
+            className={`flex-1 min-w-0 truncate text-[15px] font-bold text-gray-900 dark:text-white transition-opacity duration-200 ${
+              scrolled ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {product.name}
+          </p>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={handleToggleSaved} aria-label={liked ? "Remove from saved" : "Save"} className={iconBtn}>
+              <IonIcon icon={liked ? heart : heartOutline} className={`w-5 h-5 ${liked ? "text-red-400" : iconColor}`} />
             </button>
-            <div className="flex gap-2">
-              <button
-                onClick={handleToggleSaved}
-                className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
-              >
-                <IonIcon
-                  icon={liked ? heart : heartOutline}
-                  className={`w-5 h-5 ${liked ? "text-red-400" : "text-white"}`}
-                />
+            <button
+              onClick={async () => {
+                if (!product) return;
+                trackShare();
+                await shareProduct();
+              }}
+              disabled={sharing}
+              aria-busy={sharing}
+              aria-label="Share this product"
+              className={`${iconBtn} ${sharing ? "opacity-60 animate-pulse" : ""}`}
+            >
+              <IonIcon icon={shareSocial} className={`w-5 h-5 ${iconColor}`} />
+            </button>
+            {!isOwnProduct && (
+              <button onClick={() => requireAuth(() => setReportSheetOpen(true))} aria-label="Report" className={iconBtn}>
+                <IonIcon icon={flagOutline} className={`w-5 h-5 ${iconColor}`} />
               </button>
-              <button
-                onClick={async () => {
-                  if (!product) return;
-                  await shareContent({
-                    title: product.name,
-                    text: `Check out ${product.name}${price !== null ? ` - ${currency}${price.toLocaleString()}` : ""}\n${product.description || ""}`,
-                    url: window.location.href,
-                  });
-                }}
-                className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
-              >
-                <IonIcon icon={shareSocial} className="w-5 h-5 text-white" />
-              </button>
-              {!isOwnProduct && (
-                <button
-                  onClick={() => requireAuth(() => setReportSheetOpen(true))}
-                  className="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                >
-                  <IonIcon icon={flagOutline} className="w-5 h-5 text-white" />
-                </button>
-              )}
-            </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Keyed by product so opening another product starts at the top */}
+      <div
+        key={id}
+        onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 250)}
+        className="h-full overflow-y-auto overscroll-contain"
+      >
+      <div className="relative">
+        <div data-tour="product-gallery" className="relative h-80 overflow-hidden bg-white dark:bg-slate-800">
+          {/* Swipeable gallery; keyed by product so a new product starts at photo 1 */}
+          <div
+            key={id}
+            ref={galleryRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const idx = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+              if (idx !== currentPhoto && idx >= 0 && idx < photos.length) setCurrentPhoto(idx);
+            }}
+            className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar"
+          >
+            {photos.map((photo, i) => (
+              <img
+                key={i}
+                src={photo}
+                alt={i === 0 ? product.name : `${product.name} — photo ${i + 1}`}
+                loading={i === 0 ? "eager" : "lazy"}
+                className="w-full h-full shrink-0 snap-center object-cover"
+              />
+            ))}
           </div>
 
           {provider?.communityVerified && (
@@ -211,7 +298,8 @@ export default function ProductDetailsPage() {
                 {photos.map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setCurrentPhoto(i)}
+                    aria-label={`Photo ${i + 1}`}
+                    onClick={() => showPhoto(i)}
                     className={`rounded-full transition-all duration-200 ${
                       i === currentPhoto
                         ? "w-5 h-1.5 bg-white"
@@ -232,7 +320,7 @@ export default function ProductDetailsPage() {
             {photos.map((photo, i) => (
               <button
                 key={i}
-                onClick={() => setCurrentPhoto(i)}
+                onClick={() => showPhoto(i)}
                 className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
                   i === currentPhoto
                     ? "border-amber-500 shadow-sm"
@@ -251,7 +339,7 @@ export default function ProductDetailsPage() {
       </div>
 
       <div className="px-5 pt-5 pb-28 space-y-4">
-        <div>
+        <div data-tour="product-summary">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
@@ -260,20 +348,25 @@ export default function ProductDetailsPage() {
               ✦ Featured Product
             </span>
           )}
-          {(product as any).productType === "service" && (
+          {product.productType === "service" && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-indigo-50 to-cyan-50 dark:from-indigo-900/20 dark:to-cyan-900/20 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2 ml-1">
               🛠️ Service
             </span>
           )}
           <div className="flex items-center gap-3">
             {price !== null ? (
-              <span className="text-2xl font-extrabold text-amber-600">
-                {currency}
-                {price.toLocaleString()}
+              <span className="flex items-baseline gap-1.5">
+                {isService && (
+                  <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Starts at</span>
+                )}
+                <span className="text-2xl font-extrabold text-amber-600">
+                  {currency}
+                  {price.toLocaleString("en-IN")}
+                </span>
               </span>
             ) : (
               <span className="text-sm font-semibold text-gray-500 dark:text-slate-400">
-                Price on request
+                {isService ? "Ask for a quote" : "Price on request"}
               </span>
             )}
             {stats && stats.reviewCount > 0 && (
@@ -294,11 +387,23 @@ export default function ProductDetailsPage() {
               <IonIcon icon={checkmarkCircle} className="w-3 h-3" />
               {product.isActive ? "Available" : "Unavailable"}
             </span>
+            {productCategory && (
+              <Link
+                href={catalogHref(isService ? "service" : "product", {
+                  title: productCategory.name,
+                  filters: { categoryId: productCategory.id },
+                })}
+                className="inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300"
+              >
+                {productCategory.name}
+                <IonIcon icon={chevronForward} className="w-3 h-3" />
+              </Link>
+            )}
           </div>
         </div>
 
         {provider && (
-          <Link
+          <Link data-tour="product-seller"
             href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
             className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
           >
@@ -341,13 +446,13 @@ export default function ProductDetailsPage() {
 
         {/* Get Directions */}
         {provider &&
-          (provider as any)?.latitude &&
-          (provider as any)?.longitude && (
+          provider?.latitude &&
+          provider?.longitude && (
             <button
               onClick={() =>
                 openDirections(
-                  Number((provider as any).latitude),
-                  Number((provider as any).longitude),
+                  Number(provider.latitude),
+                  Number(provider.longitude),
                   provider.brandName,
                 )
               }
@@ -360,7 +465,7 @@ export default function ProductDetailsPage() {
 
         {provider?.categories && provider.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {provider.categories.map((cat: any) => (
+            {provider.categories.map((cat) => (
               <span
                 key={cat.id}
                 className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full"
@@ -372,9 +477,9 @@ export default function ProductDetailsPage() {
         )}
 
         {product.description && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div data-tour="product-about" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
             <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-2">
-              Description
+              About this {isService ? "service" : "product"}
             </h3>
             <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
               {product.description}
@@ -382,67 +487,28 @@ export default function ProductDetailsPage() {
           </div>
         )}
 
-        {related.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                You May Also Like
-              </h3>
-              {provider && (
-                <Link
-                  href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
-                  className="flex items-center text-xs font-semibold text-amber-600"
-                >
-                  See All
-                  <IonIcon icon={chevronForward} className="w-3.5 h-3.5" />
-                </Link>
-              )}
-            </div>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">
-              {related.map((item) => {
-                const itemCurrency =
-                  item.currency === "INR" ? "₹" : item.currency;
-                const itemPrice =
-                  item.price !== null ? Number(item.price) : null;
-                return (
-                  <Link
-                    key={item.id}
-                    href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${item.id}`}
-                    className="flex-shrink-0 w-36"
-                  >
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.98] transition-transform">
-                      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-700">
-                        <img
-                          src={item.photoUrl ?? FALLBACK_IMAGE}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-2.5">
-                        <h4 className="text-[12px] font-semibold text-gray-900 dark:text-white mb-0.5 line-clamp-1">
-                          {item.name}
-                        </h4>
-                        {itemPrice !== null ? (
-                          <span className="text-[13px] font-bold text-amber-600">
-                            {itemCurrency}
-                            {itemPrice.toLocaleString()}
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">
-                            On request
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+        {provider && related.length > 0 && (
+          <div data-tour="product-more-from-seller" className="pt-2">
+            <MoreFromSeller
+              related={related}
+              provider={provider}
+              rating={stats?.rating ?? 0}
+              reviewCount={stats?.reviewCount ?? 0}
+            />
           </div>
         )}
+
+        <div data-tour="product-similar" className="pt-2">
+          <SimilarItems
+            productId={product.id}
+            type={isService ? "service" : "product"}
+            categoryId={productCategory?.id}
+            categoryName={productCategory?.name}
+          />
+        </div>
       </div>
 
-      <div
+      <div data-tour="product-cta"
         className="fixed bottom-0 inset-x-0 z-30 pt-3 px-5"
         style={{
           paddingBottom: "calc(var(--sab, env(safe-area-inset-bottom)) + 12px)",
@@ -487,43 +553,35 @@ export default function ProductDetailsPage() {
             </div>
           </div>
         ) : (
+          <div className="flex gap-2.5">
+          <button
+            onClick={handleToggleSaved}
+            aria-label={liked ? "Remove from saved" : "Save"}
+            className="shrink-0 w-[52px] flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 active:scale-95 transition-transform"
+          >
+            <IonIcon icon={liked ? heart : heartOutline} className={`w-[22px] h-[22px] ${liked ? "text-red-500" : "text-gray-600 dark:text-slate-300"}`} />
+          </button>
           <button
             onClick={() => {
-              requireAuth(() => {
-                if (!provider?.id) return;
-                // Re-check after auth — user may have logged in as this provider
-                const currentUser = store.getState().auth.user;
-                if (currentUser && currentUser.id === provider.userId) return;
-                createConversation({
-                  providerId: provider.id,
-                  contextType: 'product',
-                  contextId: product?.id,
-                  initialMessage: `Hi! I'm interested in ${product?.name || 'this product'}. Could you share more details?`,
-                  initialMessageMetadata: {
-                    productId: product?.id,
-                    productName: product?.name,
-                    productImage: product?.photoUrl,
-                    productPrice: product?.price,
-                    currency: product?.currency,
-                  },
-                }, {
-                  onSuccess: (conv) => {
-                    dispatch(openChat(conv.id));
-                    router.push('/');
-                  },
-                  onError: (err: any) => {
-                    const msg = err?.response?.data?.message || err?.message || 'Could not start conversation';
-                    alert(Array.isArray(msg) ? msg.join(', ') : msg);
-                  },
-              });
+              if (!provider?.id || !product) return;
+              enquire({
+                providerId: provider.id,
+                providerUserId: provider.userId,
+                productId: product.id,
+                productName: product.name,
+                productType: isService ? "service" : "product",
+                photoUrl: product.photoUrl,
+                price: product.price,
+                currency: product.currency,
               });
             }}
             disabled={isCreatingChat}
-            className="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 active:scale-[0.98] transition-transform"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 dark:shadow-none active:scale-[0.98] transition-transform disabled:opacity-70"
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
-            {isCreatingChat ? "Opening Chat..." : (product as any)?.productType === "service" ? "Enquire About Service" : "Send Enquiry"}
+            {isCreatingChat ? "Opening Chat..." : isService ? "Enquire About Service" : "Send Enquiry"}
           </button>
+          </div>
         )}
       </div>
 

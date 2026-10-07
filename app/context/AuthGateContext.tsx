@@ -33,7 +33,7 @@ export const useAuthGateContext = () => {
 };
 
 export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
-  const user = useAppSelector((state) => state.auth.user) as any;
+  const user = useAppSelector((state) => state.auth.user);
   const [isOpen, setIsOpen] = useState(false);
   const pendingCallbackRef = useRef<(() => void) | null>(null);
   // Cooldown: prevent the 401 listener from reopening the sheet right after dismissal
@@ -68,6 +68,9 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (user && user.name && isOpen) {
       const wasSessionRecovery = was401Ref.current;
+      // Deliberately an effect: closing is one step of reacting to sign-in
+      // succeeding, alongside refetching and firing the queued callback.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false);
       was401Ref.current = false;
       const cb = pendingCallbackRef.current;

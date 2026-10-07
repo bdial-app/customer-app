@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -24,11 +24,18 @@ import {
   setCategoryIds,
   resetFilters,
 } from "@/store/slices/searchSlice";
-import type { SearchEntityType, SearchSortBy, ProviderSearchResult } from "@/services/search.service";
+import type {
+  SearchEntityType,
+  SearchSortBy,
+  ProviderSearchResult,
+  SearchResponse,
+  SearchFallback,
+} from "@/services/search.service";
 
 import SearchFilterSheet from "./search-filter-sheet";
 import SearchFilterChips from "./search-filter-chips";
 import ProviderResultCard from "./cards/provider-result-card";
+import { ApproximateDivider, shouldShowApproximateDivider } from "@/utils/approximate-divider";
 import ProductResultCard from "./cards/product-result-card";
 import CategoryResultCard from "./cards/category-result-card";
 import InfiniteScroll from "../infinite-scroll";
@@ -293,8 +300,11 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="grid grid-cols-2 gap-3">
-              {(Array.isArray(results.providers?.data) ? results.providers.data : []).map((p: any, i: number) => (
-                <ProviderResultCard key={p.id} provider={p} index={i} />
+              {(Array.isArray(results.providers?.data) ? results.providers.data : []).map((p, i: number, all) => (
+                <Fragment key={p.id}>
+                  {shouldShowApproximateDivider(all, i) && <ApproximateDivider item={p} />}
+                  <ProviderResultCard provider={p} index={i} />
+                </Fragment>
               ))}
             </div>
           </InfiniteScroll>
@@ -305,7 +315,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="grid grid-cols-2 gap-3">
-              {(Array.isArray(results.products?.data) ? results.products.data : []).map((p: any, i: number) => (
+              {(Array.isArray(results.products?.data) ? results.products.data : []).map((p, i: number) => (
                 <ProductResultCard key={p.id} product={p} index={i} />
               ))}
             </div>
@@ -317,7 +327,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
             onLoadMore={fetchNextPage}
           >
             <div className="space-y-2">
-              {(Array.isArray(results.categories?.data) ? results.categories.data : []).map((c: any, i: number) => (
+              {(Array.isArray(results.categories?.data) ? results.categories.data : []).map((c, i: number) => (
                 <CategoryResultCard key={c.id} category={c} index={i} onTap={onCategoryTap} />
               ))}
             </div>
@@ -335,7 +345,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
 
 // ── "All" tab — prioritized sections: Sponsored → Deals → Top Rated → Regular ──
 
-const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTap?: (name: string, id: string) => void }) => {
+const AllResultsView = ({ results, onCategoryTap }: { results: SearchResponse; onCategoryTap?: (name: string, id: string) => void }) => {
   const dispatch = useAppDispatch();
   const sponsored: ProviderSearchResult[] = results.sponsored ?? [];
   const deals: ProviderSearchResult[] = results.deals ?? [];
@@ -411,7 +421,7 @@ const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTa
             onSeeAll={() => dispatch(setActiveTab("providers"))}
           />
           <div className="grid grid-cols-2 gap-3">
-            {providers.slice(0, 4).map((p: any, i: number) => (
+            {providers.slice(0, 4).map((p, i: number) => (
               <ProviderResultCard key={p.id} provider={p} index={i} />
             ))}
           </div>
@@ -427,7 +437,7 @@ const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTa
             onSeeAll={() => dispatch(setActiveTab("products"))}
           />
           <div className="grid grid-cols-2 gap-3">
-            {products.slice(0, 4).map((p: any, i: number) => (
+            {products.slice(0, 4).map((p, i: number) => (
               <ProductResultCard key={p.id} product={p} index={i} />
             ))}
           </div>
@@ -443,7 +453,7 @@ const AllResultsView = ({ results, onCategoryTap }: { results: any; onCategoryTa
             onSeeAll={() => dispatch(setActiveTab("categories"))}
           />
           <div className="space-y-2">
-            {categories.slice(0, 3).map((c: any, i: number) => (
+            {categories.slice(0, 3).map((c, i: number) => (
               <CategoryResultCard key={c.id} category={c} index={i} onTap={onCategoryTap} />
             ))}
           </div>
@@ -507,7 +517,7 @@ const ResultsSkeleton = () => (
 
 const EmptyResults = ({ query, fallback, didYouMean, onSearch }: {
   query: string;
-  fallback?: any;
+  fallback?: SearchFallback;
   didYouMean?: string;
   onSearch?: (q: string) => void;
 }) => {
@@ -540,7 +550,7 @@ const EmptyResults = ({ query, fallback, didYouMean, onSearch }: {
       )}
 
       {/* People also searched */}
-      {fallback?.peopleAlsoSearched?.length > 0 && (
+      {!!fallback?.peopleAlsoSearched?.length && (
         <div className="w-full text-left mb-5">
           <h4 className="text-[12px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">People also searched</h4>
           <div className="flex flex-wrap gap-2">
@@ -558,11 +568,11 @@ const EmptyResults = ({ query, fallback, didYouMean, onSearch }: {
       )}
 
       {/* Related categories */}
-      {fallback?.relatedCategories?.length > 0 && (
+      {!!fallback?.relatedCategories?.length && (
         <div className="w-full text-left mb-5">
           <h4 className="text-[12px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Browse related categories</h4>
           <div className="flex flex-wrap gap-2">
-            {fallback.relatedCategories.map((c: any) => (
+            {fallback.relatedCategories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => router.push(`/search?q=${encodeURIComponent(c.name)}&categoryIds=${c.id}`)}
@@ -576,13 +586,13 @@ const EmptyResults = ({ query, fallback, didYouMean, onSearch }: {
       )}
 
       {/* Relaxed / nearby popular providers */}
-      {(fallback?.relaxedProviders?.length > 0 || fallback?.nearbyPopular?.length > 0) && (
+      {(!!fallback?.relaxedProviders?.length || !!fallback?.nearbyPopular?.length) && (
         <div className="w-full text-left mb-5">
           <h4 className="text-[12px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">
-            {fallback?.relaxedProviders?.length > 0 ? 'Close matches' : 'Popular nearby'}
+            {fallback?.relaxedProviders?.length ? 'Close matches' : 'Popular nearby'}
           </h4>
           <div className="grid grid-cols-2 gap-3">
-            {(fallback?.relaxedProviders || fallback?.nearbyPopular || []).slice(0, 4).map((p: any, i: number) => (
+            {(fallback?.relaxedProviders || fallback?.nearbyPopular || []).slice(0, 4).map((p, i: number) => (
               <ProviderResultCard key={p.id} provider={p} index={i} />
             ))}
           </div>
@@ -590,11 +600,11 @@ const EmptyResults = ({ query, fallback, didYouMean, onSearch }: {
       )}
 
       {/* Trending searches */}
-      {fallback?.trending?.length > 0 && (
+      {!!fallback?.trending?.length && (
         <div className="w-full text-left">
           <h4 className="text-[12px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Trending searches</h4>
           <div className="flex flex-wrap gap-2">
-            {fallback.trending.map((t: any) => (
+            {fallback.trending.map((t) => (
               <button
                 key={t.query}
                 onClick={() => onSearch?.(t.query)}

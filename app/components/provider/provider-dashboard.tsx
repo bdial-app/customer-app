@@ -1,5 +1,6 @@
 "use client";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -42,12 +43,13 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import OfflineFallback from "../offline-fallback";
 import { useProviderDetails } from "@/hooks/useProvider";
-import { shareProvider } from "@/utils/sharing";
+import { useShareBusiness } from "@/hooks/useShare";
 import {
   ProviderDetailsPhoto,
   ProviderDetailsProduct,
   ProviderDetailsReview,
   ProviderDetailsOffer,
+  ProviderData,
 } from "@/services/provider.service";
 import { useCurrentSubscription } from "@/hooks/useSubscription";
 import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
@@ -56,6 +58,7 @@ import ProviderWarningsSheet from "./provider-warnings-sheet";
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import PullToRefresh from "../pull-to-refresh";
 import PageSplashScreen from "../page-splash-screen";
+import { useNow } from "@/hooks/useNow";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -69,11 +72,13 @@ const WarningModal = ({
   onClose: () => void;
   onViewAll: () => void;
 }) => {
-  if (totalWarnings <= 0) return null;
+  // Warning counts load in the browser, so document exists by the time this renders.
+  if (totalWarnings <= 0 || typeof document === "undefined") return null;
 
   const isEscalation = totalWarnings >= 3;
 
-  return (
+  // On document.body: inside the tab panel the bottom bar would cover it.
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -176,7 +181,8 @@ const WarningModal = ({
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 
@@ -235,7 +241,7 @@ const WarningsBanner = ({
 
 const VerificationPrompt = ({ onVerify }: { onVerify: () => void }) => (
   <div className="px-4 mb-4">
-    <motion.div
+    <motion.div data-tour="home-verification"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 p-5"
@@ -344,7 +350,7 @@ const VerificationStatusCard = ({ status, onResubmit }: { status: string | null;
 
   return (
     <div className="px-4 mb-4">
-      <div className={`${cfg.bg} ${cfg.border} border rounded-2xl p-4`}>
+      <div data-tour="home-verification" className={`${cfg.bg} ${cfg.border} border rounded-2xl p-4`}>
         <div className="flex items-start gap-3">
           <div
             className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}
@@ -393,7 +399,7 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
     <div className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-          Today's Activity
+          Today&apos;s Activity
         </h3>
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
           <IonIcon icon={calendarOutline} className="text-xs" />
@@ -447,10 +453,31 @@ const TodayActivity = memo(({ stats, loading }: { stats: ProviderStats; loading?
 // ─── Growth Tips ────────────────────────────────────────────────────
 interface GrowthTipsProps {
   stats: ProviderStats;
-  provider: any;
+  provider: ProviderData | null;
   verificationStatus: string | null;
   onNavigate: (subTab: string) => void;
   onVerify: () => void;
+  /** Whether the Google link card is on the page for this business. */
+  canLinkGoogle: boolean;
+}
+
+/**
+ * Bring the Google link card to the middle of the screen and pulse it, so a tap
+ * on the tip visibly lands somewhere.
+ */
+function revealGoogleLinkCard() {
+  const el = document.getElementById("google-link-card");
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  const card = (el.firstElementChild as HTMLElement | null) ?? el;
+  card.animate?.(
+    [
+      { boxShadow: "0 0 0 0 rgba(59,130,246,0)" },
+      { boxShadow: "0 0 0 6px rgba(59,130,246,0.45)" },
+      { boxShadow: "0 0 0 0 rgba(59,130,246,0)" },
+    ],
+    { duration: 900, iterations: 2, delay: 350 },
+  );
 }
 
 const GrowthTips = memo(({
@@ -459,7 +486,9 @@ const GrowthTips = memo(({
   verificationStatus,
   onNavigate,
   onVerify,
+  canLinkGoogle,
 }: GrowthTipsProps) => {
+  const { share: shareBusiness } = useShareBusiness(provider?.id, { asOwner: true, prefetch: false });
   const totalPhotos = stats.photos.length;
   const totalProducts = stats.products.length;
   const totalOffers = stats.activeOffers.length;
@@ -516,29 +545,22 @@ const GrowthTips = memo(({
       priority: "medium" as const,
       action: onVerify,
     },
-    !provider?.googlePlaceId && {
+    // Only offered when the link card is actually on the page — it used to show
+    // for businesses still in review, whose card was hidden, so a tap did nothing.
+    canLinkGoogle && !provider?.googlePlaceId && {
       icon: logoGoogle,
       title: "Link Google Reviews",
       desc: "Show your Google reviews to build trust faster",
       priority: "medium" as const,
-      action: () => {
-        // Scroll to the Google link card
-        document.getElementById("google-link-card")?.scrollIntoView({ behavior: "smooth" });
-      },
+      action: revealGoogleLinkCard,
     },
     {
       icon: megaphoneOutline,
       title: "Share your profile",
-      desc: "Get 20% more reach with WhatsApp sharing",
+      desc: "Send customers a card with your logo, products and offers",
       priority: "low" as const,
       action: () => {
-        if (provider) {
-          shareProvider({
-            id: provider.id,
-            brandName: provider.brandName || "My Business",
-            description: provider.description,
-          });
-        }
+        if (provider) void shareBusiness();
       },
     },
   ].filter(Boolean) as {
@@ -561,7 +583,7 @@ const GrowthTips = memo(({
   const urgentCount = tips.filter((t) => t.priority === "high").length;
 
   return (
-    <div className="px-4 mb-4">
+    <div data-tour="home-growth-tips" className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
@@ -715,7 +737,7 @@ const RecentReviewsList = memo(({ stats, loading }: { stats: ProviderStats; load
 const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loading?: boolean }) => {
   if (loading) {
     return (
-      <div className="px-4 mb-4">
+      <div data-tour="home-catalogue" className="px-4 mb-4">
         <div className="flex items-center justify-between mb-2.5">
           <div className="h-4 w-24 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
           <div className="h-3 w-12 bg-slate-50 dark:bg-slate-700/50 rounded animate-pulse" />
@@ -737,7 +759,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
 
   if (stats.products.length === 0) {
     return (
-      <div className="px-4 mb-4">
+      <div data-tour="home-catalogue" className="px-4 mb-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 text-center">
           <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <IonIcon icon={ribbonOutline} className="text-2xl text-indigo-400" />
@@ -754,7 +776,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
   }
 
   return (
-    <div className="px-4 mb-4">
+    <div data-tour="home-catalogue" className="px-4 mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
           My Catalogue
@@ -827,7 +849,7 @@ const ProductsOverview = memo(({ stats, loading }: { stats: ProviderStats; loadi
  * town centre, so the app refuses to quote a distance for it. Only a pin the
  * owner (or a precise address lookup) gave us counts as the real thing.
  */
-const hasExactPin = (provider: any): boolean =>
+const hasExactPin = (provider: ProviderData | null): boolean =>
   Boolean(
     provider?.latitude &&
       provider?.longitude &&
@@ -839,7 +861,7 @@ const PinLocationCard = memo(({
   provider,
   onNavigate,
 }: {
-  provider: any;
+  provider: ProviderData | null;
   onNavigate: (subTab: string) => void;
 }) => {
   if (hasExactPin(provider)) return null;
@@ -861,7 +883,7 @@ const PinLocationCard = memo(({
               {placed
                 ? `We've placed you at the centre of ${provider?.city || "your city"} for now, so customers can't see how far away you are or get directions to you.`
                 : "Customers nearby can't see how far away you are, and can't get directions to you."}{" "}
-              Drop the pin once and you'll show up in “near me” searches.
+              Drop the pin once and you&apos;ll show up in “near me” searches.
             </p>
             <button
               onClick={() => onNavigate("details")}
@@ -884,7 +906,7 @@ const ProfileCompleteness = memo(({
   onNavigate,
   verificationStatus,
 }: {
-  provider: any;
+  provider: ProviderData | null;
   stats: ProviderStats;
   onNavigate: (subTab: string) => void;
   verificationStatus: string | null;
@@ -939,7 +961,7 @@ const ProfileCompleteness = memo(({
 
   return (
     <div className="px-4 mb-4">
-      <div className="bg-gradient-to-br from-indigo-800 to-indigo-600 rounded-2xl p-4 text-white relative overflow-hidden">
+      <div data-tour="home-profile-completeness" className="bg-gradient-to-br from-indigo-800 to-indigo-600 rounded-2xl p-4 text-white relative overflow-hidden">
         <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/5" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-3">
@@ -1134,7 +1156,7 @@ const RevenueBoosters = memo(({
   ];
 
   return (
-    <div className="px-4 mb-4">
+    <div data-tour="home-grow" className="px-4 mb-4">
       <div className="flex items-center gap-1.5 mb-2.5">
         <IonIcon icon={sparklesOutline} className="text-amber-500 text-sm" />
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">
@@ -1186,6 +1208,7 @@ const DealsOverview = memo(({
   onManage: () => void;
   loading?: boolean;
 }) => {
+  const now = useNow();
   if (loading) {
     return (
       <div className="px-4 mb-4">
@@ -1243,7 +1266,7 @@ const DealsOverview = memo(({
     ? Math.max(
         0,
         Math.ceil(
-          (new Date(nextExpiring.endsAt).getTime() - Date.now()) /
+          (new Date(nextExpiring.endsAt).getTime() - now) /
             (1000 * 60 * 60 * 24),
         ),
       )
@@ -1321,16 +1344,17 @@ const ProviderDashboard = ({
 
   const provider = providerData?.provider ?? null;
   const providerId = provider?.id ?? "";
-  const cachedId = useRef(
+  const [cachedId, setCachedId] = useState(() =>
     typeof window !== "undefined" ? localStorage.getItem("tijarah:provider-id") ?? "" : ""
   );
+  // Remember the latest known id (adjusted during render, not in an effect)
+  if (providerId && providerId !== cachedId) setCachedId(providerId);
   useEffect(() => {
     if (providerId) {
-      cachedId.current = providerId;
       localStorage.setItem("tijarah:provider-id", providerId);
     }
   }, [providerId]);
-  const effectiveProviderId = providerId || cachedId.current;
+  const effectiveProviderId = providerId || cachedId;
   const { data: details, isLoading: detailsLoading, isError: detailsError, refetch: refetchDetails } =
     useProviderDetails(effectiveProviderId);
   const { data: currentSub } = useCurrentSubscription();
@@ -1390,6 +1414,10 @@ const ProviderDashboard = ({
   // If providerStatus is "approved", the provider is fully approved by admin
   // regardless of the document verification record status
   const isApproved = providerStatus === "approved";
+  // Linking Google needs no admin approval (admins already link unverified
+  // businesses by phone), so any owner who can still edit their listing can do it.
+  const canLinkGoogle =
+    !!providerId && !["suspended", "disabled", "deleted", "not_applied"].includes(providerStatus ?? "not_applied");
 
   const providerStats = useMemo<ProviderStats>(() => ({
     photos: details?.photos ?? [],
@@ -1497,6 +1525,7 @@ const ProviderDashboard = ({
         provider={provider}
         verificationStatus={isApproved ? "approved" : verificationStatus}
         warningCount={unreadWarningCount}
+        onConnectGoogle={canLinkGoogle ? revealGoogleLinkCard : undefined}
       />
       <ProviderQuickStats stats={providerStats} />
       {showWarningBanner && (
@@ -1546,13 +1575,13 @@ const ProviderDashboard = ({
         verificationStatus={isApproved ? "approved" : verificationStatus}
         onNavigate={handleNavigate}
         onVerify={handleVerify}
+        canLinkGoogle={canLinkGoogle}
       />
-      {/* Google Reviews Link — show for approved providers */}
-      {isApproved && (
+      {/* Google Reviews link — for any owner who can still edit their listing */}
+      {canLinkGoogle && (
         <div id="google-link-card" className="px-4 mt-4 pb-4">
           <GoogleReviewsLinkCard
             providerId={providerId}
-            providerPhone={provider?.contactNumber}
             googlePlaceId={provider?.googlePlaceId}
             trustLevel={provider?.trustLevel}
             googleRating={provider?.googleRating}
@@ -1587,5 +1616,14 @@ const ProviderDashboard = ({
     </PullToRefresh>
   );
 };
+
+// memo() hides the inner function's name from React DevTools and errors.
+TodayActivity.displayName = "TodayActivity";
+GrowthTips.displayName = "GrowthTips";
+RecentReviewsList.displayName = "RecentReviewsList";
+ProductsOverview.displayName = "ProductsOverview";
+ProfileCompleteness.displayName = "ProfileCompleteness";
+RevenueBoosters.displayName = "RevenueBoosters";
+DealsOverview.displayName = "DealsOverview";
 
 export default ProviderDashboard;

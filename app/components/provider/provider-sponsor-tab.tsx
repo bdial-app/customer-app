@@ -41,6 +41,7 @@ import { usePayment } from "@/hooks/usePayment";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import type { SponsorshipPlan, SponsoredListing, CreateSponsorshipPayload } from "@/services/provider.service";
 import { isFreeSponsorship, hasBudgetLeft } from "@/services/provider.service";
+import { useNow } from "@/hooks/useNow";
 
 const typeLabels: Record<string, string> = {
   carousel: "Carousel",
@@ -152,8 +153,8 @@ const ProviderSponsorTab = () => {
       setShowConfirm(false);
       queryClient.invalidateQueries({ queryKey: ['my-sponsorships'] });
       notify({ title: "Boost activated!", subtitle: "Your listing is now being promoted.", variant: "success" });
-    } catch (error: any) {
-      const msg = error?.message || "Please try again.";
+    } catch (error: unknown) {
+      const msg = (error instanceof Error && error.message) || "Please try again.";
       console.error('Checkout failed:', msg, error);
       notify({ title: "Payment failed", subtitle: msg, variant: "error" });
     } finally {
@@ -396,6 +397,7 @@ const ProviderSponsorTab = () => {
 // ─── Boost Analytics Dashboard ──────────────────────────────────────
 
 const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredListing[] }) => {
+  const now = useNow();
   const totalImpressions = useMemo(() => sponsorships.reduce((s, b) => s + (b.impressions ?? 0), 0), [sponsorships]);
   const totalClicks = useMemo(() => sponsorships.reduce((s, b) => s + (b.clicks ?? 0), 0), [sponsorships]);
   const totalSpent = useMemo(() => sponsorships.reduce((s, b) => s + Number(b.spentAmount ?? 0), 0), [sponsorships]);
@@ -410,15 +412,15 @@ const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredList
     const dates = sponsorships.map(s => new Date(s.startsAt).getTime());
     return Math.min(...dates);
   }, [sponsorships]);
-  const daysRunning = Math.max(1, Math.ceil((Date.now() - oldestStart) / 86400000));
+  const daysRunning = Math.max(1, Math.ceil((now - oldestStart) / 86400000));
   const dailyBurnRate = totalSpent / daysRunning;
   const daysUntilExhausted = dailyBurnRate > 0 ? Math.ceil(remainingBudget / dailyBurnRate) : Infinity;
 
   // Find soonest expiring boost
   const soonestExpiry = useMemo(() => {
-    const daysArr = sponsorships.map(s => Math.max(0, Math.ceil((new Date(s.endsAt).getTime() - Date.now()) / 86400000)));
+    const daysArr = sponsorships.map(s => Math.max(0, Math.ceil((new Date(s.endsAt).getTime() - now) / 86400000)));
     return Math.min(...daysArr);
-  }, [sponsorships]);
+  }, [sponsorships, now]);
 
   // CTR performance rating
   const getCtrRating = () => {
@@ -516,7 +518,7 @@ const BoostAnalyticsDashboard = ({ sponsorships }: { sponsorships: SponsoredList
           {sponsorships.map((b) => {
             const bCtr = b.impressions > 0 ? ((b.clicks / b.impressions) * 100).toFixed(1) : "0.0";
             const bBudgetPct = Number(b.budgetAmount) > 0 ? Math.min(100, (Number(b.spentAmount) / Number(b.budgetAmount)) * 100) : 0;
-            const bDaysLeft = Math.max(0, Math.ceil((new Date(b.endsAt).getTime() - Date.now()) / 86400000));
+            const bDaysLeft = Math.max(0, Math.ceil((new Date(b.endsAt).getTime() - now) / 86400000));
             const typeColor = b.type === "carousel" ? "bg-blue-500" : b.type === "inline" ? "bg-emerald-500" : "bg-amber-500";
             return (
               <div key={b.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3">
@@ -617,11 +619,12 @@ const boostBenefits: Record<string, { where: string; benefit: string; tip: strin
 };
 
 const PlanCard = ({ plan, onSelect, activeUntil }: { plan: SponsorshipPlan; onSelect: (plan: SponsorshipPlan) => void; activeUntil?: string }) => {
+  const now = useNow();
   const [isExpanded, setIsExpanded] = useState(false);
   const benefits = boostBenefits[plan.type];
   const isActive = !!activeUntil;
   const daysLeft = activeUntil
-    ? Math.max(0, Math.ceil((new Date(activeUntil).getTime() - Date.now()) / 86400000))
+    ? Math.max(0, Math.ceil((new Date(activeUntil).getTime() - now) / 86400000))
     : 0;
 
   return (
@@ -733,7 +736,8 @@ const SponsorshipCard = ({
   sponsorship: SponsoredListing;
   isPast?: boolean;
 }) => {
-  const daysLeft = Math.max(0, Math.ceil((new Date(sponsorship.endsAt).getTime() - Date.now()) / 86400000));
+  const now = useNow();
+  const daysLeft = Math.max(0, Math.ceil((new Date(sponsorship.endsAt).getTime() - now) / 86400000));
   const spent = Number(sponsorship.spentAmount ?? 0);
   const budget = Number(sponsorship.budgetAmount ?? 0);
   const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;

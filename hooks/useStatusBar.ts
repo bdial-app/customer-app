@@ -1,6 +1,10 @@
 "use client";
 import { useEffect } from "react";
 
+type CapacitorWindow = Window & {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
+
 /**
  * Manages StatusBar appearance on native platforms.
  * Adapts to dark/light mode. On web, this is a no-op.
@@ -8,7 +12,7 @@ import { useEffect } from "react";
 export function useStatusBar() {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!(window as any).Capacitor?.isNativePlatform?.()) return;
+    if (!(window as CapacitorWindow).Capacitor?.isNativePlatform?.()) return;
 
     const applyStatusBar = async () => {
       const { StatusBar, Style } = await import("@capacitor/status-bar");

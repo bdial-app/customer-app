@@ -61,7 +61,7 @@ export default function PrivacyPolicyPage() {
           B. Identity Documents (Optional — Business Owners Only)
         </p>
         <p className="text-xs">
-          To receive the 'Verified' badge, business owners may voluntarily
+          To receive the &apos;Verified&apos; badge, business owners may voluntarily
           submit an Aadhaar Card, PAN Card, or Ejmaat Card. Submission is
           entirely optional. These documents are stored in an encrypted,
           access-controlled Supabase Storage bucket separate from all other
@@ -209,7 +209,7 @@ export default function PrivacyPolicyPage() {
         </h4>
         <p className="text-xs">
           We will notify you of material changes via in-app notification and
-          update the 'Last Updated' date. Continued use after changes
+          update the &apos;Last Updated&apos; date. Continued use after changes
           constitutes acceptance.
         </p>
 

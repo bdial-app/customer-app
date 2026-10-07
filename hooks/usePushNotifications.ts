@@ -53,7 +53,7 @@ export function usePushNotifications() {
         const mapped = status === "granted" ? "granted"
           : status === "denied" ? "denied"
           : "default";
-        dispatch(setPermissionStatus(mapped as any));
+        dispatch(setPermissionStatus(mapped));
         return;
       }
 
@@ -67,7 +67,7 @@ export function usePushNotifications() {
         dispatch(setPermissionStatus("unsupported"));
         return;
       }
-      dispatch(setPermissionStatus(getPermissionStatus() as any));
+      dispatch(setPermissionStatus(getPermissionStatus()));
     })();
   }, [dispatch, isNative]);
 
@@ -215,7 +215,7 @@ export function usePushNotifications() {
     }
 
     setPushError(result.error);
-    dispatch(setPermissionStatus(getPermissionStatus() as any));
+    dispatch(setPermissionStatus(getPermissionStatus()));
     return false;
   }, [dispatch, isNative]);
 
@@ -253,7 +253,7 @@ function detectPlatform(): "web" | "android" | "ios" {
   return "web";
 }
 
-function getDeviceInfo(): Record<string, any> {
+function getDeviceInfo(): Record<string, unknown> {
   if (typeof navigator === "undefined") return {};
   return {
     userAgent: navigator.userAgent,

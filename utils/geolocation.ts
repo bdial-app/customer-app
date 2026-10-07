@@ -18,10 +18,16 @@ export const LOCATION_SERVICES_DISABLED = "LOCATION_SERVICES_DISABLED";
 export const LOCATION_TIMEOUT = "LOCATION_TIMEOUT";
 export const LOCATION_UNAVAILABLE = "LOCATION_UNAVAILABLE";
 
-function makeGeoError(message: string, code: string): Error {
-  const err = new Error(message);
-  (err as any).code = code;
-  return err;
+function makeGeoError(message: string, code: string): Error & { code: string } {
+  return Object.assign(new Error(message), { code });
+}
+
+/** Lower-cased `message` of a thrown value, or "" when it has none. */
+function lowerErrorMessage(e: unknown): string {
+  if (typeof e === "object" && e !== null && "message" in e && typeof e.message === "string") {
+    return e.message.toLowerCase();
+  }
+  return "";
 }
 
 /**
@@ -46,9 +52,9 @@ async function getNativePosition(options?: GeoOptions): Promise<GeoPosition> {
     permStatus = await Geolocation.requestPermissions({
       permissions: ["location", "coarseLocation"],
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Capacitor throws when system location services (GPS) are disabled
-    const msg = e?.message?.toLowerCase?.() || "";
+    const msg = lowerErrorMessage(e);
     if (
       msg.includes("location service") ||
       msg.includes("location disabled") ||
@@ -89,7 +95,7 @@ async function getNativePosition(options?: GeoOptions): Promise<GeoPosition> {
       maximumAge: options?.maximumAge ?? 30000,
     });
     return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-  } catch (e: any) {
+  } catch (e: unknown) {
     // If high accuracy failed (GPS timeout), retry with low accuracy (network-based)
     if (highAccuracy) {
       try {
@@ -104,7 +110,7 @@ async function getNativePosition(options?: GeoOptions): Promise<GeoPosition> {
       }
     }
 
-    const msg = e?.message?.toLowerCase?.() || "";
+    const msg = lowerErrorMessage(e);
     if (msg.includes("timeout")) {
       throw makeGeoError(
         "Location request timed out. Please try again in an open area.",
@@ -166,8 +172,13 @@ export async function requestLocationOrPrompt(
 ): Promise<GeoPosition> {
   try {
     return await getCurrentPosition(options);
-  } catch (err: any) {
-    if (err?.code === LOCATION_PERMISSION_DENIED) {
+  } catch (err: unknown) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      err.code === LOCATION_PERMISSION_DENIED
+    ) {
       const { showLocationDeniedSheet } = await import(
         "@/hooks/useLocationDeniedSheet"
       );

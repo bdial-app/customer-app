@@ -21,7 +21,7 @@ export interface NotificationItem {
   title: string;
   body: string;
   imageUrl: string | null;
-  data: Record<string, any> | null;
+  data: Record<string, unknown> | null;
   isRead: boolean;
   readAt: string | null;
   sentAt: string | null;
@@ -67,7 +67,7 @@ export async function getNotifications(
   status?: "all" | "read" | "unread",
   targetMode?: "customer" | "provider",
 ): Promise<PaginatedResponse<NotificationItem>> {
-  const params: Record<string, any> = { page, limit };
+  const params: Record<string, string | number> = { page, limit };
   if (type) params.type = type;
   if (status && status !== "all") params.status = status;
   if (targetMode) params.targetMode = targetMode;
@@ -76,7 +76,7 @@ export async function getNotifications(
 }
 
 export async function getUnreadCount(targetMode?: "customer" | "provider"): Promise<{ count: number }> {
-  const params: Record<string, any> = {};
+  const params: Record<string, string> = {};
   if (targetMode) params.targetMode = targetMode;
   const { data } = await apiClient.get(NOTIFICATION_URLS.UNREAD_COUNT, { params });
   return data;
@@ -87,7 +87,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
 }
 
 export async function markAllAsRead(targetMode?: "customer" | "provider"): Promise<{ updated: number }> {
-  const params: Record<string, any> = {};
+  const params: Record<string, string> = {};
   if (targetMode) params.targetMode = targetMode;
   const { data } = await apiClient.patch(NOTIFICATION_URLS.MARK_ALL_READ, null, { params });
   return data;
@@ -112,7 +112,7 @@ export async function updatePreferences(
 export async function registerDevice(
   token: string,
   platform: "web" | "android" | "ios" = "web",
-  deviceInfo?: Record<string, any>
+  deviceInfo?: Record<string, unknown>
 ): Promise<void> {
   await apiClient.post(NOTIFICATION_URLS.REGISTER_DEVICE, {
     token,

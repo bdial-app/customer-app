@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useCallback, memo } from "react";
 import { getOptimizedImageUrl, IMAGE_SIZES } from "@/utils/image-optimization";
 
 export type ImagePreset = keyof typeof IMAGE_SIZES | "none";
@@ -38,13 +38,11 @@ const OptimizedImage = memo(function OptimizedImage({
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
 
-  // If image is already cached by browser, mark loaded immediately
-  useEffect(() => {
-    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
-      setLoaded(true);
-    }
+  // A cached image can finish before React attaches onLoad, so check on
+  // attach. A ref callback runs at commit, without an effect.
+  const imgRef = useCallback((el: HTMLImageElement | null) => {
+    if (el?.complete && el.naturalWidth > 0) setLoaded(true);
   }, []);
 
   if (error || !src) {

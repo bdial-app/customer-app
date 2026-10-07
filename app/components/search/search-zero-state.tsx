@@ -33,7 +33,7 @@ interface Props {
 const SearchZeroState = ({ onRecentTap, onTrendingTap, onCategoryTap }: Props) => {
   const dispatch = useAppDispatch();
   const recentLocal = useAppSelector((s) => s.search.recentSearchesLocal);
-  const user = useAppSelector((s) => s.auth.user as any);
+  const user = useAppSelector((s) => s.auth.user);
 
   const { data: trending = [] } = useTrendingSearches(user?.city);
   const { data: categoriesData } = useTopLevelCategories();
@@ -147,7 +147,7 @@ const SearchZeroState = ({ onRecentTap, onTrendingTap, onCategoryTap }: Props) =
             </h3>
           </div>
           <div className="grid grid-cols-4 gap-2 px-4">
-            {(categories as any[]).slice(0, 8).map((cat: any, i: number) => {
+            {categories.slice(0, 8).map((cat, i: number) => {
               return (
                 <motion.button
                   key={cat.id}

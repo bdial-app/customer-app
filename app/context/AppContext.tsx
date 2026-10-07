@@ -1,5 +1,6 @@
 "use client";
-import { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useCallback, ReactNode } from "react";
+import { useIsClient } from "@/hooks/useIsClient";
 import { updateUser } from "@/services/user.service";
 import { getItemSync, setItemSync, removeItemSync } from "@/utils/storage";
 
@@ -83,19 +84,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try { return getItemSync(PROVIDER_STATUS_KEY) != null; } catch { return false; }
   });
   const lastToggleRef = useRef(0);
-  const hydratedRef = useRef(false);
 
   const setProviderStatus = useCallback((status: ProviderStatus) => {
     _setProviderStatus(status);
     try { setItemSync(PROVIDER_STATUS_KEY, status); } catch {}
   }, []);
 
-  // Hydrate from localStorage on mount (avoids SSR mismatch)
-  useEffect(() => {
-    const stored = readStoredMode();
-    if (stored === "provider") _setUserMode("provider");
-    hydratedRef.current = true;
-  }, []);
+  // Restore the saved mode once on the client. Hydration still renders the
+  // default (matching the pre-rendered HTML); the first client render after
+  // that reads storage and adjusts, without an effect.
+  const isClient = useIsClient();
+  const [restoredMode, setRestoredMode] = useState(false);
+  if (isClient && !restoredMode) {
+    setRestoredMode(true);
+    if (readStoredMode() === "provider") _setUserMode("provider");
+  }
 
   const setUserMode = useCallback((mode: UserMode) => {
     _setUserMode(mode);

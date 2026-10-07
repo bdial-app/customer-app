@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { IonIcon } from "@ionic/react";
 import { logoLinkedin, checkmarkCircle, closeCircle } from "ionicons/icons";
 
@@ -23,7 +23,7 @@ function normalizeLinkedIn(raw: string): string {
   if (!trimmed) return "";
 
   // Strip full URL prefix variations
-  let path = trimmed
+  const path = trimmed
     .replace(/^https?:\/\/(www\.)?linkedin\.com\/?/, "")
     .replace(/^(www\.)?linkedin\.com\/?/, "")
     .replace(/\/+$/, "") // trailing slashes
@@ -54,12 +54,12 @@ export default function LinkedInInput({ value, onChange, error, touched }: Linke
   const [displayValue, setDisplayValue] = useState<string>(value || "");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync from external value changes
-  useEffect(() => {
-    if (value && !displayValue) {
-      setDisplayValue(value);
-    }
-  }, [value]);
+  // Sync from external value changes (adjusted during render, not in an effect)
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (value && !displayValue) setDisplayValue(value);
+  }
 
   const handleChange = (raw: string) => {
     setDisplayValue(raw);

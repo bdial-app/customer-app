@@ -20,7 +20,7 @@ export const useMyWarnings = () => {
     queryFn: getMyWarnings,
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 5,
-    placeholderData: (prev: any) => prev,
+    placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
   });
 };
