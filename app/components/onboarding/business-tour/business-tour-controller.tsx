@@ -1,4 +1,5 @@
 "use client";
+import { useStorageReady } from "@/hooks/useStorageReady";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useMyProvider } from "@/hooks/useMyProvider";
@@ -59,6 +60,8 @@ export default function BusinessTourController({ active, goToTab, openBusinessSu
 
   const [running, setRunning] = useState<TourChapter[] | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const storageReady = useStorageReady();
 
   const startFull = useCallback(() => {
     setPickerOpen(false);
@@ -78,15 +81,22 @@ export default function BusinessTourController({ active, goToTab, openBusinessSu
 
   // First time this owner opens the business side on this device — new sign-ups,
   // bulk-imported businesses and long-time owners alike — offer the tour once.
+  // An offer, not a takeover: the menu opens with "Not now", and it counts as
+  // offered the moment it appears, so quitting mid-tour never brings it back.
+  // Waits for saved settings to be restored (a cleared WebView reads "never").
   useEffect(() => {
-    if (!active || !userId || !provider || running) return;
+    if (!storageReady || !active || !userId || !provider || running || pickerOpen) return;
     if (progress.dismissed || (progress.chapters?.length ?? 0) > 0) return;
     // Never stack on top of the first-run welcome tour.
     if (!hasSeenWelcomeTour()) return;
-    // Let the dashboard settle so the first spotlight lands on real content.
-    const t = setTimeout(startFull, 1200);
+    // Let the dashboard settle first.
+    const t = setTimeout(() => {
+      recordBusinessTour(userId, [], true);
+      setInviting(true);
+      setPickerOpen(true);
+    }, 1200);
     return () => clearTimeout(t);
-  }, [active, userId, provider, running, progress, startFull]);
+  }, [storageReady, active, userId, provider, running, pickerOpen, progress]);
 
   // The ? button (or anything else) asks to open the tour.
   useEffect(
@@ -94,7 +104,10 @@ export default function BusinessTourController({ active, goToTab, openBusinessSu
       onOpenBusinessTour((chapterId) => {
         if (chapterId === "all") startFull();
         else if (chapterId) startChapter(chapterId);
-        else setPickerOpen(true);
+        else {
+          setInviting(false);
+          setPickerOpen(true);
+        }
       }),
     [startFull, startChapter],
   );
@@ -127,13 +140,24 @@ export default function BusinessTourController({ active, goToTab, openBusinessSu
 
       <TourPicker
         opened={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => {
+          setPickerOpen(false);
+          setInviting(false);
+        }}
         chapters={allChapters}
         done={done}
         onStartAll={startFull}
         onStartChapter={startChapter}
         fullTourBlurb="Home, Business, Analytics and Chats, start to finish"
         gradient="linear-gradient(135deg, #4F46E5, #7C3AED 55%, #DB2777)"
+        invite={
+          inviting
+            ? {
+                title: ctx.businessName ? `Welcome to your business side${ctx.firstName ? `, ${ctx.firstName}` : ""}` : "Welcome to your business side",
+                body: "A short guided walk through managing your shop. Take it all, pick one part, or skip — it won't ask again.",
+              }
+            : undefined
+        }
       />
     </>
   );

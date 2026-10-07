@@ -56,6 +56,7 @@ import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
+import AddCatalogueCard from "./manage/add-catalogue-card";
 import PullToRefresh from "../pull-to-refresh";
 import PageSplashScreen from "../page-splash-screen";
 import { useNow } from "@/hooks/useNow";
@@ -1528,6 +1529,14 @@ const ProviderDashboard = ({
         onConnectGoogle={canLinkGoogle ? revealGoogleLinkCard : undefined}
       />
       <ProviderQuickStats stats={providerStats} />
+      {/* Building the catalogue is the most useful thing an owner can do here */}
+      {providerId && (
+        <AddCatalogueCard
+          products={providerStats.products}
+          onAdd={(type) => handleNavigate(`products:add:${type}`)}
+          onManage={() => handleNavigate("products")}
+        />
+      )}
       {showWarningBanner && (
         <WarningsBanner
           unreadCount={unreadWarningCount}

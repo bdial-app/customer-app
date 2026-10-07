@@ -1,3 +1,4 @@
+import type { ProviderDetailsProduct } from "@/services/provider.service";
 import apiClient from "@/utils/axios";
 import { PRODUCT_URLS } from "@/utils/urls";
 
@@ -107,6 +108,12 @@ export const createProduct = async (payload: CreateProductPayload): Promise<Prod
   return data;
 };
 
+/** The owner's whole catalogue, hidden items included. */
+export const getMyProducts = async (): Promise<ProviderDetailsProduct[]> => {
+  const { data } = await apiClient.get(PRODUCT_URLS.MINE);
+  return Array.isArray(data) ? data : [];
+};
+
 export const updateProduct = async (id: string, payload: UpdateProductPayload): Promise<ProductDetail> => {
   const { data } = await apiClient.patch(PRODUCT_URLS.UPDATE(id), payload);
   return data;
@@ -119,8 +126,8 @@ export const deleteProduct = async (id: string): Promise<void> => {
 export const uploadProductImage = async (
   file: File,
 ): Promise<{ url: string; storageKey: string }> => {
-  const { compressImageFile, COMPRESS_PRESETS } = await import("@/utils/compress-image");
-  const compressed = await compressImageFile(file, COMPRESS_PRESETS.product);
+  const { optimizeImage } = await import("@/utils/compress-image");
+  const compressed = await optimizeImage(file, "product");
   const formData = new FormData();
   formData.append("file", compressed);
   const { data } = await apiClient.post(PRODUCT_URLS.UPLOAD_IMAGE, formData, {

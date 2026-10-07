@@ -176,17 +176,6 @@ const ProviderSponsorTab = () => {
 
   return (
     <div className="px-4 space-y-6 pb-8">
-      {/* Header */}
-      <div className="text-center pt-2">
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-700 dark:text-amber-400 px-4 py-1.5 rounded-full text-xs font-semibold border border-amber-100 dark:border-amber-800">
-          <IonIcon icon={rocketOutline} className="text-sm" />
-          Boost Your Visibility
-        </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-          Get more customers by sponsoring your listing
-        </p>
-      </div>
-
       {/* ═══ BOOST ANALYTICS DASHBOARD ═══ */}
       {activeSponsorships.length > 0 && (
         <BoostAnalyticsDashboard sponsorships={activeSponsorships} />

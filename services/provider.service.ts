@@ -349,13 +349,14 @@ export const becomeProvider = async (
   verification: ProviderVerification | null;
   products: ProviderDetailsProduct[];
 }> => {
-  const { compressImageFile, compressImageFiles, COMPRESS_PRESETS } = await import("@/utils/compress-image");
+  const { optimizeImage, optimizeImages } = await import("@/utils/compress-image");
 
   // Compress images before building FormData
-  const [compressedBanner, compressedProfile, compressedProductImages] = await Promise.all([
-    payload.bannerImage ? compressImageFile(payload.bannerImage, COMPRESS_PRESETS.profile) : Promise.resolve(undefined),
-    payload.profileImage ? compressImageFile(payload.profileImage, COMPRESS_PRESETS.profile) : Promise.resolve(undefined),
-    payload.productImages?.length ? compressImageFiles(payload.productImages, COMPRESS_PRESETS.product) : Promise.resolve([]),
+  const [compressedBanner, compressedProfile, compressedProductImages, compressedDoc] = await Promise.all([
+    payload.bannerImage ? optimizeImage(payload.bannerImage, "banner") : Promise.resolve(undefined),
+    payload.profileImage ? optimizeImage(payload.profileImage, "avatar") : Promise.resolve(undefined),
+    payload.productImages?.length ? optimizeImages(payload.productImages, "product") : Promise.resolve([]),
+    payload.aadhaarFile ? optimizeImage(payload.aadhaarFile, "document") : Promise.resolve(undefined),
   ]);
 
   const formData = new FormData();
@@ -376,7 +377,7 @@ export const becomeProvider = async (
   if (payload.ijamatExpiry) formData.append("ijamatExpiry", payload.ijamatExpiry);
   if (payload.ijamatDocUrl) formData.append("ijamatDocUrl", payload.ijamatDocUrl);
   if (payload.isWomenLed != null) formData.append("isWomenLed", String(payload.isWomenLed));
-  if (payload.aadhaarFile) formData.append("file", payload.aadhaarFile);
+  if (compressedDoc) formData.append("file", compressedDoc);
   if (compressedBanner) formData.append("bannerImage", compressedBanner);
   if (compressedProfile) formData.append("profileImage", compressedProfile);
   if (payload.bannerImageUrl) formData.append("bannerImageUrl", payload.bannerImageUrl);
@@ -468,8 +469,9 @@ export const submitVerification = async (
   file: File,
   docType?: string,
 ): Promise<ProviderVerification> => {
+  const { optimizeImage } = await import("@/utils/compress-image");
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", await optimizeImage(file, "document"));
   if (docType) formData.append("docType", docType);
 
   const { data } = await apiClient.post(PROVIDER_URLS.SUBMIT_VERIFICATION, formData, {

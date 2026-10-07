@@ -4,6 +4,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  getMyProducts,
   ProductDetailsResponse,
   CreateProductPayload,
   UpdateProductPayload,
@@ -19,7 +20,14 @@ export const useProduct = (id: string) => {
 };
 
 /** Invalidate both provider-status and provider-details so the products list refreshes */
+export const MY_PRODUCTS_KEY = ["my-products"];
+
+/** The owner's catalogue, hidden items included (the public page hides them). */
+export const useMyProducts = (enabled = true) =>
+  useQuery({ queryKey: MY_PRODUCTS_KEY, queryFn: getMyProducts, enabled });
+
 const invalidateProductQueries = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: MY_PRODUCTS_KEY });
   qc.invalidateQueries({ queryKey: PROVIDER_STATUS_KEY });
   qc.invalidateQueries({ queryKey: ["provider-details"] });
 };

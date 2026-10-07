@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, arrowForward, compass, storefront } from "ionicons/icons";
 import { hasSeenWelcomeTour, markWelcomeTourSeen, subscribeWelcomeTour } from "@/utils/welcome-tour";
+import { useStorageReady } from "@/hooks/useStorageReady";
 import { FindVisual, TrustVisual, ConnectVisual } from "./tour-visuals";
 import {
   ClosedCircleVisual, AlwaysOpenVisual, AnswersVisual, VouchVisual,
@@ -105,13 +106,17 @@ export default function WelcomeTour() {
   const [direction, setDirection] = useState(1);
   const router = useRouter();
   const pathname = usePathname();
+  // On the phone, wait until saved settings are restored, or a cleared
+  // WebView reads "never seen" and the slides open on every launch.
+  const storageReady = useStorageReady();
 
   // Decided after mount: storage is not readable while rendering on the server.
   useEffect(() => {
+    if (!storageReady) return;
     const decide = () => setOpen(!hasSeenWelcomeTour() && pathname === "/");
     decide();
     return subscribeWelcomeTour(decide);
-  }, [pathname]);
+  }, [pathname, storageReady]);
 
   const finish = useCallback(
     (next?: string) => {

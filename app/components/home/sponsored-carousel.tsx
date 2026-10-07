@@ -5,8 +5,8 @@ const IonIcon = dynamic(
   () => import("@ionic/react").then((m) => m.IonIcon),
   { ssr: false }
 );
+import { Crown } from "lucide-react";
 import {
-  sparklesOutline,
   star,
   locationOutline,
   shieldCheckmarkOutline,
@@ -80,31 +80,26 @@ const SponsoredCarousel = ({
   if (!isLoading && (!Array.isArray(providers) || providers.length === 0)) return null;
 
   return (
-    <div className="mb-2">
-      {/* Section Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-            <IonIcon icon={sparklesOutline} className="w-3 h-3 text-white" />
-          </div>
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
-            Featured Businesses
-          </h2>
+    <section className="mb-2" aria-label="Featured businesses">
+      {/* Section header: these are paid placements, so say so plainly. */}
+      <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
+        <span className="relative w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-amber-300 via-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/30 ring-1 ring-inset ring-white/40">
+          <Crown className="w-[18px] h-[18px] text-white" strokeWidth={2.3} fill="currentColor" fillOpacity={0.3} />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">Featured Businesses</h2>
+          <p className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">Promoted by businesses near you</p>
         </div>
       </div>
 
-      {/* Skeleton Loading */}
       {isLoading ? (
-        <div className="flex gap-3 overflow-hidden pl-4 pr-4 pb-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="shrink-0 w-[220px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-amber-100 dark:border-amber-900/40 animate-pulse"
-            >
-              <div className="h-[130px] bg-slate-200 dark:bg-slate-700" />
-              <div className="p-3 space-y-2">
+        <div className="flex gap-3 overflow-hidden px-4 pb-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="shrink-0 w-[74%] max-w-[280px] rounded-[20px] overflow-hidden bg-white dark:bg-slate-800 ring-1 ring-amber-200/70 dark:ring-amber-500/20 animate-pulse">
+              <div className="h-[140px] bg-slate-200 dark:bg-slate-700" />
+              <div className="p-3.5 space-y-2">
                 <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-full w-4/5" />
-                <div className="h-3 bg-amber-100 dark:bg-amber-900/30 rounded-full w-3/5" />
+                <div className="h-3 bg-amber-100 dark:bg-amber-900/30 rounded-full w-2/5" />
                 <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full w-full" />
                 <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-md" />
               </div>
@@ -112,136 +107,115 @@ const SponsoredCarousel = ({
           ))}
         </div>
       ) : (
-        <div className="relative">
-        {/* Scroll hint gradient */}
-        <div className="absolute right-0 top-0 bottom-3 w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none rounded-r-2xl" />
+        // The next card peeks in from the edge, so it's clear the row scrolls.
         <div
           ref={listRef}
-          className="flex gap-3 overflow-x-auto no-scrollbar pl-4 pr-4 pb-3"
+          className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-4 snap-x snap-mandatory scroll-px-4"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {providers.map((provider, i) => (
-            <div
-              key={provider.sponsoredListingId}
-              data-track-id={provider.sponsoredListingId}
-              onClick={() => handleClick(provider)}
-              className="shrink-0 w-[220px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.96] transition-transform duration-150 shadow-[0_2px_12px_rgba(245,158,11,0.08)] border border-amber-100/60 dark:border-amber-900/30"
-            >
-              {/* Image */}
-              <div className="relative h-[130px] overflow-hidden bg-gradient-to-br from-amber-50 to-slate-100 dark:from-slate-700 dark:to-slate-800">
-                {provider.image ? (
-                  <OptimizedImage
-                    src={provider.image}
-                    alt={provider.name}
-                    className="w-full h-full"
-                    width={220}
-                    height={130}
-                    priority={i < 3}
-                    preset="card"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-950/30 dark:to-slate-800">
-                    <span className="text-4xl font-bold text-amber-300/60 dark:text-amber-700/60">
-                      {provider.name?.charAt(0)?.toUpperCase()}
-                    </span>
-                  </div>
-                )}
+          {providers.map((provider, i) => {
+            const distance = formatDistance(provider);
+            return (
+              <button
+                type="button"
+                key={provider.sponsoredListingId}
+                data-track-id={provider.sponsoredListingId}
+                onClick={() => handleClick(provider)}
+                className="snap-start shrink-0 w-[74%] max-w-[280px] text-left rounded-[20px] p-[1.5px] bg-gradient-to-br from-amber-300 via-amber-200 to-orange-300 dark:from-amber-400/70 dark:via-amber-500/15 dark:to-amber-400/40 shadow-[0_10px_24px_-16px_rgba(217,119,6,0.55)] active:scale-[0.97] transition-transform duration-150"
+              >
+                <div className="h-full rounded-[18.5px] overflow-hidden bg-white dark:bg-slate-800 flex flex-col">
+                  {/* Image */}
+                  <div className="relative h-[140px] shrink-0 overflow-hidden bg-gradient-to-br from-amber-50 to-slate-100 dark:from-slate-700 dark:to-slate-800">
+                    {provider.image ? (
+                      <OptimizedImage
+                        src={provider.image}
+                        alt={provider.name}
+                        className="w-full h-full"
+                        width={280}
+                        height={140}
+                        priority={i < 2}
+                        preset="card"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-950/40 dark:to-slate-800">
+                        <span className="text-5xl font-extrabold text-amber-400/70 dark:text-amber-600/60">
+                          {provider.name?.charAt(0)?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
 
-                {/* Gradient overlay for readability */}
-                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/45 to-transparent" />
 
-                {/* Top badges */}
-                <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
-                  {/* Featured badge — glass style */}
-                  <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-white text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-md">
-                    <IonIcon icon={sparklesOutline} className="w-2.5 h-2.5" />
-                    Featured
-                  </div>
-
-                  {/* Verified badge */}
-                  {provider.verified && (
-                    <div className="bg-white/95 backdrop-blur-sm text-emerald-600 text-[9px] font-bold px-1.5 py-1 rounded-lg flex items-center gap-0.5 shadow-sm">
-                      <IonIcon icon={shieldCheckmarkOutline} className="w-3 h-3" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom badges */}
-                <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
-                  {/* Distance pill */}
-                  {formatDistance(provider) && (
-                    <div className="bg-white/95 backdrop-blur-sm text-slate-700 dark:text-slate-800 text-[9px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm">
-                      <IonIcon icon={navigateOutline} className="w-2.5 h-2.5 text-amber-500" />
-                      {formatDistance(provider)}
-                    </div>
-                  )}
-
-                  {/* Has Active Deals badge */}
-                  {provider.hasActiveOffer && (
-                    <div className="bg-rose-500/95 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm">
-                      <IonIcon icon={pricetagOutline} className="w-2.5 h-2.5" />
-                      Deals
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="p-3">
-                <h4 className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight line-clamp-1">
-                  {provider.name}
-                </h4>
-
-                {/* Category */}
-                {provider.primaryCategory && (
-                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 line-clamp-1">
-                    {provider.primaryCategory}
-                  </p>
-                )}
-
-                {/* Description snippet */}
-                {provider.description && (
-                  <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                    {provider.description}
-                  </p>
-                )}
-
-                {/* Rating + Reviews */}
-                <div className="flex items-center gap-1.5 mt-2">
-                  {provider.rating > 0 ? (
-                    <div className="flex items-center gap-0.5 bg-emerald-600 px-1.5 py-0.5 rounded-md">
-                      <IonIcon icon={star} className="w-2.5 h-2.5 text-white" />
-                      <span className="text-[10px] font-bold text-white">
-                        {provider.rating.toFixed(1)}
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between">
+                      <span className="inline-flex items-center gap-1 pl-1.5 pr-2 py-[3px] rounded-full bg-slate-950/60 backdrop-blur-md text-amber-300 text-[10.5px] font-bold ring-1 ring-amber-300/40">
+                        <Crown className="w-3 h-3" strokeWidth={2.4} fill="currentColor" fillOpacity={0.35} />
+                        Featured
                       </span>
+                      {provider.verified && (
+                        <span className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-sm" aria-label="Verified">
+                          <IonIcon icon={shieldCheckmarkOutline} className="w-3.5 h-3.5 text-emerald-600" />
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">
-                      <IonIcon icon={star} className="w-2.5 h-2.5 text-slate-400" />
-                      <span className="text-[10px] font-medium text-slate-400">New</span>
-                    </div>
-                  )}
-                  {provider.reviewCount > 0 && (
-                    <span className="text-[9px] text-slate-400 font-medium">
-                      {provider.reviewCount} review{provider.reviewCount !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
 
-                {/* Location row */}
-                {provider.location && (
-                  <div className="flex items-center gap-1 mt-1.5 text-[9px] text-slate-400">
-                    <IonIcon icon={locationOutline} className="w-2.5 h-2.5 shrink-0" />
-                    <span className="truncate font-medium">{provider.location}</span>
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-end justify-between gap-2">
+                      {distance && (
+                        <span className="inline-flex items-center gap-1 bg-white/95 text-slate-700 text-[10.5px] font-semibold px-2 py-[3px] rounded-full shadow-sm">
+                          <IonIcon icon={navigateOutline} className="w-3 h-3 text-amber-500" />
+                          {distance}
+                        </span>
+                      )}
+                      {provider.hasActiveOffer && (
+                        <span className="ml-auto inline-flex items-center gap-1 bg-rose-500 text-white text-[10.5px] font-bold px-2 py-[3px] rounded-full shadow-sm">
+                          <IonIcon icon={pricetagOutline} className="w-3 h-3" />
+                          Deals
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+
+                  {/* Info: rating and place line up at the bottom of every card */}
+                  <div className="flex-1 flex flex-col p-3.5">
+                    <h3 className="text-[14.5px] font-bold text-slate-900 dark:text-white leading-snug line-clamp-1">{provider.name}</h3>
+                    {provider.primaryCategory && (
+                      <p className="text-[11.5px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5 line-clamp-1">{provider.primaryCategory}</p>
+                    )}
+                    {provider.description && (
+                      <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2 leading-snug">{provider.description}</p>
+                    )}
+
+                    <div className="mt-auto pt-3 flex items-center gap-2 min-w-0">
+                      {provider.rating > 0 ? (
+                        <span className="inline-flex items-center gap-0.5 bg-emerald-600 text-white px-1.5 py-0.5 rounded-md text-[11px] font-bold shrink-0">
+                          <IonIcon icon={star} className="w-3 h-3" />
+                          {provider.rating.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-md text-[11px] font-bold shrink-0">
+                          <IonIcon icon={star} className="w-3 h-3" />
+                          New
+                        </span>
+                      )}
+                      {provider.reviewCount > 0 && (
+                        <span className="text-[11px] text-slate-400 font-medium shrink-0">
+                          {provider.reviewCount} review{provider.reviewCount !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {provider.location && (
+                        <span className="ml-auto inline-flex items-center gap-0.5 text-[11px] text-slate-400 min-w-0">
+                          <IonIcon icon={locationOutline} className="w-3 h-3 shrink-0" />
+                          <span className="truncate font-medium">{provider.location}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
