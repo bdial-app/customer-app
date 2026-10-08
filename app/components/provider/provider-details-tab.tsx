@@ -33,7 +33,7 @@ import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import { reverseGeocode, searchGeocode } from "@/services/geocode.service";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useNotification } from "@/app/context/NotificationContext";
-import { Card, GroupLabel, HowItWorks, ManagePage, ManageSheet, Pill, PrimaryButton, SectionHeader } from "./manage/kit";
+import { Card, GroupLabel, ManagePage, ManageSheet, Pill, PrimaryButton, SectionHeader } from "./manage/kit";
 import { BoostNudge } from "./manage/boost";
 import {
   AvailabilityCard,
@@ -381,17 +381,6 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       <SectionHeader
         title="Your shop profile"
         subtitle="This is what customers see when they open your shop. A complete profile gets more calls."
-      />
-
-      <HowItWorks
-        id="details"
-        title="How this page works"
-        steps={[
-          "Add your logo and a cover photo — they’re the first thing customers notice.",
-          "Tap any card below to change it. Changes go live as soon as you tap Save.",
-          "Pin your shop on the map and add your hours so people can find and visit you.",
-          "Going away? Switch off “Open for business” and customers will see you as closed.",
-        ]}
       />
 
       <GroupLabel>How customers see you</GroupLabel>

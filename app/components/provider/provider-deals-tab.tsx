@@ -33,7 +33,6 @@ import {
   ManagePage,
   SectionHeader,
   Card,
-  HowItWorks,
   EmptyState,
   PrimaryButton,
   StickyActionBar,
@@ -212,16 +211,6 @@ const ProviderDealsTab = () => {
       <SectionHeader
         title="Offers"
         subtitle="Offers show on your page and in the app's Deals section — a simple way to win new customers."
-      />
-      <HowItWorks
-        id="offers"
-        title="How offers work"
-        steps={[
-          <>Tap <b>Create an offer</b> and give it a short title, like &ldquo;20% off your first visit&rdquo;.</>,
-          <>Choose the discount — a percentage (%) or a fixed amount (₹).</>,
-          <>Pick the start and end dates. It goes live on the start date and ends on its own.</>,
-          <>Customers see it on your page and in Deals. Edit or delete it any time.</>,
-        ]}
       />
     </>
   );

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, arrowForward, compass, storefront } from "ionicons/icons";
-import { hasSeenWelcomeTour, markWelcomeTourSeen, subscribeWelcomeTour } from "@/utils/welcome-tour";
+import { hasSeenWelcomeTour, markWelcomeTourSeen, setWelcomeTourShowing, subscribeWelcomeTour } from "@/utils/welcome-tour";
 import { useStorageReady } from "@/hooks/useStorageReady";
 import { FindVisual, TrustVisual, ConnectVisual } from "./tour-visuals";
 import {
@@ -113,14 +113,31 @@ export default function WelcomeTour() {
   // Decided after mount: storage is not readable while rendering on the server.
   useEffect(() => {
     if (!storageReady) return;
-    const decide = () => setOpen(!hasSeenWelcomeTour() && pathname === "/");
+    const decide = () => {
+      if (hasSeenWelcomeTour() || pathname !== "/") return;
+      setOpen(true);
+      setWelcomeTourShowing(true);
+    };
     decide();
     return subscribeWelcomeTour(decide);
   }, [pathname, storageReady]);
 
+  // Once it's been on screen for a few seconds it counts as seen, so closing
+  // the app halfway through never brings it back on the next launch (an
+  // instant restart still shows it). Profile can replay it any time.
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(markWelcomeTourSeen, 4000);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // Leaving the page another way (a deep link, back) also ends it.
+  useEffect(() => () => setWelcomeTourShowing(false), []);
+
   const finish = useCallback(
     (next?: string) => {
       markWelcomeTourSeen();
+      setWelcomeTourShowing(false);
       setOpen(false);
       if (next) router.push(next);
     },
@@ -131,6 +148,7 @@ export default function WelcomeTour() {
   const isLast = index === slides.length - 1;
 
   const go = (delta: number) => {
+    markWelcomeTourSeen();
     setDirection(delta);
     setIndex((i) => Math.min(Math.max(i + delta, 0), slides.length - 1));
   };

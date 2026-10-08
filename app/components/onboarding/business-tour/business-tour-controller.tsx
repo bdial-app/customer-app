@@ -1,12 +1,10 @@
 "use client";
-import { useStorageReady } from "@/hooks/useStorageReady";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import { onOpenBusinessTour, readBusinessTour, recordBusinessTour, subscribeBusinessTour } from "@/utils/business-tour";
-import { hasSeenWelcomeTour } from "@/utils/welcome-tour";
 import SpotlightTour from "./spotlight-tour";
 import TourPicker from "./tour-picker";
 import { buildBusinessTour, buildFinale, type TourChapter, type TourStep } from "./tour-content";
@@ -61,7 +59,6 @@ export default function BusinessTourController({ active, goToTab, openBusinessSu
   const [running, setRunning] = useState<TourChapter[] | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
-  const storageReady = useStorageReady();
 
   const startFull = useCallback(() => {
     setPickerOpen(false);
@@ -79,24 +76,8 @@ export default function BusinessTourController({ active, goToTab, openBusinessSu
     [allChapters],
   );
 
-  // First time this owner opens the business side on this device — new sign-ups,
-  // bulk-imported businesses and long-time owners alike — offer the tour once.
-  // An offer, not a takeover: the menu opens with "Not now", and it counts as
-  // offered the moment it appears, so quitting mid-tour never brings it back.
-  // Waits for saved settings to be restored (a cleared WebView reads "never").
-  useEffect(() => {
-    if (!storageReady || !active || !userId || !provider || running || pickerOpen) return;
-    if (progress.dismissed || (progress.chapters?.length ?? 0) > 0) return;
-    // Never stack on top of the first-run welcome tour.
-    if (!hasSeenWelcomeTour()) return;
-    // Let the dashboard settle first.
-    const t = setTimeout(() => {
-      recordBusinessTour(userId, [], true);
-      setInviting(true);
-      setPickerOpen(true);
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [storageReady, active, userId, provider, running, pickerOpen, progress]);
+  // Never opens by itself: the dashboard shows a small tour card instead
+  // (BusinessTourInvite), and the ? button and Profile open it any time.
 
   // The ? button (or anything else) asks to open the tour.
   useEffect(

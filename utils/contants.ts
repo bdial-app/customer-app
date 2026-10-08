@@ -7,6 +7,7 @@ export const ROUTE_PATH = {
     GALLERY: "/gallery",
     PRODUCT_DETAILS: "/product-details",
     CATALOG: "/catalog",
+    COLLECTION: "/collection",
     SHOP: "/shop",
     HOME: "/",
     SEARCH: "/search",

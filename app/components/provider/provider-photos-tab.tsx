@@ -19,7 +19,7 @@ import { ProviderDetailsPhoto } from "@/services/provider.service";
 import { useUploadPhotos, useDeletePhoto } from "@/hooks/usePhotos";
 import { AppDialog } from "../app-dialog";
 import { checkPickedFile, UploadFileError } from "@/utils/compress-image";
-import { Card, EmptyState, GroupLabel, HowItWorks, ManagePage, PrimaryButton, SectionHeader, StickyActionBar } from "./manage/kit";
+import { Card, EmptyState, GroupLabel, ManagePage, PrimaryButton, SectionHeader, StickyActionBar } from "./manage/kit";
 
 const MAX_PHOTOS = 10;
 const MAX_PER_UPLOAD = 3;
@@ -109,16 +109,6 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
       <SectionHeader
         title="Photos"
         subtitle="Photos are the first thing customers look at. Real photos of your work win their trust."
-      />
-
-      <HowItWorks
-        id="photos"
-        title="How photos work"
-        steps={[
-          <>Tap <b>Add photos</b> and pick up to {MAX_PER_UPLOAD} pictures from your phone.</>,
-          "They appear on your business page for customers straight away.",
-          <>You can keep up to {MAX_PHOTOS}. Tap the bin on a photo to remove it.</>,
-        ]}
       />
 
       {/* Error message */}

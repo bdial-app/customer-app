@@ -269,3 +269,41 @@ export const getCategoryProviders = async (params: {
     : normalizeBody((await apiClient.get(HOME_URLS.CATEGORY_PROVIDERS, { params })).data);
   return Array.isArray(data) ? data : [];
 };
+
+// ─── Home collections ("What do you need today?") ──────────────────
+
+export type CollectionTheme = "amber" | "rose" | "sky" | "violet" | "emerald" | "orange" | "indigo" | "teal";
+
+export interface HomeCollection {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  theme: CollectionTheme;
+  /** Which drawing the banner shows. */
+  illustration: string;
+  imageUrl: string | null;
+  listingType: "all" | "product" | "service";
+  categoryIds: string[];
+  /** Real listing photos for the card. */
+  photos: { url: string; name: string }[];
+  itemCount: number;
+  productCount: number;
+  serviceCount: number;
+}
+
+export interface HomeCollectionDetail extends HomeCollection {
+  /** Only categories that have something in them. */
+  categories: { id: string; name: string; itemCount: number }[];
+}
+
+type Where = { lat?: number; lng?: number; city?: string };
+
+export const getHomeCollections = async (params: Where): Promise<HomeCollection[]> => {
+  const { data } = await apiClient.get(HOME_URLS.COLLECTIONS, { params });
+  return Array.isArray(data) ? data : [];
+};
+
+export const getHomeCollection = async (id: string, params: Where): Promise<HomeCollectionDetail> => {
+  const { data } = await apiClient.get(HOME_URLS.COLLECTION(id), { params });
+  return data;
+};

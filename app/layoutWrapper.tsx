@@ -37,7 +37,7 @@ import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import WelcomeTour from "./components/onboarding/welcome-tour";
 import CustomerTourController from "./components/onboarding/customer-tour/customer-tour-controller";
-import { hasSeenWelcomeTour, subscribeWelcomeTour } from "@/utils/welcome-tour";
+import { hasSeenWelcomeTour, isWelcomeTourShowing, subscribeWelcomeTour } from "@/utils/welcome-tour";
 import { useStorageReady } from "@/hooks/useStorageReady";
 import PermissionReminderBanner from "./components/permission-reminder-banner";
 import LocationDeniedSheet from "./components/location-denied-sheet";
@@ -74,7 +74,7 @@ function useTourFinished(): boolean {
   const storageReady = useStorageReady();
   useEffect(() => {
     if (!storageReady) return;
-    const read = () => setDone(hasSeenWelcomeTour());
+    const read = () => setDone(hasSeenWelcomeTour() && !isWelcomeTourShowing());
     read();
     return subscribeWelcomeTour(read);
   }, [storageReady]);

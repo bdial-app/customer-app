@@ -67,7 +67,7 @@ export const PRICE_BANDS: Record<CatalogType, { label: string; min?: number; max
 /** The filters a listing can be opened with or changed to. */
 export type CatalogFilters = Pick<
   CatalogBrowseParams,
-  "categoryId" | "sort" | "area" | "minPrice" | "maxPrice" | "minRating" | "verified" | "womenLed" | "priced" | "featured"
+  "categoryId" | "categoryIds" | "sort" | "area" | "minPrice" | "maxPrice" | "minRating" | "verified" | "womenLed" | "priced" | "featured"
 >;
 
 export const DEFAULT_FILTERS: CatalogFilters = { sort: "recommended", area: "all" };

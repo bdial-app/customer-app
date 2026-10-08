@@ -54,6 +54,7 @@ import { useCurrentSubscription } from "@/hooks/useSubscription";
 import { useWarningsUnreadCount, useMyWarnings } from "@/hooks/useWarnings";
 import ProviderWarningsSheet from "./provider-warnings-sheet";
 import { Sheet } from "@/app/components/ui/sheet";
+import { BusinessTourInvite } from "../onboarding/tour-invite-card";
 
 import GoogleReviewsLinkCard from "./google-reviews-link-card";
 import AddCatalogueCard from "./manage/add-catalogue-card";
@@ -1518,6 +1519,8 @@ const ProviderDashboard = ({
         onConnectGoogle={canLinkGoogle ? revealGoogleLinkCard : undefined}
       />
       <ProviderQuickStats stats={providerStats} />
+      {/* First few visits: a small card offering the dashboard tour (never a pop-up) */}
+      <BusinessTourInvite className="px-4 mb-4" />
       {/* Building the catalogue is the most useful thing an owner can do here */}
       {providerId && (
         <AddCatalogueCard
