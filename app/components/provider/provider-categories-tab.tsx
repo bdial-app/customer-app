@@ -23,7 +23,6 @@ import {
   Card,
   EmptyState,
   GroupLabel,
-  HowItWorks,
   ManagePage,
   ManageSheet,
   PrimaryButton,
@@ -160,16 +159,6 @@ const ProviderCategoriesTab = ({ providerId, currentCategories }: Props) => {
       <SectionHeader
         title="Categories"
         subtitle="Categories decide where customers find you when they browse or search the app."
-      />
-
-      <HowItWorks
-        id="categories"
-        title="How categories work"
-        steps={[
-          <>Pick up to {MAX_CATEGORIES} categories that match what you do.</>,
-          "Customers browsing those categories will see your business.",
-          <>Tap <b>Save changes</b> when you&apos;re done — nothing changes until you save.</>,
-        ]}
       />
 
       {/* Save feedback */}

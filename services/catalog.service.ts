@@ -73,6 +73,8 @@ export interface CatalogLocation {
 export interface CatalogBrowseParams extends CatalogLocation {
   type: CatalogType;
   categoryId?: string;
+  /** Several categories, comma-separated (a home collection). */
+  categoryIds?: string;
   sort?: CatalogSort;
   area?: CatalogArea;
   minPrice?: number;

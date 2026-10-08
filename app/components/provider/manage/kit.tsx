@@ -5,10 +5,10 @@
  * add things (an in-page action bar — never a floating button, which escaped
  * its tab and covered other screens), one bottom sheet and one set of inputs.
  */
-import { useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { type ReactNode } from "react";
+import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
-import { bulbOutline, chevronDownOutline, closeOutline } from "ionicons/icons";
+import { closeOutline } from "ionicons/icons";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { Sheet } from "@/app/components/ui/sheet";
 
@@ -77,62 +77,6 @@ export function GroupLabel({ children, action }: { children: ReactNode; action?:
     <div className="flex items-center justify-between px-1 -mb-1">
       <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{children}</p>
       {action}
-    </div>
-  );
-}
-
-// ─── Guidance ───────────────────────────────────────────────────────────
-
-/**
- * "How this works" for owners new to the app: numbered steps, dismissible,
- * and remembered per section on this device. Collapses to one line after.
- */
-export function HowItWorks({ id, title, steps }: { id: string; title: string; steps: ReactNode[] }) {
-  const key = `tijarah_manage_tip_${id}`;
-  // Owner screens render in the browser only, so localStorage is there to read.
-  const [open, setOpen] = useState(() => {
-    try {
-      return localStorage.getItem(key) !== "closed";
-    } catch {
-      return true; // storage unavailable: keep it open
-    }
-  });
-  const toggle = () => {
-    setOpen((o) => {
-      try {
-        localStorage.setItem(key, o ? "closed" : "open");
-      } catch {
-        /* ignore */
-      }
-      return !o;
-    });
-  };
-  return (
-    <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/60 dark:to-violet-950/40 ring-1 ring-indigo-100 dark:ring-indigo-900/60">
-      <button type="button" onClick={toggle} className="w-full flex items-center gap-2.5 px-4 py-3 text-left">
-        <span className="w-7 h-7 rounded-full bg-white dark:bg-indigo-900/60 flex items-center justify-center shrink-0 shadow-sm">
-          <IonIcon icon={bulbOutline} className="text-[15px] text-indigo-600 dark:text-indigo-300" />
-        </span>
-        <span className="flex-1 text-[13px] font-bold text-indigo-900 dark:text-indigo-100">{title}</span>
-        <IonIcon icon={chevronDownOutline} className={`text-indigo-400 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.ol
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden px-4 pb-3.5 flex flex-col gap-2"
-          >
-            {steps.map((s, i) => (
-              <li key={i} className="flex gap-2.5 items-start">
-                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">{i + 1}</span>
-                <span className="text-[12.5px] text-indigo-950/80 dark:text-indigo-100/80 leading-snug">{s}</span>
-              </li>
-            ))}
-          </motion.ol>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

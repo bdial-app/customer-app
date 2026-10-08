@@ -37,6 +37,20 @@ export function resetWelcomeTour(): void {
   notify();
 }
 
+// ── On screen right now? (It counts as seen the moment it appears, so
+// "seen" alone can't tell the permission prompt to wait.) ──
+let showing = false;
+
+export function setWelcomeTourShowing(value: boolean): void {
+  if (showing === value) return;
+  showing = value;
+  notify();
+}
+
+export function isWelcomeTourShowing(): boolean {
+  return showing;
+}
+
 // ── A tiny store, so the permission prompt can wait for the tour ──
 type Listener = () => void;
 const listeners = new Set<Listener>();

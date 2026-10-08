@@ -29,7 +29,6 @@ import { uploadProductImage } from "@/services/product.service";
 import {
   ManagePage,
   SectionHeader,
-  HowItWorks,
   EmptyState,
   PrimaryButton,
   SecondaryButton,
@@ -243,20 +242,6 @@ const ProviderProductsTab = ({
     hidden: "Nothing is hidden. Customers can see all your items.",
   };
 
-  // First-timer guide: above the list, or below the empty-state button.
-  const guide = (
-    <HowItWorks
-      id="catalogue"
-      title="How your catalogue works"
-      steps={[
-        <>Tap <b>Add product or service</b> and give it a clear name.</>,
-        <>Add a few good photos and a price — or leave the price empty to show &ldquo;Price on request&rdquo;.</>,
-        <>Tap <b>Star it</b> on your best {MAX_HERO} items — they show first on your page.</>,
-        <>Use <b>Hide</b> to take something off your page without deleting it.</>,
-      ]}
-    />
-  );
-
   return (
     <ManagePage>
       <SectionHeader
@@ -293,7 +278,6 @@ const ProviderProductsTab = ({
         </Card>
       )}
 
-      {products.length > 0 && guide}
 
       {products.length > 0 ? (
         <>
@@ -375,7 +359,6 @@ const ProviderProductsTab = ({
           }
         />
       )}
-      {products.length === 0 && guide}
 
       {/* Add/Edit sheet. Keyed so each open starts with a fresh form. */}
       <Formik

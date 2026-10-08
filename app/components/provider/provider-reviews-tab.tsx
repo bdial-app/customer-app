@@ -12,7 +12,7 @@ import {
   arrowUndoOutline,
 } from "ionicons/icons";
 import { ProviderDetailsReview } from "@/services/provider.service";
-import { Card, EmptyState, GroupLabel, HowItWorks, ManagePage, SectionHeader } from "./manage/kit";
+import { Card, EmptyState, GroupLabel, ManagePage, SectionHeader } from "./manage/kit";
 import { BoostNudge } from "./manage/boost";
 
 interface ProviderReviewsTabProps {
@@ -88,16 +88,6 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
       <SectionHeader
         title="Reviews"
         subtitle="What customers say about you. Good reviews help new customers choose you."
-      />
-
-      <HowItWorks
-        id="reviews"
-        title="How reviews work"
-        steps={[
-          "Customers rate you from 1 to 5 stars and can add a few words or photos.",
-          "Every review shows here and on your business page.",
-          "Reviews are written by customers, so they can't be edited here.",
-        ]}
       />
 
       {totalReviews > 0 ? (

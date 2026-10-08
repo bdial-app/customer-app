@@ -1,6 +1,5 @@
 "use client";
 import { ROUTE_PATH } from "@/utils/contants";
-import { useRouter } from "next/navigation";
 import {
   useRef,
   useMemo,
@@ -16,6 +15,8 @@ import QuickCategories from "./home/quick-categories";
 import PromoBannerCarousel from "./home/promo-banner-carousel";
 import DealsCarousel from "./home/deals-carousel";
 import SponsoredCarousel from "./home/sponsored-carousel";
+import NeedCollections from "./home/need-collections";
+import { CustomerTourInvite } from "./onboarding/tour-invite-card";
 import ProviderCardSlider from "./home/provider-card-slider";
 import PicksForYou from "./home/picks-for-you";
 import PicksForYouProducts from "./home/picks-for-you-products";
@@ -40,7 +41,6 @@ import GeoLocation from "./geo-location";
 // Lazy load below-fold sections — they are not visible on initial viewport
 const ReferEarnCard = lazy(() => import("./home/refer-earn-card"));
 const BecomeProviderCTA = lazy(() => import("./home/become-provider-cta"));
-const CitySpotlight = lazy(() => import("./home/city-spotlight"));
 const RecentlyAdded = lazy(() => import("./home/recently-added"));
 
 const LazyFallback = () => (
@@ -72,7 +72,6 @@ const mapProvider = (p: FeedProvider) => ({
 });
 
 const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?: boolean; selectedCity?: string | null }) => {
-  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
   const [heroScrolled, setHeroScrolled] = useState(false);
@@ -129,22 +128,10 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
     () => (Array.isArray(nearbyProvidersRaw) ? nearbyProvidersRaw : []).map(mapProvider),
     [nearbyProvidersRaw],
   );
-  const featuredCategory = feed?.featuredCategory;
-  const featuredProvidersRaw = featuredCategory?.providers;
-  const featuredProviders = useMemo(
-    () => (Array.isArray(featuredProvidersRaw) ? featuredProvidersRaw : []).map(mapProvider),
-    [featuredProvidersRaw],
-  );
   const topRatedProvidersRaw = feed?.topRatedProviders;
   const topRatedProviders = useMemo(
     () => (Array.isArray(topRatedProvidersRaw) ? topRatedProvidersRaw : []).map(mapProvider),
     [topRatedProvidersRaw],
-  );
-  const cityData = feed?.cityProviders;
-  const cityProvidersRaw = cityData?.providers;
-  const cityProviders = useMemo(
-    () => (Array.isArray(cityProvidersRaw) ? cityProvidersRaw : []).map(mapProvider),
-    [cityProvidersRaw],
   );
   const newArrivalsRaw = feed?.newArrivals;
   const newArrivals = useMemo(
@@ -263,6 +250,9 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
             {/* Personalized Greeting */}
             {/* <GreetingCard /> */}
 
+            {/* First few app opens: a small card offering the tour (never a pop-up) */}
+            <CustomerTourInvite className="px-4 pt-3" />
+
             {/* Non-serviceable city banner */}
             {!isServiceable && selectedCity && (
               <CityExpansionBanner city={selectedCity} />
@@ -274,6 +264,9 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               lng={user?.longitude ?? undefined}
               city={user?.city ?? undefined}
             /> */}
+
+            {/* ── What do you need today? Need-based collections, right under search ── */}
+            <NeedCollections />
 
             {/* ⭐ Featured Businesses — gold themed sponsored carousel */}
             <SponsoredCarousel
@@ -300,24 +293,7 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               isLoading={isLoading}
             />
 
-            {/* 🛍️ Products Around You — two-row shop window, nearest first */}
-            <ProductsAroundYou />
-
-            {/* ♀ Women-Led Businesses — purple themed section */}
-            {womenLedProviders.length > 0 && (
-              <>
-                <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-                <ProviderCardSlider
-                  title="Women-Led Businesses"
-                  subtitle="Support women entrepreneurs"
-                  providers={womenLedProviders}
-                  viewAllLink="/women-led"
-                  accentColor="#9333EA"
-                  isLoading={isLoading}
-                />
-              </>
-            )}
-                        {/* Near You - Horizontal Scroll */}
+            {/* Near You */}
             <ProviderCardSlider
               title="Near You"
               subtitle="Top-rated businesses nearby"
@@ -327,11 +303,11 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               isLoading={isLoading}
             />
 
+            {/* 🛍️ Products Around You — two-row shop window, nearest first */}
+            <ProductsAroundYou />
+
             {/* 🛠️ Services Around You — nearby services widget with one-tap chat */}
             <ServicesAroundYou />
-
-            {/* Divider */}
-            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
 
             {/* 🔥 Trending Now */}
             <TrendingServices
@@ -341,145 +317,6 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
 
             {/* 📈 Trending Products — ranked top chart by recent views */}
             <TrendingProducts />
-
-            {/* Divider */}
-            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-
-            {/* Refer & Earn */}
-            <div
-              style={{
-                contentVisibility: "auto",
-                containIntrinsicSize: "auto 200px",
-              }}
-            >
-              <Suspense fallback={<LazyFallback />}>
-                <ReferEarnCard />
-              </Suspense>
-            </div>
-
-            {/* Divider */}
-            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700 mt-2" />
-
-            {/* Featured Category — dynamic random category as slider */}
-            {featuredCategory && featuredProviders.length > 0 && (
-              <div
-                style={{
-                  contentVisibility: "auto",
-                  containIntrinsicSize: "auto 280px",
-                }}
-              >
-                <ProviderCardSlider
-                  title={featuredCategory.name}
-                  subtitle={`Explore ${featuredCategory.name.toLowerCase()} services`}
-                  providers={featuredProviders}
-                  viewAllLink={`${
-                    ROUTE_PATH.ALL_SERVICES
-                  }?search=${encodeURIComponent(featuredCategory.name)}`}
-                  accentColor="#E91E63"
-                  isLoading={isLoading}
-                />
-                <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-              </div>
-            )}
-
-            {/* City Spotlight */}
-            {cityData && cityProviders.length > 0 && (
-              <div
-                style={{
-                  contentVisibility: "auto",
-                  containIntrinsicSize: "auto 250px",
-                }}
-              >
-                <Suspense fallback={<LazyFallback />}>
-                  <CitySpotlight
-                    city={cityData.city}
-                    providers={cityProviders}
-                    isLoading={isLoading}
-                    viewAllLink={`${ROUTE_PATH.ALL_SERVICES}?sort=rating`}
-                  />
-                  <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-                </Suspense>
-              </div>
-            )}
-
-            {/* Top Products */}
-            {Array.isArray(feed?.bestProducts) && feed.bestProducts.length > 0 && (
-              <>
-                <div className="px-5 pt-4 pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-                        <span className="text-white text-[11px]">★</span>
-                      </div>
-                      <div>
-                        <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                          Top Products & Services
-                        </h2>
-                        <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
-                          Popular picks from providers near you
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-3 overflow-x-auto px-5 pb-4 no-scrollbar">
-                  {feed.bestProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      onClick={() => router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`)}
-                      className="shrink-0 w-[200px] rounded-2xl overflow-hidden active:scale-[0.97] transition-transform cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
-                    >
-                      <div className="relative h-[240px] bg-gray-100 dark:bg-slate-700">
-                        {product.photoUrl ? (
-                          <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/40 dark:to-fuchsia-900/40">
-                            <span className="text-5xl font-bold text-violet-200 dark:text-violet-700">{product.name?.charAt(0)?.toUpperCase()}</span>
-                          </div>
-                        )}
-
-                        {/* Top badges */}
-                        <div className="absolute top-0 inset-x-0 p-2.5 flex items-start justify-between">
-                          <div className="flex flex-col gap-1">
-                          {product.isHero ? (
-                            <span className="px-2 py-0.5 rounded-lg bg-violet-600/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
-                              ★ Hero
-                            </span>
-                          ) : <span />}
-                          {product.productType === "service" && (
-                            <span className="px-2 py-0.5 rounded-lg bg-indigo-500/90 backdrop-blur-sm text-white text-[9px] font-bold shadow">
-                              🛠️ Service
-                            </span>
-                          )}
-                          </div>
-                          {product.price !== null && (
-                            <span className="px-2 py-0.5 rounded-lg bg-white/90 dark:bg-black/60 backdrop-blur-sm text-[11px] font-extrabold text-gray-900 dark:text-white shadow-sm">
-                              {product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Bottom gradient overlay with info */}
-                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/75 via-black/40 to-transparent pt-14 pb-3 px-3">
-                          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2 mb-1.5">{product.name}</p>
-                          <div className="flex items-center gap-1.5">
-                            {product.providerImage ? (
-                              <img src={product.providerImage} alt="" className="w-4 h-4 rounded-full object-cover ring-1 ring-white/30" />
-                            ) : (
-                              <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[8px] text-white font-bold">
-                                {product.providerName?.charAt(0)?.toUpperCase()}
-                              </div>
-                            )}
-                            <span className="text-[10px] text-white/80 font-medium truncate">{product.providerName}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
-              </>
-            )}
 
             {/* Top Rated Providers */}
             {(isLoading || topRatedProviders.length > 0) && (
@@ -500,8 +337,20 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                   />
                 </div>
 
-                {/* Divider */}
-                <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
+              </>
+            )}
+
+            {/* ♀ Women-Led Businesses — purple themed section */}
+            {womenLedProviders.length > 0 && (
+              <>
+                <ProviderCardSlider
+                  title="Women-Led Businesses"
+                  subtitle="Support women entrepreneurs"
+                  providers={womenLedProviders}
+                  viewAllLink="/women-led"
+                  accentColor="#9333EA"
+                  isLoading={isLoading}
+                />
               </>
             )}
 
@@ -521,8 +370,17 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
               </Suspense>
             </div>
 
-            {/* Divider */}
-            <div className="mx-0 py-1 border-b border-slate-100 dark:border-slate-700" />
+            {/* Refer & Earn */}
+            <div
+              style={{
+                contentVisibility: "auto",
+                containIntrinsicSize: "auto 200px",
+              }}
+            >
+              <Suspense fallback={<LazyFallback />}>
+                <ReferEarnCard />
+              </Suspense>
+            </div>
 
             {/* Become a Provider CTA */}
             <div

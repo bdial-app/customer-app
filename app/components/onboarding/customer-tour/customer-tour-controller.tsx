@@ -1,10 +1,8 @@
 "use client";
-import { useStorageReady } from "@/hooks/useStorageReady";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useAppContext } from "@/app/context/AppContext";
-import { hasSeenWelcomeTour } from "@/utils/welcome-tour";
 import { onOpenCustomerTour, readCustomerTour, recordCustomerTour, subscribeCustomerTour } from "@/utils/customer-tour";
 import { openExploreSegment, openMainTab, openProviderTab } from "@/utils/tour-nav";
 import { browseCatalog } from "@/services/catalog.service";
@@ -14,9 +12,6 @@ import type { TourChapter, TourStep } from "../business-tour/tour-content";
 import { buildCustomerFinale, buildCustomerTour, type TourSample } from "./customer-tour-content";
 
 const BUSINESS_STATUSES = ["pending", "in_review", "approved", "unverified", "suspended"];
-
-/** Nothing full-screen (welcome slides, splash, permission prompt) is in the way. */
-const screenIsClear = () => hasSeenWelcomeTour() && !document.querySelector("[data-blocks-tour]");
 
 const here = () => `${window.location.pathname}${window.location.search}`;
 
@@ -45,7 +40,6 @@ async function pickSample(location: { lat?: number; lng?: number; city?: string 
  */
 export default function CustomerTourController() {
   const router = useRouter();
-  const pathname = usePathname();
   const user = useAppSelector((state) => state.auth.user);
   const selectedCity = useAppSelector((state) => state.location.selectedCity);
   const guestCoords = useAppSelector((state) => state.location.guestCoords);
@@ -72,7 +66,7 @@ export default function CustomerTourController() {
     [user, providerStatus, selectedCity],
   );
 
-  // Guest progress counts too: someone who toured before signing in isn't offered it again.
+  // Chapters done as a guest count too (ticked in the picker).
   const snapshot = useSyncExternalStore(
     subscribeCustomerTour,
     () => JSON.stringify([readCustomerTour(owner), owner === "guest" ? null : readCustomerTour("guest")]),
@@ -82,13 +76,11 @@ export default function CustomerTourController() {
     () => JSON.parse(snapshot) as [{ chapters?: string[]; dismissed?: boolean } | undefined, { chapters?: string[]; dismissed?: boolean } | null],
     [snapshot],
   );
-  const seenBefore = [mine, asGuest].some((r) => r && (r.dismissed || (r.chapters?.length ?? 0) > 0));
 
   const [running, setRunning] = useState<TourChapter[] | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Opened as the one-time offer (vs from a help button): shows "Not now".
   const [inviting, setInviting] = useState(false);
-  const storageReady = useStorageReady();
   const [starting, setStarting] = useState(false);
 
   // The picker lists chapters before a sample is chosen; titles don't depend on it.
@@ -114,27 +106,8 @@ export default function CustomerTourController() {
     [starting, location, ctx],
   );
 
-  // Offer it once, on the home screen, once the screen is clear for a beat.
-  // An offer, not a takeover: it opens the menu (full tour or one part, or
-  // "Not now"), and counts as offered the moment it appears, so quitting the
-  // app mid-way never brings it back. Guests are offered it once per device;
-  // signing in doesn't repeat it (their guest record counts). Waits for saved
-  // settings to be restored, or a cleared WebView would offer it every launch.
-  useEffect(() => {
-    if (!storageReady || !active || running || starting || pickerOpen || seenBefore || pathname !== "/") return;
-    let clearTicks = 0;
-    const timer = setInterval(() => {
-      clearTicks = screenIsClear() ? clearTicks + 1 : 0;
-      if (clearTicks >= 3) {
-        clearInterval(timer);
-        recordCustomerTour(owner, [], true);
-        setInviting(true);
-        setPickerOpen(true);
-      }
-    }, 500);
-    return () => clearInterval(timer);
-  }, [storageReady, active, running, starting, pickerOpen, seenBefore, pathname, owner]);
-
+  // Never opens by itself: Home shows a small tour card instead (CustomerTourInvite),
+  // and Profile can replay it.
   useEffect(
     () =>
       onOpenCustomerTour((chapterId) => {

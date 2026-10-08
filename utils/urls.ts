@@ -106,6 +106,8 @@ export const HOME_URLS = {
   STATS: '/home/stats',
   LIVE_ACTIVITY: '/home/live-activity',
   CATEGORY_PROVIDERS: '/home/category-providers',
+  COLLECTIONS: '/home/collections',
+  COLLECTION: (id: string) => `/home/collections/${id}`,
 };
 
 export const EXPLORE_URLS = {
