@@ -53,6 +53,8 @@ export const uploadOnboardingMedia = async (
 };
 
 export interface SubmitListingPayload {
+  /** The server uses the signed-in user; servers before Oct 2026 still require it in the body. */
+  userId: string;
   brandName: string;
   description: string;
   contactNumber: string;

@@ -2032,6 +2032,7 @@ const ProviderOnboardingPage = () => {
       setSubmitPhase("creating");
       const urlOf = (id: string | null | undefined) => uploads.ref(id)?.url;
       const payload: SubmitListingPayload = {
+        userId: user.id,
         brandName: values.brand_name.trim(),
         description: values.description.trim(),
         contactNumber: `+91${values.contact_number.trim()}`,
