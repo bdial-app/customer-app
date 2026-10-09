@@ -30,6 +30,7 @@ import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/g
 import type { SearchGeocodeResult } from "@/services/geocode.service";
 import { useIsClient } from "@/hooks/useIsClient";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 import { isAxiosError } from "axios";
 
 // ─── Constants ──────────────────────────────────────────────────
@@ -837,38 +838,6 @@ function AuthGateScreenContent() {
   );
 }
 
-// ─── Back button closes the screen ──────────────────────────────
-// Opening pushes a history entry, so the Android back button, the browser back
-// button and the iOS swipe-back dismiss the screen instead of leaving the page
-// underneath. Closing it any other way pops that entry again.
-function useDismissOnHistoryBack(open: boolean, onDismiss: () => void) {
-  const onDismissRef = useRef(onDismiss);
-  useEffect(() => {
-    onDismissRef.current = onDismiss;
-  });
-
-  useEffect(() => {
-    if (!open) return;
-    let pushed = false;
-    let popped = false;
-    const onPop = () => {
-      popped = true;
-      onDismissRef.current();
-    };
-    // Deferred so React strict mode's mount/unmount/mount doesn't push and pop in one tick.
-    const timer = setTimeout(() => {
-      window.history.pushState(window.history.state, "");
-      pushed = true;
-      window.addEventListener("popstate", onPop, { once: true });
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("popstate", onPop);
-      if (pushed && !popped) window.history.back();
-    };
-  }, [open]);
-}
-
 // ─── Full-screen wrapper ────────────────────────────────────────
 export default function AuthGateScreen() {
   const { isAuthGateOpen, closeAuthGate } = useAuthGateContext();
@@ -876,7 +845,7 @@ export default function AuthGateScreen() {
   const keyboard = useKeyboardOffset();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
-  useDismissOnHistoryBack(isAuthGateOpen, closeAuthGate);
+  useBackDismiss(isAuthGateOpen, closeAuthGate, { kind: "screen" });
 
   if (!mounted) return null;
 
