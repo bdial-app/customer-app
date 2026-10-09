@@ -22,6 +22,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Register custom plugins before the bridge initializes.
+        registerPlugin(RazorpayCheckoutPlugin.class);
+
         super.onCreate(savedInstanceState);
         // Android 15+ (targetSdk 35+) forces edge-to-edge and ignores setDecorFitsSystemWindows(true).
         // Drive edge-to-edge explicitly so the WebView starts below the status bar.

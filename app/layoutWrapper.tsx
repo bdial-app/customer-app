@@ -28,13 +28,14 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePostHogIdentify } from "@/hooks/usePostHogIdentify";
 import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persist";
 import { useDeepLinks } from "@/hooks/useDeepLinks";
-import { resolveDeepLink } from "@/utils/deep-link";
+import { resolveDeepLink, markDeepLinkLaunch } from "@/utils/deep-link";
 import { isNativePlatform } from "@/utils/platform";
 import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
+import DeepLinkLoadingScreen from "./components/deep-link-loading-screen";
 import WelcomeTour from "./components/onboarding/welcome-tour";
 import CustomerTourController from "./components/onboarding/customer-tour/customer-tour-controller";
 import { hasSeenWelcomeTour, isWelcomeTourShowing, subscribeWelcomeTour } from "@/utils/welcome-tour";
@@ -233,6 +234,7 @@ function PushNotificationBridge() {
         }
       }
       const targetUrl = resolveDeepLink({ route: data.route, params });
+      if (targetUrl && targetUrl !== "/") markDeepLinkLaunch();
       router.push(targetUrl);
     };
     window.addEventListener("native-notification-tap", handleNativeTap);
@@ -499,6 +501,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               {/* Customer tour lives here, not on the home screen, so it can walk through business and product pages */}
               <CustomerTourController />
               {isNativePlatform() && <PermissionPromptAfterTour />}
+              {isNativePlatform() && <DeepLinkLoadingScreen />}
               <NotificationProvider>
                 <App theme="ios">
                   <MaintenanceGate>

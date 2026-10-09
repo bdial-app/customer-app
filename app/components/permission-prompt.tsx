@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { locationOutline, notificationsOutline, checkmarkCircle, closeCircle, arrowForward } from "ionicons/icons";
 import { useAppPermissions, dismissPermissionPrompt, type PermissionState } from "@/hooks/useAppPermissions";
 import { getNativePlatform } from "@/utils/platform";
+import { isDeepLinkLaunch } from "@/utils/deep-link";
 
 /**
  * Full-screen overlay shown on first native app launch to request
@@ -16,8 +17,21 @@ export default function PermissionPrompt() {
   const [visible, setVisible] = useState(true);
   const [step, setStep] = useState<"intro" | "requesting" | "done">("intro");
   const [results, setResults] = useState<{ location?: PermissionState; notifications?: PermissionState }>({});
+  // When the app was launched/resumed via a deep link, don't let this full-screen
+  // onboarding overlay cover the deep-linked screen. The deep link navigates
+  // underneath; this would otherwise hide it (looks like "deep link didn't work").
+  const [deepLinkActive, setDeepLinkActive] = useState(() => isDeepLinkLaunch());
 
-  if (!needsPrompt || !visible) return null;
+  useEffect(() => {
+    // Re-check in case the flag was set between initial render and effect mount
+    // (cold start: getLaunchUrl resolves asynchronously after this mounts).
+    if (isDeepLinkLaunch()) setDeepLinkActive(true);
+    const onDeepLink = () => setDeepLinkActive(true);
+    window.addEventListener("tijarah-deeplink-active", onDeepLink);
+    return () => window.removeEventListener("tijarah-deeplink-active", onDeepLink);
+  }, []);
+
+  if (!needsPrompt || !visible || deepLinkActive) return null;
 
   const platform = getNativePlatform();
   const isIOS = platform === "ios";
