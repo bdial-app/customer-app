@@ -28,6 +28,7 @@ import NotificationList from "./NotificationList";
 import type { NotificationItem, NotificationType } from "@/services/notification.service";
 import { useAppContext } from "@/app/context/AppContext";
 import { useAppSelector } from "@/hooks/useAppStore";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 const TYPE_ICON: Record<NotificationType, { icon: string; color: string }> = {
   chat_message: { icon: chatbubbleOutline, color: "text-blue-500" },
@@ -59,6 +60,7 @@ interface NotificationDropdownProps {
 }
 
 export default function NotificationDropdown({ open, onClose }: NotificationDropdownProps) {
+  useBackDismiss(open, onClose, { kind: "menu" });
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showAll, setShowAll] = useState(false);

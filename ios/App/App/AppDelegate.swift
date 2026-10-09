@@ -89,3 +89,42 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
 
 }
+
+// MARK: - Native back gesture
+
+/// The app's root view controller (set in Main.storyboard). Turns on
+/// WKWebView's own edge swipe, so going back slides the page away and shows
+/// the previous one underneath, as in any iOS app.
+class MainViewController: CAPBridgeViewController {
+    override func capacitorDidLoad() {
+        webView?.allowsBackForwardNavigationGestures = true
+        bridge?.registerPluginInstance(BackGesturePlugin())
+    }
+}
+
+/// Lets the web app pause the swipe while a sheet or panel is open (so it
+/// can't go back to the page behind it), and ask whether there is a page to
+/// go back to.
+@objc(BackGesturePlugin)
+public class BackGesturePlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "BackGesturePlugin"
+    public let jsName = "BackGesture"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "setEnabled", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "canGoBack", returnType: CAPPluginReturnPromise),
+    ]
+
+    @objc func setEnabled(_ call: CAPPluginCall) {
+        let enabled = call.getBool("enabled") ?? true
+        DispatchQueue.main.async {
+            self.bridge?.webView?.allowsBackForwardNavigationGestures = enabled
+            call.resolve()
+        }
+    }
+
+    @objc func canGoBack(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            call.resolve(["value": self.bridge?.webView?.canGoBack ?? false])
+        }
+    }
+}

@@ -94,6 +94,7 @@ import { useAuthGate } from "@/hooks/useAuthGate";
 import { useInstalledVersion } from "@/hooks/useAppUpdate";
 import { removeItemSync, removeItem } from "@/utils/storage";
 import { checkContent } from "@/utils/content-sanitizer";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 
 /** The `message` from an API error response body, if there is one. */
@@ -244,6 +245,8 @@ const SlidePage = ({
   children: React.ReactNode;
 }) => {
   const mounted = useIsClient();
+  // A pushed screen: back, or an iOS edge swipe, slides it away.
+  useBackDismiss(open, onClose, { kind: "screen" });
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence>

@@ -30,6 +30,7 @@ import { persistQueryCache, restoreQueryCache } from "@/utils/query-cache-persis
 import { useDeepLinks } from "@/hooks/useDeepLinks";
 import { resolveDeepLink, markDeepLinkLaunch } from "@/utils/deep-link";
 import { isNativePlatform } from "@/utils/platform";
+import BackNavigation from "./components/back-navigation";
 import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
@@ -149,40 +150,6 @@ function PwaHistoryGuard() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [pathname]);
-
-  return null;
-}
-
-/**
- * Handles Android hardware back button on Capacitor native.
- * If there's browser history, navigates back. At root, minimizes the app
- * instead of closing it (matches native Android app behavior).
- */
-function NativeBackButtonHandler() {
-  useEffect(() => {
-    if (!isNativePlatform()) return;
-
-    let cleanup: (() => void) | null = null;
-
-    (async () => {
-      try {
-        const { App } = await import("@capacitor/app");
-        const listener = await App.addListener("backButton", ({ canGoBack }) => {
-          if (canGoBack) {
-            window.history.back();
-          } else {
-            // At root — minimize instead of closing
-            App.minimizeApp();
-          }
-        });
-        cleanup = () => listener.remove();
-      } catch {
-        // @capacitor/app not available
-      }
-    })();
-
-    return () => { cleanup?.(); };
-  }, []);
 
   return null;
 }
@@ -496,7 +463,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <DeepLinkBridge />
               <ReconnectRefresher />
               <PwaHistoryGuard />
-              <NativeBackButtonHandler />
+              <BackNavigation />
               <WelcomeTour />
               {/* Customer tour lives here, not on the home screen, so it can walk through business and product pages */}
               <CustomerTourController />

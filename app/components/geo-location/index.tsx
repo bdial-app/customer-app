@@ -42,6 +42,7 @@ import {
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, LOCATION_UNAVAILABLE, openAppSettings } from "@/utils/geolocation";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 const DEFAULT_MAP_CENTER = { lat: 18.5204, lng: 73.8567 };
@@ -52,6 +53,8 @@ const GeoLocation = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showMap, setShowMap] = useState(false);
+  // The full-screen map picker closes on back like a pushed screen.
+  useBackDismiss(showMap, () => setShowMap(false), { kind: "screen" });
   const [mapMarker, setMapMarker] = useState(DEFAULT_MAP_CENTER);
   const [mapAddress, setMapAddress] = useState("");
   const [isMapReverseLoading, setIsMapReverseLoading] = useState(false);

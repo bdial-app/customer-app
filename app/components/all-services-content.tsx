@@ -32,6 +32,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { getItemSync, setItemSync } from "@/utils/storage";
 import { setGuestCoords } from "@/store/slices/locationSlice";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 type SortOption = "relevance" | "rating" | "distance" | "reviews" | "newest";
 
@@ -64,6 +65,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [sheetOpened, setSheetOpened] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
+  useBackDismiss(showSortMenu, () => setShowSortMenu(false), { kind: "menu" });
 
   // Read URL params for pre-selected filters from home page "See All" buttons
   const [sortBy, setSortBy] = useState<SortOption>(() => {
