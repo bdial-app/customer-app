@@ -39,6 +39,7 @@ import { ModeSwitchOverlay } from "./components/provider/view-mode-switch";
 import FloatingNotificationPill from "./components/floating-notification-pill";
 import NotificationDropdown from "./components/notification-center/NotificationDropdown";
 import { useCheckServiceability } from "@/hooks/useServiceableCities";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 /** Sticky header used inside individual TabPanels */
 function TabHeader({ title }: { title: string }) {
@@ -71,6 +72,8 @@ export default function Home() {
     _setActiveTab(tab);
     try { sessionStorage.setItem("__active_tab", tab); } catch {}
   }, []);
+  // Android back on another tab returns to Home first, like a native app.
+  useBackDismiss(activeTab !== "home", () => setActiveTab("home"), { kind: "tab" });
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [listingsSubTab, setListingsSubTab] = useState<string | null>(null);
   const [analyticsView, setAnalyticsView] = useState<string | null>(null);

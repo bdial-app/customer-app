@@ -14,20 +14,23 @@ const TRIGGER_PX = 80;
 
 /**
  * iOS-style edge swipe: drag from the left edge to go back. An arrow follows
- * the finger and fills in once releasing will navigate. Mount it on any
- * pushed page; it listens on the window and renders nothing until used.
+ * the finger and fills in once releasing will navigate. Mounted once by
+ * BackNavigation, which decides through `enabled` when it applies (the
+ * native gesture covers ordinary page history).
  */
-export default function SwipeBackGesture({ onBack }: { onBack: () => void }) {
+export default function SwipeBackGesture({ onBack, enabled }: { onBack: () => void; enabled?: () => boolean }) {
   const mounted = useIsClient();
   const [drag, setDrag] = useState(0);
   const start = useRef<{ x: number; y: number } | null>(null);
   const active = useRef(false);
   const armed = useRef(false);
   const onBackRef = useRef(onBack);
+  const enabledRef = useRef(enabled);
 
   useEffect(() => {
     onBackRef.current = onBack;
-  }, [onBack]);
+    enabledRef.current = enabled;
+  }, [onBack, enabled]);
 
   useEffect(() => {
     const reset = () => {
@@ -40,6 +43,7 @@ export default function SwipeBackGesture({ onBack }: { onBack: () => void }) {
     const onStart = (e: TouchEvent) => {
       const t = e.touches[0];
       if (e.touches.length !== 1 || t.clientX > EDGE_PX) return;
+      if (enabledRef.current && !enabledRef.current()) return;
       // A guided tour is showing this page — let it drive.
       if (document.querySelector('[aria-modal="true"][aria-label$=" tour"]')) return;
       start.current = { x: t.clientX, y: t.clientY };

@@ -39,6 +39,7 @@ import { ApproximateDivider, shouldShowApproximateDivider } from "@/utils/approx
 import ProductResultCard from "./cards/product-result-card";
 import CategoryResultCard from "./cards/category-result-card";
 import InfiniteScroll from "../infinite-scroll";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 const TABS: { key: SearchEntityType; label: string; icon: string }[] = [
   { key: "all", label: "All", icon: "🔍" },
@@ -67,6 +68,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
   const dispatch = useAppDispatch();
   const { activeTab, filters } = useAppSelector((s) => s.search);
   const [showSortMenu, setShowSortMenu] = useState(false);
+  useBackDismiss(showSortMenu, () => setShowSortMenu(false), { kind: "menu" });
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const searchParams = useMemo(

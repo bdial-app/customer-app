@@ -9,7 +9,6 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useCatalogShelves } from "@/hooks/useCatalog";
 import type { CatalogType } from "@/services/catalog.service";
 import CatalogResults from "./catalog-results";
-import SwipeBackGesture from "../swipe-back-gesture";
 import { catalogHref, filtersFromSearchParams, typeNoun, type CatalogFilters } from "./catalog-utils";
 
 export default function CatalogPageContent() {
@@ -44,7 +43,6 @@ export default function CatalogPageContent() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-slate-900">
-      <SwipeBackGesture onBack={() => goBack("/")} />
       <div className="shrink-0 z-30 bg-white dark:bg-slate-900" style={{ paddingTop: "var(--sat,0px)" }}>
         <div className="flex items-center gap-3 px-4 pt-3 pb-2">
           <button

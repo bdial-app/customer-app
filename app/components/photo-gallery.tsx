@@ -8,6 +8,7 @@ import "swiper/css";
 import { shareContent } from "@/utils/sharing";
 import "swiper/css/zoom";
 import { useIsClient } from "@/hooks/useIsClient";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,8 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
   }, []);
 
   const isLightboxOpen = useCallback(() => open, [open]);
+  // Back closes the viewer; it keeps sideways swipes for its own photos.
+  useBackDismiss(open, close, { kind: "sheet" });
 
   useImperativeHandle(ref, () => ({ isLightboxOpen, openAt }), [isLightboxOpen, openAt]);
 

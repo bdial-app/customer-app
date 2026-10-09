@@ -14,6 +14,7 @@ import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "framer-motion";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 import { useIsClient } from "@/hooks/useIsClient";
 
 export interface SheetProps {
@@ -82,6 +83,8 @@ export function Sheet({
   const panelRef = useRef<HTMLDivElement>(null);
   const dragY = useMotionValue(0);
   const backdropOpacity = useTransform(dragY, [0, 420], [1, 0.15]);
+  // Android back / iOS edge swipe close the sheet before leaving the page.
+  useBackDismiss(open, onClose, { kind: "sheet", dismissible });
 
   // Latest values for listeners that are bound once per opening.
   const onCloseRef = useRef(onClose);

@@ -21,7 +21,6 @@ import OptimizedImage from "@/app/components/ui/optimized-image";
 import ProductCard, { ProductCardSkeleton } from "@/app/components/catalog/product-card";
 import { ServiceListCard } from "@/app/components/catalog/service-card";
 import { useCatalogCardActions } from "@/app/components/catalog/catalog-results";
-import SwipeBackGesture from "@/app/components/swipe-back-gesture";
 import { useSellerCatalogue } from "@/hooks/useCatalog";
 import { useShareCatalogue } from "@/hooks/useShare";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -141,7 +140,6 @@ export default function SellerCatalogueContent() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-slate-900">
-      <SwipeBackGesture onBack={() => goBack("/")} />
 
       {/* Header: whose catalogue this is */}
       <div className="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800" style={{ paddingTop: "var(--sat,0px)" }}>

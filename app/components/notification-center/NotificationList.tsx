@@ -18,6 +18,7 @@ import type { NotificationItem } from "@/services/notification.service";
 import { useAppContext } from "@/app/context/AppContext";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useIsClient } from "@/hooks/useIsClient";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 interface NotificationListProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface NotificationListProps {
 }
 
 export default function NotificationList({ open, onClose }: NotificationListProps) {
+  useBackDismiss(open, onClose, { kind: "screen" });
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"all" | "unread">("all");
