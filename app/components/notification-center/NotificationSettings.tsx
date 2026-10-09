@@ -12,6 +12,7 @@ import {
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import type { NotificationPreferences } from "@/services/notification.service";
 import { useIsClient } from "@/hooks/useIsClient";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 interface NotificationSettingsProps {
   open: boolean;
@@ -53,6 +54,7 @@ function SettingRow({
 }
 
 export default function NotificationSettings({ open, onClose }: NotificationSettingsProps) {
+  useBackDismiss(open, onClose, { kind: "screen" });
   const { data: prefs, isLoading } = useNotificationPreferences();
   const updatePrefs = useUpdatePreferences();
   const { permissionStatus, requestPermission, isSupported, pushError } = usePushNotifications();

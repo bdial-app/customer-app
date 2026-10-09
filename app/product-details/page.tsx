@@ -36,7 +36,6 @@ import { useShareProduct } from "@/hooks/useShare";
 import { triggerHaptic } from "@/utils/haptics";
 import { useTrackProductView, useTrackAction } from "@/hooks/useAnalyticsTrack";
 import ReportSheet from "../components/report-sheet";
-import SwipeBackGesture from "../components/swipe-back-gesture";
 import type { ProductDetail, ProductProviderSummary } from "@/services/product.service";
 import { MoreFromSeller, SimilarItems } from "../components/catalog/product-related-sections";
 import { catalogHref } from "../components/catalog/catalog-utils";
@@ -131,7 +130,6 @@ export default function ProductDetailsPage() {
   if (!id) {
     return (
       <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-        <SwipeBackGesture onBack={() => goBack("/")} />
         <button
           onClick={() => goBack("/")}
           aria-label="Back"
@@ -149,7 +147,6 @@ export default function ProductDetailsPage() {
   if (isLoading) {
     return (
       <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-        <SwipeBackGesture onBack={() => goBack("/")} />
         <button
           onClick={() => goBack("/")}
           aria-label="Back"
@@ -171,7 +168,6 @@ export default function ProductDetailsPage() {
   if (isError || !product) {
     return (
       <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-        <SwipeBackGesture onBack={() => goBack("/")} />
         <button
           onClick={() => goBack("/")}
           aria-label="Back"
@@ -198,7 +194,6 @@ export default function ProductDetailsPage() {
 
   return (
     <Page className="!bg-gray-50/80 dark:!bg-slate-900">
-      <SwipeBackGesture onBack={() => goBack("/")} />
 
       {/* Top bar stays put while the page scrolls: see-through over the photo,
           solid with the product name once the photo has scrolled away. */}
