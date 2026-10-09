@@ -15,12 +15,12 @@ import { useQueryClient } from "@tanstack/react-query";
 interface AuthGateContextValue {
   /** Wraps an action that requires authentication.
    *  If the user is logged in the callback runs immediately.
-   *  Otherwise the login sheet opens and the callback runs after successful auth.
+   *  Otherwise the sign-in screen opens and the callback runs after successful auth.
    */
   requireAuth: (callback?: () => void) => void;
-  /** Whether the login sheet is currently visible */
+  /** Whether the sign-in screen is currently visible */
   isAuthGateOpen: boolean;
-  /** Programmatically close the sheet (e.g. on cancel) */
+  /** Programmatically close the screen (e.g. on cancel) */
   closeAuthGate: () => void;
 }
 
@@ -36,7 +36,7 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
   const user = useAppSelector((state) => state.auth.user);
   const [isOpen, setIsOpen] = useState(false);
   const pendingCallbackRef = useRef<(() => void) | null>(null);
-  // Cooldown: prevent the 401 listener from reopening the sheet right after dismissal
+  // Cooldown: prevent the 401 listener from reopening the screen right after dismissal
   const lastDismissedRef = useRef<number>(0);
   // Track whether the gate was opened due to a 401 (session recovery)
   const was401Ref = useRef(false);
@@ -61,10 +61,10 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
     was401Ref.current = false;
   }, []);
 
-  // When user becomes truthy while the sheet is open → auth succeeded
+  // When user becomes truthy while the screen is open → auth succeeded
   // Only auto-close if the user has a complete profile (has a name).
   // New signups get a user object after OTP verify but no name yet —
-  // the sheet must stay open for the details step.
+  // the screen must stay open for the details step.
   useEffect(() => {
     if (user && user.name && isOpen) {
       const wasSessionRecovery = was401Ref.current;
@@ -82,7 +82,7 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
         queryClient.invalidateQueries();
       }
 
-      // Defer so the sheet close animation starts before the callback fires
+      // Defer so the screen's close animation starts before the callback fires
       if (cb) setTimeout(cb, 100);
     }
   }, [user, isOpen, queryClient]);
@@ -90,7 +90,7 @@ export const AuthGateProvider = ({ children }: { children: ReactNode }) => {
   // Listen for 401/403 from the axios interceptor
   useEffect(() => {
     return onUnauthorized(() => {
-      // Don't stack multiple sheets, and respect a 5-second cooldown after dismissal
+      // Don't stack multiple screens, and respect a 5-second cooldown after dismissal
       const cooldownMs = 5000;
       if (!isOpen && Date.now() - lastDismissedRef.current > cooldownMs) {
         pendingCallbackRef.current = null;

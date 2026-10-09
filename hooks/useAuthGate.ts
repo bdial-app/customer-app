@@ -9,13 +9,13 @@ export function useAuthGate() {
   const user = useAppSelector((state) => state.auth.user);
 
   return {
-    /** Runs callback immediately if logged in; otherwise opens the login sheet first */
+    /** Runs callback immediately if logged in; otherwise opens the sign-in screen first */
     requireAuth,
     /** Whether the user is currently authenticated */
     isAuthenticated: !!user,
     /** Current user object (null if not logged in) */
     user,
-    /** Whether the auth gate sheet is currently open */
+    /** Whether the sign-in screen is currently open */
     isAuthGateOpen,
     /** Programmatically close the auth gate */
     closeAuthGate,

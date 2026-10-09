@@ -17,7 +17,7 @@ import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent, isNetworkError } from "@/utils/axios";
 import { AuthGateProvider } from "./context/AuthGateContext";
-import AuthGateSheet from "./components/auth-gate-sheet";
+import AuthGateScreen from "./components/auth-gate-screen";
 import { resumeMyAccount } from "@/services/user.service";
 import { getMyProviderStatus } from "@/services/provider.service";
 import { useRouter } from "next/navigation";
@@ -512,7 +512,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />
                   <AccountPausedHandler />
-                  <AuthGateSheet />
+                  <AuthGateScreen />
                   <LocationDeniedSheet />
                   {children}
                   <SmartAppBanner />

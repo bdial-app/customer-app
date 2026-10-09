@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useField, Formik, Form, useFormikContext } from "formik";
 import * as Yup from "yup";
@@ -19,7 +20,7 @@ import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { useGoogleMapsLoader } from "@/hooks/useGoogleMaps";
 import { IonIcon } from "@ionic/react";
 import {
-  logoApple, closeOutline, phonePortraitOutline, shieldCheckmarkOutline,
+  logoApple, phonePortraitOutline, shieldCheckmarkOutline,
   personOutline, checkmarkCircle, locationOutline, navigateOutline,
   alertCircleOutline, businessOutline, mapOutline, chevronDownOutline, arrowBack,
   searchOutline, expandOutline, contractOutline, storefrontOutline, lockClosedOutline,
@@ -27,7 +28,8 @@ import {
 import { CITY_NAMES } from "@/app/data/locations";
 import { reverseGeocode as reverseGeocodeApi, searchGeocode } from "@/services/geocode.service";
 import type { SearchGeocodeResult } from "@/services/geocode.service";
-import { Sheet } from "@/app/components/ui/sheet";
+import { useIsClient } from "@/hooks/useIsClient";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { isAxiosError } from "axios";
 
 // ─── Constants ──────────────────────────────────────────────────
@@ -204,11 +206,10 @@ function CitySelector() {
   );
 }
 
-// ─── Main Sheet Content ─────────────────────────────────────────
-function AuthGateSheetContent() {
+// ─── Main Screen Content ────────────────────────────────────────
+function AuthGateScreenContent() {
   const router = useRouter();
   const { notify } = useNotification();
-  const { closeAuthGate } = useAuthGateContext();
   const [step, setStep] = useState<Step>("mobile");
   const [resendCountdown, setResendCountdown] = useState(0);
   const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -233,7 +234,7 @@ function AuthGateSheetContent() {
 
   const { isLoaded: isMapLoaded } = useGoogleMapsLoader();
 
-  // Clean up pending registration token if sheet unmounts before completion
+  // Clean up pending registration token if the screen unmounts before completion
   useEffect(() => {
     return () => {
       if (pendingTokenRef.current) {
@@ -836,42 +837,99 @@ function AuthGateSheetContent() {
   );
 }
 
-// ─── Sheet Wrapper ──────────────────────────────────────────────
-export default function AuthGateSheet() {
+// ─── Back button closes the screen ──────────────────────────────
+// Opening pushes a history entry, so the Android back button, the browser back
+// button and the iOS swipe-back dismiss the screen instead of leaving the page
+// underneath. Closing it any other way pops that entry again.
+function useDismissOnHistoryBack(open: boolean, onDismiss: () => void) {
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    let pushed = false;
+    let popped = false;
+    const onPop = () => {
+      popped = true;
+      onDismissRef.current();
+    };
+    // Deferred so React strict mode's mount/unmount/mount doesn't push and pop in one tick.
+    const timer = setTimeout(() => {
+      window.history.pushState(window.history.state, "");
+      pushed = true;
+      window.addEventListener("popstate", onPop, { once: true });
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("popstate", onPop);
+      if (pushed && !popped) window.history.back();
+    };
+  }, [open]);
+}
+
+// ─── Full-screen wrapper ────────────────────────────────────────
+export default function AuthGateScreen() {
   const { isAuthGateOpen, closeAuthGate } = useAuthGateContext();
+  const mounted = useIsClient();
+  const keyboard = useKeyboardOffset();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-  return (
-    <Sheet
-      open={isAuthGateOpen}
-      onClose={closeAuthGate}
-      label="Sign in"
-      className="bg-[linear-gradient(160deg,#0f172a_0%,#1e1b4b_55%,#1e3a5f_100%)]"
-      backdropClassName="bg-black/40 backdrop-blur-[2px]"
-    >
-            {/* Abstract background decorations */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-              <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-amber-500/[0.06] blur-3xl" />
-              <div className="absolute top-1/3 -left-16 w-48 h-48 rounded-full bg-indigo-500/[0.08] blur-2xl" />
-              <div className="absolute bottom-10 right-8 w-32 h-32 rounded-full bg-cyan-400/[0.05] blur-2xl" />
-              <svg className="absolute top-6 right-12 w-24 h-24 text-white/[0.03]" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" stroke="currentColor" strokeWidth="1" fill="none" /></svg>
-              <svg className="absolute bottom-20 left-6 w-16 h-16 text-white/[0.04]" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="20" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-            </div>
 
-            {/* Close */}
-            <div className="absolute top-2.5 right-4 sm:top-4 z-20">
-              <button
-                onClick={closeAuthGate}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.08] active:scale-90 transition-transform"
-              >
-                <IonIcon icon={closeOutline} className="text-lg text-slate-400" />
-              </button>
-            </div>
+  useDismissOnHistoryBack(isAuthGateOpen, closeAuthGate);
 
-            <div className="relative pt-6 sm:pt-10">
+  if (!mounted) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {isAuthGateOpen && (
+        <motion.div
+          key="auth-screen"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sign in"
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "tween", duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+          // Below sheets (9998) and toasts (10001) so the location prompt and OTP toasts show over it.
+          className="fixed inset-0 z-[9997] flex flex-col overflow-hidden bg-[linear-gradient(160deg,#0f172a_0%,#1e1b4b_55%,#1e3a5f_100%)]"
+        >
+          {/* Abstract background decorations */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-amber-500/[0.06] blur-3xl" />
+            <div className="absolute top-1/3 -left-16 w-48 h-48 rounded-full bg-indigo-500/[0.08] blur-2xl" />
+            <div className="absolute bottom-10 right-8 w-32 h-32 rounded-full bg-cyan-400/[0.05] blur-2xl" />
+            <svg className="absolute top-6 right-12 w-24 h-24 text-white/[0.03]" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" stroke="currentColor" strokeWidth="1" fill="none" /></svg>
+            <svg className="absolute bottom-20 left-6 w-16 h-16 text-white/[0.04]" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="20" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
+          </div>
+
+          {/* Header */}
+          <div className="relative z-20 shrink-0 px-4 pb-1 pt-[calc(var(--sat,0px)+10px)]">
+            <button
+              type="button"
+              onClick={closeAuthGate}
+              aria-label="Back"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.08] active:scale-90 transition-transform"
+            >
+              <IonIcon icon={arrowBack} className="text-xl text-slate-300" />
+            </button>
+          </div>
+
+          {/* Scrollable body — padded above the keyboard, which doesn't resize the webview */}
+          <div
+            className="relative z-10 flex flex-1 flex-col overflow-y-auto overscroll-contain"
+            style={{ paddingBottom: keyboard > 0 ? keyboard : "env(safe-area-inset-bottom)" }}
+          >
+            <div className="mx-auto my-auto w-full max-w-md py-6">
               <GoogleOAuthProvider clientId={clientId}>
-                <AuthGateSheetContent />
+                <AuthGateScreenContent />
               </GoogleOAuthProvider>
             </div>
-    </Sheet>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
   );
 }
