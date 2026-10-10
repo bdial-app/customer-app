@@ -40,12 +40,48 @@ export async function getInstalledVersion(): Promise<string> {
   }
 }
 
-/** The installed version for display; the build-time value until it resolves. */
+/**
+ * The version version-management lists as current for this platform — the
+ * display fallback when the native binary can't report its own (web/PWA, or a
+ * failed bridge call). Not used for update checks: that would hide updates.
+ */
+async function getManagedVersion(): Promise<string | null> {
+  try {
+    const native = getNativePlatform();
+    const isIos = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const platform = native !== "web" ? native : isIos ? "ios" : "android";
+    const { data } = await apiClient.get<AppVersionInfo>("/health/app-version", {
+      params: { platform },
+    });
+    return data.latestVersion || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The installed version for display, with the store build number when native
+ * ("1.0.7 (11)"). Falls back to version-management's version when the binary
+ * can't report one, then to the build-time value.
+ */
 export function useInstalledVersion(): string {
   const [version, setVersion] = useState(FALLBACK_VERSION);
   useEffect(() => {
     let live = true;
-    getInstalledVersion().then((v) => live && setVersion(v));
+    (async () => {
+      let label: string | null = null;
+      if (isNativePlatform()) {
+        try {
+          const { App } = await import("@capacitor/app");
+          const { version: v, build } = await App.getInfo();
+          if (v) label = build ? `${v} (${build})` : v;
+        } catch {
+          // fall through to version-management
+        }
+      }
+      if (!label) label = (await getManagedVersion()) || FALLBACK_VERSION;
+      if (live) setVersion(label);
+    })();
     return () => {
       live = false;
     };

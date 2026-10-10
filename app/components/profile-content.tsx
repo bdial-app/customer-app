@@ -777,10 +777,10 @@ const ProfileContent = memo(() => {
 
           {/* App Version */}
           <div className="text-center py-6">
-            <p className="text-[11px] text-slate-300 font-medium">
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
               Tijarah v{appVersion}
             </p>
-            <p className="text-[10px] text-slate-300 mt-0.5">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
               Made with ♥ in India
             </p>
           </div>
@@ -1271,10 +1271,10 @@ const ProfileContent = memo(() => {
 
           {/* App Version */}
           <div className="text-center py-6">
-            <p className="text-[11px] text-slate-300 font-medium">
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
               Tijarah v{appVersion}
             </p>
-            <p className="text-[10px] text-slate-300 mt-0.5">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
               Made with ♥ in India
             </p>
           </div>
