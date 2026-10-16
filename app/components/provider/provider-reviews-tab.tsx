@@ -14,6 +14,7 @@ import {
 import { ProviderDetailsReview } from "@/services/provider.service";
 import { Card, EmptyState, GroupLabel, ManagePage, SectionHeader } from "./manage/kit";
 import { BoostNudge } from "./manage/boost";
+import GetReviewsCard from "./get-reviews-card";
 
 interface ProviderReviewsTabProps {
   reviews: ProviderDetailsReview[];
@@ -89,6 +90,8 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
         title="Reviews"
         subtitle="What customers say about you. Good reviews help new customers choose you."
       />
+
+      <GetReviewsCard />
 
       {totalReviews > 0 ? (
         <>

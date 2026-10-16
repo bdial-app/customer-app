@@ -16,7 +16,10 @@
           "/deals*",
           "/categories*",
           "/all-services*",
-          "/service-providers*"
+          "/service-providers*",
+          "/go*",
+          "/r",
+          "/r/*"
         ]
       }
     ]

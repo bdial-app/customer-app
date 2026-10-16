@@ -13,6 +13,8 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import type { NotificationPreferences } from "@/services/notification.service";
 import { useIsClient } from "@/hooks/useIsClient";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
+import { useAppSelector } from "@/hooks/useAppStore";
+import { useSetWhatsAppConsent, useWhatsAppConsent } from "@/hooks/useWhatsAppConsent";
 
 interface NotificationSettingsProps {
   open: boolean;
@@ -59,6 +61,10 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
   const updatePrefs = useUpdatePreferences();
   const { permissionStatus, requestPermission, isSupported, pushError } = usePushNotifications();
   const mounted = useIsClient();
+  // Business owners: WhatsApp alerts for customer enquiries.
+  const signedIn = useAppSelector((s) => !!s.auth.user?.id);
+  const { data: waConsent } = useWhatsAppConsent(open && signedIn);
+  const setWaConsent = useSetWhatsAppConsent();
 
   const handleToggle = <K extends keyof NotificationPreferences>(field: K, value: NotificationPreferences[K]) => {
     updatePrefs.mutate({ [field]: value });
@@ -150,6 +156,33 @@ export default function NotificationSettings({ open, onClose }: NotificationSett
                   onChange={(val) => handleToggle("pushEnabled", val)}
                 />
               </div>
+
+              {/* WhatsApp alerts (business owners) */}
+              {waConsent?.applicable && (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                  <div className="px-4 pt-3 pb-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">WhatsApp</span>
+                  </div>
+                  <SettingRow
+                    label={waConsent.role === "customer" ? "Replies on WhatsApp" : "WhatsApp alerts"}
+                    sublabel={
+                      waConsent.role === "customer"
+                        ? `When a business replies to you and you haven't seen it in the app${waConsent.phoneMasked ? `, on ${waConsent.phoneMasked}` : ""}`
+                        : `Customer enquiries, your monthly report and free-lead updates${waConsent.phoneMasked ? ` on ${waConsent.phoneMasked}` : ""}`
+                    }
+                    checked={waConsent.consent === "opted_in"}
+                    onChange={(val) =>
+                      setWaConsent.mutate({ consent: val ? "opted_in" : "opted_out", source: "app_settings" })
+                    }
+                    disabled={setWaConsent.isPending}
+                  />
+                  {waConsent.recordedByAdmin && (
+                    <p className="px-4 pb-3 -mt-1 text-[11px] text-slate-400">
+                      Turned on by our team when you joined Tijarah. You can switch it off anytime.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Category Toggles */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">

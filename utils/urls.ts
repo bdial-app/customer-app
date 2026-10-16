@@ -153,6 +153,19 @@ export const ANALYTICS_URLS = {
   VISITOR_INSIGHTS: '/analytics/visitor-insights',
 };
 
+export const LINK_URLS = {
+  GO: (code: string) => `/go/${encodeURIComponent(code)}`,
+  GO_OPEN: (code: string) => `/go/${encodeURIComponent(code)}/open`,
+  GO_PENDING: '/go/pending',
+  REVIEW_START: '/review-links/start',
+  REVIEW_MINE: '/review-links/mine',
+};
+
+export const WHATSAPP_CONSENT_URLS = {
+  ME: '/whatsapp/consent/me',
+  LATER: '/whatsapp/consent/me/later',
+};
+
 export const NOTIFICATION_URLS = {
   LIST: '/notifications',
   UNREAD_COUNT: '/notifications/unread-count',

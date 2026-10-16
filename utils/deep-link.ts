@@ -141,11 +141,23 @@ export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
     case "/provider/leads":
       return "/provider/leads";
 
-    case "/":
-      if (params.tab) {
-        return `${ROUTE_PATH.HOME}?tab=${params.tab}`;
-      }
-      return ROUTE_PATH.HOME;
+    case "/": {
+      // Tabs, and the screen inside them (e.g. a chat or a listings section).
+      const keep = new URLSearchParams();
+      for (const k of ["tab", "subTab", "conversationId", "mode"]) if (params[k]) keep.set(k, params[k]);
+      const q = keep.toString();
+      return q ? `${ROUTE_PATH.HOME}?${q}` : ROUTE_PATH.HOME;
+    }
+
+    // Message links (tijarahapp.in/go?c=…) and review links (/r?b=…) keep their query.
+    case "/go":
+      return params.c ? `/go?c=${encodeURIComponent(params.c)}` : ROUTE_PATH.HOME;
+
+    case "/r": {
+      if (!params.b) return ROUTE_PATH.HOME;
+      const stars = params.stars ? `&stars=${encodeURIComponent(params.stars)}` : "";
+      return `/r?b=${encodeURIComponent(params.b)}${stars}`;
+    }
 
     default:
       return route.startsWith("/") ? route : ROUTE_PATH.HOME;
