@@ -75,6 +75,7 @@ import { withDeadline } from "@/utils/onboarding-media";
 import { checkPickedFile } from "@/utils/compress-image";
 import { UploadOverlay, UploadSummary } from "./upload-ui";
 import { isAxiosError } from "axios";
+import { setMyWhatsAppConsent } from "@/services/whatsapp-consent.service";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -2078,6 +2079,9 @@ const ProviderOnboardingPage = () => {
       }
 
       await draft.clear();
+      // Submitting under the WhatsApp notice is their yes to alerts. If this
+      // doesn't reach the server, the app asks them later instead.
+      setMyWhatsAppConsent("opted_in", "app_onboarding").catch(() => undefined);
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
@@ -2251,7 +2255,7 @@ const ProviderOnboardingPage = () => {
                 isSubmitting={isSubmitting}
               />
 
-              <div ref={stepScrollRef} className="overflow-y-auto max-h-[calc(100vh-210px)] pb-36">
+              <div ref={stepScrollRef} className={`overflow-y-auto max-h-[calc(100vh-210px)] ${currentStep === 5 ? "pb-44" : "pb-36"}`}>
                 {/* Saved progress: welcome back, and how saving is going */}
                 {resumed && (
                   <div className="mx-4 mt-3 mb-1 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 flex items-start gap-2.5">
@@ -2852,6 +2856,11 @@ const ProviderOnboardingPage = () => {
                 <p className="text-[10px] text-center text-slate-400 font-medium tracking-wide uppercase mb-3">
                   Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].label}
                 </p>
+                {currentStep === 5 && (
+                  <p className="text-[10px] leading-snug text-center text-slate-400 dark:text-slate-500 -mt-1 mb-2 px-4">
+                    {"By listing, you agree to get enquiries and updates from Tijarah on WhatsApp. Turn off anytime in Settings."}
+                  </p>
+                )}
                 <div className="flex gap-3">
                   {/* Back / Exit */}
                   <button

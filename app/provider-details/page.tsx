@@ -48,6 +48,7 @@ import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
 import { useShareBusiness, useShareCatalogue } from "@/hooks/useShare";
+import { cameFromReviewLink } from "@/utils/app-links";
 import { facebookUrl, instagramUrl, linkedinUrl, websiteUrl, whatsappUrl, youtubeUrl } from "@/utils/social-links";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { triggerHaptic } from "@/utils/haptics";
@@ -363,6 +364,22 @@ export default function ProviderDetailsPage() {
     if (!user || !reviews.length) return false;
     return reviews.some((r) => r.reviewerId === user.id);
   }, [user, reviews]);
+
+  // Opened from a review link (?review=1&stars=N): open the review, stars filled in.
+  const wantsReview = searchParams.get("review") === "1";
+  const wantedStars = Number(searchParams.get("stars")) || 0;
+  const reviewLinkHandled = useRef(false);
+  useEffect(() => {
+    if (!wantsReview || reviewLinkHandled.current || !provider || !data) return;
+    reviewLinkHandled.current = true;
+    if (isOwnProvider || hasAlreadyReviewed) return;
+    requireAuth(() => {
+      if (wantedStars >= 1 && wantedStars <= 5) setReviewRating(wantedStars);
+      setReviewError("");
+      setReviewSuccess(false);
+      setSheetOpened(true);
+    });
+  }, [wantsReview, wantedStars, provider, data, isOwnProvider, hasAlreadyReviewed, requireAuth]);
 
   // Read into locals so the memo's inputs are exactly what it depends on.
   const bannerImageUrl = provider?.bannerImageUrl;
@@ -2206,6 +2223,7 @@ export default function ProviderDetailsPage() {
                       providerId: id,
                       starRating: reviewRating,
                       reviewText: reviewComment.trim(),
+                      ...(cameFromReviewLink(id) ? { source: "link" as const } : {}),
                     },
                     {
                       onSuccess: () => {

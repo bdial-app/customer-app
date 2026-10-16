@@ -34,6 +34,8 @@ import BackNavigation from "./components/back-navigation";
 import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
+import WhatsAppConsentPrompter from "./components/whatsapp-consent-prompter";
+import PendingLinkOpener from "./components/pending-link-opener";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
 import WelcomeTour from "./components/onboarding/welcome-tour";
@@ -176,6 +178,7 @@ function NavigationTracker() {
 function PushNotificationBridge() {
   usePushNotifications();
   const router = useRouter();
+  const { setUserMode, providerStatus } = useAppContext();
 
   useEffect(() => {
     // Listen for foreground push notification events (dispatched by usePushNotifications)
@@ -199,6 +202,9 @@ function PushNotificationBridge() {
           params = data.params;
         }
       }
+      // A push about their business opens the business side of the app.
+      if (data.targetMode === "provider" && providerStatus !== "not_applied") setUserMode("provider");
+      else if (data.targetMode === "customer") setUserMode("customer");
       const targetUrl = resolveDeepLink({ route: data.route, params });
       router.push(targetUrl);
     };
@@ -217,7 +223,7 @@ function PushNotificationBridge() {
       window.removeEventListener("native-notification-tap", handleNativeTap);
       navigator.serviceWorker?.removeEventListener("message", handleSWMessage);
     };
-  }, [router]);
+  }, [router, setUserMode, providerStatus]);
 
   return null;
 }
@@ -455,6 +461,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
             <AppProvider>
               <AuthGateProvider>
               <ProviderStatusBootstrap />
+              <PendingLinkOpener />
               <LanguageSyncBridge />
               <NavigationTracker />
               <PushNotificationBridge />
@@ -472,6 +479,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   {isNativePlatform() && <PermissionReminderBanner />}
                   <OfflineBanner />
                   <AppUpdatePrompt />
+                  <WhatsAppConsentPrompter />
                   <AppToast />
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />

@@ -512,6 +512,8 @@ export interface SubmitReviewPayload {
   providerId: string;
   starRating: number;
   reviewText?: string;
+  /** Written from the owner's review link. */
+  source?: "link";
 }
 
 export const submitReview = async (payload: SubmitReviewPayload): Promise<ProviderDetailsReview> => {
