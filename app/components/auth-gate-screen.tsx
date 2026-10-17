@@ -12,6 +12,7 @@ import { setToken, setProfile } from "@/store/slices/authSlice";
 import { useNotification } from "@/app/context/NotificationContext";
 import { useAuthGateContext } from "@/app/context/AuthGateContext";
 import { useRouter } from "next/navigation";
+import LegalConsentLine from "@/app/components/legal/legal-consent-line";
 import { ROUTE_PATH } from "@/utils/contants";
 import { setItemSync, removeItemSync } from "@/utils/storage";
 import { checkContent } from "@/utils/content-sanitizer";
@@ -828,9 +829,10 @@ function AuthGateScreenContent() {
               </>
             )}
 
-            <p className="text-[10px] text-slate-500 mt-5 text-center leading-relaxed">
-              By continuing you agree to our Terms &amp; Privacy Policy
-            </p>
+            <LegalConsentLine
+              className="text-[10px] text-slate-500 mt-5 text-center leading-relaxed"
+              linkClassName="underline underline-offset-2 font-medium text-slate-400"
+            />
           </Form>
         );}}
       </Formik>

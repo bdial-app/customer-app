@@ -161,6 +161,13 @@ export const LINK_URLS = {
   REVIEW_MINE: '/review-links/mine',
 };
 
+export const LEGAL_URLS = {
+  DOCUMENTS: '/legal/documents',
+  DOCUMENT: (slug: string) => `/legal/documents/${encodeURIComponent(slug)}`,
+  ME: '/legal/me',
+  ACCEPT: '/legal/me/accept',
+};
+
 export const WHATSAPP_CONSENT_URLS = {
   ME: '/whatsapp/consent/me',
   LATER: '/whatsapp/consent/me/later',

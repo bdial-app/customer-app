@@ -35,6 +35,7 @@ import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import WhatsAppConsentPrompter from "./components/whatsapp-consent-prompter";
+import LegalGate from "@/app/components/legal/legal-gate";
 import PendingLinkOpener from "./components/pending-link-opener";
 import MaintenanceGate from "./components/maintenance-gate";
 import PermissionPrompt from "./components/permission-prompt";
@@ -482,6 +483,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   {isNativePlatform() && <PermissionReminderBanner />}
                   <OfflineBanner />
                   <AppUpdatePrompt />
+                  <LegalGate />
                   <WhatsAppConsentPrompter />
                   <AppToast />
                   <PostHogIdentifyBridge />

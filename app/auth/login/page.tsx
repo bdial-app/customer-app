@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useIsClient } from "@/hooks/useIsClient";
 import Link from "next/link";
+import LegalConsentLine from "@/app/components/legal/legal-consent-line";
 import { ROUTE_PATH } from "@/utils/contants";
 import { Formik, Form, useField } from "formik";
 import * as Yup from "yup";
@@ -526,9 +527,10 @@ function LoginContent() {
                     Sign up
                   </Link>
                 </p>
-                <p className="text-2xs text-gray-300 dark:text-slate-600 mt-3 leading-relaxed">
-                  By continuing you agree to our Terms & Privacy Policy
-                </p>
+                <LegalConsentLine
+                  className="text-2xs text-gray-400 dark:text-slate-500 mt-3 leading-relaxed"
+                  linkClassName="underline underline-offset-2 font-medium text-gray-500 dark:text-slate-400"
+                />
               </div>
             </Form>
           )}

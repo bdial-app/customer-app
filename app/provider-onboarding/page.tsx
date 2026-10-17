@@ -39,6 +39,7 @@ import {
   logoFacebook,
   logoYoutube,
   refreshOutline,
+  checkmark,
 } from "ionicons/icons";
 import { useAppContext } from "../context/AppContext";
 import { useNotification } from "../context/NotificationContext";
@@ -76,6 +77,9 @@ import { checkPickedFile } from "@/utils/compress-image";
 import { UploadOverlay, UploadSummary } from "./upload-ui";
 import { isAxiosError } from "axios";
 import { setMyWhatsAppConsent } from "@/services/whatsapp-consent.service";
+import { acceptLegalDocuments } from "@/services/legal.service";
+import { MY_LEGAL_KEY, useLegalDocuments } from "@/hooks/useLegal";
+import LegalDocumentSheet from "@/app/components/legal/legal-document-sheet";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1643,6 +1647,10 @@ const ProviderOnboardingPage = () => {
     new Set(),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // The last step's "I agree to the Business Listing Terms" tick, and the document opened from it.
+  const [agreedBusinessTerms, setAgreedBusinessTerms] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<string | null>(null);
+  const { data: legalDocs } = useLegalDocuments();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [docType, setDocType] = useState<DocTypeId>("aadhaar");
@@ -1987,6 +1995,10 @@ const ProviderOnboardingPage = () => {
       setSubmitError("You must be logged in to list your business.");
       return;
     }
+    if (!agreedBusinessTerms) {
+      setSubmitError("Please tick that you agree to the Business Listing Terms.");
+      return;
+    }
 
     // Content sanitization check
     const nameCheck = checkContent(values.brand_name);
@@ -2082,6 +2094,19 @@ const ProviderOnboardingPage = () => {
       // Submitting under the WhatsApp notice is their yes to alerts. If this
       // doesn't reach the server, the app asks them later instead.
       setMyWhatsAppConsent("opted_in", "app_onboarding").catch(() => undefined);
+      // Record the Business Listing Terms tick, at the versions that were live.
+      // If this fails, the app asks them to accept when they next open it.
+      const businessDocs = (legalDocs ?? []).filter((d) => d.requiredFor === "business");
+      if (businessDocs.length) {
+        acceptLegalDocuments(
+          businessDocs.map((d) => ({ slug: d.slug, version: d.version })),
+          "business_onboarding",
+        )
+          .then((status) => queryClient.setQueryData(MY_LEGAL_KEY, status))
+          .catch(() => queryClient.invalidateQueries({ queryKey: MY_LEGAL_KEY }));
+      } else {
+        queryClient.invalidateQueries({ queryKey: MY_LEGAL_KEY });
+      }
       // Invalidate explore & home feed caches so the new provider appears immediately
       queryClient.invalidateQueries({ queryKey: ["explore-feed"] });
       queryClient.invalidateQueries({ queryKey: ["home-feed"] });
@@ -2857,9 +2882,41 @@ const ProviderOnboardingPage = () => {
                   Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].label}
                 </p>
                 {currentStep === 5 && (
-                  <p className="text-[10px] leading-snug text-center text-slate-400 dark:text-slate-500 -mt-1 mb-2 px-4">
-                    {"By listing, you agree to get enquiries and updates from Tijarah on WhatsApp. Turn off anytime in Settings."}
-                  </p>
+                  <div className="-mt-1 mb-3">
+                    <label className="flex items-start gap-2.5 px-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={agreedBusinessTerms}
+                        onChange={(e) => setAgreedBusinessTerms(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      <span
+                        aria-hidden
+                        className={`mt-px w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center shrink-0 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-violet-400 ${
+                          agreedBusinessTerms ? "bg-violet-600 border-violet-600" : "border-slate-300 dark:border-slate-500"
+                        }`}
+                      >
+                        {agreedBusinessTerms && <IonIcon icon={checkmark} className="text-white text-[13px]" />}
+                      </span>
+                      <span className="text-[12px] leading-snug text-slate-600 dark:text-slate-300">
+                        I own or am authorised to list this business, and I agree to the{" "}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setLegalDoc("business-terms");
+                          }}
+                          className="font-semibold text-violet-600 dark:text-violet-400 underline underline-offset-2"
+                        >
+                          Business Listing Terms
+                        </button>
+                        .
+                      </span>
+                    </label>
+                    <p className="text-[10px] leading-snug text-slate-400 dark:text-slate-500 mt-1.5 pl-7">
+                      {"You'll get enquiries and updates from Tijarah on WhatsApp. Turn off anytime in Settings."}
+                    </p>
+                  </div>
                 )}
                 <div className="flex gap-3">
                   {/* Back / Exit */}
@@ -2903,7 +2960,7 @@ const ProviderOnboardingPage = () => {
                   ) : isStep5HasDoc ? (
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !agreedBusinessTerms}
                       className="flex flex-1 items-center justify-center gap-2 h-12 rounded-2xl bg-violet-600 text-white font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.97] shadow-md shadow-violet-200"
                     >
                       {isSubmitting ? (
@@ -2925,7 +2982,7 @@ const ProviderOnboardingPage = () => {
                   ) : (
                     <button
                       type="button"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !agreedBusinessTerms}
                       onClick={() => {
                         pendingSubmitRef.current = submitForm;
                         setShowSkipConfirm(true);
@@ -2955,6 +3012,8 @@ const ProviderOnboardingPage = () => {
           );
         }}
       </Formik>
+
+      <LegalDocumentSheet slug={legalDoc} onClose={() => setLegalDoc(null)} onOpenDoc={setLegalDoc} />
 
       {/* Photos that didn't upload: retry, or list now and add them later */}
       <AppDialog
