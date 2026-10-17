@@ -44,6 +44,9 @@ import {
   eyeOutline,
   powerOutline,
   navigateCircleOutline,
+  peopleOutline,
+  receiptOutline,
+  storefrontOutline,
 } from "ionicons/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
@@ -321,7 +324,6 @@ const ProfileContent = memo(() => {
   // Slide-page states
   const [activePage, setActivePage] = useState<
     | "about"
-    | "terms"
     | "help"
     | "language"
     | "notificationSettings"
@@ -755,8 +757,8 @@ const ProfileContent = memo(() => {
               icon={documentTextOutline}
               iconColor="text-slate-500"
               iconBg="bg-slate-100"
-              label="Terms & Conditions"
-              onClick={() => setActivePage("terms")}
+              label="Terms of Use"
+              onClick={() => router.push("/terms")}
             />
             <MenuRow
               icon={shieldCheckmarkOutline}
@@ -764,6 +766,28 @@ const ProfileContent = memo(() => {
               iconBg="bg-green-50"
               label="Privacy Policy"
               onClick={() => router.push("/privacy-policy")}
+            />
+            <MenuRow
+              icon={storefrontOutline}
+              iconColor="text-violet-500"
+              iconBg="bg-violet-50"
+              label="Business Listing Terms"
+              sublabel="For business owners"
+              onClick={() => router.push("/legal?doc=business-terms")}
+            />
+            <MenuRow
+              icon={peopleOutline}
+              iconColor="text-sky-500"
+              iconBg="bg-sky-50"
+              label="Community Guidelines"
+              onClick={() => router.push("/legal?doc=community-guidelines")}
+            />
+            <MenuRow
+              icon={receiptOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Refund & Cancellation"
+              onClick={() => router.push("/legal?doc=refund-policy")}
             />
             <MenuRow
               icon={lockClosedOutline}
@@ -1196,8 +1220,8 @@ const ProfileContent = memo(() => {
               icon={documentTextOutline}
               iconColor="text-slate-500"
               iconBg="bg-slate-100"
-              label="Terms & Conditions"
-              onClick={() => setActivePage("terms")}
+              label="Terms of Use"
+              onClick={() => router.push("/terms")}
             />
             <MenuRow
               icon={shieldCheckmarkOutline}
@@ -1205,6 +1229,28 @@ const ProfileContent = memo(() => {
               iconBg="bg-green-50"
               label="Privacy Policy"
               onClick={() => router.push("/privacy-policy")}
+            />
+            <MenuRow
+              icon={storefrontOutline}
+              iconColor="text-violet-500"
+              iconBg="bg-violet-50"
+              label="Business Listing Terms"
+              sublabel="For business owners"
+              onClick={() => router.push("/legal?doc=business-terms")}
+            />
+            <MenuRow
+              icon={peopleOutline}
+              iconColor="text-sky-500"
+              iconBg="bg-sky-50"
+              label="Community Guidelines"
+              onClick={() => router.push("/legal?doc=community-guidelines")}
+            />
+            <MenuRow
+              icon={receiptOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Refund & Cancellation"
+              onClick={() => router.push("/legal?doc=refund-policy")}
             />
             <MenuRow
               icon={lockClosedOutline}
@@ -1506,196 +1552,6 @@ const ProfileContent = memo(() => {
         </div>
       </SlidePage>
 
-      {/* Terms & Conditions Page */}
-      <SlidePage
-        open={activePage === "terms"}
-        onClose={() => setActivePage(null)}
-        title="Terms & Conditions"
-      >
-        <div className="space-y-5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-              Effective Date: 1 May 2026 · Last Updated: May 2026
-            </p>
-          </div>
-
-          <p>
-            Welcome to Tijarah. These Terms govern your use of
-            the Tijarah app and all related services. By using Tijarah, you
-            confirm you have read, understood, and agreed to these Terms.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            1. About Tijarah — What We Are and Are Not
-          </h4>
-          <p>
-            Tijarah is a community-driven business discovery platform. We
-            provide a digital space where Bohra-owned businesses can be listed
-            and discovered.
-          </p>
-          <div className="bg-slate-50 dark:bg-slate-800 border-l-4 border-amber-400 px-4 py-3 rounded-r-xl">
-            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              IMPORTANT
-            </p>
-            <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
-              Tijarah is an intermediary platform only. We do not own, operate,
-              or control any listed business. We do not handle payments,
-              bookings, or any transaction. Any arrangement between a User and a
-              Business Owner is strictly between those two parties. Tijarah
-              accepts no liability arising from it.
-            </p>
-          </div>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            2. Eligibility
-          </h4>
-          <p>
-            You may use Tijarah if you are at least 13 years of age and capable
-            of entering a legally binding agreement. Users between 13–18 should
-            have a parent or guardian review these Terms.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            3. User Accounts
-          </h4>
-          <p>
-            You must provide accurate registration information, keep credentials
-            secure, and notify us of any unauthorised access. You are
-            responsible for all activity through your account.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            4. Business Listings
-          </h4>
-          <p>
-            By submitting a listing, you confirm all information is accurate and
-            the business is genuinely owned by a member of the Dawoodi Bohra
-            community. The following are not permitted and will be removed
-            without notice:
-          </p>
-          <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li>Businesses not owned by a Bohra community member</li>
-            <li>Listings for illegal goods or services</li>
-            <li>Duplicate, misleading, or fraudulent listings</li>
-            <li>Content violating third-party intellectual property rights</li>
-          </ul>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            5. Verified Badge
-          </h4>
-          <p>
-            The &apos;Verified&apos; badge indicates Tijarah reviewed an identity or
-            community document. It does <strong>not</strong> guarantee quality,
-            reliability, or safety of the business. Users must conduct their own
-            due diligence.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            6. User Conduct
-          </h4>
-          <p>
-            You agree not to post false or offensive content, impersonate
-            others, spam, scrape data, upload malware, or use the platform for
-            any unlawful purpose. We may suspend accounts that violate these
-            rules without prior notice.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            7. Reviews & Community Content
-          </h4>
-          <p>
-            Reviews must be honest and based on genuine first-hand experience.
-            Reviews in exchange for payment, discounts, or gifts are prohibited.
-            You retain ownership of your content and grant Tijarah a
-            non-exclusive licence to display it within the Platform.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            8. Reporting & Blocking
-          </h4>
-          <p>
-            You may report or block any business or user. Submitting a report
-            does not guarantee removal — Tijarah reviews each case individually
-            and takes action where a clear violation is identified.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            9. Disclaimer of Warranties
-          </h4>
-          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3">
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              The Platform is provided on an &quot;AS IS&quot; basis without warranties of
-              any kind. Tijarah makes no warranty that the Platform will be
-              uninterrupted, error-free, or that any listing is accurate or
-              reliable.
-            </p>
-          </div>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            10. Limitation of Liability
-          </h4>
-          <p className="text-xs">
-            To the fullest extent permitted by law, Tijarah shall not be liable
-            for any loss arising from reliance on listings, any transaction
-            between users and businesses, or any indirect or consequential
-            damages. Our maximum aggregate liability is zero for users who have
-            not paid anything.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            11. Governing Law
-          </h4>
-          <p>
-            These Terms are governed by the laws of India. Disputes shall be
-            subject to the exclusive jurisdiction of the courts in Pune,
-            Maharashtra.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            11a. Subscriptions & In-App Purchases
-          </h4>
-          <p className="text-xs">
-            Tijarah offers optional paid subscriptions (e.g. Provider
-            Sponsorship) to business owners. By subscribing:
-          </p>
-          <ul className="list-disc pl-5 space-y-1 text-xs">
-            <li>Payment is charged to your Apple ID or Google Play account at confirmation of purchase.</li>
-            <li>Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current billing period.</li>
-            <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the same rate.</li>
-            <li>You can manage and cancel subscriptions in your device’s Settings → Subscriptions.</li>
-            <li>Any unused portion of a free trial period is forfeited upon purchasing a subscription.</li>
-            <li>Prices are displayed in your local currency and may vary by region.</li>
-          </ul>
-          <p className="text-xs mt-2">
-            Refunds are subject to Apple’s or Google’s refund policies. Tijarah
-            does not process refunds directly for in-app purchases.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            11b. End User Licence Agreement (EULA)
-          </h4>
-          <p className="text-xs">
-            Use of the Tijarah iOS app is also subject to Apple’s Standard
-            End User Licence Agreement (EULA) available at{" "}
-            <span className="text-blue-600">https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</span>.
-            In the event of a conflict between these Terms and Apple’s EULA,
-            Apple’s EULA shall prevail for iOS users.
-          </p>
-
-          <h4 className="font-bold text-slate-800 dark:text-white">
-            12. Contact
-          </h4>
-          <p>
-            Legal enquiries:{" "}
-            <span className="text-blue-600 font-medium">support@tijarahapp.in</span>
-          </p>
-
-          <p className="text-xs text-slate-400 pt-2 text-center">
-            © 2026 Tijarah (BohriConnect). All rights reserved. · v2.0 · May
-            2026
-          </p>
-        </div>
-      </SlidePage>
 
       {/* Help & FAQ Page */}
       <SlidePage

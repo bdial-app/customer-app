@@ -21,7 +21,12 @@ export interface WhatsAppConsentStatus {
   promptKind: "ask" | "confirm" | null;
 }
 
-export type WhatsAppConsentSource = "app_onboarding" | "app_prompt" | "app_settings";
+export type WhatsAppConsentSource =
+  | "app_onboarding"
+  | "app_prompt"
+  | "app_settings"
+  | "app_home_card"
+  | "app_dashboard_card";
 
 export async function getMyWhatsAppConsent(): Promise<WhatsAppConsentStatus> {
   const { data } = await apiClient.get(WHATSAPP_CONSENT_URLS.ME);

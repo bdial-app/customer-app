@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, type TouchEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -18,6 +18,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchSuggestions } from "@/hooks/useSearch";
 import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating, setMaxDistance, setVerifiedOnly, setWomenLedOnly } from "@/store/slices/searchSlice";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { ROUTE_PATH } from "@/utils/contants";
 import type { SearchSuggestion, SearchSortBy } from "@/services/search.service";
 
@@ -42,6 +43,11 @@ const SearchPageContent = () => {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement>(null);
+  // The app doesn't resize the page for the keyboard (KeyboardResize.None), so
+  // the list runs on under it: pad the list by the keyboard's height, and put
+  // the keyboard away as soon as the list is dragged, like native search does.
+  const keyboard = useKeyboardOffset();
+  const dragStartY = useRef<number | null>(null);
 
   const initialQ = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(initialQ);
@@ -155,6 +161,18 @@ const SearchPageContent = () => {
     goBack(ROUTE_PATH.HOME);
   }, [goBack, dispatch]);
 
+  const handleBodyTouchStart = useCallback((e: TouchEvent) => {
+    dragStartY.current = e.touches[0]?.clientY ?? null;
+  }, []);
+
+  const handleBodyTouchMove = useCallback((e: TouchEvent) => {
+    const startY = dragStartY.current;
+    const y = e.touches[0]?.clientY;
+    if (startY === null || y === undefined || Math.abs(y - startY) < 8) return;
+    dragStartY.current = null;
+    if (document.activeElement === inputRef.current) inputRef.current?.blur();
+  }, []);
+
   const handleInputFocus = useCallback(() => {
     setIsFocused(true);
     if (committedQuery) {
@@ -253,7 +271,12 @@ const SearchPageContent = () => {
       </div>
 
       {/* ── Body ───────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">
+      <div
+        className="flex-1 overflow-y-auto overscroll-contain"
+        style={{ paddingBottom: keyboard }}
+        onTouchStart={handleBodyTouchStart}
+        onTouchMove={handleBodyTouchMove}
+      >
         <AnimatePresence mode="wait">
           {phase === "zero" && (
             <motion.div

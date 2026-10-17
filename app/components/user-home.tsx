@@ -1,5 +1,6 @@
 "use client";
 import { ROUTE_PATH } from "@/utils/contants";
+import WhatsAppOptInCard from "@/app/components/whatsapp-optin-card";
 import {
   useRef,
   useMemo,
@@ -276,6 +277,9 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
 
             {/* 🏷️ Deals Around You — red themed carousel */}
             <DealsCarousel deals={dealsAroundYou} isLoading={isLoading} />
+
+            {/* Tijarah on WhatsApp — only for people who haven't decided yet */}
+            <WhatsAppOptInCard variant="customer" className="px-4 pt-2 pb-1" />
 
             {/* ✨ Picks for You — personalized spotlight with "why we picked this" */}
             {forYouProviders.length > 0 && (
