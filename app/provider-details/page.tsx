@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { Page } from "konsta/react";
 import { BottomSheet } from "../components/bottom-sheet";
 import { Sheet } from "@/app/components/ui/sheet";
@@ -638,9 +639,10 @@ export default function ProviderDetailsPage() {
           >
             {heroImage ? (
               <img
-                src={heroImage}
+                src={sizedImageUrl(heroImage, 1080)}
                 alt={provider.brandName}
                 className="w-full h-full object-cover"
+                onError={fallbackToOriginal(heroImage)}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -971,9 +973,10 @@ export default function ProviderDetailsPage() {
                   >
                     {img && (
                       <img
-                        src={img}
+                        src={sizedImageUrl(img, 480)}
                         alt=""
                         className="w-full h-full object-cover"
+                        onError={fallbackToOriginal(img)}
                       />
                     )}
                     {i === 2 && galleryImages.length > 3 && (
@@ -1243,7 +1246,7 @@ export default function ProviderDetailsPage() {
                       className="flex items-center gap-2.5 mt-2 px-3.5 py-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 hover:border-indigo-200 dark:hover:border-indigo-700 active:scale-[0.98] transition-all"
                     >
                       {provider.websiteLogoUrl ? (
-                        <img src={provider.websiteLogoUrl} alt="" className="w-5 h-5 rounded-md object-contain shrink-0" />
+                        <img src={sizedImageUrl(provider.websiteLogoUrl, 64)} alt="" className="w-5 h-5 rounded-md object-contain shrink-0" onError={fallbackToOriginal(provider.websiteLogoUrl)} />
                       ) : (
                         <div className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
                           <IonIcon icon={globeOutline} className="w-3 h-3 text-indigo-500" />
@@ -1682,7 +1685,7 @@ export default function ProviderDetailsPage() {
                         {review.photos && review.photos.length > 0 && (
                           <div className="flex gap-1.5 mt-3">
                             {review.photos.slice(0, 3).map((ph) =>
-                              ph.imageUrl ? <img key={ph.id} src={ph.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover" /> : null,
+                              ph.imageUrl ? <img key={ph.id} src={sizedImageUrl(ph.imageUrl, 168)} alt="" className="w-14 h-14 rounded-lg object-cover" onError={fallbackToOriginal(ph.imageUrl)} /> : null,
                             )}
                           </div>
                         )}
@@ -1821,7 +1824,7 @@ export default function ProviderDetailsPage() {
                               {/* Image */}
                               <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
-                                  <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
+                                  <img src={sizedImageUrl(product.photoUrl, 480)} alt={product.name} className="w-full h-full object-cover" onError={fallbackToOriginal(product.photoUrl)} />
                                 ) : (
                                   <div className="w-full h-full flex flex-col items-center justify-center gap-1">
                                     <IonIcon icon={imagesOutline} className="w-7 h-7 text-gray-200 dark:text-slate-600" />
@@ -1894,7 +1897,7 @@ export default function ProviderDetailsPage() {
                               {/* Image */}
                               <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
                                 {product.photoUrl ? (
-                                  <img src={product.photoUrl} alt={product.name} className="w-full h-full object-cover" />
+                                  <img src={sizedImageUrl(product.photoUrl, 480)} alt={product.name} className="w-full h-full object-cover" onError={fallbackToOriginal(product.photoUrl)} />
                                 ) : (
                                   <div className="w-full h-full flex flex-col items-center justify-center gap-1">
                                     <IonIcon icon={imagesOutline} className="w-7 h-7 text-gray-200 dark:text-slate-600" />

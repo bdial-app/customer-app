@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { useState, useRef, useCallback, useMemo, useImperativeHandle, forwardRef, FC } from "react";
 import { createPortal } from "react-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -106,7 +107,7 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
               className={`relative overflow-hidden bg-gray-100 dark:bg-slate-800 focus:outline-none active:opacity-70 active:scale-[0.98] transition-all duration-150 aspect-square ${idx === 0 ? "rounded-tl-2xl" : ""} ${idx === 2 ? "rounded-tr-2xl" : ""}`}
             >
               {img.thumb && (
-                <img src={img.thumb} alt={img.alt} loading="lazy" draggable={false} className="w-full h-full object-cover select-none" />
+                <img src={sizedImageUrl(img.thumb, 400)} alt={img.alt} loading="lazy" draggable={false} className="w-full h-full object-cover select-none" onError={fallbackToOriginal(img.thumb)} />
               )}
               <div className="absolute inset-0 bg-linear-to-t from-black/5 to-transparent pointer-events-none" />
             </button>
@@ -175,10 +176,11 @@ const Gallery = forwardRef<PhotoGalleryRef, PhotoGalleryProps>((props, ref) => {
                 >
                   <div className="swiper-zoom-container" style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <img
-                      src={img.src}
+                      src={sizedImageUrl(img.src, 1600, 85)}
                       alt={img.alt}
                       draggable={false}
                       className="max-w-full max-h-full object-contain select-none"
+                      onError={fallbackToOriginal(img.src)}
                     />
                   </div>
                 </SwiperSlide>

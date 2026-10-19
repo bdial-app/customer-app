@@ -4,7 +4,10 @@ import { getItem, setItem, removeItem } from "@/utils/storage";
 
 const CACHE_KEY = "tijarah-query-cache";
 const CACHE_VERSION = 1;
-const MAX_AGE = 10 * 60 * 1000; // 10 minutes
+// The saved feed is shown straight away on open and refreshed in the
+// background (useHomeFeed refetches on mount), so an older copy is still far
+// better than a loading screen. Past a day it's too stale to show.
+const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CacheEntry {
   version: number;

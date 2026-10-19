@@ -53,8 +53,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Supabase storage images — cache-first (images rarely change)
+  // Supabase storage images — cache-first (images rarely change). Plain
+  // <img> loads are no-cors: their responses are opaque (status 0), can't be
+  // cached here, and only got slower going through the worker, so the
+  // browser handles those itself.
   if (
+    request.mode !== "no-cors" &&
     url.hostname.includes("supabase.co") &&
     (url.pathname.includes("/storage/v1/object/public/") || url.pathname.includes("/storage/v1/render/image/public/"))
   ) {

@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { useState, useMemo, memo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -258,10 +259,11 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
                     <div className="relative w-[88px] h-[88px] rounded-xl overflow-hidden flex-shrink-0 cursor-pointer bg-slate-100">
                       {item.image ? (
                         <img
-                          src={item.image}
+                          src={sizedImageUrl(item.image, 360)}
                           alt={item.name}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          onError={fallbackToOriginal(item.image)}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -400,10 +402,11 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
                   <div className="relative h-[120px]">
                     {item.image ? (
                       <img
-                        src={item.image}
+                        src={sizedImageUrl(item.image, 360)}
                         alt={item.name}
                         className="w-full h-full object-cover"
                         loading="lazy"
+                        onError={fallbackToOriginal(item.image)}
                       />
                     ) : (
                       <div className="w-full h-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">

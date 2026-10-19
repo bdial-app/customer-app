@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IonIcon } from "@ionic/react";
@@ -169,12 +170,12 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
                   {photo.imageUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={photo.imageUrl}
+                      src={sizedImageUrl(photo.imageUrl, 480)}
                       alt={`Business photo ${i + 1}`}
                       className="relative w-full h-full object-cover"
-                      onError={(e) => {
+                      onError={fallbackToOriginal(photo.imageUrl, (e) => {
                         (e.target as HTMLImageElement).style.display = "none";
-                      }}
+                      })}
                     />
                   )}
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/45 to-transparent" />

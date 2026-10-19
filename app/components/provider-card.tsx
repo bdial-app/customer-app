@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -84,7 +85,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
         {/* Image */}
         <div className="relative w-[110px] h-[110px] shrink-0 overflow-hidden bg-gray-100 dark:bg-slate-800">
           {provider.image ? (
-            <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+            <img src={sizedImageUrl(provider.image, 480)} alt={provider.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={fallbackToOriginal(provider.image)} />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-700">
               <span className="text-2xl font-bold text-amber-200 dark:text-slate-600">{provider.name?.charAt(0)?.toUpperCase()}</span>
@@ -164,7 +165,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
       {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-800">
         {provider.image ? (
-          <img src={provider.image} alt={provider.name} className="w-full h-full object-cover" loading="lazy" />
+          <img src={sizedImageUrl(provider.image, 480)} alt={provider.name} className="w-full h-full object-cover" loading="lazy" onError={fallbackToOriginal(provider.image)} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-700">
             <span className="text-3xl font-bold text-amber-200 dark:text-slate-600">{provider.name?.charAt(0)?.toUpperCase()}</span>

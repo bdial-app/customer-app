@@ -1,6 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { isNativePlatform } from "@/utils/platform";
+
+/**
+ * Inside the Android app the web service worker only gets in the way: the
+ * app's files are already on the phone, every request went through it, and
+ * when it took control it reloaded the whole app ("Loading your feed"
+ * twice on first launch and after every update). iOS never runs it. So in
+ * the app it isn't registered, and one left by an earlier version is
+ * removed along with its caches.
+ */
+async function removeServiceWorker(): Promise<void> {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((r) => r.unregister()));
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k.startsWith("tijarah-")).map((k) => caches.delete(k)));
+    }
+  } catch {
+    // Nothing to clean up, or not allowed: the app works either way.
+  }
+}
 
 export function useServiceWorker() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -9,6 +31,10 @@ export function useServiceWorker() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
+    if (isNativePlatform()) {
+      void removeServiceWorker();
+      return;
+    }
 
     let registration: ServiceWorkerRegistration | null = null;
 

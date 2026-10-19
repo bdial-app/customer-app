@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { Page } from "konsta/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -273,10 +274,11 @@ export default function ProductDetailsPage() {
             {photos.map((photo, i) => (
               <img
                 key={i}
-                src={photo}
+                src={sizedImageUrl(photo, 1080)}
                 alt={i === 0 ? product.name : `${product.name} — photo ${i + 1}`}
                 loading={i === 0 ? "eager" : "lazy"}
                 className="w-full h-full shrink-0 snap-center object-cover"
+                onError={fallbackToOriginal(photo)}
               />
             ))}
           </div>
@@ -323,9 +325,10 @@ export default function ProductDetailsPage() {
                 }`}
               >
                 <img
-                  src={photo}
+                  src={sizedImageUrl(photo, 1080)}
                   alt=""
                   className="w-full h-full object-cover"
+                  onError={fallbackToOriginal(photo)}
                 />
               </button>
             ))}
@@ -405,9 +408,10 @@ export default function ProductDetailsPage() {
             <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden flex-shrink-0">
               {provider.profilePhotoUrl ? (
                 <img
-                  src={provider.profilePhotoUrl}
+                  src={sizedImageUrl(provider.profilePhotoUrl, 160)}
                   alt={provider.brandName}
                   className="w-full h-full object-cover"
+                  onError={fallbackToOriginal(provider.profilePhotoUrl)}
                 />
               ) : (
                 <IonIcon icon={storefront} className="w-5 h-5 text-amber-600" />

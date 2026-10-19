@@ -1,5 +1,6 @@
 "use client";
 
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -43,10 +44,11 @@ const ProviderResultCard = ({ provider, index }: Props) => {
       <div className="relative h-[140px] overflow-hidden bg-gray-100 dark:bg-slate-700">
         {image ? (
           <img
-            src={image}
+            src={sizedImageUrl(image, 360)}
             alt={provider.brandName}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={fallbackToOriginal(image)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-800">
