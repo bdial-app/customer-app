@@ -38,6 +38,8 @@ const OptimizedImage = memo(function OptimizedImage({
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  // If the resized copy fails, try the original once before showing the fallback.
+  const [useOriginal, setUseOriginal] = useState(false);
 
   // A cached image can finish before React attaches onLoad, so check on
   // attach. A ref callback runs at commit, without an effect.
@@ -66,8 +68,13 @@ const OptimizedImage = memo(function OptimizedImage({
 
   // Generate srcSet for 2x displays if using a preset with width
   const srcSet = transformOptions?.width
-    ? `${optimizedSrc} 1x, ${getOptimizedImageUrl(src, { ...transformOptions, width: transformOptions.width * 2 })} 2x`
+    ? `${optimizedSrc} 1x, ${getOptimizedImageUrl(src, {
+        ...transformOptions,
+        width: transformOptions.width * 2,
+        height: "height" in transformOptions ? transformOptions.height * 2 : undefined,
+      })} 2x`
     : undefined;
+  const shownSrc = useOriginal ? src : optimizedSrc;
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -77,8 +84,8 @@ const OptimizedImage = memo(function OptimizedImage({
       )}
       <img
         ref={imgRef}
-        src={optimizedSrc}
-        srcSet={srcSet}
+        src={shownSrc}
+        srcSet={useOriginal ? undefined : srcSet}
         alt={alt}
         width={width}
         height={height}
@@ -86,7 +93,7 @@ const OptimizedImage = memo(function OptimizedImage({
         decoding={priority ? "sync" : "async"}
         fetchPriority={priority ? "high" : "auto"}
         onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
+        onError={() => (optimizedSrc !== src && !useOriginal ? setUseOriginal(true) : setError(true))}
         className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
       />
     </div>

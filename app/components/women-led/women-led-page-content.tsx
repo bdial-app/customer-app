@@ -1,5 +1,6 @@
 "use client";
 
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
@@ -443,10 +444,11 @@ function ProviderCard({
         <div className="relative w-[110px] shrink-0 overflow-hidden bg-purple-50 dark:bg-slate-700">
           {provider.image ? (
             <img
-              src={provider.image}
+              src={sizedImageUrl(provider.image, 480)}
               alt={provider.name}
               className="w-full h-full object-cover min-h-[120px]"
               loading="lazy"
+              onError={fallbackToOriginal(provider.image)}
             />
           ) : (
             <div className="w-full h-full min-h-[120px] flex items-center justify-center bg-gradient-to-br from-purple-100 to-fuchsia-100 dark:from-purple-900/30 dark:to-fuchsia-900/30">

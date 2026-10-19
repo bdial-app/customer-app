@@ -1,5 +1,6 @@
 "use client";
 
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -99,10 +100,10 @@ const SuggestionThumbnail = ({
     return (
       <div className="relative w-10 h-10 flex-shrink-0">
         <img
-          src={imageUrl}
+          src={sizedImageUrl(imageUrl, 120)}
           alt=""
           className="w-10 h-10 rounded-xl object-cover ring-1 ring-gray-100 dark:ring-slate-700"
-          onError={() => setImgError(true)}
+          onError={fallbackToOriginal(imageUrl, () => setImgError(true))}
         />
         <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md ${itemConfig.bg} flex items-center justify-center ring-2 ring-white dark:ring-slate-900`}>
           <IonIcon icon={itemConfig.icon} className={`w-2.5 h-2.5 ${itemConfig.color}`} />

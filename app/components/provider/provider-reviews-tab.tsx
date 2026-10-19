@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import {
@@ -185,9 +186,10 @@ const ProviderReviewsTab = ({ reviews }: ProviderReviewsTabProps) => {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             key={ph.id}
-                            src={ph.imageUrl}
+                            src={sizedImageUrl(ph.imageUrl, 240)}
                             alt="Photo from customer"
                             className="w-20 h-20 rounded-xl object-cover shrink-0 bg-slate-100 dark:bg-slate-800 ring-1 ring-black/5 dark:ring-white/5"
+                            onError={fallbackToOriginal(ph.imageUrl)}
                           />
                         ))}
                       </div>

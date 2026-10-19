@@ -1,4 +1,5 @@
 "use client";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import {
   Block,
   Navbar,
@@ -252,9 +253,10 @@ export default function ServiceProvidersPage() {
                 provider.image ? (
                   <img
                     className="ios:rounded-lg material:rounded-lg ios:w-20 material:w-20 h-20"
-                    src={provider.image}
+                    src={sizedImageUrl(provider.image, 240)}
                     width="80"
                     alt={provider.name}
+                    onError={fallbackToOriginal(provider.image)}
                   />
                 ) : (
                   <div className="ios:rounded-lg material:rounded-lg w-20 h-20 bg-amber-100 dark:bg-slate-700 flex items-center justify-center">
