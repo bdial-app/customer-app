@@ -678,9 +678,10 @@ const GeoLocation = () => {
       <AnimatePresence>
         {showMap && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween", duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
             className="fixed inset-0 z-[9999] bg-white dark:bg-slate-900 flex flex-col"
           >
             {/* Map Header — back button + search bar */}

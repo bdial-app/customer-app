@@ -17,7 +17,7 @@ import { useLanguageSync } from "./context/LanguageContext";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { onAccountPaused, onInappropriateContent, isNetworkError } from "@/utils/axios";
 import { AuthGateProvider } from "./context/AuthGateContext";
-import AuthGateScreen from "./components/auth-gate-screen";
+import AuthGateSheet from "./components/auth-gate-sheet";
 import { resumeMyAccount } from "@/services/user.service";
 import { getMyProviderStatus } from "@/services/provider.service";
 import { useRouter } from "next/navigation";
@@ -71,6 +71,23 @@ if (typeof window !== "undefined" && (window as CapacitorWindow).Capacitor?.isNa
       onlineManager.setOnline(status.connected);
     });
   });
+}
+
+// The viewport meta lets the keyboard overlay the page (interactive-widget=
+// overlays-content) — right for the native app, where the Keyboard plugin
+// reports its height. A mobile browser has no such plugin and, in that mode,
+// tells the page nothing, so sheets stayed behind the keyboard. In the browser
+// go back to Chrome's default: the keyboard shrinks the visual viewport, which
+// useKeyboardOffset measures, while the layout (and the bottom nav) stays put.
+// After hydration, so React's <meta> matches the server's.
+function useBrowserKeyboardViewport() {
+  useEffect(() => {
+    if (isNativePlatform()) return;
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (meta?.content.includes("interactive-widget=overlays-content")) {
+      meta.content = meta.content.replace("interactive-widget=overlays-content", "interactive-widget=resizes-visual");
+    }
+  }, []);
 }
 
 /** True once the welcome tour is out of the way, so prompts can queue behind it. */
@@ -405,6 +422,7 @@ function ProviderStatusBootstrap() {
 
 
 export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+  useBrowserKeyboardViewport();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -489,7 +507,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />
                   <AccountPausedHandler />
-                  <AuthGateScreen />
+                  <AuthGateSheet />
                   <LocationDeniedSheet />
                   {children}
                   <SmartAppBanner />

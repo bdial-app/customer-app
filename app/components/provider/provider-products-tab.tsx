@@ -444,6 +444,7 @@ const ProviderProductsTab = ({
           return (
             <ManageSheet
               open={sheetOpen}
+              variant="screen"
               onClose={closeSheet}
               title={editing ? (editing.productType === "service" ? "Edit service" : "Edit product") : "Add to your catalogue"}
               subtitle={editing ? "Changes show on your page after you save" : "Customers will see this on your page"}

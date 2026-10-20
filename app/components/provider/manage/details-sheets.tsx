@@ -465,6 +465,7 @@ export function LinksSheet({ open, onClose, formik, saveError }: { open: boolean
   return (
     <ManageSheet
       open={open}
+      variant="screen"
       onClose={onClose}
       title="Online links"
       subtitle="All optional. Add the ones you use."

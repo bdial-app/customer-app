@@ -3,7 +3,7 @@
  * Building blocks for the Manage Business screens, so every section looks and
  * behaves the same: one header style, one card, one empty state, one way to
  * add things (an in-page action bar — never a floating button, which escaped
- * its tab and covered other screens), one bottom sheet and one set of inputs.
+ * its tab and covered other screens), one editor screen and one set of inputs.
  */
 import { type ReactNode } from "react";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { IonIcon } from "@ionic/react";
 import { closeOutline } from "ionicons/icons";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { Sheet } from "@/app/components/ui/sheet";
+import { Screen } from "@/app/components/ui/screen";
 
 /** Space the bottom navigation (and its Business Mode pill) takes up. */
 export const BOTTOM_NAV_SPACE = "calc(6.5rem + var(--sab, 0px))";
@@ -227,10 +228,12 @@ export function Segmented<T extends string>({
 // ─── Sheet ──────────────────────────────────────────────────────────────
 
 /**
- * Bottom sheet on document.body (above the tab bar and bottom navigation, and
- * just below AppDialog, so a confirm dialog opened from a sheet dims it),
- * with a fixed header, a scrolling body and an optional fixed footer for the
- * main action — so Save is always reachable, even with the keyboard open.
+ * An editor with a fixed header, a scrolling body and an optional fixed footer
+ * for the main action — so Save is always reachable, even with the keyboard
+ * open. A bottom sheet by default; `variant="screen"` makes it a full screen
+ * for long forms (more than four fields), where the keyboard needs the room.
+ * Either way it sits on document.body, above the tab bar and bottom navigation
+ * and just below AppDialog, so a confirm dialog opened from it dims it.
  */
 export function ManageSheet({
   open,
@@ -239,6 +242,7 @@ export function ManageSheet({
   subtitle,
   headerRight,
   footer,
+  variant = "sheet",
   children,
 }: {
   open: boolean;
@@ -247,9 +251,26 @@ export function ManageSheet({
   subtitle?: string;
   headerRight?: ReactNode;
   footer?: ReactNode;
+  variant?: "screen" | "sheet";
   children: ReactNode;
 }) {
   const keyboard = useKeyboardOffset();
+  if (variant === "screen") {
+    return (
+      <Screen
+        open={open}
+        onClose={onClose}
+        zIndex={9996}
+        title={title}
+        subtitle={subtitle}
+        headerRight={headerRight}
+        footer={footer && <div className="px-5 py-3">{footer}</div>}
+        bodyClassName="px-5 py-4"
+      >
+        {children}
+      </Screen>
+    );
+  }
   return (
     <Sheet open={open} onClose={onClose} zIndex={9996} label={title} safeArea={!footer}>
       <div className="shrink-0 flex items-start gap-3 px-5 pt-1 sm:pt-5 pb-3 border-b border-slate-100 dark:border-slate-800">

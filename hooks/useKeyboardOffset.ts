@@ -112,6 +112,8 @@ export function useKeyboardOffset(): number {
       }
     } else {
       // ── Web / PWA: visualViewport only ──────────────────────────────
+      // (layoutWrapper switches the browser to interactive-widget=
+      // resizes-visual, so the keyboard shrinks the visual viewport.)
       const vv = window.visualViewport;
       if (!vv) return;
 
@@ -133,3 +135,4 @@ export function useKeyboardOffset(): number {
 
   return offset;
 }
+

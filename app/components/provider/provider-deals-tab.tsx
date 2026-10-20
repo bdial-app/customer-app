@@ -455,6 +455,7 @@ const ProviderDealsTab = () => {
           return (
             <ManageSheet
               open={sheetOpen}
+              variant="screen"
               onClose={closeSheet}
               title={editing ? "Edit offer" : "New offer"}
               subtitle={editing ? "Changes show to customers right away." : "Takes about a minute."}
