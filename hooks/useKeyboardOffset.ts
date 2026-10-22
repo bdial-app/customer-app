@@ -6,16 +6,37 @@ import { isNativePlatform } from "@/utils/platform";
 /**
  * Returns the current software-keyboard height in CSS pixels.
  *
- * Strategy (native Capacitor with KeyboardResize.None):
- *  1. `keyboardWillShow` — immediate response from the plugin.
- *  2. `keyboardDidShow`  — refine the value with a visualViewport
- *     measurement that is in CSS coordinates (fixes Android gap where
- *     the plugin height includes the system navigation bar).
- *  3. visualViewport `resize`/`scroll` — fallback for iOS if the
- *     Capacitor keyboard events never fire.
+ * Native (Capacitor): the Keyboard plugin's height, minus however much the
+ * WebView itself shrank for the keyboard (Android's SystemBars pads the
+ * window by it) — i.e. only the part of the page the keyboard still covers.
+ * visualViewport is the fallback if the plugin's events never fire (iOS).
  *
  * On web / PWA the hook relies on the visualViewport API exclusively.
  */
+/**
+ * The WebView's height with no keyboard, shared by every caller and tracked
+ * from the first use (app start, keyboard closed): the tallest it has been at
+ * the current width. On Android the keyboard's shrink reaches the page as a
+ * window resize *before* the plugin's keyboardWillShow, so a resize must never
+ * lower it — only a change of width (rotation) starts over.
+ */
+const view = { fullWidth: 0, fullHeight: 0, webViewResizes: false, tracking: false };
+function trackFullHeight() {
+  if (view.tracking || typeof window === "undefined") return;
+  view.tracking = true;
+  const measure = () => {
+    if (window.innerWidth !== view.fullWidth) {
+      view.fullWidth = window.innerWidth;
+      view.fullHeight = window.innerHeight;
+    } else {
+      view.fullHeight = Math.max(view.fullHeight, window.innerHeight);
+    }
+  };
+  measure();
+  // Registered first, so it runs before any hook's own resize handler.
+  window.addEventListener("resize", measure);
+}
+
 export function useKeyboardOffset(): number {
   const [offset, setOffset] = useState(0);
 
@@ -33,34 +54,51 @@ export function useKeyboardOffset(): number {
     };
 
     if (isNativePlatform()) {
+      // The plugin reports the whole keyboard. But Capacitor's SystemBars
+      // (Android, edge-to-edge) pads the window by the keyboard, so the
+      // WebView itself shrinks to end above it — then only what's left
+      // uncovered counts, or sheets lift twice and float mid-screen.
+      // So: plugin height minus how much the WebView shrank.
+      let pluginHeight = 0;
+      trackFullHeight();
+
+      const covered = () => {
+        // Shrunk for the keyboard: the page already ends above it. (On older
+        // WebViews it shrinks by the keyboard minus the nav bar it was already
+        // padded for, so don't subtract — any remainder would be a gap.)
+        if (view.fullHeight - window.innerHeight > 50) {
+          view.webViewResizes = true;
+          return 0;
+        }
+        return Math.round(pluginHeight);
+      };
+
+      const onWindowResize = () => {
+        if (pluginActive) setOffset(covered());
+      };
+      window.addEventListener("resize", onWindowResize);
+      cleanups.push(() => window.removeEventListener("resize", onWindowResize));
+
       // ── Source 1: Capacitor Keyboard plugin ─────────────────────────
       import("@capacitor/keyboard")
         .then(({ Keyboard }) => {
           if (cancelled) return;
 
-          // Fast initial response — may overshoot on Android because
-          // keyboardHeight includes the system navigation bar height.
           Keyboard.addListener("keyboardWillShow", (info) => {
             // Cancel any pending hide — keyboard reopened quickly (e.g. step transition)
             if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
             pluginActive = true;
-            setOffset(info.keyboardHeight);
+            pluginHeight = info.keyboardHeight;
+            // The WebView hasn't shrunk yet; if it will, don't lift at all.
+            setOffset(view.webViewResizes ? 0 : covered());
           }).then((l) => cleanups.push(() => l.remove()));
 
-          // After keyboardDidShow, refine with the visual viewport
-          // measurement which is in CSS pixels. Only refine UPWARD —
-          // on Android the plugin value is now authoritative because the
-          // WebView extends behind the nav bar; the viewport measurement
-          // may undercount if interactive-widget resizes the layout viewport.
-          Keyboard.addListener("keyboardDidShow", () => {
+          Keyboard.addListener("keyboardDidShow", (info) => {
             if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
             pluginActive = true;
+            pluginHeight = info.keyboardHeight;
             requestAnimationFrame(() => {
-              if (cancelled) return;
-              const vvH = measureFromViewport();
-              if (vvH > 50) {
-                setOffset((prev) => Math.max(prev, vvH));
-              }
+              if (!cancelled) setOffset(covered());
             });
           }).then((l) => cleanups.push(() => l.remove()));
 
@@ -70,6 +108,7 @@ export function useKeyboardOffset(): number {
             // keyboardWillShow will cancel this timer and keep the offset.
             hideTimer = setTimeout(() => {
               pluginActive = false;
+              pluginHeight = 0;
               setOffset(0);
               hideTimer = null;
             }, 300);
@@ -80,28 +119,22 @@ export function useKeyboardOffset(): number {
             // let it handle it. Only force-reset if no timer is pending.
             if (!hideTimer) {
               pluginActive = false;
+              pluginHeight = 0;
               setOffset(0);
             }
           }).then((l) => cleanups.push(() => l.remove()));
         })
         .catch(() => {});
 
-      // ── Source 2: visualViewport — secondary refinement ──────────────
-      // On native, the plugin value is authoritative. The viewport
-      // measurement is used only to refine upward (never reduce the
-      // offset below the plugin's value, which now correctly includes
-      // the nav bar since the WebView extends behind it).
+      // ── Source 2: visualViewport — iOS fallback ─────────────────────
+      // If the plugin's events never fire, the visual viewport still shows
+      // the keyboard (it measures only what's covered, so it can't double).
       const vv = window.visualViewport;
       if (vv) {
         const vvUpdate = () => {
+          if (pluginActive) return;
           const measured = measureFromViewport();
-          if (measured > 50) {
-            // Only increase — never shrink below the plugin's value
-            setOffset((prev) => Math.max(prev, measured));
-          } else if (!pluginActive) {
-            // Only reset to 0 when the plugin confirms keyboard is hidden.
-            setOffset(0);
-          }
+          setOffset(measured > 50 ? measured : 0);
         };
         vv.addEventListener("resize", vvUpdate);
         vv.addEventListener("scroll", vvUpdate);
