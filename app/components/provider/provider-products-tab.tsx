@@ -388,17 +388,25 @@ const ProviderProductsTab = ({
           // Collect server URLs that the user kept
           const keptServerUrls = photoPreviews.filter((u) => !u.startsWith("blob:"));
 
-          // Upload new files
+          // Upload new files. Each gets a second try (a dropped connection or a
+          // server waking up shouldn't lose the photo); if one still fails,
+          // nothing is saved, so the owner can tap Save again with photos intact.
           let newUrls: string[] = [];
           if (photoFiles.length > 0) {
+            setIsUploading(true);
+            setPhotoError(null);
             try {
-              setIsUploading(true);
               const results = await Promise.all(
-                photoFiles.map((f) => uploadProductImage(f)),
+                photoFiles.map((f) => uploadProductImage(f).catch(() => uploadProductImage(f))),
               );
               newUrls = results.map((r) => r.url);
             } catch {
-              // Continue with what we have
+              setPhotoError(
+                photoFiles.length === 1
+                  ? "The photo didn't upload. Check your connection and tap Save again."
+                  : "Some photos didn't upload. Check your connection and tap Save again.",
+              );
+              return;
             } finally {
               setIsUploading(false);
             }
