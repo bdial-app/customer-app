@@ -68,6 +68,7 @@ const mapProvider = (p: FeedProvider) => ({
   location: p.location || undefined,
   verified: p.verified || false,
   womenLed: p.isWomenLed || p.womenLed || false,
+  badges: p.badges ?? [],
   // Cards read null and undefined the same way (no distance known).
   distance: p.distance ?? undefined,
 });

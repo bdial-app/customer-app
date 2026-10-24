@@ -226,6 +226,7 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
         distance: p.distance,
         womenLed: p.isWomenLed || false,
         featured: p.isFeatured || false,
+        badges: p.badges ?? [],
       })),
     );
     // Sponsored/featured providers float to top

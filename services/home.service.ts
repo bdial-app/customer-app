@@ -48,6 +48,8 @@ async function nativeGet(path: string, params?: Record<string, unknown>): Promis
 
 export interface HomeProvider {
   id: string;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
   name: string;
   image: string | null;
   description: string | null;
@@ -146,6 +148,8 @@ export interface HomeProviderWithOffer {
 
 export interface HomeSponsoredProvider {
   id: string;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
   name: string;
   image: string | null;
   description: string | null;

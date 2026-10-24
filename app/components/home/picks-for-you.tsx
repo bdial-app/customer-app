@@ -10,9 +10,12 @@ import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
 import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
+import { TopBadge } from "@/app/components/badges/badge-chip";
 
 interface PicksProvider {
   id: string | number;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
   name: string;
   image: string;
   rating?: number;
@@ -165,6 +168,7 @@ const PicksForYou = ({
                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-1">
                     {provider.name}
                   </h4>
+                  <TopBadge badges={provider.badges} className="mt-1" />
                   {provider.service && (
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                       {provider.service}

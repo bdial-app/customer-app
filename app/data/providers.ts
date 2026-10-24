@@ -12,6 +12,8 @@ export interface Provider {
   image: string;
   verified: boolean;
   womenLed?: boolean;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
 }
 
 export const ALL_PROVIDERS: Provider[] = [

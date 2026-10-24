@@ -6,7 +6,6 @@ import { Sheet } from "@/app/components/ui/sheet";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { PROVIDER_TAB_EVENT } from "@/utils/tour-nav";
 import Link from "next/link";
-import { ROUTE_PATH } from "@/utils/contants";
 import { getPendingDeepLinkTarget, endDeepLinkLoading } from "@/utils/deep-link";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
@@ -49,7 +48,9 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
-import { useListingId } from "@/hooks/useListingId";
+import { useListingId, useReadableAddress } from "@/hooks/useListingId";
+import { knownBadges } from "@/utils/badges";
+import { BadgesSheet } from "@/app/components/badges/badges-sheet";
 import { useShareBusiness, useShareCatalogue } from "@/hooks/useShare";
 import { cameFromReviewLink } from "@/utils/app-links";
 import { facebookUrl, instagramUrl, linkedinUrl, websiteUrl, whatsappUrl, youtubeUrl } from "@/utils/social-links";
@@ -72,6 +73,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCombinedReviews } from "@/hooks/useCombinedReviews";
 import type { GoogleReview } from "@/services/google-reviews.service";
 import { isAxiosError } from "axios";
+import { businessPath, catalogueHref, productHref } from "@/utils/share-links";
 
 type ViewSource = NonNullable<Parameters<typeof useTrackProviderView>[1]>;
 
@@ -240,6 +242,7 @@ export default function ProviderDetailsPage() {
   const { data } = details;
   const isLoading = listing.resolving || details.isLoading;
   const isError = listing.notFound || details.isError;
+  useReadableAddress(data?.provider?.slug ? businessPath(data.provider.slug) : null);
   const { data: combinedData } = useCombinedReviews(id);
 
   // Hand the cold-start deep-link loader off to real content once this page has
@@ -370,6 +373,8 @@ export default function ProviderDetailsPage() {
   const reviews = (data?.reviews?.length ?? 0) > 0 ? data!.reviews : [];
   const categories = data?.categories ?? [];
   const badges = data?.badges ?? [];
+  const heroBadges = knownBadges(badges);
+  const [showBadges, setShowBadges] = useState(false);
   const activeOffers = data?.activeOffers ?? [];
   const isSponsored = data?.isSponsored ?? false;
   const sponsorEndsAt = data?.sponsorEndsAt ?? null;
@@ -772,24 +777,31 @@ export default function ProviderDetailsPage() {
                     ⭐ Premium
                   </span>
                 )}
-                {badges.length > 0 &&
-                  badges.slice(0, 3).map((b) => (
-                    <span
-                      key={b.id}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white"
-                    >
-                      {b.type === "gold_seller"
-                        ? "🥇"
-                        : b.type === "top_rated"
-                        ? "⭐"
-                        : b.type === "trusted"
-                        ? "🛡️"
-                        : b.type === "express_service"
-                        ? "⚡"
-                        : "🌟"}
-                      {b.type.replace(/_/g, " ")}
-                    </span>
-                  ))}
+                {heroBadges.length > 0 && (
+                  // Tap for what they mean and how they're earned.
+                  <button
+                    onClick={() => setShowBadges(true)}
+                    className="inline-flex items-center gap-1 shrink-0 active:scale-95 transition-transform"
+                    aria-label="What these badges mean"
+                  >
+                    {heroBadges.slice(0, 2).map((b) => (
+                      <span
+                        key={b.key}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold pl-1 pr-2 py-0.5 rounded-full bg-white/90 text-gray-900 shadow-sm"
+                      >
+                        <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-white ${b.disc}`}>
+                          <IonIcon icon={b.icon} className="w-2.5 h-2.5" />
+                        </span>
+                        {b.label}
+                      </span>
+                    ))}
+                    {heroBadges.length > 2 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/25 backdrop-blur-sm text-white">
+                        +{heroBadges.length - 2}
+                      </span>
+                    )}
+                  </button>
+                )}
                 {/* Google's verdict up front, so a well-reviewed shop reads as one
                     before anyone opens the Reviews tab. */}
                 {(provider.googleReviewCount ?? 0) > 0 && Number(provider.googleRating) > 0 && (
@@ -1800,7 +1812,7 @@ export default function ProviderDetailsPage() {
                     Share
                   </button>
                   <Link
-                    href={`${ROUTE_PATH.SHOP}?id=${id}`}
+                    href={catalogueHref({ id, slug: provider?.slug })}
                     className="flex items-center h-8 px-3 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-[12px] font-bold active:scale-95 transition-transform"
                   >
                     View all
@@ -1825,7 +1837,7 @@ export default function ProviderDetailsPage() {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = product.productType === "service";
                         return (
-                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`} className="block h-full">
+                          <Link key={product.id} href={productHref({ ...product, providerSlug: provider?.slug })} className="block h-full">
                             <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-amber-200/70 dark:border-amber-700/40 shadow-[0_0_16px_rgba(251,191,36,0.18)] dark:shadow-[0_0_16px_rgba(251,191,36,0.12)] active:scale-[0.97] transition-transform">
                               {/* Image */}
                               <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
@@ -1898,7 +1910,7 @@ export default function ProviderDetailsPage() {
                         const currencySymbol = product.currency === "INR" ? "₹" : product.currency + " ";
                         const isService = product.productType === "service";
                         return (
-                          <Link key={product.id} href={`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`} className="block h-full">
+                          <Link key={product.id} href={productHref({ ...product, providerSlug: provider?.slug })} className="block h-full">
                             <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] active:scale-[0.97] transition-transform">
                               {/* Image */}
                               <div className="relative aspect-[4/3] shrink-0 bg-gray-50 dark:bg-slate-700 overflow-hidden">
@@ -2279,6 +2291,12 @@ export default function ProviderDetailsPage() {
           onClose={() => setReportSheetOpen(false)}
         />
       )}
+      <BadgesSheet
+        open={showBadges}
+        onClose={() => setShowBadges(false)}
+        badges={badges}
+        businessName={provider.brandName}
+      />
     </Page>
   );
 }

@@ -20,6 +20,7 @@ import type { HomeSponsoredProvider } from "@/services/home.service";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
 import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
+import { TopBadge } from "@/app/components/badges/badge-chip";
 
 // A city-level pin shows the town instead of a distance that would be wrong.
 const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
@@ -179,6 +180,7 @@ const SponsoredCarousel = ({
                   {/* Info: rating and place line up at the bottom of every card */}
                   <div className="flex-1 flex flex-col p-3.5">
                     <h3 className="text-[14.5px] font-bold text-slate-900 dark:text-white leading-snug line-clamp-1">{provider.name}</h3>
+                    <TopBadge badges={provider.badges} className="mt-1" />
                     {provider.primaryCategory && (
                       <p className="text-[11.5px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5 line-clamp-1">{provider.primaryCategory}</p>
                     )}

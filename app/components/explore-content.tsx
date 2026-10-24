@@ -42,6 +42,7 @@ import type {
 } from "@/services/explore.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { TopBadge } from "@/app/components/badges/badge-chip";
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
@@ -448,6 +449,7 @@ const BusinessesExplore = memo(() => {
                 </div>
                 <div className="p-2.5">
                   <h4 className="text-[13px] font-semibold text-slate-800 dark:text-white line-clamp-1">{p.name}</h4>
+                  <TopBadge badges={p.badges} className="mt-1" />
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{p.services || p.location}</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     {p.rating > 0 ? (
@@ -514,6 +516,7 @@ const BusinessesExplore = memo(() => {
                 </div>
                 <div className="p-2.5">
                   <h4 className="text-[12px] font-semibold text-slate-800 dark:text-white line-clamp-1">{p.name}</h4>
+                  <TopBadge badges={p.badges} className="mt-1" />
                   <p className="text-[10px] text-rose-600 font-medium mt-0.5 line-clamp-1">{p.offerTitle}</p>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     {p.rating > 0 && (
@@ -851,6 +854,7 @@ function ExploreCarouselCard({
       </div>
       <div className="p-2.5">
         <h4 className="text-[12px] font-semibold text-slate-800 dark:text-white line-clamp-1">{p.name}</h4>
+        <TopBadge badges={p.badges} className="mt-1" />
         <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{p.services || p.location}</p>
         <div className="flex items-center gap-1.5 mt-1.5">
           {p.rating > 0 ? (

@@ -52,6 +52,8 @@ export interface SearchSuggestion {
 
 export interface ProviderSearchResult {
   id: string;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
   brandName: string;
   description: string | null;
   profilePhotoUrl: string | null;

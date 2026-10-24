@@ -3,9 +3,10 @@ import { EXPLORE_URLS } from "@/utils/urls";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
+/** A badge on a card (see utils/badges.ts for the list). */
 export interface ProviderBadge {
-  type: 'gold_seller' | 'top_rated' | 'express_service' | 'trusted' | 'rising_star';
-  source: 'paid' | 'earned';
+  type: string;
+  source: string;
 }
 
 export interface ExploreProvider {

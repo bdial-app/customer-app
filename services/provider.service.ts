@@ -77,6 +77,8 @@ export interface BecomeProviderPayload {
 
 export interface ProviderData {
   id: string;
+  /** Badges it holds now, highest first (lists only). */
+  badges?: import("@/utils/badges").BadgeRef[];
   /** Public address: /business/<slug>. Missing until the API that makes slugs is live. */
   slug?: string;
   userId: string;
@@ -278,12 +280,15 @@ export interface ProviderDetailsCategory {
   slug: string;
 }
 
+/** A badge on the business page: live ones only, highest first. */
 export interface ProviderDetailsBadge {
   id: string;
-  providerId: string;
   type: string;
-  createdAt: string;
-  isActive: boolean;
+  source: string;
+  /** Why the team chose it (Tijarah Pick). */
+  reason: string | null;
+  since: string;
+  expiresAt: string | null;
 }
 
 export interface ProviderDetailsOffer {

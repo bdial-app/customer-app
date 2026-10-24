@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
 import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
+import { TopBadge } from "@/app/components/badges/badge-chip";
 
 interface Provider {
   id: string | number;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
   name: string;
   image: string;
   rating?: number;
@@ -161,6 +164,7 @@ const FeaturedProviderGrid = ({
                 <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
                   {provider.name}
                 </h4>
+                <TopBadge badges={provider.badges} className="mt-1" />
                 {provider.service && (
                   <p className="text-[10px] text-slate-500 mt-0.5">
                     {provider.service}

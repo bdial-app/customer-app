@@ -18,6 +18,7 @@ import {
 import type { ProviderSearchResult } from "@/services/search.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { TopBadge } from "@/app/components/badges/badge-chip";
 
 interface Props {
   provider: ProviderSearchResult;
@@ -101,6 +102,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
         <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-tight line-clamp-1">
           {provider.brandName}
         </h4>
+        <TopBadge badges={provider.badges} className="mt-1" />
 
         {provider.categories && (
           <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1 font-medium">

@@ -16,9 +16,12 @@ import {
 } from "ionicons/icons";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { TopBadge } from "@/app/components/badges/badge-chip";
 
 export interface ProviderCardData {
   id: string;
+  /** Badges it holds now, highest first. */
+  badges?: import("@/utils/badges").BadgeRef[];
   name: string;
   image: string;
   rating?: number | null;
@@ -128,6 +131,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
           {provider.service && (
             <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{provider.service}</p>
           )}
+          <TopBadge badges={provider.badges} className="mt-1" />
 
           {/* Spacer */}
           <div className="flex-1" />
@@ -217,6 +221,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
       {/* Info — compact */}
       <div className="px-2.5 py-2">
         <h4 className="text-[12px] font-bold text-gray-900 dark:text-white leading-tight line-clamp-1">{provider.name}</h4>
+        <TopBadge badges={provider.badges} className="mt-1" />
         {provider.service && (
           <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{provider.service}</p>
         )}

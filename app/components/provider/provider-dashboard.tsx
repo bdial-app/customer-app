@@ -3,6 +3,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import WhatsAppOptInCard from "@/app/components/whatsapp-optin-card";
+import YourBadgesCard from "@/app/components/provider/your-badges-card";
 import {
   sparklesOutline,
   chevronForwardOutline,
@@ -1557,6 +1558,7 @@ const ProviderDashboard = ({
         verificationStatus={verificationStatus}
       />
       <TodayActivity stats={providerStats} loading={detailsLoading} />
+      <YourBadgesCard enabled={!!providerId} />
       <WhatsAppOptInCard variant="business" className="px-4 mb-4" />
       {subscriptionsVisible && (hasActivePlan ? (
         <ActivePlanBanner
