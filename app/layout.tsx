@@ -47,6 +47,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+/** The API this build talks to, warmed up before the first request. */
+const apiOrigin = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_API_URL ? new URL(process.env.NEXT_PUBLIC_API_URL).origin : null;
+  } catch {
+    return null;
+  }
+})();
+
 export default async function RootLayout({
   children,
   seo,
@@ -96,8 +105,8 @@ export default async function RootLayout({
         <meta name="msapplication-TileImage" content="/icons/192.png" />
         <link rel="manifest" href="/manifest.json" />
         {/* DNS prefetch for API — speeds up first request on mobile data */}
-        <link rel="dns-prefetch" href="https://develop-customer-api.tijarahapp.in" />
-        <link rel="preconnect" href="https://develop-customer-api.tijarahapp.in" crossOrigin="" />
+        {apiOrigin && <link rel="dns-prefetch" href={apiOrigin} />}
+        {apiOrigin && <link rel="preconnect" href={apiOrigin} crossOrigin="" />}
         {/* Apple splash screens — required to prevent white screen on old iOS PWA launch */}
         {/* iPad 1/2 (768×1024 @1x) */}
         <link rel="apple-touch-startup-image" href="/splash-screen.png"

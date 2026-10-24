@@ -70,6 +70,15 @@ const clip = (text: string | null | undefined, max: number) => {
   return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), max * 0.6))}…`;
 };
 
+/**
+ * The owner's own words when there are enough of them to describe anything;
+ * a one-word description ("Pronttera") would make a poor search snippet.
+ */
+const ownWords = (text: string | null | undefined, max: number) => {
+  const t = clip(text, max);
+  return t.length >= 50 ? t : "";
+};
+
 const place = (area?: string | null, city?: string | null) => [area, city].filter(Boolean).join(", ");
 
 const money = (amount: number | string | null | undefined, currency?: string | null) => {
@@ -115,13 +124,15 @@ const businessImage = (d: ProviderDetailsResponse) =>
 
 export function businessMetadata(d: ProviderDetailsResponse, slug: string) {
   const p = d.provider;
-  const categories = (d.categories ?? []).map((c) => c.name).filter(Boolean).slice(0, 2).join(" & ");
+  // The main category only: names like "IT & Computer Services" already hold
+  // an "&", and two of them joined read as a list.
+  const category = (d.categories ?? []).map((c) => c.name).find(Boolean) ?? "";
   const where = place(p.area, p.city);
-  const lead = [categories, where && `in ${where}`].filter(Boolean).join(" ");
+  const lead = [category, where && `in ${where}`].filter(Boolean).join(" ");
   return baseMetadata({
     title: `${p.brandName}${lead ? ` – ${lead}` : ""} | Tijarah Connect`,
     description:
-      clip(p.description, 155) ||
+      ownWords(p.description, 155) ||
       `${p.brandName}${lead ? `, ${lead}` : ""}. See photos, prices and reviews, and call or WhatsApp directly on Tijarah Connect.`,
     path: businessPath(slug),
     image: businessImage(d),
@@ -156,7 +167,7 @@ export function productMetadata(d: ProductDetailsResponse, businessSlug: string,
   return baseMetadata({
     title: `${item.name}${price ? ` – ${price}` : ""} | ${shop.brandName}`,
     description:
-      clip(item.description, 155) ||
+      ownWords(item.description, 155) ||
       `${item.name}${price ? ` for ${price}` : ""} from ${shop.brandName}${where ? `, ${where}` : ""}. Order by call or WhatsApp on Tijarah Connect.`,
     path: productPath(businessSlug, itemSlug),
     image: item.photoUrls?.find(Boolean) ?? item.photoUrl ?? shop.profilePhotoUrl,
