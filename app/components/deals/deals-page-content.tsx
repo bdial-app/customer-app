@@ -23,7 +23,6 @@ import {
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useDeals } from "@/hooks/useDeals";
 import { getTopLevelCategories } from "@/services/category.service";
@@ -31,6 +30,7 @@ import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { ProviderWithOffer } from "@/services/explore.service";
 import { distanceLabel } from "@/utils/distance-label";
 import { useNow } from "@/hooks/useNow";
+import { businessHref } from "@/utils/share-links";
 
 type SortOption = "discount" | "ending_soon" | "distance" | "newest";
 type DiscountFilter = "all" | "percentage" | "flat";
@@ -330,7 +330,7 @@ const DealsPageContent = () => {
 
   const handleDealClick = useCallback(
     (deal: ProviderWithOffer) => {
-      router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${deal.id}`);
+      router.push(businessHref(deal));
     },
     [router]
   );

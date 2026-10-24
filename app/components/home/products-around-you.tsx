@@ -63,7 +63,7 @@ const ProductsAroundYou = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: Math.min(i, 8) * 0.03, duration: 0.25 }}
                 >
-                  <Link href={productHref(item.id, "home_feed")} className="block active:scale-[0.96] transition-transform">
+                  <Link href={productHref(item, "home_feed")} className="block active:scale-[0.96] transition-transform">
                     <div className="relative w-[124px] h-[124px] rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-100 dark:ring-slate-800">
                       {item.photoUrl ? (
                         <OptimizedImage src={item.photoUrl} alt={item.name} className="w-full h-full" width={124} height={124} preset="product" priority={i < 4} />

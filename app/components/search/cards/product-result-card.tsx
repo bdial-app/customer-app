@@ -9,9 +9,9 @@ const IonIcon = dynamic(
   { ssr: false }
 );
 import { locationOutline, navigateOutline, storefrontOutline } from "ionicons/icons";
-import { ROUTE_PATH } from "@/utils/contants";
 import type { ProductSearchResult } from "@/services/search.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
+import { productHref } from "@/utils/share-links";
 
 interface Props {
   product: ProductSearchResult;
@@ -27,7 +27,7 @@ const ProductResultCard = ({ product, index }: Props) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
       onClick={() =>
-        router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${product.id}`)
+        router.push(productHref(product))
       }
       className="cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.97] transition-transform duration-150"
     >

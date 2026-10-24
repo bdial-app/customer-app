@@ -67,7 +67,7 @@ const ServicesAroundYou = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.25 }}
                   >
-                    <Link href={productHref(item.id, "home_feed")} className="flex items-center gap-3 p-3 active:bg-slate-50 dark:active:bg-slate-700/50">
+                    <Link href={productHref(item, "home_feed")} className="flex items-center gap-3 p-3 active:bg-slate-50 dark:active:bg-slate-700/50">
                       <div className="w-[52px] h-[52px] rounded-xl overflow-hidden bg-indigo-50 dark:bg-slate-700 shrink-0">
                         {item.photoUrl ? (
                           <OptimizedImage src={item.photoUrl} alt={item.name} className="w-full h-full" width={52} height={52} preset="thumbnail" />

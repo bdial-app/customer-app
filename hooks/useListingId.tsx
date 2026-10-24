@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { resolveBusinessSlug, resolveProductSlug } from "@/services/slug.service";
+import { HAS_LISTING_PAGES } from "@/utils/share-links";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -61,4 +62,24 @@ export function useListingId(kind: "business" | "product"): ListingId {
     return { id: lookup.data ?? "", resolving: lookup.isPending, notFound: lookup.isError };
   }
   return { id: raw, resolving: false, notFound: false };
+}
+
+const APP_SCREEN = /^\/(provider-details|product-details|shop)\/?$/;
+
+/**
+ * On the website, once a details screen opened by its old address
+ * (/provider-details?id=…) knows the listing's readable one, the address bar
+ * shows that instead — without reloading — so what people copy or share is
+ * the /business/… link. Not during the onboarding tour, which follows the
+ * screen's own address, and never in the app.
+ */
+export function useReadableAddress(path: string | null) {
+  useEffect(() => {
+    if (!HAS_LISTING_PAGES || !path || !APP_SCREEN.test(window.location.pathname)) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tour") === "1") return;
+    for (const k of ["id", "b", "p"]) params.delete(k);
+    const query = params.toString();
+    window.history.replaceState(window.history.state, "", query ? `${path}?${query}` : path);
+  }, [path]);
 }

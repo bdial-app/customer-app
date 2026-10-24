@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { bagHandle, arrowForward, storefront } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { ROUTE_PATH } from "@/utils/contants";
 import { HomeFeedProduct, PersonalizedCategory } from "@/services/home.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
+import { productHref } from "@/utils/share-links";
 
 const formatPrice = (price: number | null, currency: string) => {
   if (price == null) return null;
@@ -45,7 +45,7 @@ const PicksForYouProducts = ({
   const supporting = rest.slice(0, 3);
 
   const handleOpen = (id: string) =>
-    router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${id}`);
+    router.push(productHref({ id }));
 
   if (isLoading) {
     return (

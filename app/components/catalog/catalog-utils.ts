@@ -1,4 +1,5 @@
 import { ROUTE_PATH } from "@/utils/contants";
+import { productHref as itemHref } from "@/utils/share-links";
 import { distanceLabel } from "@/utils/distance-label";
 import type {
   CatalogArea,
@@ -26,8 +27,10 @@ export const itemLocation = (item: CatalogItem) =>
   [item.providerArea, item.providerCity].filter(Boolean).join(", ");
 
 /** Where tapping a card goes; `src` attributes the product view in analytics. */
-export const productHref = (id: string, src: "explore" | "home_feed" | "direct" = "explore") =>
-  `${ROUTE_PATH.PRODUCT_DETAILS}?id=${id}&src=${src}`;
+export const productHref = (
+  item: Pick<CatalogItem, "id" | "slug" | "providerId" | "providerSlug">,
+  src: "explore" | "home_feed" | "direct" = "explore",
+) => itemHref(item, { src });
 
 export const typeNoun = (type: CatalogType, plural = true) =>
   type === "service" ? (plural ? "services" : "service") : plural ? "products" : "product";

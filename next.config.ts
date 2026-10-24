@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
   pageExtensions: webServer ? ["web.tsx", "web.ts", "tsx", "ts", "jsx", "js"] : ["tsx", "ts", "jsx", "js"],
   env: {
     NEXT_PUBLIC_SHARE_ORIGIN: shareOrigin,
+    // Whether this build has the /business/… pages, so links can go to them
+    // (the website) or must use the app's own screens (the app).
+    NEXT_PUBLIC_LISTING_PAGES: webServer ? "1" : "",
   },
   trailingSlash: true,
   images: {

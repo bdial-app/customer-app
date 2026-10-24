@@ -22,7 +22,6 @@ import {
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ROUTE_PATH } from "@/utils/contants";
 import { useAppSelector } from "@/hooks/useAppStore";
 import {
   getWomenLedHub,
@@ -31,6 +30,7 @@ import {
 } from "@/services/provider.service";
 import { getTopLevelCategories } from "@/services/category.service";
 import { distanceLabel } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 type SortOption = "rating" | "newest" | "reviews";
 
@@ -130,7 +130,7 @@ export default function WomenLedPageContent() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleProviderClick = useCallback(
-    (id: string) => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${id}`),
+    (id: string) => router.push(businessHref({ id })),
     [router],
   );
 

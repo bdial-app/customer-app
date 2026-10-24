@@ -3,7 +3,6 @@ import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { Page } from "konsta/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ROUTE_PATH } from "@/utils/contants";
 import { getPendingDeepLinkTarget, endDeepLinkLoading } from "@/utils/deep-link";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
@@ -26,7 +25,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useProduct } from "@/hooks/useProduct";
-import { useListingId } from "@/hooks/useListingId";
+import { useListingId, useReadableAddress } from "@/hooks/useListingId";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -42,6 +41,7 @@ import ReportSheet from "../components/report-sheet";
 import type { ProductDetail, ProductProviderSummary } from "@/services/product.service";
 import { MoreFromSeller, SimilarItems } from "../components/catalog/product-related-sections";
 import { catalogHref } from "../components/catalog/catalog-utils";
+import { businessHref, productPath } from "@/utils/share-links";
 
 // Fields the product API returns that the shared service types don't declare.
 type ProviderWithCoords = ProductProviderSummary & {
@@ -65,6 +65,9 @@ export default function ProductDetailsPage() {
   const { data } = product_;
   const isLoading = listing.resolving || product_.isLoading;
   const isError = listing.notFound || product_.isError;
+  useReadableAddress(
+    data?.product?.slug && data.provider?.slug ? productPath(data.provider.slug, data.product.slug) : null,
+  );
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
@@ -408,7 +411,7 @@ export default function ProductDetailsPage() {
 
         {provider && (
           <Link data-tour="product-seller"
-            href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
+            href={businessHref(provider)}
             className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
           >
             <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden flex-shrink-0">

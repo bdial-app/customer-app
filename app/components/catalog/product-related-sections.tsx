@@ -4,7 +4,6 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
 import { arrowForwardOutline, storefront, sparkles } from "ionicons/icons";
-import { ROUTE_PATH } from "@/utils/contants";
 import type { ProductDetail, ProductProviderSummary } from "@/services/product.service";
 import type { CatalogItem, CatalogType } from "@/services/catalog.service";
 import { useSimilarItems } from "@/hooks/useCatalog";
@@ -12,6 +11,7 @@ import ProductCard, { ProductCardSkeleton } from "./product-card";
 import { ServiceListCard, ServiceListSkeleton } from "./service-card";
 import { useCatalogCardActions } from "./catalog-results";
 import { catalogHref, typeNoun } from "./catalog-utils";
+import { businessHref } from "@/utils/share-links";
 
 /** The detail endpoint's same-seller items, in the shape catalog cards take. */
 const fromSellerItem = (
@@ -101,7 +101,7 @@ export function MoreFromSeller({
         icon={storefront}
         iconClass="text-amber-500"
         title={`More from ${provider.brandName}`}
-        href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}
+        href={businessHref(provider)}
       />
       <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-1">
         {items.map((item) => (

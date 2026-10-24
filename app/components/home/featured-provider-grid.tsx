@@ -3,8 +3,8 @@ import { motion, type Variants } from "framer-motion";
 import { IonIcon } from "@ionic/react";
 import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { ROUTE_PATH } from "@/utils/contants";
 import { distanceLabel } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 interface Provider {
   id: string | number;
@@ -108,7 +108,7 @@ const FeaturedProviderGrid = ({
               variants={cardVariant}
               whileTap={{ scale: 0.97 }}
               onClick={() =>
-                router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
+                router.push(businessHref(provider))
               }
               className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800"
             >

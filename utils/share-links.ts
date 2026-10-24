@@ -22,6 +22,55 @@ export const productPath = (businessSlugOrId: string, itemSlugOrId: string) =>
   `/business/${encodeURIComponent(businessSlugOrId)}/${encodeURIComponent(itemSlugOrId)}/`;
 
 /**
+ * Whether this build has the /business/… pages. The website (server build)
+ * does; the app's static build doesn't, so its links use its own screens.
+ */
+export const HAS_LISTING_PAGES = process.env.NEXT_PUBLIC_LISTING_PAGES === "1";
+
+type Query = Record<string, string | number | null | undefined>;
+const withQuery = (path: string, query?: Query) => {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(query ?? {})) if (v != null && v !== "") q.set(k, String(v));
+  const s = q.toString();
+  return s ? `${path}?${s}` : path;
+};
+
+/**
+ * Where a link to a business goes inside the site or app: /business/<slug>/
+ * on the website (its id when the slug isn't known — the page redirects),
+ * the business screen in the app.
+ */
+// Some older card types still type an id as `string | number`.
+type Ref = { id: string | number; slug?: string | null };
+
+export const businessHref = (b: Ref, query?: Query) =>
+  HAS_LISTING_PAGES
+    ? withQuery(businessPath(b.slug || String(b.id)), query)
+    : withQuery(ROUTE_PATH.PROVIDER_DETAILS, { id: b.id, ...query });
+
+/** A business's whole catalogue: /business/<slug>/catalogue/ on the website. */
+export const catalogueHref = (b: Ref, query?: Query) =>
+  HAS_LISTING_PAGES
+    ? withQuery(cataloguePath(b.slug || String(b.id)), query)
+    : withQuery(ROUTE_PATH.SHOP, { id: b.id, ...query });
+
+/**
+ * A product or service: /business/<business>/<item>/ on the website when its
+ * business is known (slugs, or ids that redirect to them); otherwise, and in
+ * the app, the item screen — which on the website then shows the readable
+ * address once it has loaded.
+ */
+export const productHref = (
+  p: { id: string; slug?: string | null; providerId?: string | null; providerSlug?: string | null },
+  query?: Query,
+) => {
+  const business = p.providerSlug || p.providerId;
+  return HAS_LISTING_PAGES && business
+    ? withQuery(productPath(business, p.slug || p.id), query)
+    : withQuery(ROUTE_PATH.PRODUCT_DETAILS, { id: p.id, ...query });
+};
+
+/**
  * A business: https://…/business/<slug>/ once the API sends slugs, else the
  * short https://…/b/<id>.
  */
@@ -57,7 +106,8 @@ export function readShareLink(pathname: string, search: string): { kind: ShareLi
 
 /** The in-app / web page a share link opens. */
 export const detailsRouteFor = (link: { kind: ShareLinkKind; id: string }) => {
-  const page =
-    link.kind === "business" ? ROUTE_PATH.PROVIDER_DETAILS : link.kind === "catalogue" ? ROUTE_PATH.SHOP : ROUTE_PATH.PRODUCT_DETAILS;
-  return `${page}?id=${encodeURIComponent(link.id)}&src=product_link`;
+  const query = { src: "product_link" };
+  if (link.kind === "business") return businessHref({ id: link.id }, query);
+  if (link.kind === "catalogue") return catalogueHref({ id: link.id }, query);
+  return productHref({ id: link.id }, query);
 };

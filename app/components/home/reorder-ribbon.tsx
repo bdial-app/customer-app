@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { businessHref } from "@/utils/share-links";
 
 interface LastVisited {
   id: string;
@@ -45,7 +46,7 @@ const ReorderRibbon = ({ lastVisited }: ReorderRibbonProps) => {
           <motion.button
             whileTap={{ scale: 0.95 }}
             className="bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm"
-            onClick={() => router.push(`/provider-details?id=${lastVisited.providerId}`)}
+            onClick={() => router.push(businessHref({ id: lastVisited.providerId }))}
           >
             View
           </motion.button>

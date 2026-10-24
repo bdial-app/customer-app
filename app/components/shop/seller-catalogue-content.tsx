@@ -22,7 +22,7 @@ import ProductCard, { ProductCardSkeleton } from "@/app/components/catalog/produ
 import { ServiceListCard } from "@/app/components/catalog/service-card";
 import { useCatalogCardActions } from "@/app/components/catalog/catalog-results";
 import { useSellerCatalogue } from "@/hooks/useCatalog";
-import { useListingId } from "@/hooks/useListingId";
+import { useListingId, useReadableAddress } from "@/hooks/useListingId";
 import { useShareCatalogue } from "@/hooks/useShare";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
@@ -30,8 +30,8 @@ import { useAuthGate } from "@/hooks/useAuthGate";
 import { useCreateConversation } from "@/hooks/useChat";
 import { openChat } from "@/store/slices/chatSlice";
 import { store } from "@/store";
-import { ROUTE_PATH } from "@/utils/contants";
 import type { CatalogItem } from "@/services/catalog.service";
+import { businessHref, cataloguePath } from "@/utils/share-links";
 
 type TypeFilter = "all" | "product" | "service";
 const OTHER = "Other";
@@ -86,6 +86,7 @@ export default function SellerCatalogueContent() {
   const { data } = catalogue;
   const isLoading = listing.resolving || catalogue.isLoading;
   const isError = listing.notFound || catalogue.isError;
+  useReadableAddress(data?.provider.slug ? cataloguePath(data.provider.slug) : null);
   const actions = useCatalogCardActions();
   const userId = useAppSelector((s) => s.auth.user?.id);
   const isOwner = !!userId && data?.provider.userId === userId;
@@ -142,7 +143,7 @@ export default function SellerCatalogueContent() {
 
   const p = data?.provider;
   const hasBothTypes = (data?.counts.products ?? 0) > 0 && (data?.counts.services ?? 0) > 0;
-  const shopHref = p ? `${ROUTE_PATH.PROVIDER_DETAILS}?id=${p.id}` : "/";
+  const shopHref = p ? businessHref(p) : "/";
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-slate-900">

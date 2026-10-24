@@ -41,6 +41,7 @@ import type {
   ProviderWithOffer,
 } from "@/services/explore.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 const COLLECTION_GRADIENTS = [
   "from-amber-400 to-orange-600",
@@ -342,7 +343,7 @@ const BusinessesExplore = memo(() => {
         entityType: "sponsored_listing",
         entityId: p.sponsoredListingId,
       });
-      router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${p.id}`);
+      router.push(businessHref(p));
     },
     [trackAd, router],
   );
@@ -354,13 +355,13 @@ const BusinessesExplore = memo(() => {
         entityType: "provider_offer",
         entityId: p.offerId,
       });
-      router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${p.id}`);
+      router.push(businessHref(p));
     },
     [trackAd, router],
   );
 
   const goToProvider = useCallback(
-    (id: string) => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${id}`),
+    (id: string) => router.push(businessHref({ id })),
     [router],
   );
 

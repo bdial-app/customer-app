@@ -71,7 +71,7 @@ const TrendingProducts = () => {
                   return (
                     <Link
                       key={item.id}
-                      href={productHref(item.id, "home_feed")}
+                      href={productHref(item, "home_feed")}
                       className="flex items-center gap-3 py-2 active:opacity-70"
                     >
                       <span className={`w-6 text-center text-[26px] font-black italic leading-none tabular-nums ${RANK_COLORS[rank - 1] ?? "text-slate-300 dark:text-slate-600"}`}>

@@ -1,4 +1,4 @@
-import { SHARE_ORIGIN } from "./share-links";
+import { businessHref, SHARE_ORIGIN } from "./share-links";
 
 /**
  * Message links carry their screen as an in-app route, sometimes with
@@ -46,4 +46,4 @@ export function cameFromReviewLink(providerId: string): boolean {
 
 /** The business page with the review sheet open, stars filled in. */
 export const reviewRoute = (providerId: string, stars?: number | null) =>
-  `/provider-details?id=${encodeURIComponent(providerId)}&review=1${stars ? `&stars=${stars}` : ""}`;
+  businessHref({ id: providerId }, { review: 1, stars: stars || undefined });

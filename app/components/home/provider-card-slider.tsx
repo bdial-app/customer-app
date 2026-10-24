@@ -3,9 +3,9 @@ import { memo } from "react";
 import { IonIcon } from "@ionic/react";
 import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 interface Provider {
   id: string | number;
@@ -93,7 +93,7 @@ const ProviderCardSlider = ({
             <div
               key={provider.id}
               onClick={() =>
-                router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
+                router.push(businessHref(provider))
               }
               className="shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-slate-50 dark:border-slate-800 active:scale-[0.97] transition-transform"
             >

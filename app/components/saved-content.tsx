@@ -20,9 +20,9 @@ import {
   cubeOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { ROUTE_PATH } from "@/utils/contants";
 import { useSavedItems, useToggleSaved } from "@/hooks/useSavedItems";
 import type { SavedItemData } from "@/services/saved-item.service";
+import { businessHref, productHref } from "@/utils/share-links";
 
 // ─── Types ──────────────────────────────────────────────────────
 type FilterTab = "all" | "providers" | "products";
@@ -82,9 +82,9 @@ const SavedContent = memo(({ isActive }: SavedContentProps) => {
 
   const handleNavigate = (item: SavedItemData) => {
     if (item.itemType === "provider") {
-      router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${item.itemId}`);
+      router.push(businessHref({ id: item.itemId }));
     } else {
-      router.push(`${ROUTE_PATH.PRODUCT_DETAILS}?id=${item.itemId}`);
+      router.push(productHref({ id: item.itemId }));
     }
   };
 

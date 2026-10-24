@@ -1,5 +1,4 @@
 import { Fragment } from "react";
-import { ROUTE_PATH } from "@/utils/contants";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), {
   ssr: false,
@@ -14,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { distanceLabel, type HasDistance } from "@/utils/distance-label";
 import { ApproximateDivider, shouldShowApproximateDivider } from "@/utils/approximate-divider";
+import { businessHref } from "@/utils/share-links";
 
 export interface ProviderListItem extends HasDistance {
   id: string;
@@ -30,7 +30,7 @@ const ProviderList = ({ providerList }: { providerList: ProviderListItem[] }) =>
   const router = useRouter();
 
   const handleNavigate = (id: string) => {
-    router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${id}`);
+    router.push(businessHref({ id }));
   };
 
   return (

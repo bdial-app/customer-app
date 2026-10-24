@@ -15,9 +15,9 @@ import {
   navigateOutline,
   ribbonOutline,
 } from "ionicons/icons";
-import { ROUTE_PATH } from "@/utils/contants";
 import type { ProviderSearchResult } from "@/services/search.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 interface Props {
   provider: ProviderSearchResult;
@@ -36,7 +36,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
       onClick={() =>
-        router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
+        router.push(businessHref(provider))
       }
       className="cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.97] transition-transform duration-150"
     >

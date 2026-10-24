@@ -15,9 +15,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
-import { ROUTE_PATH } from "@/utils/contants";
 import { IonIcon } from "@ionic/react";
 import { arrowBack, star, call, location, chatbubble } from "ionicons/icons";
+import { businessHref } from "@/utils/share-links";
 
 interface ServiceProvider {
   id: number;
@@ -201,7 +201,7 @@ export default function ServiceProvidersPage() {
 
       <List strongIos outlineIos className="mt-4">
         {filteredProviders.map((provider) => (
-          <Link key={provider.id} href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`}>
+          <Link key={provider.id} href={businessHref(provider)}>
             <ListItem
               className="material:border-b material:border-b-slate-300"
               link

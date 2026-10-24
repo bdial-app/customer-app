@@ -102,7 +102,7 @@ export const ServiceListCard = memo(function ServiceListCard(props: ServiceCardP
 
   return (
     <Link
-      href={productHref(item.id)}
+      href={productHref(item)}
       className="flex gap-3 bg-white dark:bg-slate-800 rounded-2xl p-2.5 border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none active:scale-[0.99] transition-transform"
     >
       <div className="relative w-[92px] h-[92px] shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700">
@@ -142,7 +142,7 @@ export const ServiceRailCard = memo(function ServiceRailCard(props: ServiceCardP
 
   return (
     <Link
-      href={productHref(item.id)}
+      href={productHref(item)}
       className="shrink-0 w-[232px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none active:scale-[0.98] transition-transform"
     >
       <div className="relative h-[124px] bg-slate-100 dark:bg-slate-700">

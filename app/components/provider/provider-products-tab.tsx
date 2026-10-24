@@ -13,7 +13,6 @@ import {
   checkmarkOutline,
 } from "ionicons/icons";
 import Link from "next/link";
-import { ROUTE_PATH } from "@/utils/contants";
 import { useShareCatalogue } from "@/hooks/useShare";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
@@ -53,6 +52,7 @@ import {
   MAX_HERO,
   MAX_PHOTOS,
 } from "./manage/catalogue-parts";
+import { catalogueHref } from "@/utils/share-links";
 
 interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
@@ -252,7 +252,7 @@ const ProviderProductsTab = ({
       {canPreview && (
         <div className="grid grid-cols-2 gap-2 -mt-1">
           <Link
-            href={`${ROUTE_PATH.SHOP}?id=${providerId}`}
+            href={catalogueHref({ id: providerId })}
             className="h-11 inline-flex items-center justify-center gap-1.5 rounded-xl font-bold text-[13px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 active:scale-[0.97] transition-transform"
           >
             <IonIcon icon={eyeOutline} className="text-[16px]" />

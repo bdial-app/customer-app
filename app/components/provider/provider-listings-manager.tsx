@@ -15,7 +15,6 @@ import {
 import { motion } from "framer-motion";
 import { Segmented } from "./manage/kit";
 import Link from "next/link";
-import { ROUTE_PATH } from "@/utils/contants";
 import ProviderDetailsTab from "./provider-details-tab";
 import ProviderProductsTab from "./provider-products-tab";
 import ProviderPhotosTab from "./provider-photos-tab";
@@ -31,6 +30,7 @@ import { useProviderDetails } from "@/hooks/useProvider";
 import { useMyProducts } from "@/hooks/useProduct";
 import { useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { businessHref } from "@/utils/share-links";
 
 type ManagerTab = "details" | "products" | "photos" | "reviews" | "deals" | "categories" | "plans" | "boost";
 
@@ -236,7 +236,7 @@ const ProviderListingsManager = ({ initialSubTab, onSubTabConsumed }: ProviderLi
           </div>
           {providerId && (
             <Link
-              href={`${ROUTE_PATH.PROVIDER_DETAILS}?id=${providerId}`}
+              href={businessHref({ id: providerId })}
               aria-label="Preview my page as customers see it"
               className="w-9 h-9 rounded-full bg-white/15 active:bg-white/25 text-white flex items-center justify-center shrink-0"
             >

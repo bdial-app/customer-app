@@ -14,8 +14,8 @@ import {
   navigateOutline,
   ribbonOutline,
 } from "ionicons/icons";
-import { ROUTE_PATH } from "@/utils/contants";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 export interface ProviderCardData {
   id: string;
@@ -65,7 +65,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
   const router = useRouter();
 
   const handleNavigate = () => {
-    router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`);
+    router.push(businessHref(provider));
   };
 
   // ───────── LIST VARIANT — Swiggy/Zomato-style horizontal card ─────────

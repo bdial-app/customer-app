@@ -33,7 +33,7 @@ const ProductCard = memo(function ProductCard({
 
   return (
     <Link
-      href={productHref(item.id)}
+      href={productHref(item)}
       className={`group block bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none active:scale-[0.97] transition-transform ${
         variant === "rail" ? "shrink-0 w-[152px]" : "w-full"
       }`}

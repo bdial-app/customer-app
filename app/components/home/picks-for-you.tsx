@@ -8,6 +8,7 @@ import { ROUTE_PATH } from "@/utils/contants";
 import { PersonalizedCategory } from "@/services/home.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 interface PicksProvider {
   id: string | number;
@@ -109,7 +110,7 @@ const PicksForYou = ({
                 transition={{ duration: 0.3, delay: idx * 0.05, ease: "easeOut" }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() =>
-                  router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)
+                  router.push(businessHref(provider))
                 }
                 className="shrink-0 w-[240px] rounded-2xl overflow-hidden cursor-pointer shadow-md shadow-slate-900/[0.08] bg-white dark:bg-slate-900 border border-slate-100/80 dark:border-slate-800"
               >

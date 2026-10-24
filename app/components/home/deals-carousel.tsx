@@ -11,6 +11,7 @@ import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { HomeProviderWithOffer } from "@/services/home.service";
 import { distanceLabel } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 const formatOfferLabel = (type: string, value: number) =>
   type === "percentage" ? `${value}% OFF` : `₹${value} OFF`;
@@ -90,7 +91,7 @@ const DealsCarousel = ({
             <div
               key={deal.offerId}
               onClick={() =>
-                router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${deal.id}`)
+                router.push(businessHref(deal))
               }
               className="shrink-0 w-[170px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer border border-rose-100 dark:border-rose-900/40 active:scale-[0.96] transition-transform"
             >

@@ -14,11 +14,11 @@ import {
   pricetagOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { useTrackAd } from "@/hooks/useExplore";
 import type { HomeSponsoredProvider } from "@/services/home.service";
 import { distanceLabel } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 // A city-level pin shows the town instead of a distance that would be wrong.
 const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
@@ -72,7 +72,7 @@ const SponsoredCarousel = ({
           entityId: provider.sponsoredListingId,
         });
       }
-      router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`);
+      router.push(businessHref(provider));
     },
     [trackAd, router],
   );

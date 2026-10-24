@@ -12,6 +12,7 @@ import CategoryIcon from "@/app/components/ui/category-icon";
 import { GRADIENT_PALETTE } from "@/app/components/ui/category-icon";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
 
 /** Top-level categories come back with a provider count attached. */
 type CategoryWithCount = Category & { providerCount?: number };
@@ -370,7 +371,7 @@ export default function CategoriesPage() {
                     .slice(0, 8).map((provider, idx) => (
                     <div
                       key={provider.id}
-                      onClick={() => router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${provider.id}`)}
+                      onClick={() => router.push(businessHref(provider))}
                       className={`shrink-0 w-[150px] bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.97] transition-transform ${
                         provider.isSponsored
                           ? "border-2 border-amber-200/60 dark:border-amber-700/40"
