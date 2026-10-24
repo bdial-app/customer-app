@@ -77,6 +77,8 @@ export interface BecomeProviderPayload {
 
 export interface ProviderData {
   id: string;
+  /** Public address: /business/<slug>. Missing until the API that makes slugs is live. */
+  slug?: string;
   userId: string;
   brandName: string;
   description: string | null;
@@ -236,6 +238,8 @@ export interface ProviderDetailsPhoto {
 
 export interface ProviderDetailsProduct {
   id: string;
+  /** Public address under its business: /business/<business slug>/<slug>. */
+  slug?: string;
   providerId: string;
   name: string;
   description: string | null;

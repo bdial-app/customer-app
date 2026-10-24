@@ -49,6 +49,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import PhotoGallary, { PhotoGalleryRef } from "../components/photo-gallery";
 import InstagramGrid from "../components/provider/instagram-grid";
 import { useProviderDetails, useSubmitReview } from "@/hooks/useProvider";
+import { useListingId } from "@/hooks/useListingId";
 import { useShareBusiness, useShareCatalogue } from "@/hooks/useShare";
 import { cameFromReviewLink } from "@/utils/app-links";
 import { facebookUrl, instagramUrl, linkedinUrl, websiteUrl, whatsappUrl, youtubeUrl } from "@/utils/social-links";
@@ -231,9 +232,14 @@ export default function ProviderDetailsPage() {
   const router = useRouter();
   const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
-  const id = searchParams.get("id") || "";
+  // ?id=<id>, ?id=<slug>, or the id a /business/<slug> page passes down.
+  const listing = useListingId("business");
+  const id = listing.id;
 
-  const { data, isLoading, isError } = useProviderDetails(id);
+  const details = useProviderDetails(id);
+  const { data } = details;
+  const isLoading = listing.resolving || details.isLoading;
+  const isError = listing.notFound || details.isError;
   const { data: combinedData } = useCombinedReviews(id);
 
   // Hand the cold-start deep-link loader off to real content once this page has

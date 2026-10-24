@@ -161,6 +161,16 @@ export const LINK_URLS = {
   REVIEW_MINE: '/review-links/mine',
 };
 
+/** Readable addresses (/business/<slug>/…) → the ids everything else uses. */
+export const SLUG_URLS = {
+  BUSINESS: (slug: string) => `/slugs/business/${encodeURIComponent(slug)}`,
+  PRODUCT: (slug: string, productSlug: string) =>
+    `/slugs/business/${encodeURIComponent(slug)}/${encodeURIComponent(productSlug)}`,
+  SITEMAP: '/slugs/sitemap',
+  MINE_CHECK: '/slugs/mine/check',
+  MINE: '/slugs/mine',
+};
+
 export const LEGAL_URLS = {
   DOCUMENTS: '/legal/documents',
   DOCUMENT: (slug: string) => `/legal/documents/${encodeURIComponent(slug)}`,

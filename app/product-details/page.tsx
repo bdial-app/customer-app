@@ -26,6 +26,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useProduct } from "@/hooks/useProduct";
+import { useListingId } from "@/hooks/useListingId";
 import { useIsSaved, useToggleSaved } from "@/hooks/useSavedItems";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { useAuthGate } from "@/hooks/useAuthGate";
@@ -56,9 +57,14 @@ export default function ProductDetailsPage() {
   const router = useRouter();
   const { goBack } = useBackNavigation();
   const searchParams = useSearchParams();
-  const id = searchParams.get("id") ?? "";
+  // ?id=<id>, ?b=<business slug>&p=<item slug>, or the id a /business/… page passes down.
+  const listing = useListingId("product");
+  const id = listing.id;
 
-  const { data, isLoading, isError } = useProduct(id);
+  const product_ = useProduct(id);
+  const { data } = product_;
+  const isLoading = listing.resolving || product_.isLoading;
+  const isError = listing.notFound || product_.isError;
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);

@@ -5,11 +5,20 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const outDir = path.join(__dirname, "..", "out");
+// On Vercel the website builds as a server (see next.config.ts): there is no
+// out/ and public/ is served as it is, so `--before` stamps public/sw.js ahead
+// of `next build` — only there, in Vercel's throwaway checkout, never in a
+// working copy.
+const before = process.argv.includes("--before");
+const serverBuild =
+  process.env.NEXT_OUTPUT === "server" || (process.env.NEXT_OUTPUT !== "export" && !!process.env.VERCEL);
+if (before && !(serverBuild && process.env.VERCEL)) process.exit(0);
+
+const outDir = path.join(__dirname, "..", before ? "public" : "out");
 const swPath = path.join(outDir, "sw.js");
 
 if (!fs.existsSync(swPath)) {
-  console.log("[stamp-sw] No out/sw.js found, skipping.");
+  console.log(`[stamp-sw] No ${path.relative(path.join(__dirname, ".."), swPath)} found, skipping.`);
   process.exit(0);
 }
 

@@ -4,6 +4,8 @@ import { PRODUCT_URLS } from "@/utils/urls";
 
 export interface ProductDetail {
   id: string;
+  /** Public address under its business: /business/<business slug>/<slug>. */
+  slug?: string;
   providerId: string;
   name: string;
   description: string | null;
@@ -30,6 +32,8 @@ export interface ProductCategoryRef {
 
 export interface ProductProviderSummary {
   id: string;
+  /** Public address: /business/<slug>. Missing until the API that makes slugs is live. */
+  slug?: string;
   userId: string;
   brandName: string;
   description: string | null;

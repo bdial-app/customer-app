@@ -48,6 +48,7 @@ export function toShareBusiness(details: ProviderDetailsResponse): ShareBusiness
   const close = hour12(p.closeTime);
   return {
     id: p.id,
+    slug: p.slug,
     name: p.brandName,
     category: (details.categories ?? []).slice(0, 2).map((c) => c.name).join(" · ") || null,
     area: p.area,
@@ -74,6 +75,7 @@ export function toShareProduct(details: ProductDetailsResponse, providerDetails:
     ? toShareBusiness(providerDetails)
     : {
         id: summary?.id ?? product.providerId,
+        slug: summary?.slug,
         name: summary?.brandName ?? "this business",
         category: summary?.categories?.slice(0, 2).map((c) => c.name).join(" · ") || null,
         area: summary?.area ?? null,
@@ -86,6 +88,7 @@ export function toShareProduct(details: ProductDetailsResponse, providerDetails:
       };
   return {
     id: product.id,
+    slug: product.slug,
     name: product.name,
     price: product.price != null ? Number(product.price) : null,
     currency: product.currency,

@@ -6,18 +6,37 @@ import { ROUTE_PATH } from "./contants";
  * /.well-known/apple-app-site-association and assetlinks.json); without the
  * app, the /b and /p landing pages open the store instead.
  *
- * Comes from NEXT_APP_BASE_URL via next.config — the UAT web app for now.
+ * Set in next.config — the production website.
  */
-export const SHARE_ORIGIN = (process.env.NEXT_PUBLIC_SHARE_ORIGIN || "https://uat.tijarahapp.in").replace(/\/+$/, "");
+export const SHARE_ORIGIN = (process.env.NEXT_PUBLIC_SHARE_ORIGIN || "https://www.tijarahapp.in").replace(/\/+$/, "");
 
-/** https://…/b/<id> — a business. */
-export const businessShareUrl = (id: string) => `${SHARE_ORIGIN}/b/${encodeURIComponent(id)}`;
+/**
+ * The website's readable addresses. A business: /business/<slug>/; its
+ * catalogue: /business/<slug>/catalogue/; one of its items:
+ * /business/<slug>/<item slug>/. An id works in place of a slug too: the page
+ * answers it with a redirect to the slug. Trailing slash, as every page here.
+ */
+export const businessPath = (slugOrId: string) => `/business/${encodeURIComponent(slugOrId)}/`;
+export const cataloguePath = (slugOrId: string) => `/business/${encodeURIComponent(slugOrId)}/catalogue/`;
+export const productPath = (businessSlugOrId: string, itemSlugOrId: string) =>
+  `/business/${encodeURIComponent(businessSlugOrId)}/${encodeURIComponent(itemSlugOrId)}/`;
 
-/** https://…/p/<id> — a product or service. */
-export const productShareUrl = (id: string) => `${SHARE_ORIGIN}/p/${encodeURIComponent(id)}`;
+/**
+ * A business: https://…/business/<slug>/ once the API sends slugs, else the
+ * short https://…/b/<id>.
+ */
+export const businessShareUrl = (id: string, slug?: string | null) =>
+  slug ? `${SHARE_ORIGIN}${businessPath(slug)}` : `${SHARE_ORIGIN}/b/${encodeURIComponent(id)}`;
 
-/** https://…/c/<business id> — a business's whole catalogue. */
-export const catalogueShareUrl = (providerId: string) => `${SHARE_ORIGIN}/c/${encodeURIComponent(providerId)}`;
+/** A product or service: https://…/business/<business>/<item>/, else https://…/p/<id>. */
+export const productShareUrl = (id: string, businessSlug?: string | null, slug?: string | null) =>
+  businessSlug && slug
+    ? `${SHARE_ORIGIN}${productPath(businessSlug, slug)}`
+    : `${SHARE_ORIGIN}/p/${encodeURIComponent(id)}`;
+
+/** A business's whole catalogue: https://…/business/<slug>/catalogue/, else https://…/c/<id>. */
+export const catalogueShareUrl = (providerId: string, slug?: string | null) =>
+  slug ? `${SHARE_ORIGIN}${cataloguePath(slug)}` : `${SHARE_ORIGIN}/c/${encodeURIComponent(providerId)}`;
 
 export type ShareLinkKind = "business" | "product" | "catalogue";
 

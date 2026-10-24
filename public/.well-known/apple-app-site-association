@@ -9,6 +9,7 @@
           "/p/*",
           "/shop*",
           "/c/*",
+          "/business/*",
           "/provider-details*",
           "/product-details*",
           "/search*",

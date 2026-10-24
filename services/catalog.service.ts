@@ -8,6 +8,8 @@ export type CatalogArea = "nearby" | "city" | "all";
 /** One product or service as every catalog surface shows it. */
 export interface CatalogItem {
   id: string;
+  /** Public address under its business: /business/<providerSlug>/<slug>. */
+  slug?: string;
   name: string;
   description: string | null;
   price: number | null;
@@ -19,6 +21,7 @@ export interface CatalogItem {
   categoryId: string | null;
   categoryName: string | null;
   providerId: string;
+  providerSlug?: string;
   providerUserId: string;
   providerName: string;
   providerImage: string | null;
@@ -132,6 +135,7 @@ export const getSimilarItems = async (
 export interface SellerCatalogue {
   provider: {
     id: string;
+    slug?: string;
     userId: string;
     name: string;
     logoUrl: string | null;

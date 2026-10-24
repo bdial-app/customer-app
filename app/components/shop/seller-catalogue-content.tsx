@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
@@ -22,6 +22,7 @@ import ProductCard, { ProductCardSkeleton } from "@/app/components/catalog/produ
 import { ServiceListCard } from "@/app/components/catalog/service-card";
 import { useCatalogCardActions } from "@/app/components/catalog/catalog-results";
 import { useSellerCatalogue } from "@/hooks/useCatalog";
+import { useListingId } from "@/hooks/useListingId";
 import { useShareCatalogue } from "@/hooks/useShare";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
@@ -78,8 +79,13 @@ export default function SellerCatalogueContent() {
   const dispatch = useAppDispatch();
   const { goBack } = useBackNavigation();
   const { requireAuth } = useAuthGate();
-  const providerId = useSearchParams().get("id") ?? "";
-  const { data, isLoading, isError } = useSellerCatalogue(providerId);
+  // ?id=<id>, ?id=<slug>, or the id a /business/<slug>/catalogue page passes down.
+  const listing = useListingId("business");
+  const providerId = listing.id;
+  const catalogue = useSellerCatalogue(providerId);
+  const { data } = catalogue;
+  const isLoading = listing.resolving || catalogue.isLoading;
+  const isError = listing.notFound || catalogue.isError;
   const actions = useCatalogCardActions();
   const userId = useAppSelector((s) => s.auth.user?.id);
   const isOwner = !!userId && data?.provider.userId === userId;

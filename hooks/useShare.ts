@@ -125,7 +125,7 @@ export function useShareProduct(productId: string | undefined, opts: { asOwner?:
 
 /**
  * Share a business's whole catalogue: the shop's card plus a message listing
- * what it sells, ending in the /c/<id> link that opens every item.
+ * what it sells, ending in the link that opens every item.
  */
 export function useShareCatalogue(providerId: string | undefined, opts: { asOwner?: boolean; prefetch?: boolean } = {}) {
   const { asOwner = false, prefetch = true } = opts;
@@ -151,6 +151,7 @@ export function useShareCatalogue(providerId: string | undefined, opts: { asOwne
       caption: catalogueCaption(
         {
           providerId,
+          slug: catalogue.provider.slug,
           name: catalogue.provider.name,
           area: catalogue.provider.area,
           city: catalogue.provider.city,

@@ -49,8 +49,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({
   children,
+  seo,
 }: Readonly<{
   children: React.ReactNode;
+  /** Structured data for search engines (the @seo slot); empty except on the website's /business/… pages. */
+  seo: React.ReactNode;
 }>) {
   return (
     <html
@@ -118,6 +121,8 @@ export default async function RootLayout({
         className="min-h-full flex flex-col bg-[#FAFAFA] dark:bg-slate-900 transition-colors duration-300 overflow-hidden h-full"
         suppressHydrationWarning
       >
+        {/* Outside the app shell, which draws only in the browser, so it is in the HTML itself. */}
+        {seo}
         <CSPostHogProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </CSPostHogProvider>

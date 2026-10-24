@@ -94,6 +94,16 @@ export function resolveDeepLink(data: DeepLinkData | null | undefined): string {
   // A whole catalogue: /c/<provider id>.
   const shortCatalogue = route.match(/^\/c\/([^/?#]+)$/);
   if (shortCatalogue) return `${ROUTE_PATH.SHOP}?id=${encodeURIComponent(shortCatalogue[1]!)}`;
+  // The website's readable addresses: /business/<slug>, /business/<slug>/catalogue
+  // and /business/<slug>/<item slug>. The pages look the slugs up themselves.
+  const readable = route.match(/^\/business\/([^/?#]+)(?:\/([^/?#]+))?$/);
+  if (readable) {
+    const business = encodeURIComponent(decodeURIComponent(readable[1]!));
+    const sub = readable[2] ? decodeURIComponent(readable[2]) : null;
+    if (!sub) return `${ROUTE_PATH.PROVIDER_DETAILS}?id=${business}`;
+    if (sub === "catalogue") return `${ROUTE_PATH.SHOP}?id=${business}`;
+    return `${ROUTE_PATH.PRODUCT_DETAILS}?b=${business}&p=${encodeURIComponent(sub)}`;
+  }
   // The same links in their /b/?id= form.
   if ((route === "/b" || route === "/p" || route === "/c") && params.id) {
     const page = route === "/b" ? ROUTE_PATH.PROVIDER_DETAILS : route === "/c" ? ROUTE_PATH.SHOP : ROUTE_PATH.PRODUCT_DETAILS;

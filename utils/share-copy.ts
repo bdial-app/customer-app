@@ -7,6 +7,8 @@ import { businessShareUrl, catalogueShareUrl, productShareUrl } from "./share-li
  */
 export interface ShareBusiness {
   id: string;
+  /** Makes the link /business/<slug>; without it the link falls back to /b/<id>. */
+  slug?: string;
   name: string;
   /** "IT & Computer Services · Digital Marketing" */
   category?: string | null;
@@ -41,6 +43,8 @@ export interface ShareProductLite {
 
 export interface ShareProduct {
   id: string;
+  /** With the business's slug, makes the link /business/<business>/<slug>. */
+  slug?: string;
   name: string;
   price?: number | null;
   currency?: string | null;
@@ -127,7 +131,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       b.hours && `🕒 Open ${b.hours}`,
       "",
-      openLink(businessShareUrl(b.id)),
+      openLink(businessShareUrl(b.id, b.slug)),
     );
   }
 
@@ -144,7 +148,7 @@ export function businessCaption(b: ShareBusiness, asOwner = false): string {
     b.deal && `🎁 Running now: ${dealLine(b.deal)}`,
     b.hours && `🕒 Open ${b.hours}`,
     "",
-    openLink(businessShareUrl(b.id)),
+    openLink(businessShareUrl(b.id, b.slug)),
   );
 }
 
@@ -167,7 +171,7 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
       where && `📍 ${where}`,
       b.deal && `🎁 Offer for you: ${dealLine(b.deal)}`,
       "",
-      openLink(productShareUrl(p.id)),
+      openLink(productShareUrl(p.id, b.slug, p.slug)),
     );
   }
 
@@ -183,13 +187,15 @@ export function productCaption(p: ShareProduct, asOwner = false): string {
     `From *${b.name}*${where ? ` · ${where}` : ""}${trust ? ` · ✅ ${trust}` : ""}`,
     b.deal && `🎁 This shop is running ${dealLine(b.deal)}`,
     "",
-    openLink(productShareUrl(p.id)),
+    openLink(productShareUrl(p.id, b.slug, p.slug)),
   );
 }
 
 /** Everything a catalogue share needs, already shaped for display. */
 export interface ShareCatalogue {
   providerId: string;
+  /** Makes the link /business/<slug>/catalogue; without it, /c/<id>. */
+  slug?: string;
   name: string;
   area?: string | null;
   city?: string | null;
@@ -237,6 +243,6 @@ export function catalogueCaption(c: ShareCatalogue, asOwner = false): string {
     picks && (asOwner ? "A few favourites:" : "A few from the list:"),
     picks,
     "",
-    `👉 See everything${asOwner ? " we offer" : ""}, with prices:\n${catalogueShareUrl(c.providerId)}`,
+    `👉 See everything${asOwner ? " we offer" : ""}, with prices:\n${catalogueShareUrl(c.providerId, c.slug)}`,
   );
 }
