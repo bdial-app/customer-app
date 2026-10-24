@@ -5,7 +5,17 @@ import ProviderDetailsPage from "@/app/provider-details/page";
 import { ListingIdProvider } from "@/hooks/useListingId";
 import { businessPath } from "@/utils/share-links";
 import { businessMetadata, loadBusiness, resolveBusiness } from "../seo";
-import { keepQuery, type RouteProps } from "../route-props";
+import type { RouteProps } from "../route-props";
+
+/**
+ * Rendered on a listing's first visit, then served from the edge cache and
+ * refreshed in the background at most every 5 minutes — so opening a
+ * business is instant instead of a server round trip every time.
+ */
+export const revalidate = 300;
+export function generateStaticParams() {
+  return [];
+}
 
 type Props = RouteProps<{ slug: string }>;
 
@@ -22,12 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * what search engines read. An old slug or an id redirects to the current
  * slug, so every link ever shared still lands here.
  */
-export default async function BusinessPage({ params, searchParams }: Props) {
+export default async function BusinessPage({ params }: Props) {
   const { slug } = await params;
   const found = await resolveBusiness(slug);
   if (!found) notFound();
   if (found.slug !== decodeURIComponent(slug)) {
-    permanentRedirect(`${businessPath(found.slug)}${keepQuery(await searchParams)}`);
+    permanentRedirect(`${businessPath(found.slug)}`);
   }
 
   const details = await loadBusiness(found.id);

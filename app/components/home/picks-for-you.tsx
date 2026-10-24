@@ -9,6 +9,7 @@ import { PersonalizedCategory } from "@/services/home.service";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 interface PicksProvider {
   id: string | number;
@@ -35,6 +36,7 @@ const PicksForYou = ({
   isLoading?: boolean;
 }) => {
   const router = useRouter();
+  usePrefetchBusinesses(providers);
 
   const reasons = useMemo(() => {
     // Just the category. "Because you love " ate most of the chip and pushed

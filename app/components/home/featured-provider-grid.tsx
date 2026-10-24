@@ -5,6 +5,7 @@ import { star, location, navigateOutline } from "ionicons/icons";
 import { useRouter } from "next/navigation";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 interface Provider {
   id: string | number;
@@ -49,6 +50,7 @@ const FeaturedProviderGrid = ({
   isLoading?: boolean;
 }) => {
   const router = useRouter();
+  usePrefetchBusinesses(providers.slice(0, 4));
 
   return (
     <div className="mb-2">

@@ -12,6 +12,7 @@ import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { HomeProviderWithOffer } from "@/services/home.service";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 const formatOfferLabel = (type: string, value: number) =>
   type === "percentage" ? `${value}% OFF` : `₹${value} OFF`;
@@ -41,6 +42,7 @@ const DealsCarousel = ({
   isLoading?: boolean;
 }) => {
   const router = useRouter();
+  usePrefetchBusinesses(deals);
 
   if (!isLoading && (!deals || deals.length === 0)) return null;
 

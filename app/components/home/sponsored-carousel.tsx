@@ -19,6 +19,7 @@ import { useTrackAd } from "@/hooks/useExplore";
 import type { HomeSponsoredProvider } from "@/services/home.service";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 // A city-level pin shows the town instead of a distance that would be wrong.
 const formatDistance = (p: Parameters<typeof distanceLabel>[0]) => distanceLabel(p, true);
@@ -31,6 +32,7 @@ const SponsoredCarousel = ({
   isLoading?: boolean;
 }) => {
   const router = useRouter();
+  usePrefetchBusinesses(providers);
   const trackAd = useTrackAd();
   const trackedRef = useRef(new Set<string>());
   const listRef = useRef<HTMLDivElement>(null);

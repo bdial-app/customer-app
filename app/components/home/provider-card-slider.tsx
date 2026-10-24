@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 interface Provider {
   id: string | number;
@@ -37,6 +38,7 @@ const ProviderCardSlider = ({
   isLoading?: boolean;
 }) => {
   const router = useRouter();
+  usePrefetchBusinesses(Array.isArray(providers) ? providers : []);
 
   return (
     <div className="mb-2">

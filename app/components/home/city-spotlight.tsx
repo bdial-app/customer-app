@@ -7,6 +7,7 @@ import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 interface Provider {
   id: string | number;
@@ -29,6 +30,7 @@ interface CitySpotlightProps {
 
 const CitySpotlight = ({ city, providers, isLoading, viewAllLink }: CitySpotlightProps) => {
   const router = useRouter();
+  usePrefetchBusinesses(providers);
 
   if (!city && !isLoading) return null;
 

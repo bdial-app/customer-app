@@ -7,6 +7,7 @@ import { ROUTE_PATH } from "@/utils/contants";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import { distanceLabel } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
+import { usePrefetchBusinesses } from "@/hooks/usePrefetchBusinesses";
 
 interface Provider {
   id: string | number;
@@ -30,6 +31,7 @@ const RecentlyAdded = ({
   viewAllLink?: string;
 }) => {
   const router = useRouter();
+  usePrefetchBusinesses(providers);
 
   if (providers.length === 0 && !isLoading) return null;
 

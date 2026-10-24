@@ -6,6 +6,7 @@ import type { ProductDetailsResponse } from "@/services/product.service";
 import type { SellerCatalogue } from "@/services/catalog.service";
 import type { ResolvedBusiness, ResolvedProduct } from "@/services/slug.service";
 import { businessPath, cataloguePath, productPath } from "@/utils/share-links";
+import { isIndexedHostName, SITE_ORIGIN } from "./hosts";
 
 /**
  * Server-side helpers for the website's /business/… pages: loading a listing
@@ -13,15 +14,12 @@ import { businessPath, cataloguePath, productPath } from "@/utils/share-links";
  * Used only by the *.web.tsx pages, which only the server build has.
  */
 
-/** The address search engines should treat as the real one. */
-export const SITE_ORIGIN = "https://www.tijarahapp.in";
+export { SITE_ORIGIN };
 
-/** Only the production site is indexed; uat, develop and previews would be duplicates. */
-const INDEXED_HOSTS = new Set(["www.tijarahapp.in", "tijarahapp.in"]);
-
+/** For routes that answer per request (robots.txt): is this the production site? */
 export async function isIndexedHost(): Promise<boolean> {
-  const host = ((await headers()).get("x-forwarded-host") ?? (await headers()).get("host") ?? "").toLowerCase();
-  return INDEXED_HOSTS.has(host.replace(/:\d+$/, ""));
+  const h = await headers();
+  return isIndexedHostName(h.get("x-forwarded-host") ?? h.get("host"));
 }
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
@@ -87,19 +85,23 @@ const money = (amount: number | string | null | undefined, currency?: string | n
   return `${symbol}${Number(amount).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 };
 
-async function baseMetadata(opts: {
+/**
+ * The same for every host, so the page can be cached and served from the
+ * edge. uat, develop and previews are kept out of search by the proxy's
+ * X-Robots-Tag header (and their robots.txt) instead of this tag.
+ */
+function baseMetadata(opts: {
   title: string;
   description: string;
   path: string;
   image: string | null;
-}): Promise<Metadata> {
+}): Metadata {
   const url = `${SITE_ORIGIN}${opts.path}`;
-  const indexed = await isIndexedHost();
   return {
     title: opts.title,
     description: opts.description,
     alternates: { canonical: url },
-    robots: indexed ? { index: true, follow: true } : { index: false, follow: false },
+    robots: { index: true, follow: true },
     openGraph: {
       type: "website",
       siteName: "Tijarah Connect",

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { businessPath, cataloguePath, productPath } from "@/utils/share-links";
+import { isIndexedHostName } from "@/app/business/hosts";
 
 /**
  * Real HTTP answers for the website's listing addresses, which pages can't
@@ -11,6 +12,9 @@ import { businessPath, cataloguePath, productPath } from "@/utils/share-links";
  *   an unknown or hidden listing answers 404.
  * - The app's own screens opened by their old address (/provider-details?id=,
  *   /product-details?id=, /shop?id=) answer 308 to the /business/… page.
+ *
+ * - On uat, develop and previews, /business/… pages get X-Robots-Tag:
+ *   noindex — the cached pages are the same for every host.
  *
  * Only for a browser loading the page: navigations inside the site (RSC
  * requests) go through untouched — the pages handle those themselves, and
@@ -68,6 +72,39 @@ async function fromAppScreen(request: NextRequest, screen: string) {
   return redirect(request, screen === "shop" ? cataloguePath(data.slug) : businessPath(data.slug), drop);
 }
 
+/**
+ * What the API said about a /business/… address, kept for a few minutes so a
+ * page served from the cache isn't held up by asking again. Per proxy
+ * instance; a slug changed in the meantime is picked up within the TTL.
+ */
+type Lookup = { status: number; canonical: string | null; at: number };
+const LOOKUP_TTL_MS = 5 * 60 * 1000;
+const lookups = new Map<string, Lookup>();
+
+async function lookUp(slug: string, sub: string | null): Promise<Lookup> {
+  const key = `${slug}/${sub ?? ""}`;
+  const hit = lookups.get(key);
+  if (hit && Date.now() - hit.at < LOOKUP_TTL_MS) return hit;
+  const item = sub && sub !== "catalogue" ? sub : null;
+  const { status, data } = await getJson<{ slug?: string; providerSlug?: string; productSlug?: string }>(
+    `/slugs/business/${enc(slug)}${item ? `/${enc(item)}` : ""}`,
+  );
+  const canonical = !data
+    ? null
+    : item
+      ? productPath(data.providerSlug!, data.productSlug!)
+      : sub === "catalogue"
+        ? cataloguePath(data.slug!)
+        : businessPath(data.slug!);
+  const result = { status, canonical, at: Date.now() };
+  // Only answers worth keeping: a timeout or a server error is asked again.
+  if (status === 200 || status === 404 || status === 400) {
+    if (lookups.size > 5000) lookups.clear();
+    lookups.set(key, result);
+  }
+  return result;
+}
+
 export default async function proxy(request: NextRequest) {
   if (isInSiteNavigation(request)) return NextResponse.next();
   const path = request.nextUrl.pathname;
@@ -77,26 +114,22 @@ export default async function proxy(request: NextRequest) {
 
   const match = path.match(/^\/business\/([^/]+)(?:\/([^/]+))?\/?$/);
   if (!match) return NextResponse.next();
-  const slug = decodeURIComponent(match[1]!);
-  const sub = match[2] ? decodeURIComponent(match[2]) : null;
-  const item = sub && sub !== "catalogue" ? sub : null;
+  const { status, canonical } = await lookUp(decodeURIComponent(match[1]!), match[2] ? decodeURIComponent(match[2]) : null);
 
-  const { status, data } = await getJson<{ slug?: string; providerSlug?: string; productSlug?: string }>(
-    `/slugs/business/${enc(slug)}${item ? `/${enc(item)}` : ""}`,
-  );
   if (status === 404 || status === 400) {
     // No route answers here, so Next draws its not-found page with a 404.
     return NextResponse.rewrite(new URL("/_listing-not-found", request.url));
   }
-  if (!data) return NextResponse.next(); // The page tries again and handles it.
-
-  const canonical = item
-    ? productPath(data.providerSlug!, data.productSlug!)
-    : sub === "catalogue"
-      ? cataloguePath(data.slug!)
-      : businessPath(data.slug!);
   const here = path.endsWith("/") ? path : `${path}/`;
-  return decodeURIComponent(here) !== decodeURIComponent(canonical) ? redirect(request, canonical) : NextResponse.next();
+  if (canonical && decodeURIComponent(here) !== decodeURIComponent(canonical)) return redirect(request, canonical);
+
+  // The page is cached and the same for every host, so uat, develop and
+  // previews are kept out of search engines here.
+  const res = NextResponse.next();
+  if (!isIndexedHostName(request.headers.get("x-forwarded-host") ?? request.headers.get("host"))) {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return res;
 }
 
 export const config = {
