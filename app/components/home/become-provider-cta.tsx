@@ -47,6 +47,9 @@ const BecomeProviderCTA = () => {
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                 Join 500+ businesses earning from home. List your skills, get bookings.
               </p>
+              <p className="text-[11px] font-semibold text-emerald-700 mt-1.5 leading-relaxed">
+                🔥 See who&apos;s interested in your business, and call them first.
+              </p>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}

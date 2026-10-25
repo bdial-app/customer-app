@@ -63,6 +63,7 @@ import AddCatalogueCard from "./manage/add-catalogue-card";
 import PullToRefresh from "../pull-to-refresh";
 import PageSplashScreen from "../page-splash-screen";
 import { useNow } from "@/hooks/useNow";
+import { LeadsSpotlightCard } from "../leads/leads-spotlight-card";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -1055,18 +1056,18 @@ const SubscriptionUpsell = ({
             </span>
           </div>
           <h3 className="text-base font-bold text-white mb-1">
-            Get More Leads & Deals
+            Reach More Interested Customers
           </h3>
           <p className="text-xs text-slate-400 leading-relaxed mb-4">
-            Unlock unlimited lead access, more deal slots, and exclusive
-            sponsorship placements with a premium plan.
+            Get the contact of more customers who are ready to buy, plus more
+            deal slots and sponsored placements, with a premium plan.
           </p>
 
           <div className="flex items-center gap-3 mb-4">
             <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
               <IonIcon icon={peopleOutline} className="text-indigo-400 text-xs" />
               <span className="text-[10px] text-white font-medium">
-                More Leads
+                More Contacts
               </span>
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
@@ -1137,14 +1138,14 @@ const RevenueBoosters = memo(({
     },
     {
       id: "analytics",
-      title: "Unlock Leads",
-      subtitle: "See who's viewing your profile and reach out",
+      title: "Interested Customers",
+      subtitle: "See who wants to buy from you and call them first",
       icon: peopleOutline,
       gradient: "from-violet-500 to-purple-600",
       iconBg: "bg-violet-50 dark:bg-violet-900/30",
       iconColor: "text-violet-500",
       action: () => onNavigateToAnalytics?.("leads"),
-      cta: "View Leads",
+      cta: "See Customers",
     },
   ];
 
@@ -1521,6 +1522,10 @@ const ProviderDashboard = ({
         onConnectGoogle={canLinkGoogle ? revealGoogleLinkCard : undefined}
       />
       <ProviderQuickStats stats={providerStats} />
+      {/* Interested customers — the reason to open the app most days */}
+      {providerId && (
+        <LeadsSpotlightCard className="px-4 mb-4" onOpen={() => onNavigateToAnalytics?.("leads")} />
+      )}
       {/* First few visits: a small card offering the dashboard tour (never a pop-up) */}
       <BusinessTourInvite className="px-4 mb-4" />
       {/* Building the catalogue is the most useful thing an owner can do here */}
