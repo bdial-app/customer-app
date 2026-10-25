@@ -67,6 +67,9 @@ export interface SubmitListingPayload {
   latitude?: string;
   longitude?: string;
   isWomenLed?: boolean;
+  /** Women-led: her name (as on her ID) and role, for the team to check. */
+  womenLedName?: string;
+  womenLedRole?: "owner" | "co_owner" | "runs_it";
   categoryIds?: string[];
   bannerImageUrl?: string;
   profilePhotoUrl?: string;

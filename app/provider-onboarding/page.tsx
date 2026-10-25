@@ -72,6 +72,7 @@ import { checkContent } from "@/utils/content-sanitizer";
 import { useOnboardingUploads, type UploadItem, type MediaRef } from "@/hooks/useOnboardingUploads";
 import { useOnboardingDraft } from "@/hooks/useOnboardingDraft";
 import { submitListing, type SubmitListingPayload } from "@/services/onboarding.service";
+import { ROLE_OPTIONS as WOMEN_LED_ROLE_OPTIONS, type WomenLedRole } from "@/services/women-led.service";
 import { withDeadline } from "@/utils/onboarding-media";
 import { checkPickedFile } from "@/utils/compress-image";
 import { UploadOverlay, UploadSummary } from "./upload-ui";
@@ -1575,6 +1576,11 @@ interface OnboardingDraft {
   docType: DocTypeId;
   categoryIds: string[];
   isWomenLed: boolean;
+  /** Women-led: the answer, her name and role, and "this is true" (newer drafts). */
+  womenLedAnswer?: "yes" | "no" | null;
+  womanName?: string;
+  womanRole?: WomenLedRole | null;
+  womenLedConfirmed?: boolean;
   coords: { lat: number; lng: number } | null;
   locationLabel: string | null;
   /** The contact number already confirmed by OTP (so a resume doesn't re-ask). */
@@ -1685,7 +1691,14 @@ const ProviderOnboardingPage = () => {
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [isWomenLed, setIsWomenLed] = useState(false);
+  // Women-led is a request the team checks: an explicit answer, then who she
+  // is, her role, and "this is true" (proof can follow in My business).
+  const [womenLedAnswer, setWomenLedAnswer] = useState<"yes" | "no" | null>(null);
+  const [womanName, setWomanName] = useState("");
+  const [womanRole, setWomanRole] = useState<WomenLedRole | null>(null);
+  const [womenLedConfirmed, setWomenLedConfirmed] = useState(false);
+  const isWomenLed = womenLedAnswer === "yes";
+  const womenLedReady = !isWomenLed || (womanName.trim().length >= 2 && !!womanRole && womenLedConfirmed);
   const [detectedLocationLabel, setDetectedLocationLabel] = useState<
     string | null
   >(null);
@@ -1707,7 +1720,10 @@ const ProviderOnboardingPage = () => {
       setCompletedSteps(new Set(d.completedSteps ?? []));
       setDocType(d.docType ?? "aadhaar");
       setSelectedCategoryIds(d.categoryIds ?? []);
-      setIsWomenLed(!!d.isWomenLed);
+      setWomenLedAnswer(d.womenLedAnswer ?? (d.isWomenLed ? "yes" : null));
+      setWomanName(d.womanName ?? "");
+      setWomanRole(d.womanRole ?? null);
+      setWomenLedConfirmed(!!d.womenLedConfirmed);
       setDetectedCoords(d.coords ?? null);
       setDetectedLocationLabel(d.locationLabel ?? null);
       if (d.verifiedPhone) {
@@ -1751,6 +1767,10 @@ const ProviderOnboardingPage = () => {
       docType,
       categoryIds: selectedCategoryIds,
       isWomenLed,
+      womenLedAnswer,
+      womanName,
+      womanRole,
+      womenLedConfirmed,
       coords: detectedCoords,
       locationLabel: detectedLocationLabel,
       verifiedPhone: otpVerified && verifiedPhone ? verifiedPhone : null,
@@ -1781,7 +1801,10 @@ const ProviderOnboardingPage = () => {
     setProfileId(null);
     setProductItems([emptyProduct()]);
     setSelectedCategoryIds([]);
-    setIsWomenLed(false);
+    setWomenLedAnswer(null);
+    setWomanName("");
+    setWomanRole(null);
+    setWomenLedConfirmed(false);
     setDetectedCoords(null);
     setDetectedLocationLabel(null);
     setDocType("aadhaar");
@@ -2058,6 +2081,7 @@ const ProviderOnboardingPage = () => {
         latitude,
         longitude,
         isWomenLed,
+        ...(isWomenLed && womanRole ? { womenLedName: womanName.trim(), womenLedRole: womanRole } : {}),
         categoryIds: selectedCategoryIds.length ? selectedCategoryIds : undefined,
         bannerImageUrl: urlOf(bannerId),
         profilePhotoUrl: urlOf(profileId),
@@ -2263,7 +2287,7 @@ const ProviderOnboardingPage = () => {
           );
 
           const canAdvance: Record<StepId, boolean> = {
-            1: isStep1Valid && !hasTimeOverlap,
+            1: isStep1Valid && !hasTimeOverlap && womenLedReady,
             2: isStep2Valid,
             3: true,
             4: true,
@@ -2460,40 +2484,113 @@ const ProviderOnboardingPage = () => {
                       )}
                     </div>
 
-                    {/* Women-Led Business Toggle */}
+                    {/* Women-Led: an explicit answer, then who she is (the team checks it) */}
                     <div className="px-4 mb-4">
                       <div className={`p-4 rounded-2xl border-2 transition-colors ${
                         isWomenLed
-                          ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-600"
+                          ? "border-purple-400 bg-purple-50/70 dark:bg-purple-900/20 dark:border-purple-600"
                           : "border-slate-200 bg-slate-50/50 dark:bg-slate-800 dark:border-slate-700"
                       }`}>
                         <div className="flex items-start gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">♀</span>
-                              <h4 className="text-sm font-bold text-gray-800 dark:text-white">Women-Led Business</h4>
-                            </div>
-                            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
-                              Mark this if your business is owned or led by a woman. Women-led businesses get extra visibility, featured placement, and bonus free leads on Tijarah.
+                          <span className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white text-base">♀</span>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-bold text-gray-800 dark:text-white">Is this business owned or run by a woman?</h4>
+                            <p className="text-[11.5px] text-gray-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                              Women-Led businesses get a badge, a place in the Women-Led section and extra free leads.
                             </p>
-                            {isWomenLed && (
-                              <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1.5 font-medium">
-                                ✓ Admin verification required — your badge will appear once approved
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mt-3" role="radiogroup" aria-label="Owned or run by a woman">
+                          {(["yes", "no"] as const).map((a) => {
+                            const on = womenLedAnswer === a;
+                            return (
+                              <button
+                                key={a}
+                                type="button"
+                                role="radio"
+                                aria-checked={on}
+                                onClick={() => {
+                                  setWomenLedAnswer(a);
+                                  // Her name starts as the account's only when the account is hers.
+                                  if (a === "yes" && !womanName.trim() && user?.gender === "female" && user?.name) setWomanName(user.name);
+                                }}
+                                className={`h-11 rounded-xl text-sm font-semibold ring-1 transition-colors ${
+                                  on
+                                    ? a === "yes"
+                                      ? "bg-purple-600 text-white ring-purple-600"
+                                      : "bg-slate-700 text-white ring-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:ring-slate-200"
+                                    : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 ring-slate-200 dark:ring-slate-700"
+                                }`}
+                              >
+                                {a === "yes" ? "Yes" : "No"}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {isWomenLed && (
+                          <div className="mt-4 flex flex-col gap-3.5">
+                            <div>
+                              <label htmlFor="woman-name" className="block text-[12.5px] font-bold text-gray-700 dark:text-slate-200 mb-1.5">Her name, as on her ID</label>
+                              <input
+                                id="woman-name"
+                                value={womanName}
+                                onChange={(e) => setWomanName(e.target.value.slice(0, 100))}
+                                placeholder="e.g. Fatema Burhani"
+                                autoComplete="off"
+                                className="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-[12.5px] font-bold text-gray-700 dark:text-slate-200 mb-1.5">Her role</p>
+                              <div className="flex flex-col gap-2" role="radiogroup" aria-label="Her role">
+                                {WOMEN_LED_ROLE_OPTIONS.map((o) => {
+                                  const on = womanRole === o.value;
+                                  return (
+                                    <button
+                                      key={o.value}
+                                      type="button"
+                                      role="radio"
+                                      aria-checked={on}
+                                      onClick={() => setWomanRole(o.value)}
+                                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left ring-1 transition-colors ${
+                                        on ? "bg-white dark:bg-purple-950/40 ring-purple-500" : "bg-white/70 dark:bg-slate-900 ring-slate-200 dark:ring-slate-700"
+                                      }`}
+                                    >
+                                      <span className={`w-[18px] h-[18px] rounded-full ring-2 flex items-center justify-center shrink-0 ${on ? "ring-purple-500" : "ring-slate-300 dark:ring-slate-600"}`}>
+                                        {on && <span className="w-2 h-2 rounded-full bg-purple-500" />}
+                                      </span>
+                                      <span className="min-w-0">
+                                        <span className="block text-[13.5px] font-semibold text-gray-900 dark:text-white">{o.label}</span>
+                                        <span className="block text-[11.5px] text-gray-500 dark:text-slate-400">{o.hint}</span>
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <label className="flex items-start gap-2.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={womenLedConfirmed}
+                                onChange={(e) => setWomenLedConfirmed(e.target.checked)}
+                                className="mt-0.5 w-[18px] h-[18px] accent-purple-600 shrink-0"
+                              />
+                              <span className="text-[12.5px] text-gray-600 dark:text-slate-300 leading-snug">
+                                I confirm this is true. Tijarah may call her to check.
+                              </span>
+                            </label>
+                            <p className="text-[11.5px] text-purple-700/90 dark:text-purple-300 leading-snug">
+                              The badge shows once our team checks it, usually within 2 working days. You can add proof (Udyam, GST or shop licence) later in My business.
+                            </p>
+                            {!womenLedReady && (
+                              <p className="text-[11.5px] font-medium text-rose-500">
+                                {womanName.trim().length < 2 ? "Add her name" : !womanRole ? "Choose her role" : "Tick the box to confirm"} to continue, or choose No.
                               </p>
                             )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsWomenLed(!isWomenLed)}
-                            className={`shrink-0 w-12 h-6 rounded-full transition-colors relative ${
-                              isWomenLed ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-600"
-                            }`}
-                          >
-                            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-200 ${
-                              isWomenLed ? "left-[26px]" : "left-0.5"
-                            }`} />
-                          </button>
-                        </div>
+                        )}
                       </div>
                     </div>
 

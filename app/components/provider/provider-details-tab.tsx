@@ -35,6 +35,7 @@ import { checkContent } from "@/utils/content-sanitizer";
 import { useNotification } from "@/app/context/NotificationContext";
 import { Card, GroupLabel, ManagePage, ManageSheet, Pill, PrimaryButton, SectionHeader } from "./manage/kit";
 import { BoostNudge } from "./manage/boost";
+import { WomenLedCard } from "./women-led-card";
 import {
   AvailabilityCard,
   DetailRow,
@@ -577,6 +578,8 @@ const ProviderDetailsTab = ({ provider }: ProviderDetailsTabProps) => {
       />
 
       {/* Full description / address with map */}
+      <WomenLedCard />
+
       <ManageSheet
         open={readSheet !== null}
         onClose={() => setReadSheet(null)}
