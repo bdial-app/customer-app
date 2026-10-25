@@ -6,9 +6,10 @@ import { IonIcon } from "@ionic/react";
 import {
   lockOpenOutline,
   flameOutline,
-  thermometerOutline,
-  snowOutline,
-  leafOutline,
+  sparklesOutline,
+  eyeOutline,
+  handLeftOutline,
+  timeOutline,
   ticketOutline,
   rocketOutline,
   closeOutline,
@@ -16,6 +17,7 @@ import {
 import { motion } from "framer-motion";
 import { validateVoucher } from "@/services/payment.service";
 import { getNativePlatform } from "@/utils/platform";
+import { LEAD_TIERS, type LeadSignal } from "@/app/components/leads/lead-insights";
 
 // Vouchers can't be honored through Apple IAP (Apple fixes the price), so the
 // voucher UI is hidden on iOS.
@@ -37,13 +39,15 @@ interface LeadUnlockSheetProps {
   /** Admin voucher feature flag — when false, the voucher field is hidden. Defaults to shown. */
   vouchersEnabled?: boolean;
   isLoading?: boolean;
+  /** What this customer did, so the owner sees what they're paying for. */
+  why?: { line: string; signals: LeadSignal[]; score: number };
 }
 
 const tierConfig = {
-  hot: { icon: flameOutline, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", label: "Hot Lead", gradient: "from-red-500 to-orange-500" },
-  warm: { icon: thermometerOutline, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", label: "Warm Lead", gradient: "from-amber-400 to-orange-400" },
-  soft: { icon: leafOutline, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", label: "Soft Lead", gradient: "from-emerald-400 to-indigo-400" },
-  cold: { icon: snowOutline, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", label: "Cold Lead", gradient: "from-blue-400 to-indigo-400" },
+  hot: { icon: flameOutline, label: LEAD_TIERS.hot.name, gradient: LEAD_TIERS.hot.gradient },
+  warm: { icon: sparklesOutline, label: LEAD_TIERS.warm.name, gradient: LEAD_TIERS.warm.gradient },
+  soft: { icon: eyeOutline, label: LEAD_TIERS.soft.name, gradient: LEAD_TIERS.soft.gradient },
+  cold: { icon: handLeftOutline, label: LEAD_TIERS.cold.name, gradient: LEAD_TIERS.cold.gradient },
 };
 
 export function LeadUnlockSheet({
@@ -61,6 +65,7 @@ export function LeadUnlockSheet({
   monetizationEnabled,
   vouchersEnabled = true,
   isLoading,
+  why,
 }: LeadUnlockSheetProps) {
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherResult, setVoucherResult] = useState<{ valid: boolean; discount?: number; finalAmount?: number; message: string } | null>(null);
@@ -103,14 +108,38 @@ export function LeadUnlockSheet({
                   <IonIcon icon={config.icon} className="text-white text-xl" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Unlock {config.label}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Reveal contact info & chat</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Contact this customer</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {config.label}{why ? ` · Buying intent ${why.score}%` : ""}
+                  </p>
                 </div>
               </div>
               <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                 <IonIcon icon={closeOutline} className="text-slate-500 text-lg" />
               </button>
             </div>
+
+            {/* What they did — the reason to reach out */}
+            {why && (
+              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Why they&apos;re worth a call</p>
+                <p className="text-sm text-slate-800 dark:text-slate-100 leading-snug">{why.line}</p>
+                {why.signals.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {why.signals.slice(0, 4).map((s) => (
+                      <span key={s.key} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                        <IonIcon icon={s.icon} className="text-[11px]" />
+                        {s.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="flex items-center gap-1 mt-2 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                  <IonIcon icon={timeOutline} className="text-[11px]" />
+                  Reply today — the business that replies first often wins the order
+                </p>
+              </div>
+            )}
 
             {/* Free unlock method */}
             {isFreeUnlock && freeMethod && (
@@ -129,7 +158,7 @@ export function LeadUnlockSheet({
               <>
                 <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600 dark:text-slate-300">{config.label} Unlock</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Phone number & chat</span>
                     <div className="flex items-baseline gap-2">
                       {originalPrice && originalPrice !== price && (
                         <span className="text-xs text-slate-400 line-through">₹{originalPrice}</span>
@@ -207,12 +236,12 @@ export function LeadUnlockSheet({
               ) : isFreeUnlock ? (
                 <span className="flex items-center justify-center gap-2">
                   <IonIcon icon={lockOpenOutline} className="text-base" />
-                  Unlock for Free
+                  Get contact free
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <IonIcon icon={lockOpenOutline} className="text-base" />
-                  Unlock for ₹{finalPrice}
+                  Get contact for ₹{finalPrice}
                 </span>
               )}
             </motion.button>

@@ -431,10 +431,10 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         analyticsView: "leads",
         anchor: "analytics-view-switch",
         icon: people,
-        title: "Leads — people showing real interest",
+        title: "Interested Customers — people showing real interest",
         body:
-          "A lead is someone who spent real time on your listing — opened your products, searched for what you do, " +
-          "came back for another look. We score every visit so you know who to call first.",
+          "Someone who spent real time on your listing — opened your products, searched for what you do, " +
+          "tapped call or saved you. We score every visit so you know who to call first.",
       },
       {
         id: "tiers",
@@ -442,12 +442,12 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         analyticsView: "leads",
         anchor: "leads-tiers",
         icon: flame,
-        title: "Hot, warm, soft, cold",
-        body: "Filter by how interested someone was.",
+        title: "From ready to buy to just discovered you",
+        body: "Filter by how interested someone was. Each card says why they're there.",
         points: [
-          "Hot — looked closely; likely ready to order",
-          "Warm — interested; a friendly message goes far",
-          "Soft & Cold — browsed briefly",
+          "🔥 Ready to buy — strong buying signals; contact them first",
+          "✨ High interest — spent real time on your business",
+          "👀 Comparing & 👋 New interest — reach them before others do",
         ],
       },
       {
@@ -457,9 +457,9 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         anchor: "leads-quota",
         optional: true,
         icon: lockOpen,
-        title: "Unlocking a lead",
+        title: "Getting a customer's contact",
         body:
-          "Tap Unlock on a lead to see their name and how to reach them. What you have available this month is shown here.",
+          "Tap Get contact to see their name and how to reach them. What you have available this month is shown here.",
         missing: "Your unlock allowance appears here once you have leads to unlock.",
       },
       {

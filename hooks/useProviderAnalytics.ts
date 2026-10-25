@@ -95,6 +95,8 @@ export const useUnlockLead = () => {
       if (data.unlocked) {
         qc.invalidateQueries({ queryKey: ANALYTICS_LEADS_KEY });
         qc.invalidateQueries({ queryKey: ["lead-unlock-info"] });
+        // A lead can be bought from its detail screen: show the contact there too.
+        qc.invalidateQueries({ queryKey: ["analytics-lead-detail"] });
       }
     },
   });

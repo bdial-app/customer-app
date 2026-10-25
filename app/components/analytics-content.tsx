@@ -71,7 +71,19 @@ import { ActivePlanBanner, ActiveBoostBanner } from "@/app/components/provider/a
 import PageSplashScreen from "./page-splash-screen";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
-import type { StatWithTrend, LeadFilters } from "@/services/analytics.service";
+import type { StatWithTrend, LeadFilters, LeadItem } from "@/services/analytics.service";
+import { LeadCard } from "@/app/components/leads/lead-card";
+import { LeadsExplainer } from "@/app/components/leads/leads-explainer";
+import {
+  LEAD_TIERS,
+  TIER_ORDER,
+  tierInfo,
+  formatTimeSpent,
+  leadRecency,
+  leadSignals,
+  leadWhyLine,
+  type LeadTier,
+} from "@/app/components/leads/lead-insights";
 
 type Period = "7d" | "30d" | "90d";
 type View = "overview" | "leads" | "lead-detail";
@@ -108,23 +120,6 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   );
 };
 
-// ─── Tier Badge Styles ────────────────────────────────────────────────
-const TIER_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
-  hot: { bg: "bg-red-50 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
-  warm: { bg: "bg-orange-50 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-400" },
-  soft: { bg: "bg-yellow-50 dark:bg-yellow-900/30", text: "text-yellow-700 dark:text-yellow-400", dot: "bg-yellow-400" },
-  cold: { bg: "bg-blue-50 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-400" },
-};
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
 // ─── Timeline Event Info ──────────────────────────────────────────────
 const TIMELINE_EVENTS: Record<string, { label: string; description: string; icon: string; color: string; bg: string }> = {
   profile_view: { label: "Viewed Your Profile", description: "Opened your business page", icon: eyeOutline, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" },
@@ -137,6 +132,20 @@ const TIMELINE_EVENTS: Record<string, { label: string; description: string; icon
   enquiry: { label: "Sent an Enquiry", description: "Reached out with a question", icon: chatbubbleOutline, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
   like: { label: "Liked Your Business", description: "Showed appreciation for your page", icon: heartOutline, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/30" },
 };
+// The names the tracker sends (the ones above were never matched for these).
+Object.assign(TIMELINE_EVENTS, {
+  search_appearance: TIMELINE_EVENTS.search_appear,
+  search_click: { label: "Opened You From Search", description: "Picked your business from their search results", icon: searchOutline, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30" },
+  call_clicked: TIMELINE_EVENTS.call_click,
+  direction_clicked: TIMELINE_EVENTS.direction_click,
+  saved: TIMELINE_EVENTS.save,
+  share_clicked: TIMELINE_EVENTS.share,
+  chat_initiated: { label: "Started a Chat", description: "Opened a conversation with you", icon: chatbubbleOutline, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
+  offer_viewed: { label: "Checked Your Offers", description: "Looked at a deal you're running", icon: cashOutline, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30" },
+  review_read: { label: "Read Your Reviews", description: "Checked what other customers say", icon: star, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30" },
+  photo_viewed: { label: "Browsed Your Photos", description: "Looked through your photos", icon: eyeOutline, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-900/30" },
+  tab_switched: { label: "Explored Your Page", description: "Moved between sections of your page", icon: eyeOutline, color: "text-slate-500", bg: "bg-slate-100 dark:bg-slate-700" },
+});
 const getTimelineEventInfo = (eventType: string) =>
   TIMELINE_EVENTS[eventType] || {
     label: eventType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -147,7 +156,17 @@ const getTimelineEventInfo = (eventType: string) =>
   };
 
 // ─── Lead Detail View ─────────────────────────────────────────────────
-function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void }) {
+function LeadDetailView({
+  leadId,
+  unlockLabel,
+  unlockDisabled,
+  onUnlock,
+}: {
+  leadId: string;
+  unlockLabel: (tier: LeadTier) => string;
+  unlockDisabled?: boolean;
+  onUnlock: (lead: LeadItem) => void;
+}) {
   const { data: detail, isLoading } = useLeadDetail(leadId);
 
   if (isLoading || !detail) {
@@ -160,29 +179,50 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
     );
   }
 
-  const badge = TIER_BADGE[detail.tier] || TIER_BADGE.cold;
+  const tier = tierInfo(detail.tier);
   const visitMinutes = Math.round(detail.totalDuration / 60);
   const hasSearchQuery = !!detail.searchQuery;
+  const signals = leadSignals(detail);
+  const recency = leadRecency(detail.lastSeenAt);
+  const canBuy = !detail.isUnlocked && !detail.isAnonymous;
+  const actions = new Set(detail.actionsPerformed);
 
-  // Generate actionable insights
+  // What each signal means for the owner
   const insights: { icon: string; text: string; color: string }[] = [];
-  if (detail.productsViewed.length >= 3) insights.push({ icon: "🔥", text: `Viewed ${detail.productsViewed.length} products — high purchase intent`, color: "text-red-600" });
-  if (visitMinutes >= 5) insights.push({ icon: "⏱️", text: `Spent ${visitMinutes} min browsing — very engaged visitor`, color: "text-blue-600" });
-  if (hasSearchQuery) insights.push({ icon: "🔍", text: `Searched for "${detail.searchQuery}" — knows what they want`, color: "text-violet-600" });
-  if (detail.actionsPerformed.includes("share") || detail.actionsPerformed.includes("save")) insights.push({ icon: "⭐", text: "Saved or shared your profile — strong interest signal", color: "text-amber-600" });
-  if (detail.tier === "hot") insights.push({ icon: "💰", text: "Hot lead — highest conversion probability", color: "text-emerald-600" });
+  if (actions.has("call_clicked") || actions.has("chat_initiated")) insights.push({ icon: "📞", text: "Tried to reach you — they want to talk", color: "text-emerald-600" });
+  if (actions.has("direction_clicked")) insights.push({ icon: "📍", text: "Looked up how to get to you — planning a visit", color: "text-indigo-600" });
+  if (detail.productsViewed.length >= 3) insights.push({ icon: "🛍️", text: `Viewed ${detail.productsViewed.length} products — comparing what to buy`, color: "text-red-600" });
+  if (visitMinutes >= 5) insights.push({ icon: "⏱️", text: `Spent ${formatTimeSpent(detail.totalDuration)} on your page — very engaged`, color: "text-blue-600" });
+  if (hasSearchQuery) insights.push({ icon: "🔍", text: `Searched for “${detail.searchQuery}” — knows what they want`, color: "text-violet-600" });
+  if (actions.has("saved") || actions.has("share_clicked")) insights.push({ icon: "⭐", text: "Saved or shared your business — strong interest", color: "text-amber-600" });
+  if (detail.tier === "hot") insights.push({ icon: "💰", text: "Ready to buy — the most likely to become a customer", color: "text-emerald-600" });
+  if (recency.tone === "today") insights.push({ icon: "⚡", text: "Active today — a great moment to reach out", color: "text-emerald-600" });
 
   return (
     <div className="p-4 space-y-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">{detail.visitor.name}</h3>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-            {detail.tier} · Score {detail.score}
-          </span>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            {detail.isAnonymous && !detail.isUnlocked ? "Guest visitor" : detail.visitor.name}
+          </h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.badgeClass}`}>
+              {tier.emoji} {tier.name} · Buying intent {detail.score}%
+            </span>
+            <span className={`flex items-center gap-1 text-[10px] font-semibold ${recency.text}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${recency.dot}`} />
+              {recency.label}
+            </span>
+          </div>
         </div>
+      </div>
+
+      {/* The one-line reason, as on the card */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Why they&apos;re worth a call</p>
+        <p className="text-sm text-slate-800 dark:text-slate-100 leading-snug">{leadWhyLine(signals)}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{tier.meaning}</p>
       </div>
 
       {/* Contact info — shown for unlocked non-anonymous leads */}
@@ -228,14 +268,14 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
       )}
 
       {/* Contact hint — masked info to encourage unlock */}
-      {!detail.isUnlocked && (
+      {canBuy && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <IonIcon icon={lockClosedOutline} className="text-amber-600 dark:text-amber-400" />
             <span className="text-xs font-bold text-amber-700 dark:text-amber-300">Contact Info Locked</span>
           </div>
           <div className="space-y-1.5">
-            {detail.visitor.userId && (
+            {!detail.isAnonymous && (
               <div className="flex items-center gap-2">
                 <IonIcon icon={callOutline} className="text-slate-400 text-sm" />
                 {/* Fully masked. Random trailing digits read as part of the real
@@ -248,9 +288,21 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
               <span className="text-xs text-slate-500 dark:text-slate-400">Direct chat available after unlock</span>
             </div>
           </div>
-          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-medium">
-            Unlock to reveal phone number and start a conversation
-          </p>
+          <button
+            onClick={() => onUnlock(detail)}
+            disabled={unlockDisabled}
+            className={`mt-3 w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r ${tier.gradient} text-white rounded-xl text-sm font-bold shadow-sm active:scale-[0.98] disabled:opacity-50`}
+          >
+            <IonIcon icon={lockOpenOutline} className="text-base" />
+            {unlockLabel(detail.tier)}
+          </button>
+        </div>
+      )}
+
+      {/* A guest never signed in — nothing to buy, but the activity is theirs to read */}
+      {!detail.isUnlocked && detail.isAnonymous && (
+        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-4 text-xs text-slate-500 dark:text-slate-400">
+          This visitor didn&apos;t sign in, so there are no contact details to share. Their activity below shows what caught their eye.
         </div>
       )}
 
@@ -261,8 +313,8 @@ function LeadDetailView({ leadId, onBack }: { leadId: string; onBack: () => void
           <p className="text-[10px] text-slate-400">Products</p>
         </div>
         <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-slate-900 dark:text-white">{visitMinutes}</p>
-          <p className="text-[10px] text-slate-400">Minutes</p>
+          <p className="text-lg font-bold text-slate-900 dark:text-white">{formatTimeSpent(detail.totalDuration)}</p>
+          <p className="text-[10px] text-slate-400">On your page</p>
         </div>
         <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-slate-900 dark:text-white">{detail.actionsPerformed.length}</p>
@@ -433,7 +485,52 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
   });
   const { data: sponsorships } = useMySponsorships();
   const { data: visitorInsights } = useVisitorInsights(period);
-  const [unlockSheetLead, setUnlockSheetLead] = useState<{ id: string; tier: string } | null>(null);
+  const [unlockSheetLead, setUnlockSheetLead] = useState<LeadItem | null>(null);
+  const [showLeadsHelp, setShowLeadsHelp] = useState(false);
+
+  /** What a contact costs this owner right now: free, or the tier's price. */
+  const leadPrice = (tier: LeadTier) => {
+    if (!monetizationConfig) return 49;
+    return leadUnlockInfo?.isGrowthSubscriber
+      ? monetizationConfig.leadPricing[`${tier}Discounted` as keyof typeof monetizationConfig.leadPricing]
+      : monetizationConfig.leadPricing[tier];
+  };
+  const unlockLabel = (tier: LeadTier) => {
+    const info = leadUnlockInfo;
+    if (!monetizationConfig?.flags.leadsMonetizationEnabled || !info) return "Get contact";
+    if (info.isProSubscriber || info.subscriptionCreditsRemaining > 0 || info.freeRemaining > 0) return "Get contact free";
+    return `Get contact · ₹${leadPrice(tier)}`;
+  };
+
+  const renderUnlockSheet = () => {
+    if (!unlockSheetLead) return null;
+    const tier = (unlockSheetLead.tier || "cold") as LeadTier;
+    const signals = leadSignals(unlockSheetLead);
+    return (
+      <LeadUnlockSheet
+        open
+        onClose={() => setUnlockSheetLead(null)}
+        onUnlock={(voucherCode) => {
+          unlockMutation.mutate(
+            { leadId: unlockSheetLead.id, voucherCode },
+            { onSuccess: (data) => { if (data.unlocked) setUnlockSheetLead(null); } }
+          );
+        }}
+        tier={tier}
+        price={leadPrice(tier)}
+        originalPrice={monetizationConfig && leadUnlockInfo?.isGrowthSubscriber ? monetizationConfig.leadPricing[tier] : undefined}
+        freeRemaining={leadUnlockInfo?.freeRemaining ?? 5}
+        freeTotal={monetizationConfig?.freeQuotas.leadsPerMonth ?? 5}
+        subscriptionCreditsRemaining={leadUnlockInfo?.subscriptionCreditsRemaining ?? 0}
+        isProSubscriber={leadUnlockInfo?.isProSubscriber ?? false}
+        isGrowthSubscriber={leadUnlockInfo?.isGrowthSubscriber ?? false}
+        monetizationEnabled={monetizationConfig?.flags.leadsMonetizationEnabled ?? false}
+        vouchersEnabled={monetizationConfig?.flags.vouchersEnabled !== false}
+        isLoading={unlockMutation.isPending}
+        why={{ line: leadWhyLine(signals), signals, score: unlockSheetLead.score }}
+      />
+    );
+  };
 
   const hasActivePlan = currentSub && currentSub.status === "active" && currentSub.plan;
   const activeSponsorships = sponsorships?.filter(
@@ -515,10 +612,16 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             <button onClick={() => { setView("leads"); setSelectedLeadId(null); }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
               <IonIcon icon={arrowBack} className="text-white text-base" />
             </button>
-            <h1 className="text-lg font-bold text-white">Lead Details</h1>
+            <h1 className="text-lg font-bold text-white">Interested customer</h1>
           </div>
         </div>
-        <LeadDetailView leadId={selectedLeadId} onBack={() => { setView("leads"); setSelectedLeadId(null); }} />
+        <LeadDetailView
+          leadId={selectedLeadId}
+          unlockLabel={unlockLabel}
+          unlockDisabled={unlockMutation.isPending}
+          onUnlock={(lead) => setUnlockSheetLead(lead)}
+        />
+        {renderUnlockSheet()}
       </div>
     );
   }
@@ -558,7 +661,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               view === "leads" ? "bg-white text-slate-800" : "bg-white/10 text-white/60"
             }`}
           >
-            Leads
+            Interested Customers
             {summary && (summary.leads.hot + summary.leads.warm) > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
                 {summary.leads.hot + summary.leads.warm}
@@ -662,8 +765,8 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                   >
                     <IonIcon icon={flameOutline} className="text-orange-400 text-sm" />
                     <span className="text-white/70 text-[11px] flex-1 text-left">
-                      <span className="text-amber-400 font-bold">{summary.leads.hot} hot</span>
-                      {summary.leads.warm > 0 && <>, <span className="text-orange-300 font-bold">{summary.leads.warm} warm</span></>} leads waiting
+                      <span className="text-amber-400 font-bold">{summary.leads.hot} ready to buy</span>
+                      {summary.leads.warm > 0 && <>, <span className="text-orange-300 font-bold">{summary.leads.warm} highly interested</span></>} — waiting for you
                     </span>
                     <IonIcon icon={chevronForwardOutline} className="text-white/30 text-xs" />
                   </button>
@@ -796,24 +899,23 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-1.5">
                     <IonIcon icon={flameOutline} className="text-sm text-orange-500" />
-                    <h3 className="text-xs font-bold text-slate-800 dark:text-white">Lead Funnel</h3>
-                    <InfoTip text="Shows visitor interest levels — Hot means ready to buy, Cold means just browsing" size={11} />
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-white">Customer Interest</h3>
+                    <InfoTip text="How interested your visitors are — from just discovering you to ready to buy" size={11} />
                   </div>
                   <button onClick={() => setView("leads")} className="text-[10px] font-semibold text-amber-600 flex items-center gap-0.5">
                     View all <IonIcon icon={chevronForwardOutline} className="text-[9px]" />
                   </button>
                 </div>
                 <div className="space-y-1.5">
-                  {(["hot", "warm", "soft", "cold"] as const).map((tier) => {
+                  {TIER_ORDER.map((tier) => {
                     const total = summary.leads.hot + summary.leads.warm + summary.leads.soft + summary.leads.cold;
                     const pct = total > 0 ? Math.round((summary.leads[tier] / total) * 100) : 0;
-                    const colors = { hot: "bg-red-500", warm: "bg-orange-400", soft: "bg-yellow-400", cold: "bg-blue-400" };
                     return (
                       <div key={tier} className="flex items-center gap-2">
-                        <span className="text-[10px] font-semibold text-slate-500 w-9 capitalize">{tier}</span>
+                        <span className="text-[10px] font-semibold text-slate-500 w-[92px] shrink-0 truncate">{LEAD_TIERS[tier].emoji} {LEAD_TIERS[tier].badge}</span>
                         <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                           <motion.div
-                            className={`h-full rounded-full ${colors[tier]}`}
+                            className={`h-full rounded-full ${LEAD_TIERS[tier].bar}`}
                             initial={{ width: 0 }}
                             animate={{ width: `${Math.max(pct, 2)}%` }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -1239,24 +1341,31 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
         /* ═══ LEADS VIEW ═══ */
         <div className="px-4 pt-3 space-y-4">
 
-          {/* Hot Leads CTA */}
-          {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && !showFilters && (
-            <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 text-white">
-              <div className="flex items-center gap-2 mb-1">
-                <IonIcon icon={flameOutline} className="text-lg" />
-                <span className="text-sm font-bold">Hot Leads Available!</span>
+          <LeadsExplainer forceOpen={showLeadsHelp} onClose={() => setShowLeadsHelp(false)} />
+
+          {/* Ready-to-buy CTA */}
+          {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && !showFilters && (() => {
+            const ready = leadsData.data.filter((l) => l.tier === "hot").length;
+            return (
+              <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 text-white">
+                <div className="flex items-center gap-2 mb-1">
+                  <IonIcon icon={flameOutline} className="text-lg" />
+                  <span className="text-sm font-bold">
+                    {ready} customer{ready === 1 ? " is" : "s are"} ready to buy
+                  </span>
+                </div>
+                <p className="text-[11px] opacity-90">
+                  They showed strong buying signals. Reach them before another business does.
+                </p>
+                <button
+                  onClick={() => { setLeadTier("hot"); setLeadPage(1); }}
+                  className="mt-3 px-4 py-2 bg-white/20 backdrop-blur rounded-xl text-xs font-bold active:scale-[0.97]"
+                >
+                  See who they are
+                </button>
               </div>
-              <p className="text-[11px] opacity-90">
-                You have {leadsData.data.filter((l) => l.tier === "hot").length} highly interested visitors. Unlock to connect!
-              </p>
-              <button
-                onClick={() => { setLeadTier("hot"); setLeadPage(1); }}
-                className="mt-3 px-4 py-2 bg-white/20 backdrop-blur rounded-xl text-xs font-bold active:scale-[0.97]"
-              >
-                View Hot Leads
-              </button>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Quota indicator */}
           {leadUnlockInfo && monetizationConfig?.flags.leadsMonetizationEnabled && (
@@ -1290,7 +1399,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                 <IonIcon icon={searchOutline} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                 <input
                   type="text"
-                  placeholder="Search leads by name..."
+                  placeholder="Search by name..."
                   value={leadSearch}
                   onChange={(e) => { setLeadSearch(e.target.value); setLeadPage(1); }}
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:border-slate-400 dark:focus:border-slate-500 transition-colors"
@@ -1326,10 +1435,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             <div data-tour="leads-tiers" className="flex gap-2 overflow-x-auto no-scrollbar">
               {([
                 { key: undefined as string | undefined, label: "All" },
-                { key: "hot", label: "🔥 Hot" },
-                { key: "warm", label: "🟠 Warm" },
-                { key: "soft", label: "🟡 Soft" },
-                { key: "cold", label: "🔵 Cold" },
+                ...TIER_ORDER.map((t) => ({ key: t as string | undefined, label: `${LEAD_TIERS[t].emoji} ${LEAD_TIERS[t].badge}` })),
               ]).map((t) => (
                 <button
                   key={t.label}
@@ -1343,6 +1449,12 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                   {t.label}
                 </button>
               ))}
+              <button
+                onClick={() => setShowLeadsHelp(true)}
+                className="px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 dark:text-slate-500"
+              >
+                What do these mean?
+              </button>
             </div>
 
             {/* Expandable filter panel */}
@@ -1551,7 +1663,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
           {leadsData && (
             <div className="flex items-center justify-between">
               <p className="text-[11px] text-slate-400">
-                {leadsData.meta.total} lead{leadsData.meta.total !== 1 ? "s" : ""} found
+                {leadsData.meta.total} interested customer{leadsData.meta.total !== 1 ? "s" : ""}
               </p>
               {leadsData.meta.totalPages > 1 && (
                 <p className="text-[10px] text-slate-400">
@@ -1572,12 +1684,12 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             <div data-tour="leads-list" className="text-center py-12">
               <IonIcon icon={activeFilterCount > 0 ? funnelOutline : personOutline} className="text-4xl text-slate-300 mb-3" />
               <p className="text-sm font-semibold text-slate-400">
-                {activeFilterCount > 0 ? "No leads match your filters" : "No leads yet"}
+                {activeFilterCount > 0 ? "No customers match your filters" : "No interested customers yet"}
               </p>
-              <p className="text-xs text-slate-300 mt-1">
+              <p className="text-xs text-slate-400 mt-1 max-w-[260px] mx-auto leading-relaxed">
                 {activeFilterCount > 0
                   ? "Try adjusting or clearing your filters"
-                  : "Leads appear when customers interact with your profile"}
+                  : "When people search for, view or save your business, they show up here. Products with photos and prices get more people looking."}
               </p>
               {activeFilterCount > 0 && (
                 <button
@@ -1599,125 +1711,16 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             </div>
           ) : (
             <div data-tour="leads-list" className="space-y-3">
-              {leadsData.data.map((lead) => {
-                const badge = TIER_BADGE[lead.tier] || TIER_BADGE.cold;
-                return (
-                  <motion.div
-                    key={lead.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 relative">
-                        {lead.isUnlocked && lead.visitor.avatar ? (
-                          <img src={lead.visitor.avatar} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" />
-                        ) : (
-                          <IonIcon icon={personOutline} className="text-xl text-slate-400" />
-                        )}
-                        {!lead.isUnlocked && (
-                          <div className="absolute inset-0 rounded-full bg-slate-200/60 dark:bg-slate-600/60 backdrop-blur-[2px] flex items-center justify-center">
-                            <IonIcon icon={lockClosedOutline} className="text-sm text-slate-500" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {lead.isUnlocked ? (
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">
-                              {lead.visitor.name}
-                            </span>
-                          ) : (
-                            <div className="flex items-center gap-1.5">
-                              <div className="h-3 w-24 rounded-full bg-slate-600/60 dark:bg-slate-500/50 animate-pulse" />
-                              <div className="h-3 w-14 rounded-full bg-slate-600/40 dark:bg-slate-500/30 animate-pulse" />
-                            </div>
-                          )}
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-                            {lead.tier}
-                          </span>
-                        </div>
-
-                        {/* Contact info for unlocked leads */}
-                        {lead.isUnlocked && (lead.visitor.phone || lead.visitor.email) && (
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
-                            {lead.visitor.phone && (
-                              <a href={`tel:${lead.visitor.phone}`} className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                <IonIcon icon={callOutline} className="text-[10px]" />
-                                {lead.visitor.phone}
-                              </a>
-                            )}
-                            {lead.visitor.email && (
-                              <a href={`mailto:${lead.visitor.email}`} className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-medium">
-                                <IonIcon icon={mailOutline} className="text-[10px]" />
-                                {lead.visitor.email}
-                              </a>
-                            )}
-                            {lead.visitor.city && (
-                              <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                <IonIcon icon={locationOutline} className="text-[10px]" />
-                                {lead.visitor.city}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
-                          {lead.searchQuery && (
-                            <span className="flex items-center gap-1">
-                              <IonIcon icon={searchOutline} className="text-[10px]" />
-                              &ldquo;{lead.searchQuery}&rdquo;
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <IonIcon icon={cubeOutline} className="text-[10px]" />
-                            {lead.productsViewed.length} products
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <IonIcon icon={timeOutline} className="text-[10px]" />
-                            {Math.round(lead.totalDuration / 60)}m spent
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-300 mt-1">Last seen {timeAgo(lead.lastSeenAt)}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-lg font-bold text-slate-800 dark:text-white">{lead.score}</span>
-                        <p className="text-[9px] text-slate-400 uppercase">Score</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      {lead.isUnlocked ? (
-                        <button
-                          onClick={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
-                          className="flex-1 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-[0.98] transition-transform"
-                        >
-                          View Details
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setUnlockSheetLead({ id: lead.id, tier: lead.tier || "cold" })}
-                          disabled={unlockMutation.isPending}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 text-white rounded-xl text-xs font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
-                        >
-                          <IonIcon icon={lockOpenOutline} className="text-sm" />
-                          {(() => {
-                            const info = leadUnlockInfo;
-                            const config = monetizationConfig;
-                            if (!config?.flags.leadsMonetizationEnabled || !info) return "Unlock Lead";
-                            if (info.isProSubscriber || info.subscriptionCreditsRemaining > 0 || info.freeRemaining > 0) return "Unlock Free";
-                            const tier = (lead.tier || "cold") as "hot" | "warm" | "soft" | "cold";
-                            const price = info.isGrowthSubscriber
-                              ? config.leadPricing[`${tier}Discounted` as keyof typeof config.leadPricing]
-                              : config.leadPricing[tier];
-                            return `Unlock ₹${price}`;
-                          })()}
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {leadsData.data.map((lead) => (
+                <LeadCard
+                  key={lead.id}
+                  lead={lead}
+                  unlockLabel={unlockLabel(lead.tier)}
+                  unlockDisabled={unlockMutation.isPending}
+                  onOpen={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
+                  onUnlock={() => setUnlockSheetLead(lead)}
+                />
+              ))}
             </div>
           )}
 
@@ -1746,40 +1749,7 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
         </div>
       )}
 
-      {/* Lead Unlock Sheet */}
-      {unlockSheetLead && (
-        <LeadUnlockSheet
-          open={!!unlockSheetLead}
-          onClose={() => setUnlockSheetLead(null)}
-          onUnlock={(voucherCode) => {
-            unlockMutation.mutate(
-              { leadId: unlockSheetLead.id, voucherCode },
-              { onSuccess: (data) => { if (data.unlocked) setUnlockSheetLead(null); } }
-            );
-          }}
-          tier={(unlockSheetLead.tier as "hot" | "warm" | "soft" | "cold") || "cold"}
-          price={(() => {
-            if (!monetizationConfig) return 49;
-            const tier = unlockSheetLead.tier as "hot" | "warm" | "soft" | "cold";
-            return leadUnlockInfo?.isGrowthSubscriber
-              ? monetizationConfig.leadPricing[`${tier}Discounted` as keyof typeof monetizationConfig.leadPricing]
-              : monetizationConfig.leadPricing[tier];
-          })()}
-          originalPrice={(() => {
-            if (!monetizationConfig || !leadUnlockInfo?.isGrowthSubscriber) return undefined;
-            const tier = unlockSheetLead.tier as "hot" | "warm" | "soft" | "cold";
-            return monetizationConfig.leadPricing[tier];
-          })()}
-          freeRemaining={leadUnlockInfo?.freeRemaining ?? 5}
-          freeTotal={monetizationConfig?.freeQuotas.leadsPerMonth ?? 5}
-          subscriptionCreditsRemaining={leadUnlockInfo?.subscriptionCreditsRemaining ?? 0}
-          isProSubscriber={leadUnlockInfo?.isProSubscriber ?? false}
-          isGrowthSubscriber={leadUnlockInfo?.isGrowthSubscriber ?? false}
-          monetizationEnabled={monetizationConfig?.flags.leadsMonetizationEnabled ?? false}
-          vouchersEnabled={monetizationConfig?.flags.vouchersEnabled !== false}
-          isLoading={unlockMutation.isPending}
-        />
-      )}
+      {renderUnlockSheet()}
     </div>
   );
 };
