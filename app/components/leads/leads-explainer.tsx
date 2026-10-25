@@ -76,7 +76,7 @@ export function LeadsExplainer({ forceOpen, onClose }: { forceOpen?: boolean; on
             <div className="mt-3 space-y-1.5">
               {TIER_ORDER.map((t) => (
                 <div key={t} className="flex items-center gap-2">
-                  <span className="text-xs w-4 text-center">{LEAD_TIERS[t].emoji}</span>
+                  <IonIcon icon={LEAD_TIERS[t].icon} className={`text-sm w-4 shrink-0 ${LEAD_TIERS[t].iconColor}`} />
                   <span className="text-[11px] font-semibold w-[120px] shrink-0">{LEAD_TIERS[t].name}</span>
                   <span className="text-[10px] text-white/50 leading-snug">{LEAD_TIERS[t].meaning}</span>
                 </div>

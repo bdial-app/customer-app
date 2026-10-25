@@ -11,6 +11,10 @@ import {
   starOutline,
   imagesOutline,
   eyeOutline,
+  flame,
+  heart,
+  eye,
+  sparkles,
 } from "ionicons/icons";
 import type { LeadItem } from "@/services/analytics.service";
 
@@ -24,12 +28,25 @@ export type LeadTier = LeadItem["tier"];
  */
 export const LEAD_TIERS: Record<
   LeadTier,
-  { name: string; badge: string; emoji: string; meaning: string; badgeClass: string; dot: string; bar: string; gradient: string }
+  {
+    name: string;
+    badge: string;
+    /** Filled icon; takes the colour of the text around it. */
+    icon: string;
+    /** The icon's colour on its own, e.g. on a dark card. */
+    iconColor: string;
+    meaning: string;
+    badgeClass: string;
+    dot: string;
+    bar: string;
+    gradient: string;
+  }
 > = {
   hot: {
     name: "Ready to Buy",
     badge: "Ready to buy",
-    emoji: "🔥",
+    icon: flame,
+    iconColor: "text-red-500",
     meaning: "Strong buying signals — contact them first",
     badgeClass: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400",
     dot: "bg-red-500",
@@ -39,7 +56,8 @@ export const LEAD_TIERS: Record<
   warm: {
     name: "Highly Interested",
     badge: "High interest",
-    emoji: "✨",
+    icon: heart,
+    iconColor: "text-orange-400",
     meaning: "Spent real time on your business",
     badgeClass: "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
     dot: "bg-orange-400",
@@ -49,7 +67,8 @@ export const LEAD_TIERS: Record<
   soft: {
     name: "Comparing Options",
     badge: "Comparing",
-    emoji: "👀",
+    icon: eye,
+    iconColor: "text-yellow-400",
     meaning: "Weighing you up — reach them before others do",
     badgeClass: "bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400",
     dot: "bg-yellow-400",
@@ -59,7 +78,8 @@ export const LEAD_TIERS: Record<
   cold: {
     name: "Just Discovered You",
     badge: "New interest",
-    emoji: "👋",
+    icon: sparkles,
+    iconColor: "text-sky-400",
     meaning: "Found you recently — a friendly hello goes far",
     badgeClass: "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
     dot: "bg-blue-400",

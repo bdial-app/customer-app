@@ -38,6 +38,8 @@ import {
   swapVerticalOutline,
   closeOutline,
   chevronDownOutline,
+  bagHandleOutline,
+  flame,
 } from "ionicons/icons";
 import {
   AreaChart,
@@ -189,14 +191,14 @@ function LeadDetailView({
 
   // What each signal means for the owner
   const insights: { icon: string; text: string; color: string }[] = [];
-  if (actions.has("call_clicked") || actions.has("chat_initiated")) insights.push({ icon: "📞", text: "Tried to reach you — they want to talk", color: "text-emerald-600" });
-  if (actions.has("direction_clicked")) insights.push({ icon: "📍", text: "Looked up how to get to you — planning a visit", color: "text-indigo-600" });
-  if (detail.productsViewed.length >= 3) insights.push({ icon: "🛍️", text: `Viewed ${detail.productsViewed.length} products — comparing what to buy`, color: "text-red-600" });
-  if (visitMinutes >= 5) insights.push({ icon: "⏱️", text: `Spent ${formatTimeSpent(detail.totalDuration)} on your page — very engaged`, color: "text-blue-600" });
-  if (hasSearchQuery) insights.push({ icon: "🔍", text: `Searched for “${detail.searchQuery}” — knows what they want`, color: "text-violet-600" });
-  if (actions.has("saved") || actions.has("share_clicked")) insights.push({ icon: "⭐", text: "Saved or shared your business — strong interest", color: "text-amber-600" });
-  if (detail.tier === "hot") insights.push({ icon: "💰", text: "Ready to buy — the most likely to become a customer", color: "text-emerald-600" });
-  if (recency.tone === "today") insights.push({ icon: "⚡", text: "Active today — a great moment to reach out", color: "text-emerald-600" });
+  if (actions.has("call_clicked") || actions.has("chat_initiated")) insights.push({ icon: callOutline, text: "Tried to reach you — they want to talk", color: "text-emerald-600" });
+  if (actions.has("direction_clicked")) insights.push({ icon: navigateOutline, text: "Looked up how to get to you — planning a visit", color: "text-indigo-600" });
+  if (detail.productsViewed.length >= 3) insights.push({ icon: bagHandleOutline, text: `Viewed ${detail.productsViewed.length} products — comparing what to buy`, color: "text-red-600" });
+  if (visitMinutes >= 5) insights.push({ icon: timeOutline, text: `Spent ${formatTimeSpent(detail.totalDuration)} on your page — very engaged`, color: "text-blue-600" });
+  if (hasSearchQuery) insights.push({ icon: searchOutline, text: `Searched for “${detail.searchQuery}” — knows what they want`, color: "text-violet-600" });
+  if (actions.has("saved") || actions.has("share_clicked")) insights.push({ icon: bookmarkOutline, text: "Saved or shared your business — strong interest", color: "text-amber-600" });
+  if (detail.tier === "hot") insights.push({ icon: flame, text: "Ready to buy — the most likely to become a customer", color: "text-emerald-600" });
+  if (recency.tone === "today") insights.push({ icon: flashOutline, text: "Active today — a great moment to reach out", color: "text-emerald-600" });
 
   return (
     <div className="p-4 space-y-4 pb-24">
@@ -208,7 +210,8 @@ function LeadDetailView({
           </h3>
           <div className="flex items-center gap-2 mt-1">
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.badgeClass}`}>
-              {tier.emoji} {tier.name} · Buying intent {detail.score}%
+              <IonIcon icon={tier.icon} className="text-[11px]" />
+              {tier.name} · Buying intent {detail.score}%
             </span>
             <span className={`flex items-center gap-1 text-[10px] font-semibold ${recency.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${recency.dot}`} />
@@ -332,7 +335,7 @@ function LeadDetailView({
           <div className="space-y-2">
             {insights.map((ins, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="text-sm shrink-0">{ins.icon}</span>
+                <IonIcon icon={ins.icon} className={`text-sm shrink-0 mt-0.5 ${ins.color}`} />
                 <p className={`text-xs ${ins.color} dark:opacity-90 leading-relaxed`}>{ins.text}</p>
               </div>
             ))}
@@ -912,7 +915,10 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                     const pct = total > 0 ? Math.round((summary.leads[tier] / total) * 100) : 0;
                     return (
                       <div key={tier} className="flex items-center gap-2">
-                        <span className="text-[10px] font-semibold text-slate-500 w-[92px] shrink-0 truncate">{LEAD_TIERS[tier].emoji} {LEAD_TIERS[tier].badge}</span>
+                        <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 w-[92px] shrink-0 truncate">
+                          <IonIcon icon={LEAD_TIERS[tier].icon} className={`text-[11px] shrink-0 ${LEAD_TIERS[tier].iconColor}`} />
+                          {LEAD_TIERS[tier].badge}
+                        </span>
                         <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                           <motion.div
                             className={`h-full rounded-full ${LEAD_TIERS[tier].bar}`}
@@ -1434,18 +1440,19 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             {/* Tier pills row */}
             <div data-tour="leads-tiers" className="flex gap-2 overflow-x-auto no-scrollbar">
               {([
-                { key: undefined as string | undefined, label: "All" },
-                ...TIER_ORDER.map((t) => ({ key: t as string | undefined, label: `${LEAD_TIERS[t].emoji} ${LEAD_TIERS[t].badge}` })),
+                { key: undefined as string | undefined, label: "All", icon: undefined as string | undefined, color: "" },
+                ...TIER_ORDER.map((t) => ({ key: t as string | undefined, label: LEAD_TIERS[t].badge, icon: LEAD_TIERS[t].icon as string | undefined, color: LEAD_TIERS[t].iconColor })),
               ]).map((t) => (
                 <button
                   key={t.label}
                   onClick={() => { setLeadTier(t.key); setLeadPage(1); }}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                     leadTier === t.key
                       ? "bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-sm"
                       : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 active:bg-slate-200 dark:active:bg-slate-600"
                   }`}
                 >
+                  {t.icon && <IonIcon icon={t.icon} className={`text-[13px] ${t.color}`} />}
                   {t.label}
                 </button>
               ))}
@@ -1625,7 +1632,8 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
               <div className="flex flex-wrap gap-1.5">
                 {leadStatus && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                    {leadStatus === "unlocked" ? "🔓" : "🔒"} {leadStatus}
+                    <IonIcon icon={leadStatus === "unlocked" ? lockOpenOutline : lockClosedOutline} className="text-[11px]" />
+                    {leadStatus}
                     <button onClick={() => { setLeadStatus(undefined); setLeadPage(1); }}>
                       <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
                     </button>
@@ -1633,7 +1641,8 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                 )}
                 {leadSource && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                    📍 {leadSource.replace("_", " ")}
+                    <IonIcon icon={navigateOutline} className="text-[11px]" />
+                    {leadSource.replace("_", " ")}
                     <button onClick={() => { setLeadSource(undefined); setLeadPage(1); }}>
                       <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
                     </button>
@@ -1641,7 +1650,8 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
                 )}
                 {leadDateRange !== "all" && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                    📅 {leadDateRange}
+                    <IonIcon icon={calendarOutline} className="text-[11px]" />
+                    {leadDateRange}
                     <button onClick={() => { setLeadDateRange("all"); setLeadPage(1); }}>
                       <IonIcon icon={closeOutline} className="text-[10px] text-slate-400" />
                     </button>

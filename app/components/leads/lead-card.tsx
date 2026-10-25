@@ -71,7 +71,8 @@ export function LeadCard({ lead, unlockLabel, unlockDisabled, onOpen, onUnlock }
               </span>
             </div>
             <span className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.badgeClass}`}>
-              {tier.emoji} {tier.badge}
+              <IonIcon icon={tier.icon} className="text-[11px]" />
+              {tier.badge}
             </span>
           </div>
         </div>

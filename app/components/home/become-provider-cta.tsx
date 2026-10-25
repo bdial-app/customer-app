@@ -1,6 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { IonIcon } from "@ionic/react";
+import { flame } from "ionicons/icons";
 import { useAppContext } from "@/app/context/AppContext";
 
 const BecomeProviderCTA = () => {
@@ -47,8 +49,9 @@ const BecomeProviderCTA = () => {
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                 Join 500+ businesses earning from home. List your skills, get bookings.
               </p>
-              <p className="text-[11px] font-semibold text-emerald-700 mt-1.5 leading-relaxed">
-                🔥 See who&apos;s interested in your business, and call them first.
+              <p className="flex items-start gap-1 text-[11px] font-semibold text-emerald-700 mt-1.5 leading-relaxed">
+                <IonIcon icon={flame} className="text-[12px] text-orange-500 mt-[2px] shrink-0" />
+                See who&apos;s interested in your business, and call them first.
               </p>
             </div>
             <motion.button

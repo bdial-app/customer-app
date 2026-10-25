@@ -117,8 +117,9 @@ export function LeadsSpotlightCard({ onOpen, className = "" }: { onOpen: () => v
                   {recency.label}
                 </span>
               </div>
-              <p className="text-[10px] font-bold text-orange-300 mt-1">
-                {tier.emoji} {tier.badge} · Buying intent {lead.score}%
+              <p className="flex items-center gap-1 text-[10px] font-bold text-orange-300 mt-1">
+                <IonIcon icon={tier.icon} className="text-[11px]" />
+                {tier.badge} · Buying intent {lead.score}%
               </p>
               <p className="text-[11px] text-white/80 mt-1 leading-snug line-clamp-2">{leadWhyLine(leadSignals(lead))}</p>
             </button>

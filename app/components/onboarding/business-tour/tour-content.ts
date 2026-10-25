@@ -445,9 +445,9 @@ export function buildBusinessTour(ctx: TourContext): TourChapter[] {
         title: "From ready to buy to just discovered you",
         body: "Filter by how interested someone was. Each card says why they're there.",
         points: [
-          "🔥 Ready to buy — strong buying signals; contact them first",
-          "✨ High interest — spent real time on your business",
-          "👀 Comparing & 👋 New interest — reach them before others do",
+          "Ready to buy — strong buying signals; contact them first",
+          "High interest — spent real time on your business",
+          "Comparing & New interest — reach them before others do",
         ],
       },
       {

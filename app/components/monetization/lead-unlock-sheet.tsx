@@ -5,10 +5,6 @@ import { Sheet } from "@/app/components/ui/sheet";
 import { IonIcon } from "@ionic/react";
 import {
   lockOpenOutline,
-  flameOutline,
-  sparklesOutline,
-  eyeOutline,
-  handLeftOutline,
   timeOutline,
   ticketOutline,
   rocketOutline,
@@ -44,10 +40,10 @@ interface LeadUnlockSheetProps {
 }
 
 const tierConfig = {
-  hot: { icon: flameOutline, label: LEAD_TIERS.hot.name, gradient: LEAD_TIERS.hot.gradient },
-  warm: { icon: sparklesOutline, label: LEAD_TIERS.warm.name, gradient: LEAD_TIERS.warm.gradient },
-  soft: { icon: eyeOutline, label: LEAD_TIERS.soft.name, gradient: LEAD_TIERS.soft.gradient },
-  cold: { icon: handLeftOutline, label: LEAD_TIERS.cold.name, gradient: LEAD_TIERS.cold.gradient },
+  hot: { icon: LEAD_TIERS.hot.icon, label: LEAD_TIERS.hot.name, gradient: LEAD_TIERS.hot.gradient },
+  warm: { icon: LEAD_TIERS.warm.icon, label: LEAD_TIERS.warm.name, gradient: LEAD_TIERS.warm.gradient },
+  soft: { icon: LEAD_TIERS.soft.icon, label: LEAD_TIERS.soft.name, gradient: LEAD_TIERS.soft.gradient },
+  cold: { icon: LEAD_TIERS.cold.icon, label: LEAD_TIERS.cold.name, gradient: LEAD_TIERS.cold.gradient },
 };
 
 export function LeadUnlockSheet({
