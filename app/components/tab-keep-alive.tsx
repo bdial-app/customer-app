@@ -34,6 +34,9 @@ export function TabPanel({ id, activeTab, children }: TabPanelProps) {
   return (
     <div
       ref={containerRef}
+      // Named for utils/scroll-memory: which tabs are mounted varies, so the
+      // panels can't be told apart by position.
+      data-scroll-key={`tab-${id}`}
       className="tab-panel absolute inset-0 bg-white dark:bg-slate-900 overflow-y-auto overscroll-contain"
       style={{
         display: isActive ? "block" : "none",

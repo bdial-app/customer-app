@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { LayoutWrapper } from "./layoutWrapper";
+import { ScrollMemory } from "./components/scroll-memory";
 import { CSPostHogProvider } from "./providers/PostHogProvider";
 import { DOWNLOAD_REDIRECT_SCRIPT } from "@/utils/download-redirect";
 
@@ -135,6 +136,7 @@ export default async function RootLayout({
       >
         {/* Outside the app shell, which draws only in the browser, so it is in the HTML itself. */}
         {seo}
+        <ScrollMemory />
         <CSPostHogProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
         </CSPostHogProvider>
