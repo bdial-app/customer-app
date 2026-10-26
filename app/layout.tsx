@@ -3,6 +3,7 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { LayoutWrapper } from "./layoutWrapper";
 import { CSPostHogProvider } from "./providers/PostHogProvider";
+import { DOWNLOAD_REDIRECT_SCRIPT } from "@/utils/download-redirect";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -79,6 +80,8 @@ export default async function RootLayout({
             __html: `(function(){try{var m=localStorage.getItem("bohri_theme");if(m!=="light"&&m!=="dark")m="auto";var h=new Date().getHours();var d=m==="dark"||(m==="auto"&&(window.matchMedia("(prefers-color-scheme: dark)").matches||h>=19||h<7));if(d)document.documentElement.classList.add("dark");}catch(e){}})();`,
           }}
         />
+        {/* tijarahapp.in/download (print QR codes): straight to the right store. No-op elsewhere. */}
+        <script dangerouslySetInnerHTML={{ __html: DOWNLOAD_REDIRECT_SCRIPT }} />
         <meta
           name="theme-color"
           content="#F59E0B"
