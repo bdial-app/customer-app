@@ -64,6 +64,7 @@ import PullToRefresh from "../pull-to-refresh";
 import PageSplashScreen from "../page-splash-screen";
 import { useNow } from "@/hooks/useNow";
 import { LeadsSpotlightCard } from "../leads/leads-spotlight-card";
+import { SellingGuideCard } from "./selling-guide/selling-guide-card";
 
 // ─── Verification Prompt Card ───────────────────────────────────────
 
@@ -1579,6 +1580,8 @@ const ProviderDashboard = ({
           onManage={() => handleNavigate("boost")}
         />
       )}
+      {/* How to photograph and describe the business, so the tips above land */}
+      <SellingGuideCard className="px-4 mb-4" onNavigate={handleNavigate} />
       <GrowthTips
         stats={providerStats}
         provider={provider}

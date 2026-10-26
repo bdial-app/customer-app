@@ -21,6 +21,7 @@ import { useUploadPhotos, useDeletePhoto } from "@/hooks/usePhotos";
 import { AppDialog } from "../app-dialog";
 import { checkPickedFile, UploadFileError } from "@/utils/compress-image";
 import { Card, EmptyState, GroupLabel, ManagePage, PrimaryButton, SectionHeader, StickyActionBar } from "./manage/kit";
+import { SellingGuideLink } from "./selling-guide/selling-guide-card";
 
 const MAX_PHOTOS = 10;
 const MAX_PER_UPLOAD = 3;
@@ -287,6 +288,9 @@ const ProviderPhotosTab = ({ photos, providerId }: ProviderPhotosTabProps) => {
             </li>
           ))}
         </ul>
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-2.5 pb-1.5">
+          <SellingGuideLink section="photos">The full photo guide</SellingGuideLink>
+        </div>
         {photos.length > 0 && (
           <p className="flex items-center gap-1.5 border-t border-slate-100 dark:border-slate-800 pt-2.5 pb-1.5 mt-0.5 text-[11.5px] text-slate-400 dark:text-slate-500">
             <IonIcon icon={informationCircleOutline} className="text-[14px] shrink-0" />

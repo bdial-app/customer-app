@@ -53,6 +53,7 @@ import {
   MAX_PHOTOS,
 } from "./manage/catalogue-parts";
 import { catalogueHref } from "@/utils/share-links";
+import { SellingGuideLink } from "./selling-guide/selling-guide-card";
 
 interface ProviderProductsTabProps {
   products: ProviderDetailsProduct[];
@@ -248,6 +249,9 @@ const ProviderProductsTab = ({
         title="Your catalogue"
         subtitle="What customers can buy or book from you"
       />
+      <div className="-mt-2 px-1">
+        <SellingGuideLink section="items">How to make items that sell</SellingGuideLink>
+      </div>
 
       {canPreview && (
         <div className="grid grid-cols-2 gap-2 -mt-1">
