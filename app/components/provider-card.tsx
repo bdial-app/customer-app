@@ -17,6 +17,7 @@ import {
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
 import { TopBadge } from "@/app/components/badges/badge-chip";
+import { reportSponsored } from "@/services/search.service";
 
 export interface ProviderCardData {
   id: string;
@@ -31,6 +32,9 @@ export interface ProviderCardData {
   verified?: boolean;
   womenLed?: boolean;
   featured?: boolean;
+  /** Placed by a live boost (category pages); taps are reported against the listing. */
+  sponsored?: boolean;
+  sponsoredListingId?: string;
   distance?: number | null;
   approximateLocation?: boolean;
   city?: string | null;
@@ -66,8 +70,10 @@ const RatingPill = ({ rating, reviews }: { rating?: number | null; reviews?: num
 
 const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardProps) => {
   const router = useRouter();
+  const isAd = provider.sponsored || provider.featured;
 
   const handleNavigate = () => {
+    reportSponsored("click", provider.sponsoredListingId, "category_list");
     router.push(businessHref(provider));
   };
 
@@ -80,7 +86,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
         transition={{ delay: index * 0.025, duration: 0.2 }}
         onClick={handleNavigate}
         className={`cursor-pointer bg-white dark:bg-slate-900 rounded-2xl overflow-hidden active:scale-[0.98] transition-transform duration-150 flex ${
-          provider.featured
+          isAd
             ? "border border-amber-200 dark:border-amber-700/50 shadow-[0_2px_12px_rgba(245,158,11,0.08)]"
             : "border border-gray-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
         }`}
@@ -95,7 +101,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
             </div>
           )}
           {/* Sponsored ribbon */}
-          {provider.featured && (
+          {isAd && (
             <div className="absolute top-0 left-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-bold px-2 py-[2px] rounded-br-lg">
               AD
             </div>
@@ -161,7 +167,7 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
       transition={{ delay: index * 0.025, duration: 0.2 }}
       onClick={handleNavigate}
       className={`cursor-pointer bg-white dark:bg-slate-900 rounded-2xl overflow-hidden active:scale-[0.97] transition-transform duration-150 ${
-        provider.featured
+        isAd
           ? "border border-amber-200 dark:border-amber-700/50 shadow-[0_2px_12px_rgba(245,158,11,0.08)]"
           : "border border-gray-100 dark:border-slate-800 shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
       }`}
@@ -181,12 +187,12 @@ const ProviderCard = ({ provider, index = 0, variant = "grid" }: ProviderCardPro
 
         {/* Top-left: Sponsored or Verified badge */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {provider.featured && (
+          {isAd && (
             <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-bold px-2 py-[2px] rounded-md shadow-sm">
               Sponsored
             </div>
           )}
-          {provider.verified && !provider.featured && (
+          {provider.verified && !isAd && (
             <div className="bg-white/95 backdrop-blur-sm text-emerald-600 text-[8px] font-bold px-1.5 py-[2px] rounded-md flex items-center gap-0.5 shadow-sm">
               <IonIcon icon={shieldCheckmarkOutline} className="w-2.5 h-2.5" />
             </div>

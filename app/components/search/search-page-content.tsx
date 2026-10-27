@@ -20,7 +20,7 @@ import { addRecentSearch, setCategoryIds, resetFilters, setSortBy, setMinRating,
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { ROUTE_PATH } from "@/utils/contants";
-import type { SearchSuggestion, SearchSortBy } from "@/services/search.service";
+import { reportSponsored, type SearchSuggestion, type SearchSortBy } from "@/services/search.service";
 
 import SearchZeroState from "./search-zero-state";
 import SuggestionList from "./suggestion-list";
@@ -126,6 +126,8 @@ const SearchPageContent = () => {
 
   const handleSuggestionTap = useCallback(
     (suggestion: SearchSuggestion) => {
+      // Sponsors pay for taps on their search placements
+      reportSponsored("click", suggestion.sponsoredListingId, "suggestion");
       if (suggestion.type === "provider") {
         // Navigate directly to the business page
         router.push(`${ROUTE_PATH.PROVIDER_DETAILS}?id=${suggestion.id}`);
@@ -309,6 +311,7 @@ const SearchPageContent = () => {
                 query={debouncedQuery}
                 isLoading={isSuggestionsFetching}
                 onSelect={handleSuggestionTap}
+                onSeeAll={() => handleSubmit()}
               />
             </motion.div>
           )}

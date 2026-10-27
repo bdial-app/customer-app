@@ -27,6 +27,9 @@ export interface NearbyProvider extends ProviderData {
   reviewCount: number;
   services: string | null;
   isWomenLed?: boolean;
+  /** Set on category pages when a live boost places this business first. */
+  isSponsored?: boolean;
+  sponsoredListingId?: string;
   roadDistance?: string;
   roadDistanceMeters?: number;
 }

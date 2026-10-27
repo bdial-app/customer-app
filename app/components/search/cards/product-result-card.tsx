@@ -9,7 +9,7 @@ const IonIcon = dynamic(
   { ssr: false }
 );
 import { locationOutline, navigateOutline, storefrontOutline } from "ionicons/icons";
-import type { ProductSearchResult } from "@/services/search.service";
+import { reportSponsored, type ProductSearchResult } from "@/services/search.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { productHref } from "@/utils/share-links";
 
@@ -26,9 +26,10 @@ const ProductResultCard = ({ product, index }: Props) => {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
-      onClick={() =>
-        router.push(productHref(product))
-      }
+      onClick={() => {
+        reportSponsored("click", product.sponsoredListingId, "search_result");
+        router.push(productHref(product));
+      }}
       className="cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.97] transition-transform duration-150"
     >
       {/* Image */}
@@ -67,6 +68,14 @@ const ProductResultCard = ({ product, index }: Props) => {
           <div className="absolute bottom-2 left-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-gray-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
             <IonIcon icon={navigateOutline} className="w-3 h-3 text-amber-500" />
             {distanceLabel(product)}
+          </div>
+        )}
+
+        {product.isSponsored && (
+          <div className="absolute bottom-2 right-2">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-amber-600 dark:text-amber-400 text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg shadow-sm flex items-center gap-0.5">
+              <span className="text-[8px]">⚡</span> Sponsored
+            </div>
           </div>
         )}
       </div>

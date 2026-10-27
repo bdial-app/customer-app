@@ -15,7 +15,7 @@ import {
   navigateOutline,
   ribbonOutline,
 } from "ionicons/icons";
-import type { ProviderSearchResult } from "@/services/search.service";
+import { reportSponsored, type ProviderSearchResult } from "@/services/search.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
 import { TopBadge } from "@/app/components/badges/badge-chip";
@@ -36,9 +36,10 @@ const ProviderResultCard = ({ provider, index }: Props) => {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
-      onClick={() =>
-        router.push(businessHref(provider))
-      }
+      onClick={() => {
+        reportSponsored("click", provider.sponsoredListingId, "search_result");
+        router.push(businessHref(provider));
+      }}
       className="cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.97] transition-transform duration-150"
     >
       {/* Image */}
@@ -88,8 +89,12 @@ const ProviderResultCard = ({ provider, index }: Props) => {
             </div>
           )}
 
-          {/* Featured */}
-          {provider.isFeatured && (
+          {/* Sponsored (takes the Featured spot) */}
+          {provider.isSponsored ? (
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-amber-600 dark:text-amber-400 text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg shadow-sm flex items-center gap-0.5">
+              <span className="text-[8px]">⚡</span> Sponsored
+            </div>
+          ) : provider.isFeatured && (
             <div className="bg-amber-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-sm">
               Featured
             </div>

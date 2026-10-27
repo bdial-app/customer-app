@@ -226,11 +226,14 @@ const AllServicesContent = ({ isSheet = false }: { isSheet?: boolean }) => {
         distance: p.distance,
         womenLed: p.isWomenLed || false,
         featured: p.isFeatured || false,
+        sponsored: p.isSponsored || false,
+        sponsoredListingId: p.sponsoredListingId,
         badges: p.badges ?? [],
       })),
     );
-    // Sponsored/featured providers float to top
-    return mapped.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    // Sponsored (already first from the server), then featured, float to top
+    const rank = (p: (typeof mapped)[number]) => (p.sponsored ? 2 : p.featured ? 1 : 0);
+    return mapped.sort((a, b) => rank(b) - rank(a));
   }, [data]);
 
   const activeFilterCount =

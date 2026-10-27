@@ -1,7 +1,7 @@
 "use client";
 
 import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(
@@ -15,7 +15,7 @@ import {
   arrowForward,
   searchOutline,
 } from "ionicons/icons";
-import type { SearchSuggestion } from "@/services/search.service";
+import { reportSponsored, type SearchSuggestion } from "@/services/search.service";
 import CategoryIcon from "@/app/components/ui/category-icon";
 
 interface Props {
@@ -23,6 +23,8 @@ interface Props {
   query: string;
   isLoading: boolean;
   onSelect: (suggestion: SearchSuggestion) => void;
+  /** Runs the full search for the typed query. */
+  onSeeAll?: () => void;
 }
 
 const TYPE_CONFIG = {
@@ -128,22 +130,26 @@ const SuggestionThumbnail = ({
   );
 };
 
-const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
+const SuggestionList = ({ suggestions, query, isLoading, onSelect, onSeeAll }: Props) => {
+  // The server already ranks: matching sponsors first, then by relevance, and
+  // orders the sections by what the query is about — keep both as sent.
   const grouped = {
-    provider: suggestions
-      .filter((s) => s.type === "provider")
-      .sort((a, b) => {
-        const aScore = (a.isSponsored ? 2 : 0) + (a.hasActiveOffer ? 1 : 0);
-        const bScore = (b.isSponsored ? 2 : 0) + (b.hasActiveOffer ? 1 : 0);
-        return bScore - aScore;
-      }),
+    provider: suggestions.filter((s) => s.type === "provider"),
     product: suggestions.filter((s) => s.type === "product"),
     category: suggestions.filter((s) => s.type === "category"),
   };
 
-  const sections = (
-    ["provider", "product", "category"] as const
-  ).filter((t) => grouped[t].length > 0);
+  const sections = [...new Set(suggestions.map((s) => s.type))];
+
+  // Record each sponsored row once per visit to the search screen
+  const seenSponsored = useRef(new Set<string>());
+  useEffect(() => {
+    suggestions.forEach((s, i) => {
+      if (!s.sponsoredListingId || seenSponsored.current.has(s.sponsoredListingId)) return;
+      seenSponsored.current.add(s.sponsoredListingId);
+      reportSponsored("impression", s.sponsoredListingId, `suggestion_${i + 1}`);
+    });
+  }, [suggestions]);
 
   if (isLoading && suggestions.length === 0) {
     return (
@@ -271,6 +277,21 @@ const SuggestionList = ({ suggestions, query, isLoading, onSelect }: Props) => {
           </div>
         );
       })}
+
+      {onSeeAll && query.trim() && (
+        <button
+          onClick={onSeeAll}
+          className="w-full flex items-center gap-3 px-4 py-3 mt-1 border-t border-gray-100 dark:border-slate-800 active:bg-gray-50 dark:active:bg-slate-800 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <IonIcon icon={searchOutline} className="w-5 h-5 text-amber-500" />
+          </div>
+          <p className="flex-1 min-w-0 text-left text-[14px] font-semibold text-amber-600 dark:text-amber-400 truncate">
+            See all results for &ldquo;{query.trim()}&rdquo;
+          </p>
+          <IonIcon icon={arrowForward} className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+        </button>
+      )}
     </div>
   );
 };

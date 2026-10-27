@@ -279,7 +279,10 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
         <div className="px-4 pt-2.5 pb-0.5">
           <p className="text-[11px] text-gray-400 dark:text-slate-500 font-medium">
             {totalResults.toLocaleString()} result{totalResults !== 1 ? "s" : ""} for &ldquo;
-            {query}&rdquo;
+            {results.meta.correctedQuery ?? query}&rdquo;
+            {results.meta.correctedQuery && (
+              <span className="text-gray-300 dark:text-slate-600"> · you searched &ldquo;{query}&rdquo;</span>
+            )}
             {tookMs > 0 && (
               <span className="text-gray-300 dark:text-slate-600"> · {tookMs}ms</span>
             )}

@@ -58,7 +58,7 @@ export const useSearchSuggestions = (
   return useQuery({
     queryKey: ["search-suggestions", debouncedQuery, lat, lng],
     queryFn: () =>
-      getSuggestions({ q: debouncedQuery, lat, lng }),
+      getSuggestions({ q: debouncedQuery, lat, lng, limit: 10 }),
     enabled: debouncedQuery.length >= 1,
     staleTime: 60_000,
     placeholderData: (prev) => prev,

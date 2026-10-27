@@ -1,4 +1,5 @@
 import apiClient from "@/utils/axios";
+import { trackAdEvent } from "@/services/explore.service";
 
 // ─── URLs ──────────────────────────────────────────────────────
 
@@ -46,6 +47,8 @@ export interface SearchSuggestion {
   icon?: string;
   iconColor?: string;
   isSponsored?: boolean;
+  /** Present on sponsored rows — taps are reported against it. */
+  sponsoredListingId?: string;
   hasActiveOffer?: boolean;
   productType?: "product" | "service";
 }
@@ -90,6 +93,8 @@ export interface ProductSearchResult {
   providerArea: string | null;
   distance: number | null;
   relevanceScore: number;
+  isSponsored?: boolean;
+  sponsoredListingId?: string;
 }
 
 export interface CategorySearchResult {
@@ -120,7 +125,8 @@ export interface SearchResponse {
   providers: { data: ProviderSearchResult[]; total: number };
   products: { data: ProductSearchResult[]; total: number };
   categories: { data: CategorySearchResult[]; total: number };
-  meta: { query: string; tookMs: number; totalResults: number; didYouMean?: string };
+  /** `correctedQuery` is set when the server fixed a misspelling. */
+  meta: { query: string; tookMs: number; totalResults: number; didYouMean?: string; correctedQuery?: string };
   fallback?: SearchFallback;
 }
 
@@ -147,6 +153,19 @@ export async function searchAll(params: SearchParams): Promise<SearchResponse> {
     },
   });
   return res.data;
+}
+
+/**
+ * Report a sponsored placement seen or tapped in search. Search placements
+ * are charged per tap; views are recorded for the sponsor's stats only.
+ */
+export function reportSponsored(
+  eventType: "impression" | "click",
+  sponsoredListingId: string | undefined,
+  position?: string
+): void {
+  if (!sponsoredListingId) return;
+  trackAdEvent({ eventType, entityType: "sponsored_listing", entityId: sponsoredListingId, position }).catch(() => {});
 }
 
 export async function getSuggestions(
