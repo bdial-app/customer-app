@@ -21,6 +21,7 @@ import {
   locationOutline,
   navigateOutline,
   flagOutline,
+  shieldCheckmark,
 } from "ionicons/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -213,6 +214,8 @@ export default function ProductDetailsPage() {
     scrolled ? "bg-gray-100 dark:bg-slate-800" : "bg-black/30 backdrop-blur-md"
   }`;
   const iconColor = scrolled ? "text-gray-800 dark:text-white" : "text-white";
+  // A boosted business's items wear the same Premium Partner look as its page.
+  const isSponsored = !!provider?.isSponsored;
 
   return (
     <Page className="!bg-gray-50/80 dark:!bg-slate-900">
@@ -224,7 +227,19 @@ export default function ProductDetailsPage() {
           scrolled ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-[0_1px_0_rgba(0,0,0,0.06)]" : ""
         }`}
       >
-        <div className="flex items-center gap-2 px-4 pt-[calc(var(--sat,0px)+12px)] pb-3">
+        {isSponsored && (
+          <div
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500/95 via-amber-400/95 to-yellow-400/95 backdrop-blur-sm"
+            style={{ paddingTop: "calc(var(--sat,0px) + 6px)", paddingBottom: "6px" }}
+          >
+            <IonIcon icon={shieldCheckmark} className="w-4 h-4 text-white" />
+            <span className="text-[11px] font-bold text-white tracking-wide uppercase">
+              {isService ? "Featured Service" : "Featured Product"}
+            </span>
+            <span className="text-[9px] text-white/80 font-medium">• Premium Partner</span>
+          </div>
+        )}
+        <div className={`flex items-center gap-2 px-4 pb-3 ${isSponsored ? "pt-3" : "pt-[calc(var(--sat,0px)+12px)]"}`}>
           <button
             onClick={() => goBack("/")}
             aria-label="Back"
@@ -297,7 +312,7 @@ export default function ProductDetailsPage() {
           </div>
 
           {provider?.communityVerified && (
-            <span className="absolute top-[calc(var(--sat,0px)+56px)] left-4 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white">
+            <span className={`absolute left-4 ${isSponsored ? "top-[calc(var(--sat,0px)+88px)]" : "top-[calc(var(--sat,0px)+56px)]"} text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-white`}>
               Community Verified
             </span>
           )}
@@ -354,13 +369,19 @@ export default function ProductDetailsPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {product.name}
           </h1>
+          {isSponsored && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 text-xs font-bold mb-2 mr-1 shadow-sm shadow-amber-200/60 dark:shadow-none">
+              ⭐ Premium
+            </span>
+          )}
           {product.isHero && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-200/60 dark:border-violet-800/40 text-violet-600 dark:text-violet-400 text-xs font-bold mb-2">
-              ✦ Featured Product
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-200/60 dark:border-violet-800/40 text-violet-600 dark:text-violet-400 text-xs font-bold mb-2 mr-1">
+              {/* "Featured" already names the boost on these pages */}
+              {isSponsored ? "✦ Seller's pick" : `✦ Featured ${isService ? "Service" : "Product"}`}
             </span>
           )}
           {product.productType === "service" && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-indigo-50 to-cyan-50 dark:from-indigo-900/20 dark:to-cyan-900/20 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2 ml-1">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-indigo-50 to-cyan-50 dark:from-indigo-900/20 dark:to-cyan-900/20 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2">
               🛠️ Service
             </span>
           )}
@@ -429,8 +450,14 @@ export default function ProductDetailsPage() {
         {provider && (
           <Link data-tour="product-seller"
             href={businessHref(provider)}
-            className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
+            className={`block relative overflow-hidden rounded-2xl active:scale-[0.99] transition-transform ${
+              isSponsored
+                ? "border border-amber-200/70 dark:border-amber-800/40 bg-gradient-to-br from-amber-50 via-white to-yellow-50 dark:from-amber-950/30 dark:via-slate-800 dark:to-yellow-950/20 shadow-[0_2px_12px_rgba(245,158,11,0.1)]"
+                : "bg-white dark:bg-slate-800 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none"
+            }`}
           >
+            {isSponsored && <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-400/10 rounded-full blur-xl pointer-events-none" />}
+            <div className="relative flex items-center gap-3 p-3">
             <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden flex-shrink-0">
               {provider.profilePhotoUrl ? (
                 <img
@@ -454,6 +481,11 @@ export default function ProductDetailsPage() {
                     className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
                   />
                 )}
+                {isSponsored && (
+                  <span className="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 shadow-sm">
+                    ⭐ Premium Partner
+                  </span>
+                )}
               </div>
               {(provider.area || provider.city) && (
                 <p className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
@@ -466,6 +498,20 @@ export default function ProductDetailsPage() {
               icon={chevronForward}
               className="w-4 h-4 text-gray-400 flex-shrink-0"
             />
+            </div>
+            {/* The business page's trust card, in brief */}
+            {isSponsored && (
+              <div className="relative flex items-center gap-2 px-3 py-2 border-t border-amber-100/80 dark:border-amber-900/40">
+                <span className="flex items-center gap-1 whitespace-nowrap text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                  <IonIcon icon={shieldCheckmark} className="w-3.5 h-3.5" />
+                  Premium Verified
+                </span>
+                <span className="ml-auto flex items-center gap-2 whitespace-nowrap text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="flex items-center gap-0.5"><IonIcon icon={checkmarkCircle} className="w-3 h-3" />ID Verified</span>
+                  <span className="flex items-center gap-0.5"><IonIcon icon={checkmarkCircle} className="w-3 h-3" />Quality Assured</span>
+                </span>
+              </div>
+            )}
           </Link>
         )}
 
@@ -601,7 +647,9 @@ export default function ProductDetailsPage() {
               });
             }}
             disabled={isCreatingChat}
-            className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-amber-500 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 dark:shadow-none active:scale-[0.98] transition-transform disabled:opacity-70"
+            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-white shadow-sm shadow-amber-200 dark:shadow-none active:scale-[0.98] transition-transform disabled:opacity-70 ${
+              isSponsored ? "bg-gradient-to-r from-amber-500 to-amber-400" : "bg-amber-500"
+            }`}
           >
             <IonIcon icon={chatbubbleOutline} className="w-[18px] h-[18px]" />
             {isCreatingChat ? "Opening Chat..." : isService ? "Enquire About Service" : "Send Enquiry"}

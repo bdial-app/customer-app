@@ -43,6 +43,8 @@ export interface ProductProviderSummary {
   contactNumber: string;
   isWomenLed: boolean;
   communityVerified: boolean;
+  /** Has a live boost — the item page wears the Premium Partner look. */
+  isSponsored?: boolean;
   photos: Array<{ id: string; imageUrl: string; displayOrder: number }>;
   categories: Array<{ id: string; name: string; slug: string }>;
 }
