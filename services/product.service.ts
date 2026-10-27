@@ -58,10 +58,25 @@ export interface ProductReview {
   reviewer?: { id: string; name: string } | null;
 }
 
+export interface ProductOffer {
+  id: string;
+  providerId: string;
+  title: string;
+  description: string | null;
+  discountType: "percentage" | "flat";
+  discountValue: number;
+  minOrderAmount: number | null;
+  maxDiscount: number | null;
+  startsAt: string;
+  endsAt: string;
+}
+
 export interface ProductDetailsResponse {
   product: ProductDetail;
   provider: ProductProviderSummary | null;
   related: ProductDetail[];
+  /** The business's live offers; missing from older API builds. */
+  activeOffers?: ProductOffer[];
   stats: {
     rating: number;
     reviewCount: number;

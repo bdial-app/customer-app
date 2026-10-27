@@ -301,6 +301,8 @@ export interface ProviderDetailsOffer {
   description: string | null;
   discountType: string;
   discountValue: number;
+  minOrderAmount?: number | string | null;
+  maxDiscount?: number | string | null;
   startsAt: string;
   endsAt: string;
   isActive: boolean;

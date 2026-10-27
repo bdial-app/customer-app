@@ -17,6 +17,8 @@ export interface EnquiryTarget {
   photoUrl?: string | null;
   price?: number | null;
   currency?: string;
+  /** Overrides the default first message, e.g. to claim an offer. */
+  message?: string;
 }
 
 /**
@@ -42,7 +44,7 @@ export const useProductEnquiry = () => {
             providerId: target.providerId,
             contextType: "product",
             contextId: target.productId,
-            initialMessage: `Hi! I'm interested in ${target.productName || noun}. Could you share more details?`,
+            initialMessage: target.message ?? `Hi! I'm interested in ${target.productName || noun}. Could you share more details?`,
             initialMessageMetadata: {
               productId: target.productId,
               productName: target.productName,

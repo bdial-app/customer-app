@@ -156,8 +156,9 @@ export async function searchAll(params: SearchParams): Promise<SearchResponse> {
 }
 
 /**
- * Report a sponsored placement seen or tapped in search. Search placements
- * are charged per tap; views are recorded for the sponsor's stats only.
+ * Report a sponsored placement seen or tapped in search or the storefront.
+ * These placements are charged per tap; views are recorded for the sponsor's
+ * stats only.
  */
 export function reportSponsored(
   eventType: "impression" | "click",

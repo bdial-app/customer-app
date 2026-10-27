@@ -2,7 +2,8 @@
 import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
 import { Page } from "konsta/react";
 import { BottomSheet } from "../components/bottom-sheet";
-import { Sheet } from "@/app/components/ui/sheet";
+import { OffersSection, OfferSheet, claimMessage, type OfferLike } from "@/app/components/offers/offer-ui";
+import { trackAdEvent } from "@/services/explore.service";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { PROVIDER_TAB_EVENT } from "@/utils/tour-nav";
 import Link from "next/link";
@@ -28,7 +29,6 @@ import {
   createOutline,
   eyeOutline,
   navigateOutline,
-  pricetag,
   peopleOutline,
   flagOutline,
   lockClosedOutline,
@@ -280,10 +280,7 @@ export default function ProviderDetailsPage() {
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
-  const [selectedDeal, setSelectedDeal] = useState<typeof activeOffers[number] | null>(null);
-  // The deal stays on screen while its sheet slides away.
-  const [shownDeal, setShownDeal] = useState(selectedDeal);
-  if (selectedDeal && selectedDeal !== shownDeal) setShownDeal(selectedDeal);
+  const [selectedDeal, setSelectedDeal] = useState<OfferLike | null>(null);
 
   // Reset local UI state when navigating to a different provider. State is
   // reset during render so the new provider never paints with the old one's
@@ -378,6 +375,42 @@ export default function ProviderDetailsPage() {
   const activeOffers = data?.activeOffers ?? [];
   const isSponsored = data?.isSponsored ?? false;
   const sponsorEndsAt = data?.sponsorEndsAt ?? null;
+
+  const openDeal = (offer: OfferLike) => {
+    setSelectedDeal(offer);
+    if (!isOwnProvider) {
+      trackAdEvent({ eventType: "click", entityType: "provider_offer", entityId: offer.id, position: "business_page" }).catch(() => {});
+    }
+  };
+
+  // Claiming opens a chat that already names the offer, so the customer doesn't have to.
+  const claimDeal = (offer: OfferLike) => {
+    requireAuth(() => {
+      if (!provider?.id) return;
+      const currentUser = store.getState().auth.user;
+      if (currentUser && currentUser.id === provider.userId) return;
+      trackChat();
+      createConversation(
+        {
+          providerId: provider.id,
+          contextType: "provider",
+          contextId: provider.id,
+          initialMessage: claimMessage(offer),
+        },
+        {
+          onSuccess: (conv) => {
+            setSelectedDeal(null);
+            dispatch(openChat(conv.id));
+            router.push("/");
+          },
+          onError: (err) => {
+            const msg = apiErrorMessage(err) || err?.message || "Could not start conversation";
+            alert(Array.isArray(msg) ? msg.join(", ") : msg);
+          },
+        },
+      );
+    });
+  };
 
   // Check if current user already reviewed this provider
   const hasAlreadyReviewed = useMemo(() => {
@@ -1032,91 +1065,16 @@ export default function ProviderDetailsPage() {
               />
             </div>
 
-            {/* Active Offers */}
-            {activeOffers.length > 0 && (
-              <div data-tour="biz-page-offers" className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-100/80 dark:border-amber-800/40">
-                <div className="flex items-center gap-2 mb-3">
-                  <IonIcon icon={pricetag} className="w-4 h-4 text-amber-600" />
-                  <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">
-                    Active Deals
-                  </h3>
-                </div>
-                <div className="space-y-2.5">
-                  {activeOffers.map((offer) => (
-                    <button
-                      key={offer.id}
-                      type="button"
-                      onClick={() => setSelectedDeal(offer)}
-                      className="w-full flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-none text-left active:scale-[0.98] transition-transform"
-                    >
-                      {offer.discountValue && (
-                        <div className="w-11 h-11 rounded-xl bg-red-500 flex items-center justify-center shrink-0">
-                          <span className="text-white text-xs font-bold">
-                            {offer.discountType === "percentage"
-                              ? `${Number(offer.discountValue)}%`
-                              : `₹${Number(offer.discountValue)}`}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
-                          {offer.title}
-                        </p>
-                        <p className="text-[11px] text-gray-500 dark:text-slate-400 line-clamp-1">
-                          {offer.description}
-                        </p>
-                      </div>
-                      <IonIcon icon={chevronForwardOutline} className="text-gray-400 dark:text-slate-500 text-sm shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Deal Detail Bottom Sheet */}
-            <Sheet open={!!selectedDeal} onClose={() => setSelectedDeal(null)} label="Offer" zIndex={9999} maxHeight="80dvh" className="bg-white dark:bg-slate-800">
-              {shownDeal && (
-                    <div className="px-5 pb-6 pt-1 sm:pt-6">
-                      {/* Discount badge */}
-                      {shownDeal.discountValue && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 mb-3">
-                          <IonIcon icon={pricetag} className="text-red-500 text-sm" />
-                          <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                            {shownDeal.discountType === "percentage"
-                              ? `${Number(shownDeal.discountValue)}% OFF`
-                              : `₹${Number(shownDeal.discountValue)} OFF`}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Title */}
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                        {shownDeal.title}
-                      </h3>
-
-                      {/* Description */}
-                      {shownDeal.description && (
-                        <p className="text-[13px] text-gray-600 dark:text-slate-300 leading-relaxed mb-4 whitespace-pre-line">
-                          {shownDeal.description}
-                        </p>
-                      )}
-
-                      {/* Validity */}
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 px-3 py-2.5 rounded-xl">
-                        <IonIcon icon={time} className="text-amber-500 text-sm" />
-                        <span>
-                          Valid until{" "}
-                          {new Date(shownDeal.endsAt).toLocaleDateString(undefined, {
-                            weekday: "short",
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    </div>
-              )}
-            </Sheet>
+            {/* Offers running now */}
+            <OffersSection offers={activeOffers} brandName={provider.brandName} onOpen={openDeal} />
+            <OfferSheet
+              offer={selectedDeal}
+              brandName={provider.brandName}
+              onClose={() => setSelectedDeal(null)}
+              onClaim={claimDeal}
+              claiming={isCreatingChat}
+              canClaim={!isOwnProvider}
+            />
 
             {/* About */}
             <div data-tour="biz-page-about" className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100/80 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">

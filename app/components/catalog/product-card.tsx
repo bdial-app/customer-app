@@ -3,9 +3,10 @@ import { memo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
-import { heart, heartOutline, star, checkmarkCircle, navigateOutline, locationOutline, flame } from "ionicons/icons";
+import { heart, heartOutline, star, checkmarkCircle, navigateOutline, locationOutline, flame, diamondOutline } from "ionicons/icons";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { CatalogItem } from "@/services/catalog.service";
+import { reportSponsored } from "@/services/search.service";
 import { formatPrice, itemDistance, productHref } from "./catalog-utils";
 
 interface ProductCardProps {
@@ -30,11 +31,17 @@ const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const price = formatPrice(item.price, item.currency);
   const distance = itemDistance(item);
+  const sponsored = !!item.sponsoredListingId;
 
   return (
     <Link
       href={productHref(item)}
-      className={`group block bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none active:scale-[0.97] transition-transform ${
+      onClick={() => reportSponsored("click", item.sponsoredListingId, "catalog_shelf")}
+      className={`group block bg-white dark:bg-slate-800 rounded-2xl overflow-hidden active:scale-[0.97] transition-transform ${
+        sponsored
+          ? "border-2 border-amber-200/70 dark:border-amber-700/40 shadow-[0_2px_12px_rgba(245,158,11,0.10)] dark:shadow-none"
+          : "border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none"
+      } ${
         variant === "rail" ? "shrink-0 w-[152px]" : "w-full"
       }`}
     >
@@ -58,7 +65,9 @@ const ProductCard = memo(function ProductCard({
         )}
 
         {/* Top-left: one badge, the most useful one */}
-        {showTrending && item.views > 0 ? (
+        {sponsored ? (
+          <SponsoredChip />
+        ) : showTrending && item.views > 0 ? (
           <span className="absolute top-2 left-2 flex items-center gap-0.5 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
             <IonIcon icon={flame} className="text-[10px]" />
             Trending
@@ -119,6 +128,14 @@ const ProductCard = memo(function ProductCard({
 });
 
 export default ProductCard;
+
+/** The "Ad" mark a boosted item carries, matching the Businesses carousel. */
+export const SponsoredChip = () => (
+  <span className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
+    <IonIcon icon={diamondOutline} className="w-2.5 h-2.5" />
+    Ad
+  </span>
+);
 
 export const ProductCardSkeleton = ({ variant = "grid" }: { variant?: "rail" | "grid" }) => (
   <div

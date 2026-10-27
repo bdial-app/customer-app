@@ -1,5 +1,5 @@
 "use client";
-import { memo, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -20,10 +20,12 @@ import {
   shieldCheckmarkOutline,
   starOutline,
   storefrontOutline,
+  megaphoneOutline,
 } from "ionicons/icons";
 import { ROUTE_PATH } from "@/utils/contants";
 import CategoryIcon from "@/app/components/ui/category-icon";
-import type { CatalogShelf, CatalogType, CatalogCategoryChip } from "@/services/catalog.service";
+import type { CatalogShelf, CatalogType, CatalogCategoryChip, CatalogItem } from "@/services/catalog.service";
+import { reportSponsored } from "@/services/search.service";
 import { useCatalogLocation, useCatalogShelves } from "@/hooks/useCatalog";
 import ProductCard, { ProductCardSkeleton } from "./product-card";
 import { ServiceRailCard, ServiceRailSkeleton } from "./service-card";
@@ -31,6 +33,7 @@ import CatalogResults, { useCatalogCardActions } from "./catalog-results";
 import { catalogHref, typeNoun, type CatalogFilters } from "./catalog-utils";
 
 const SHELF_STYLE: Record<string, { icon: string; color: string }> = {
+  sponsored: { icon: megaphoneOutline, color: "text-amber-500" },
   for_you: { icon: sparkles, color: "text-violet-500" },
   trending: { icon: flame, color: "text-rose-500" },
   near_you: { icon: navigate, color: "text-sky-500" },
@@ -39,6 +42,34 @@ const SHELF_STYLE: Record<string, { icon: string; color: string }> = {
   top_rated: { icon: star, color: "text-amber-500" },
   new_sellers: { icon: rocket, color: "text-indigo-500" },
 };
+
+const NO_ITEMS: CatalogItem[] = [];
+
+/** Report each boosted card once per visit, when half of it is on screen. */
+function useSponsoredViews(items: CatalogItem[]) {
+  const ref = useRef<HTMLDivElement>(null);
+  const seen = useRef(new Set<string>());
+
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || items.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.trackId;
+          if (!entry.isIntersecting || !id || seen.current.has(id)) continue;
+          seen.current.add(id);
+          reportSponsored("impression", id, "catalog_shelf");
+        }
+      },
+      { threshold: 0.5 },
+    );
+    root.querySelectorAll("[data-track-id]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [items]);
+
+  return ref;
+}
 
 /* ── One horizontal shelf ── */
 function Shelf({
@@ -55,11 +86,37 @@ function Shelf({
 }) {
   const style = SHELF_STYLE[shelf.key] ?? { icon: sparkles, color: "text-amber-500" };
   const isForYou = shelf.key === "for_you";
+  const isSponsored = shelf.key === "sponsored";
+  const viewsRef = useSponsoredViews(isSponsored ? shelf.items : NO_ITEMS);
+
+  const card = (item: CatalogItem, i: number) =>
+    type === "service" ? (
+      <ServiceRailCard
+        key={item.id}
+        item={item}
+        priority={i < 2}
+        isSaved={actions.isSaved(item.id)}
+        onToggleSave={actions.toggle}
+        onEnquire={actions.enquire}
+        enquiring={actions.isEnquiring(item)}
+        isOwn={actions.isOwn(item)}
+      />
+    ) : (
+      <ProductCard
+        key={item.id}
+        item={item}
+        variant="rail"
+        priority={i < 3}
+        showTrending={shelf.key === "trending"}
+        isSaved={actions.isSaved(item.id)}
+        onToggleSave={actions.toggle}
+      />
+    );
 
   return (
     <section
       data-tour={first ? "store-first-shelf" : `store-shelf-${shelf.key}`}
-      className={`mt-6 ${isForYou ? "mx-4 rounded-3xl bg-gradient-to-br from-violet-50 via-fuchsia-50/60 to-amber-50 dark:from-violet-950/40 dark:via-slate-900 dark:to-slate-900 border border-violet-100/80 dark:border-violet-900/40 py-3.5" : ""}`}
+      className={`${isSponsored ? "mt-5" : "mt-6"} ${isForYou ? "mx-4 rounded-3xl bg-gradient-to-br from-violet-50 via-fuchsia-50/60 to-amber-50 dark:from-violet-950/40 dark:via-slate-900 dark:to-slate-900 border border-violet-100/80 dark:border-violet-900/40 py-3.5" : ""}`}
       style={isForYou ? undefined : { contentVisibility: "auto", containIntrinsicSize: "auto 280px" }}
     >
       <div className={`flex items-end justify-between gap-3 mb-2.5 ${isForYou ? "px-3.5" : "px-4"}`}>
@@ -79,31 +136,22 @@ function Shelf({
           </Link>
         )}
       </div>
-      <div className={`flex gap-3 overflow-x-auto no-scrollbar pb-1 ${isForYou ? "px-3.5" : "px-4"}`}>
-        {shelf.items.map((item, i) =>
-          type === "service" ? (
-            <ServiceRailCard
-              key={item.id}
-              item={item}
-              priority={i < 2}
-              isSaved={actions.isSaved(item.id)}
-              onToggleSave={actions.toggle}
-              onEnquire={actions.enquire}
-              enquiring={actions.isEnquiring(item)}
-              isOwn={actions.isOwn(item)}
-            />
-          ) : (
-            <ProductCard
-              key={item.id}
-              item={item}
-              variant="rail"
-              priority={i < 3}
-              showTrending={shelf.key === "trending"}
-              isSaved={actions.isSaved(item.id)}
-              onToggleSave={actions.toggle}
-            />
-          ),
+      <div className="relative">
+        {/* Scroll hint, as on the Businesses carousel */}
+        {isSponsored && shelf.items.length > 1 && (
+          <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
         )}
+        <div ref={viewsRef} className={`flex gap-3 overflow-x-auto no-scrollbar pb-1 ${isForYou ? "px-3.5" : "px-4"}`}>
+          {shelf.items.map((item, i) =>
+            isSponsored ? (
+              <div key={item.id} data-track-id={item.sponsoredListingId} className="shrink-0 flex">
+                {card(item, i)}
+              </div>
+            ) : (
+              card(item, i)
+            ),
+          )}
+        </div>
       </div>
     </section>
   );
@@ -206,6 +254,9 @@ const CatalogStorefront = memo(function CatalogStorefront({ type }: { type: Cata
   const scopeArea: CatalogFilters["area"] = data?.scope === "all" || !data ? "all" : "city";
   const gridFilters: CatalogFilters = filters ?? { sort: "recommended", area: scopeArea };
 
+  const sponsoredShelf = data?.shelves.find((s) => s.key === "sponsored");
+  const shelves = data?.shelves.filter((s) => s.key !== "sponsored") ?? [];
+
   const where =
     data?.scope === "nearby" ? "near you" : data?.scope === "city" && location.city ? `in ${location.city}` : "on Tijarah";
 
@@ -241,8 +292,10 @@ const CatalogStorefront = memo(function CatalogStorefront({ type }: { type: Cata
       ) : (
         <>
           {!isError && <IntroCard type={type} total={data?.totalItems ?? 0} where={where} />}
+          {/* Boosted items lead the storefront, as sponsored businesses do on the Businesses tab */}
+          {sponsoredShelf && <Shelf shelf={sponsoredShelf} type={type} actions={actions} />}
           {data && <CategoryTiles categories={data.categories} type={type} />}
-          {data?.shelves.map((shelf, i) => (
+          {shelves.map((shelf, i) => (
             <Shelf key={shelf.key} shelf={shelf} type={type} actions={actions} first={i === 0} />
           ))}
 

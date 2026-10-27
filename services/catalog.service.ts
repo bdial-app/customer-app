@@ -34,6 +34,8 @@ export interface CatalogItem {
   views: number;
   distance: number | null;
   approximateLocation: boolean;
+  /** Set when a live boost placed it; taps are charged against this listing. */
+  sponsoredListingId?: string;
 }
 
 /** Filters a shelf's "See all" opens the full listing with. */

@@ -15,6 +15,8 @@ import {
 } from "ionicons/icons";
 import OptimizedImage from "@/app/components/ui/optimized-image";
 import type { CatalogItem } from "@/services/catalog.service";
+import { reportSponsored } from "@/services/search.service";
+import { SponsoredChip } from "./product-card";
 import { formatPrice, itemDistance, itemLocation, productHref } from "./catalog-utils";
 
 interface ServiceCardProps {
@@ -139,15 +141,22 @@ export const ServiceListCard = memo(function ServiceListCard(props: ServiceCardP
 export const ServiceRailCard = memo(function ServiceRailCard(props: ServiceCardProps) {
   const { item, priority, isOwn } = props;
   const distance = itemDistance(item);
+  const sponsored = !!item.sponsoredListingId;
 
   return (
     <Link
       href={productHref(item)}
-      className="shrink-0 w-[232px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none active:scale-[0.98] transition-transform"
+      onClick={() => reportSponsored("click", item.sponsoredListingId, "catalog_shelf")}
+      className={`shrink-0 w-[232px] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden active:scale-[0.98] transition-transform ${
+        sponsored
+          ? "border-2 border-amber-200/70 dark:border-amber-700/40 shadow-[0_2px_12px_rgba(245,158,11,0.10)] dark:shadow-none"
+          : "border border-slate-100 dark:border-slate-700/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:shadow-none"
+      }`}
     >
       <div className="relative h-[124px] bg-slate-100 dark:bg-slate-700">
         <ServicePhoto item={item} size={232} priority={priority} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
+        {sponsored && <SponsoredChip />}
         <SaveButton {...props} className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-slate-900/70 backdrop-blur-sm shadow-sm" />
         {distance && (
           <span className="absolute bottom-2 left-2 flex items-center gap-0.5 bg-white/90 dark:bg-slate-900/75 backdrop-blur-sm text-slate-700 dark:text-slate-200 text-[9px] font-semibold px-1.5 py-0.5 rounded-full">

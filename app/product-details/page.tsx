@@ -42,6 +42,8 @@ import type { ProductDetail, ProductProviderSummary } from "@/services/product.s
 import { MoreFromSeller, SimilarItems } from "../components/catalog/product-related-sections";
 import { catalogHref } from "../components/catalog/catalog-utils";
 import { businessHref, productPath } from "@/utils/share-links";
+import { OfferBanner, OfferSheet, claimMessage, type OfferLike } from "../components/offers/offer-ui";
+import { trackAdEvent } from "@/services/explore.service";
 
 // Fields the product API returns that the shared service types don't declare.
 type ProviderWithCoords = ProductProviderSummary & {
@@ -117,6 +119,8 @@ export default function ProductDetailsPage() {
   const isOwnProduct = Boolean(user && provider && user.id === provider.userId);
   const stats = data?.stats;
   const related = data?.related ?? [];
+  const activeOffers = data?.activeOffers ?? [];
+  const [openOffer, setOpenOffer] = useState<OfferLike | null>(null);
 
   // ─── Analytics Tracking ─────────────────────────────────────────
   const source = (searchParams.get("src") as ViewSource | null) || "direct";
@@ -410,6 +414,19 @@ export default function ProductDetailsPage() {
         </div>
 
         {provider && (
+          <OfferBanner
+            offers={activeOffers}
+            brandName={provider.brandName}
+            onOpen={(o) => {
+              setOpenOffer(o);
+              if (!isOwnProduct) {
+                trackAdEvent({ eventType: "click", entityType: "provider_offer", entityId: o.id, position: "product_page" }).catch(() => {});
+              }
+            }}
+          />
+        )}
+
+        {provider && (
           <Link data-tour="product-seller"
             href={businessHref(provider)}
             className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100/80 dark:border-slate-700 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.99] transition-transform"
@@ -592,6 +609,29 @@ export default function ProductDetailsPage() {
           </div>
         )}
       </div>
+
+      {provider && product && (
+        <OfferSheet
+          offer={openOffer}
+          brandName={provider.brandName}
+          onClose={() => setOpenOffer(null)}
+          claiming={isCreatingChat}
+          canClaim={!isOwnProduct}
+          onClaim={(o) =>
+            enquire({
+              providerId: provider.id,
+              providerUserId: provider.userId,
+              productId: product.id,
+              productName: product.name,
+              productType: isService ? "service" : "product",
+              photoUrl: product.photoUrl,
+              price: product.price,
+              currency: product.currency,
+              message: claimMessage(o, product.name),
+            })
+          }
+        />
+      )}
 
       {/* Report Sheet */}
       </div>{/* end scroll wrapper */}
