@@ -61,9 +61,10 @@ export const useCreateAccount = (initialMobile?: string) => {
 
   const requestLocation = useCallback(async () => {
     try {
+      // A customer's area only needs a quick fix; GPS sharpens it in the background.
       const pos = await requestLocationOrPrompt("Completing registration", {
-        enableHighAccuracy: true,
         timeout: 10000,
+        onRefine: (fix) => setLocation({ lat: fix.latitude, lng: fix.longitude }),
       });
       setLocation({ lat: pos.latitude, lng: pos.longitude });
       notify({

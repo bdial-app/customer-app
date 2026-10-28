@@ -218,6 +218,11 @@ const AddAddressView = ({ onBack }: { onBack: () => void }) => {
   const { isLoaded, loadError } = useGoogleMapsLoader();
 
   const [marker, setMarker] = useState(defaultCenter);
+  // Read by the GPS refine, which must not move a pin the customer placed.
+  const markerRef = useRef(marker);
+  useEffect(() => {
+    markerRef.current = marker;
+  }, [marker]);
   const [address, setAddress] = useState("");
   const [locationLabel, setLocationLabel] = useState("");
   const [fullLocation, setFullLocation] =
@@ -306,17 +311,31 @@ const AddAddressView = ({ onBack }: { onBack: () => void }) => {
 
   const handleLocateMe = useCallback(async () => {
     try {
+      const placePin = (lat: number, lng: number) => {
+        const pos = { lat, lng };
+        setMarker(pos);
+        getAddress(lat, lng);
+        if (mapRef.current) {
+          mapRef.current.panTo(pos);
+          mapRef.current.setZoom(16);
+        }
+      };
+      let quickPin: { lat: number; lng: number } | null = null;
       const { latitude, longitude } = await requestLocationOrPrompt(
         "Finding your location",
-        { timeout: 10000, maximumAge: 60000 },
+        {
+          timeout: 10000,
+          // The quick fix lands the pin at once; GPS moves it if it was off,
+          // unless the customer has already moved the pin themselves.
+          onRefine: (fix) => {
+            if (quickPin && markerRef.current?.lat === quickPin.lat && markerRef.current?.lng === quickPin.lng) {
+              placePin(fix.latitude, fix.longitude);
+            }
+          },
+        },
       );
-      const newPos = { lat: latitude, lng: longitude };
-      setMarker(newPos);
-      getAddress(latitude, longitude);
-      if (mapRef.current) {
-        mapRef.current.panTo(newPos);
-        mapRef.current.setZoom(16);
-      }
+      quickPin = { lat: latitude, lng: longitude };
+      placePin(latitude, longitude);
     } catch (error) {
       console.error("Geolocation error:", error);
     }

@@ -41,7 +41,9 @@ import {
   storefrontOutline,
 } from "ionicons/icons";
 import { useRouter } from "next/navigation";
-import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, LOCATION_UNAVAILABLE, openAppSettings } from "@/utils/geolocation";
+import { getCurrentPosition, warmUpLocation, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, LOCATION_UNAVAILABLE, openAppSettings } from "@/utils/geolocation";
+import { store } from "@/store";
+import { isActiveCoords } from "@/utils/active-coords";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
@@ -56,6 +58,10 @@ const GeoLocation = () => {
   // The full-screen map picker closes on back like a pushed screen.
   useBackDismiss(showMap, () => setShowMap(false), { kind: "screen" });
   const [mapMarker, setMapMarker] = useState(DEFAULT_MAP_CENTER);
+  const mapMarkerRef = useRef(mapMarker);
+  useEffect(() => {
+    mapMarkerRef.current = mapMarker;
+  }, [mapMarker]);
   const [mapAddress, setMapAddress] = useState("");
   const [isMapReverseLoading, setIsMapReverseLoading] = useState(false);
   const [mapSearchQuery, setMapSearchQuery] = useState("");
@@ -174,20 +180,43 @@ const GeoLocation = () => {
     });
   };
 
+  // Get a quick fix going as soon as the sheet opens, so the tap answers at once.
+  useEffect(() => {
+    if (open) warmUpLocation();
+  }, [open]);
+
+  /** Save coordinates for the signed-in user or the guest, and re-resolve the city. */
+  const saveCurrentCoords = useCallback((latitude: number, longitude: number) => {
+    // Clear city immediately so serviceability re-evaluates with new coords
+    dispatch(setSelectedCity(null));
+    const current = store.getState().auth.user;
+    if (current) {
+      dispatch(setProfile({ ...current, latitude, longitude }));
+      updateUserMutation.mutate({ latitude, longitude });
+    } else {
+      dispatch(setGuestCoords({ lat: latitude, lng: longitude }));
+    }
+    reverseGeocodeApi({ lat: latitude, lng: longitude }).then((geo) => {
+      dispatch(setSelectedCity(geo.city || null));
+    }).catch(() => {});
+  }, [dispatch, updateUserMutation]);
+
   const handleUseCurrentLocation = async () => {
     setLocationDenied(false);
     setLocationError(null);
     setIsLocating(true);
     try {
-      const { latitude, longitude } = await getCurrentPosition({ timeout: 15000 });
-      // Clear city immediately so serviceability re-evaluates with new coords
-      dispatch(setSelectedCity(null));
-      if (user) {
-        dispatch(setProfile({ ...user, latitude, longitude }));
-        updateUserMutation.mutate({ latitude, longitude });
-      } else {
-        dispatch(setGuestCoords({ lat: latitude, lng: longitude }));
-      }
+      let quick: { lat: number; lng: number } | null = null;
+      const { latitude, longitude } = await getCurrentPosition({
+        timeout: 15000,
+        // GPS landed away from the quick fix: quietly move there, unless the
+        // customer has picked another place meanwhile.
+        onRefine: (fix) => {
+          if (quick && isActiveCoords(quick.lat, quick.lng)) saveCurrentCoords(fix.latitude, fix.longitude);
+        },
+      });
+      quick = { lat: latitude, lng: longitude };
+      saveCurrentCoords(latitude, longitude);
       if (addressData) {
         dispatch(
           addRecentLocation({
@@ -200,10 +229,6 @@ const GeoLocation = () => {
           }),
         );
       }
-      // Resolve city name asynchronously
-      reverseGeocodeApi({ lat: latitude, lng: longitude }).then((geo) => {
-        dispatch(setSelectedCity(geo.city || null));
-      }).catch(() => {});
       setOpen(false);
     } catch (err: unknown) {
       const code =
@@ -256,8 +281,7 @@ const GeoLocation = () => {
   }, []);
 
   const handleMapLocateMe = useCallback(async () => {
-    try {
-      const { latitude: lat, longitude: lng } = await getCurrentPosition({ timeout: 10000 });
+    const placePin = async (lat: number, lng: number) => {
       const newPos = { lat, lng };
       setMapMarker(newPos);
       setMapSearchQuery("");
@@ -275,6 +299,19 @@ const GeoLocation = () => {
       } finally {
         setIsMapReverseLoading(false);
       }
+    };
+    try {
+      let quick: { lat: number; lng: number } | null = null;
+      const { latitude: lat, longitude: lng } = await getCurrentPosition({
+        timeout: 10000,
+        // GPS moves the pin if the quick fix was off — unless it was moved by hand.
+        onRefine: (fix) => {
+          const cur = mapMarkerRef.current;
+          if (quick && cur.lat === quick.lat && cur.lng === quick.lng) placePin(fix.latitude, fix.longitude);
+        },
+      });
+      quick = { lat, lng };
+      await placePin(lat, lng);
     } catch {
       // silently ignore
     }

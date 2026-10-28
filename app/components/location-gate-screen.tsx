@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 const IonIcon = dynamic(() => import("@ionic/react").then((m) => m.IonIcon), { ssr: false });
@@ -13,7 +13,9 @@ import { setGuestCoords, setSelectedCity, addRecentLocation } from "@/store/slic
 import { setProfile } from "@/store/slices/authSlice";
 import { useUpdateUser } from "@/hooks/useUser";
 import { useSearchGeocode } from "@/hooks/useGeocode";
-import { getCurrentPosition, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, openAppSettings } from "@/utils/geolocation";
+import { getCurrentPosition, warmUpLocation, LOCATION_PERMISSION_DENIED, LOCATION_SERVICES_DISABLED, LOCATION_TIMEOUT, openAppSettings } from "@/utils/geolocation";
+import { isActiveCoords } from "@/utils/active-coords";
+import { store } from "@/store";
 import { reverseGeocode as reverseGeocodeApi, SearchGeocodeResult } from "@/services/geocode.service";
 import { useAppSelector } from "@/hooks/useAppStore";
 
@@ -71,12 +73,33 @@ export default function LocationGateScreen({ onLocationSet }: LocationGateScreen
     [user, dispatch, updateUserMutation, onLocationSet],
   );
 
+  // When permission was granted before, get a quick fix going right away.
+  useEffect(() => {
+    warmUpLocation();
+  }, []);
+
   const handleUseCurrentLocation = async () => {
     setIsLocating(true);
     setLocationDenied(false);
     setLocationError(null);
     try {
-      const { latitude, longitude } = await getCurrentPosition({ timeout: 15000 });
+      let quick: { lat: number; lng: number } | null = null;
+      const { latitude, longitude } = await getCurrentPosition({
+        timeout: 15000,
+        // GPS landed away from the quick fix: move there quietly, unless
+        // another place has been picked since.
+        onRefine: ({ latitude: lat, longitude: lng }) => {
+          if (!quick || !isActiveCoords(quick.lat, quick.lng)) return;
+          const current = store.getState().auth.user;
+          if (current) {
+            dispatch(setProfile({ ...current, latitude: lat, longitude: lng }));
+            updateUserMutation.mutate({ latitude: lat, longitude: lng });
+          } else {
+            dispatch(setGuestCoords({ lat, lng }));
+          }
+        },
+      });
+      quick = { lat: latitude, lng: longitude };
       await applyLocation(latitude, longitude);
     } catch (caught: unknown) {
       // Geolocation failures carry a string `code` (see utils/geolocation).
