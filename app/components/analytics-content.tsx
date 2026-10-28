@@ -40,6 +40,7 @@ import {
   chevronDownOutline,
   bagHandleOutline,
   flame,
+  checkmark,
 } from "ionicons/icons";
 import {
   AreaChart,
@@ -75,6 +76,15 @@ import { useQuery } from "@tanstack/react-query";
 import { getCurrentSubscription } from "@/services/payment.service";
 import type { StatWithTrend, LeadFilters, LeadItem } from "@/services/analytics.service";
 import { LeadCard } from "@/app/components/leads/lead-card";
+import {
+  LeadWalletCard,
+  LeadPackSheet,
+  LeadWalletHistory,
+  BulkUnlockBar,
+  UnlockedContactsSheet,
+  apiMessage,
+} from "@/app/components/leads/lead-wallet";
+import { useLeadWallet, useWalletUnlock } from "@/hooks/useLeadWallet";
 import { LeadsExplainer } from "@/app/components/leads/leads-explainer";
 import {
   LEAD_TIERS,
@@ -498,12 +508,74 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
       ? monetizationConfig.leadPricing[`${tier}Discounted` as keyof typeof monetizationConfig.leadPricing]
       : monetizationConfig.leadPricing[tier];
   };
+  // ─── Lead Wallet: top up once, get contacts in one tap or many at once ───
+  const leadsPaid = !!monetizationConfig?.flags.leadsMonetizationEnabled;
+  const { data: wallet } = useLeadWallet(leadsPaid);
+  const walletOn = leadsPaid && !!wallet?.enabled;
+  const walletUnlock = useWalletUnlock();
+  const [packSheet, setPackSheet] = useState<{ suggested?: string | null; need?: number } | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [contactsIds, setContactsIds] = useState<string[] | null>(null);
+  const [walletError, setWalletError] = useState("");
+
+  const freeNow = (info = leadUnlockInfo) =>
+    !leadsPaid || !info || info.isProSubscriber || info.subscriptionCreditsRemaining > 0 || info.freeRemaining > 0;
+  const walletCovers = (tier: LeadTier) => walletOn && (wallet?.balance ?? 0) >= leadPrice(tier);
+
   const unlockLabel = (tier: LeadTier) => {
     const info = leadUnlockInfo;
     if (!monetizationConfig?.flags.leadsMonetizationEnabled || !info) return "Get contact";
     if (info.isProSubscriber || info.subscriptionCreditsRemaining > 0 || info.freeRemaining > 0) return "Get contact free";
+    if (walletCovers(tier)) return `Get contact · ₹${leadPrice(tier)} · wallet`;
     return `Get contact · ₹${leadPrice(tier)}`;
   };
+
+  /** Unlock from the wallet straight away when it covers the price; otherwise the usual sheet. */
+  const handleUnlock = (lead: LeadItem) => {
+    if (!freeNow() && walletCovers(lead.tier as LeadTier)) {
+      setWalletError("");
+      walletUnlock.mutate([lead.id], {
+        onSuccess: (r) => r.unlocked.length && setContactsIds(r.unlocked),
+        onError: (e) => setWalletError(apiMessage(e) || "Couldn't get that contact. Please try again."),
+      });
+      return;
+    }
+    setUnlockSheetLead(lead);
+  };
+
+  const toggleSelected = (id: string) =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Set());
+  };
+
+  const walletSheets = (
+    <>
+      {wallet && packSheet && (
+        <LeadPackSheet
+          open
+          onClose={() => setPackSheet(null)}
+          wallet={wallet}
+          suggested={packSheet.suggested}
+          need={packSheet.need}
+        />
+      )}
+      {wallet && <LeadWalletHistory open={historyOpen} onClose={() => setHistoryOpen(false)} wallet={wallet} />}
+      <UnlockedContactsSheet
+        open={!!contactsIds}
+        onClose={() => setContactsIds(null)}
+        leads={(leadsData?.data ?? []).filter((l) => contactsIds?.includes(l.id) && l.isUnlocked)}
+      />
+    </>
+  );
 
   const renderUnlockSheet = () => {
     if (!unlockSheetLead) return null;
@@ -621,10 +693,11 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
         <LeadDetailView
           leadId={selectedLeadId}
           unlockLabel={unlockLabel}
-          unlockDisabled={unlockMutation.isPending}
-          onUnlock={(lead) => setUnlockSheetLead(lead)}
+          unlockDisabled={unlockMutation.isPending || walletUnlock.isPending}
+          onUnlock={handleUnlock}
         />
         {renderUnlockSheet()}
+        {walletSheets}
       </div>
     );
   }
@@ -1349,6 +1422,11 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
 
           <LeadsExplainer forceOpen={showLeadsHelp} onClose={() => setShowLeadsHelp(false)} />
 
+          {walletOn && wallet && (
+            <LeadWalletCard wallet={wallet} onTopUp={() => setPackSheet({})} onHistory={() => setHistoryOpen(true)} />
+          )}
+          {walletError && <p className="text-[12px] text-rose-500 text-center">{walletError}</p>}
+
           {/* Ready-to-buy CTA */}
           {leadsData && leadsData.data.filter((l) => l.tier === "hot").length > 0 && !leadTier && !showFilters && (() => {
             const ready = leadsData.data.filter((l) => l.tier === "hot").length;
@@ -1721,16 +1799,61 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
             </div>
           ) : (
             <div data-tour="leads-list" className="space-y-3">
-              {leadsData.data.map((lead) => (
-                <LeadCard
-                  key={lead.id}
-                  lead={lead}
-                  unlockLabel={unlockLabel(lead.tier)}
-                  unlockDisabled={unlockMutation.isPending}
-                  onOpen={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
-                  onUnlock={() => setUnlockSheetLead(lead)}
-                />
-              ))}
+              {/* Pick several leads and get them all in one go (Lead Wallet) */}
+              {walletOn && (() => {
+                const lockable = leadsData.data.filter((l) => !l.isUnlocked && !l.isAnonymous);
+                if (lockable.length < 2 && !selecting) return null;
+                const hot = lockable.filter((l) => l.tier === "hot");
+                const pickAll = (ids: string[]) => { setSelecting(true); setSelected(new Set(ids)); };
+                return (
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    {!selecting ? (
+                      <button type="button" onClick={() => setSelecting(true)} className="shrink-0 h-9 px-3.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold">
+                        Select leads
+                      </button>
+                    ) : (
+                      <span className="shrink-0 text-[12px] font-bold text-slate-700 dark:text-slate-200 pr-1">Pick:</span>
+                    )}
+                    {hot.length > 0 && (
+                      <button type="button" onClick={() => pickAll(hot.map((l) => l.id))} className="shrink-0 h-9 px-3.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 text-[12px] font-bold">
+                        {`🔥 All hot (${hot.length})`}
+                      </button>
+                    )}
+                    <button type="button" onClick={() => pickAll(lockable.map((l) => l.id))} className="shrink-0 h-9 px-3.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[12px] font-bold">
+                      {`All on this page (${lockable.length})`}
+                    </button>
+                  </div>
+                );
+              })()}
+              {leadsData.data.map((lead) => {
+                const pickable = selecting && !lead.isUnlocked && !lead.isAnonymous;
+                const on = selected.has(lead.id);
+                return (
+                  <div key={lead.id} className="relative">
+                    <LeadCard
+                      lead={lead}
+                      unlockLabel={unlockLabel(lead.tier)}
+                      unlockDisabled={unlockMutation.isPending || walletUnlock.isPending}
+                      onOpen={() => { setSelectedLeadId(lead.id); setView("lead-detail"); }}
+                      onUnlock={() => handleUnlock(lead)}
+                    />
+                    {pickable && (
+                      <button
+                        type="button"
+                        aria-pressed={on}
+                        aria-label={on ? "Unselect lead" : "Select lead"}
+                        onClick={() => toggleSelected(lead.id)}
+                        className={`absolute inset-0 rounded-2xl transition-colors ${on ? "ring-2 ring-amber-500 bg-amber-500/10" : "bg-white/0"}`}
+                      >
+                        <span className={`absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center ring-2 ${on ? "bg-amber-500 ring-amber-500" : "bg-white/90 dark:bg-slate-800/90 ring-slate-300"}`}>
+                          {on && <IonIcon icon={checkmark} className="text-white text-[14px]" />}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              {selecting && <div className="h-20" aria-hidden />}
             </div>
           )}
 
@@ -1760,6 +1883,24 @@ const AnalyticsContent = ({ onNavigateToBoost, initialView, onViewConsumed }: An
       )}
 
       {renderUnlockSheet()}
+      {walletSheets}
+      {selecting && selected.size > 0 && (
+        <BulkUnlockBar
+          ids={[...selected]}
+          busy={walletUnlock.isPending}
+          onCancel={stopSelecting}
+          onTopUp={(suggested, need) => setPackSheet({ suggested, need })}
+          onUnlock={() =>
+            walletUnlock.mutate([...selected], {
+              onSuccess: (r) => {
+                stopSelecting();
+                if (r.unlocked.length) setContactsIds(r.unlocked);
+              },
+              onError: (e) => setWalletError(apiMessage(e) || "Couldn't get those contacts. Please try again."),
+            })
+          }
+        />
+      )}
     </div>
   );
 };
