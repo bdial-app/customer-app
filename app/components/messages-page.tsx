@@ -39,7 +39,8 @@ import {
   useBlockConversation,
 } from "@/hooks/useChat";
 import { useQuery } from "@tanstack/react-query";
-import { useAppSelector } from "@/hooks/useAppStore";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppStore";
+import { openChat } from "@/store/slices/chatSlice";
 import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 import ReportSheet from "./report-sheet";
@@ -140,6 +141,7 @@ export default function MessagesPage({
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -184,17 +186,22 @@ export default function MessagesPage({
     mins == null ? null : mins < 15 ? "replies in minutes" : mins < 60 ? "replies within an hour" : mins < 240 ? "replies in a few hours" : mins < 1440 ? "replies within a day" : null;
   const trust = isCustomerView ? convDetail?.business ?? null : null;
 
-  /** Cards open what they show; the chat closes so the page is visible. */
+  /**
+   * Cards open what they show straight away (closing the chat first flashed
+   * the chat list). The chat is marked to reopen, so Back returns to it.
+   */
+  const leaveTo = (href: string) => {
+    if (conversationId) dispatch(openChat(conversationId));
+    router.push(href);
+  };
   const openProduct = (m: ChatMessageMetadata) => {
     if (!m.productId) return;
-    onBack();
-    router.push(productHref({ id: m.productId, slug: m.productSlug, providerSlug: m.providerSlug, providerId: otherProviderId }));
+    leaveTo(productHref({ id: m.productId, slug: m.productSlug, providerSlug: m.providerSlug, providerId: otherProviderId }));
   };
   const openDeal = (m: ChatMessageMetadata) => {
     const id = m.providerId || otherProviderId;
     if (!id) return;
-    onBack();
-    router.push(businessHref({ id }));
+    leaveTo(businessHref({ id }));
   };
 
   /** Share a catalogue item or a live deal as a card (business side). */
@@ -546,8 +553,7 @@ export default function MessagesPage({
               if (convDetail?.myRole === "provider" && convDetail.otherParticipant.role !== "provider") {
                 setProfileOpen(true);
               } else if (otherProviderId) {
-                onBack();
-                router.push(businessHref({ id: otherProviderId }));
+                leaveTo(businessHref({ id: otherProviderId }));
               }
             }}
             aria-label={`View ${displayName}`}
@@ -575,8 +581,13 @@ export default function MessagesPage({
                 {convDetail && !trust && <span className="text-slate-400 dark:text-slate-500">{" · "}{convDetail.myRole === "provider" ? "View profile" : "View business"}</span>}
               </p>
               {/* Why a customer can trust this business: rating, verified, how fast it answers */}
-              {trust && (trust.reviewCount > 0 || trust.verified || replyLabel(trust.replyMinutes)) && (
+              {trust && (trust.reviewCount > 0 || trust.verified || trust.premium || replyLabel(trust.replyMinutes)) && (
                 <p className="flex items-center gap-1 text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                  {trust.premium && (
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-px rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900">
+                      ⭐ Premium Partner
+                    </span>
+                  )}
                   {trust.reviewCount > 0 && (
                     <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-bold">
                       <IonIcon icon={star} className="text-[10px]" />

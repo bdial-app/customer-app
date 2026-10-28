@@ -102,6 +102,10 @@ const ProviderResultCard = ({ provider, index }: Props) => {
             <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg shadow-sm flex items-center gap-0.5">
               <span className="text-[8px]">⚡</span> Sponsored
             </div>
+          ) : provider.premium ? (
+            <div className="bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 text-[9px] font-bold px-2 py-1 rounded-lg shadow-sm">
+              ⭐ Premium
+            </div>
           ) : provider.isFeatured && (
             <div className="bg-amber-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-sm">
               Featured

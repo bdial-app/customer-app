@@ -73,6 +73,8 @@ export interface ProviderSearchResult {
   relevanceScore: number;
   isSponsored?: boolean;
   sponsoredListingId?: string;
+  /** Runs a live boost — shown as a Premium partner. */
+  premium?: boolean;
   hasActiveOffer?: boolean;
   offerId?: string;
   offerTitle?: string;
@@ -97,6 +99,8 @@ export interface ProductSearchResult {
   relevanceScore: number;
   isSponsored?: boolean;
   sponsoredListingId?: string;
+  /** Its business runs a live boost. */
+  premium?: boolean;
   /** The business behind it has a live offer. */
   hasActiveOffer?: boolean;
   offerId?: string;

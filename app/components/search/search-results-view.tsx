@@ -362,7 +362,6 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
 
 /** In "All", drop anything far weaker than the best match; the tabs still list everything. */
 const RELATIVE_FLOOR = 0.6;
-const SECTION_SIZE = 4;
 
 /** Report each card once per visit when half of it is on screen. */
 function useViewReports(deps: unknown[]) {
@@ -451,10 +450,10 @@ const DealCard = ({ p, index }: { p: ProviderSearchResult; index: number }) => {
 };
 
 type MatchKey = "services" | "products" | "providers";
-const MATCH_META: Record<MatchKey, { title: string; icon: string; tab: SearchEntityType }> = {
-  services: { title: "Services", icon: "🛠️", tab: "services" },
-  products: { title: "Products", icon: "📦", tab: "products" },
-  providers: { title: "Businesses", icon: "🏪", tab: "providers" },
+const MATCH_META: Record<MatchKey, { title: string; single: string; icon: string; tab: SearchEntityType }> = {
+  services: { title: "Services", single: "service", icon: "🛠️", tab: "services" },
+  products: { title: "Products", single: "product", icon: "📦", tab: "products" },
+  providers: { title: "Businesses", single: "business", icon: "🏪", tab: "providers" },
 };
 
 const AllResultsView = ({ results, query, onCategoryTap }: { results: SearchResponse; query: string; onCategoryTap?: (name: string, id: string) => void }) => {
@@ -489,17 +488,24 @@ const AllResultsView = ({ results, query, onCategoryTap }: { results: SearchResp
       products: items.filter((p) => p.productType !== "service").length,
       providers: results.providers?.total ?? providers.length,
     };
+    // Already on screen in the Sponsored, Deals or Top rated rows.
+    const elsewhere = {
+      services: items.filter((p) => p.isSponsored && p.productType === "service").length,
+      products: items.filter((p) => p.isSponsored && p.productType !== "service").length,
+      providers: sponsoredBiz.length + (results.deals?.length ?? 0) + (results.topRated?.length ?? 0),
+    };
     const top = Math.max(0, ...[...organic, ...providers].map((x) => x.relevanceScore ?? 0));
     const floor = top * RELATIVE_FLOOR;
     return (Object.keys(lists) as MatchKey[])
       .map((key) => {
         const all = lists[key] as (ProductSearchResult | ProviderSearchResult)[];
         const strong = all.filter((x) => (x.relevanceScore ?? 0) >= floor);
-        return { key, count: counts[key], strong, best: strong[0]?.relevanceScore ?? 0 };
+        const more = Math.max(0, counts[key] - elsewhere[key] - strong.length);
+        return { key, count: counts[key], more, strong, best: strong[0]?.relevanceScore ?? 0 };
       })
       .filter((m) => m.strong.length > 0)
       .sort((a, b) => b.best - a.best);
-  }, [items, providers, results]);
+  }, [items, providers, results, sponsoredBiz]);
 
   const viewsRef = useViewReports([sponsored, deals]);
 
@@ -573,10 +579,10 @@ const AllResultsView = ({ results, query, onCategoryTap }: { results: SearchResp
               icon={meta.icon}
               count={m.count}
               badge={idx === 0 && matches.length > 1 ? "Best match" : undefined}
-              onSeeAll={() => dispatch(setActiveTab(meta.tab))}
             />
+            {/* Every match is listed right here — no "See all" detour */}
             <div className="grid grid-cols-2 gap-3">
-              {m.strong.slice(0, SECTION_SIZE).map((x, i) =>
+              {m.strong.map((x, i) =>
                 m.key === "providers" ? (
                   <ProviderResultCard key={x.id} provider={x as ProviderSearchResult} index={i} />
                 ) : (
@@ -584,6 +590,16 @@ const AllResultsView = ({ results, query, onCategoryTap }: { results: SearchResp
                 ),
               )}
             </div>
+            {/* Only when more exist than this page holds (or loosely related ones were left out) */}
+            {m.more > 0 && (
+              <button
+                type="button"
+                onClick={() => dispatch(setActiveTab(meta.tab))}
+                className="mt-3 w-full h-10 rounded-xl text-[12.5px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-900/20 active:scale-[0.99] transition-transform"
+              >
+                {`Show ${m.more} more ${m.more === 1 ? meta.single : meta.title.toLowerCase()}`}
+              </button>
+            )}
           </section>
         );
       })}
@@ -613,13 +629,11 @@ const SectionHeader = ({
   icon,
   count,
   badge,
-  onSeeAll,
 }: {
   title: string;
   icon: string;
   count: number;
   badge?: string;
-  onSeeAll: () => void;
 }) => (
   <div className="flex items-center justify-between mb-3">
     <h3 className="flex items-center gap-1.5 text-[15px] font-extrabold text-gray-900 dark:text-white">
@@ -632,14 +646,6 @@ const SectionHeader = ({
         </span>
       )}
     </h3>
-    {count > SECTION_SIZE && (
-      <button
-        onClick={onSeeAll}
-        className="text-[12px] font-bold text-amber-500 active:opacity-60 px-2 py-1 rounded-lg active:bg-amber-50 dark:active:bg-amber-900/20 transition-colors"
-      >
-        See all →
-      </button>
-    )}
   </div>
 );
 

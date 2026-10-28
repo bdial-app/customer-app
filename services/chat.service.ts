@@ -33,7 +33,7 @@ export interface ConversationDetail extends ConversationListItem {
   /** No push notifications for this chat (newer APIs). */
   isMuted?: boolean;
   /** Trust line a customer sees about the business (newer APIs). */
-  business?: { verified: boolean; rating: number; reviewCount: number; replyMinutes: number | null } | null;
+  business?: { verified: boolean; premium?: boolean; rating: number; reviewCount: number; replyMinutes: number | null } | null;
 }
 
 /** Free-form message metadata; known keys are used by image and enquiry messages. */
