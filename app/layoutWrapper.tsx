@@ -53,6 +53,7 @@ import { useStatusBar } from "@/hooks/useStatusBar";
 import { onReconnect } from "@/hooks/useNetworkStatus";
 import { useAppSelector } from "@/hooks/useAppStore";
 import { isAxiosError } from "axios";
+import { QueryRecovery } from "@/app/components/query-recovery";
 
 // Initialize Sentry as early as possible
 initSentry();
@@ -488,6 +489,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
               <PushNotificationBridge />
               <DeepLinkBridge />
               <ReconnectRefresher />
+              <QueryRecovery />
               <PwaHistoryGuard />
               <BackNavigation />
               <WelcomeTour />

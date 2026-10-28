@@ -188,6 +188,13 @@ const UserHome = memo(({ isServiceable = true, selectedCity }: { isServiceable?:
                 Banner has negative margin so it sits behind them on initial render. */}
             <GeoLocation />
 
+            {/* Online but the feed failed: say so and offer a retry (it also retries on its own) */}
+            {isError && !feed && (
+              <div className="mt-2 mb-1">
+                <OfflineFallback compact message="Couldn't load businesses near you. Trying again…" onRetry={handleRefresh} />
+              </div>
+            )}
+
             {/* Sticky search bar — when stuck, its blur extends UP into the safe
                 area so the dynamic-island / status-bar zone reads as one continuous
                 frosted bar with the categories sticky below. The negative margin-top
