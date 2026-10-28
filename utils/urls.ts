@@ -206,6 +206,8 @@ export const PAYMENT_URLS = {
   SPONSORSHIP_CHECKOUT: '/payments/sponsorship/checkout',
   LEAD_UNLOCK_CHECKOUT: '/payments/lead-unlock/checkout',
   LEAD_UNLOCK_INFO: '/payments/lead-unlock/info',
+  LEAD_BULK_QUOTE: '/payments/lead-bulk/quote',
+  LEAD_BULK_CHECKOUT: '/payments/lead-bulk/checkout',
   DEAL_CREATION_CHECKOUT: '/payments/deal-creation/checkout',
   DEAL_CREATION_INFO: '/payments/deal-creation/info',
   SUBSCRIPTION_CHECKOUT: '/payments/subscriptions/checkout',
