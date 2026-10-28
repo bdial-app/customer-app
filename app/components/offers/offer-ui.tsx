@@ -28,8 +28,10 @@ const DAY = 24 * 60 * 60 * 1000;
 const inr = (v: number | string) => `₹${Number(v).toLocaleString("en-IN")}`;
 
 /** "10%" or "₹200" — the number on the ticket. */
-export const offerValue = (o: OfferLike) =>
-  o.discountType === "percentage" ? `${Number(o.discountValue)}%` : inr(o.discountValue);
+export const discountValueLabel = (type: string | undefined, value: number | string) =>
+  type === "percentage" ? `${Number(value)}%` : inr(value);
+
+export const offerValue = (o: OfferLike) => discountValueLabel(o.discountType, o.discountValue);
 
 /** "10% OFF" / "₹200 OFF". */
 export const offerHeadline = (o: OfferLike) => `${offerValue(o)} OFF`;

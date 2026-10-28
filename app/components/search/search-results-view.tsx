@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, Fragment } from "react";
+import { useMemo, Fragment, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -14,6 +14,10 @@ import {
   checkmark,
   searchOutline,
   sadOutline,
+  pricetag,
+  star,
+  locationOutline,
+  navigateOutline,
 } from "ionicons/icons";
 import { useState, useCallback } from "react";
 import { useSearchResults } from "@/hooks/useSearch";
@@ -28,9 +32,16 @@ import type {
   SearchEntityType,
   SearchSortBy,
   ProviderSearchResult,
+  ProductSearchResult,
   SearchResponse,
   SearchFallback,
 } from "@/services/search.service";
+import { reportSponsored } from "@/services/search.service";
+import { trackAdEvent } from "@/services/explore.service";
+import { fallbackToOriginal, sizedImageUrl } from "@/utils/image-optimization";
+import { distanceLabel, isApproximate } from "@/utils/distance-label";
+import { businessHref } from "@/utils/share-links";
+import { discountValueLabel } from "@/app/components/offers/offer-ui";
 
 import SearchFilterSheet from "./search-filter-sheet";
 import SearchFilterChips from "./search-filter-chips";
@@ -133,7 +144,6 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
   }, [data, activeTab]);
 
   const totalResults = results?.meta?.totalResults ?? 0;
-  const tookMs = results?.meta?.tookMs ?? 0;
 
   const activeFilterCount =
     filters.categoryIds.length +
@@ -156,7 +166,11 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
                 : tab.key === "providers"
                   ? results?.providers?.total ?? 0
                   : tab.key === "products" || tab.key === "services"
-                    ? results?.products?.total ?? 0
+                    ? activeTab === tab.key
+                      ? results?.products?.total ?? 0
+                      : activeTab === "all"
+                        ? (results?.products?.data ?? []).filter((p) => (p.productType === "service") === (tab.key === "services")).length
+                        : 0
                     : results?.categories?.total ?? 0;
 
             return (
@@ -277,14 +291,10 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
       {/* ── Meta ──────────────────────────────── */}
       {!isLoading && results && totalResults > 0 && (
         <div className="px-4 pt-2.5 pb-0.5">
-          <p className="text-[11px] text-gray-400 dark:text-slate-500 font-medium">
-            {totalResults.toLocaleString()} result{totalResults !== 1 ? "s" : ""} for &ldquo;
-            {results.meta.correctedQuery ?? query}&rdquo;
+          <p className="text-[11.5px] text-gray-500 dark:text-slate-400 font-medium">
+            {`${totalResults.toLocaleString()} result${totalResults !== 1 ? "s" : ""} for “${results.meta.correctedQuery ?? query}”`}
             {results.meta.correctedQuery && (
-              <span className="text-gray-300 dark:text-slate-600"> · you searched &ldquo;{query}&rdquo;</span>
-            )}
-            {tookMs > 0 && (
-              <span className="text-gray-300 dark:text-slate-600"> · {tookMs}ms</span>
+              <span className="text-gray-400 dark:text-slate-500">{` · you searched “${query}”`}</span>
             )}
           </p>
         </div>
@@ -297,7 +307,7 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
         ) : !results || totalResults === 0 ? (
           <EmptyResults query={query} fallback={results?.fallback} didYouMean={results?.meta?.didYouMean} onSearch={onCategoryTap ? (q: string) => onCategoryTap(q, '') : undefined} />
         ) : activeTab === "all" ? (
-          <AllResultsView results={results} onCategoryTap={onCategoryTap} />
+          <AllResultsView results={results} query={results.meta.correctedQuery ?? query} onCategoryTap={onCategoryTap} />
         ) : activeTab === "providers" ? (
           <InfiniteScroll
             hasMore={!!hasNextPage}
@@ -348,120 +358,250 @@ const SearchResultsView = ({ query, lat, lng, city, onCategoryTap }: Props) => {
   );
 };
 
-// ── "All" tab — prioritized sections: Sponsored → Deals → Top Rated → Regular ──
+// ── "All" tab: Sponsored → Deals → best matches (strongest section first) → Top rated ──
 
-const AllResultsView = ({ results, onCategoryTap }: { results: SearchResponse; onCategoryTap?: (name: string, id: string) => void }) => {
+/** In "All", drop anything far weaker than the best match; the tabs still list everything. */
+const RELATIVE_FLOOR = 0.6;
+const SECTION_SIZE = 4;
+
+/** Report each card once per visit when half of it is on screen. */
+function useViewReports(deps: unknown[]) {
+  const ref = useRef<HTMLDivElement>(null);
+  const seen = useRef(new Set<string>());
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const el = entry.target as HTMLElement;
+          const id = el.dataset.viewId;
+          const kind = el.dataset.viewKind;
+          if (!id || !kind || seen.current.has(id)) continue;
+          seen.current.add(id);
+          if (kind === "sponsored") reportSponsored("impression", id, "search_results");
+          else trackAdEvent({ eventType: "impression", entityType: "provider_offer", entityId: id, position: "search_deals" }).catch(() => {});
+        }
+      },
+      { threshold: 0.5 },
+    );
+    root.querySelectorAll("[data-view-id]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return ref;
+}
+
+const Rail = ({ children }: { children: React.ReactNode }) => (
+  <div className="relative">
+    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 items-stretch">{children}</div>
+  </div>
+);
+
+/** A business with a live deal: the offer leads, the business follows. */
+const DealCard = ({ p, index }: { p: ProviderSearchResult; index: number }) => {
+  const router = useRouter();
+  const image = p.profilePhotoUrl || p.bannerImageUrl || "";
+  return (
+    <motion.button
+      type="button"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index, 6) * 0.04 }}
+      onClick={() => {
+        if (p.offerId) trackAdEvent({ eventType: "click", entityType: "provider_offer", entityId: p.offerId, position: "search_deals" }).catch(() => {});
+        router.push(businessHref(p));
+      }}
+      className="w-[220px] h-full text-left flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-rose-100 dark:border-rose-900/40 shadow-[0_2px_10px_rgba(244,63,94,0.10)] dark:shadow-none active:scale-[0.97] transition-transform"
+    >
+      <div className="relative h-[104px] bg-gray-100 dark:bg-slate-700">
+        {image ? (
+          <img src={sizedImageUrl(image, 480)} alt={p.brandName} className="w-full h-full object-cover" loading="lazy" onError={fallbackToOriginal(image)} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-3xl opacity-20">🏪</div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+        <div className="absolute top-2 left-2 rounded-xl bg-gradient-to-br from-rose-500 via-red-500 to-orange-500 text-white px-2.5 py-1 shadow-md">
+          <span className="text-[15px] font-extrabold leading-none">{discountValueLabel(p.discountType, p.discountValue ?? 0)}</span>
+          <span className="ml-1 text-[9px] font-bold tracking-wider">OFF</span>
+        </div>
+        {distanceLabel(p) && (
+          <div className="absolute bottom-2 left-2 bg-white/95 dark:bg-slate-800/95 text-gray-700 dark:text-slate-300 text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1">
+            <IonIcon icon={isApproximate(p) ? locationOutline : navigateOutline} className="w-3 h-3 text-amber-500" />
+            {distanceLabel(p)}
+          </div>
+        )}
+      </div>
+      <div className="p-3 flex-1 flex flex-col">
+        <p className="text-[13px] font-bold text-gray-900 dark:text-white leading-snug line-clamp-1">{p.offerTitle || "Special offer"}</p>
+        <p className="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400 line-clamp-1">{p.brandName}</p>
+        <div className="mt-auto pt-2 flex items-center gap-1.5">
+          {p.avgRating != null && p.avgRating > 0 && (
+            <span className="flex items-center gap-0.5 bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+              <IonIcon icon={star} className="w-2.5 h-2.5" />
+              {p.avgRating.toFixed(1)}
+            </span>
+          )}
+          <span className="ml-auto text-[10.5px] font-bold text-rose-600 dark:text-rose-300">View deal →</span>
+        </div>
+      </div>
+    </motion.button>
+  );
+};
+
+type MatchKey = "services" | "products" | "providers";
+const MATCH_META: Record<MatchKey, { title: string; icon: string; tab: SearchEntityType }> = {
+  services: { title: "Services", icon: "🛠️", tab: "services" },
+  products: { title: "Products", icon: "📦", tab: "products" },
+  providers: { title: "Businesses", icon: "🏪", tab: "providers" },
+};
+
+const AllResultsView = ({ results, query, onCategoryTap }: { results: SearchResponse; query: string; onCategoryTap?: (name: string, id: string) => void }) => {
   const dispatch = useAppDispatch();
-  const sponsored: ProviderSearchResult[] = results.sponsored ?? [];
-  const deals: ProviderSearchResult[] = results.deals ?? [];
-  const topRated: ProviderSearchResult[] = results.topRated ?? [];
-  const providers = results.providers?.data ?? [];
-  const products = results.products?.data ?? [];
+  const items = useMemo(() => results.products?.data ?? [], [results]);
+  const providers = useMemo(() => results.providers?.data ?? [], [results]);
+  const sponsoredBiz = useMemo(() => results.sponsored ?? [], [results]);
+  const deals = useMemo(() => (results.deals ?? []).filter((d) => d.discountValue != null), [results]);
+  const topRated = results.topRated ?? [];
   const categories = results.categories?.data ?? [];
 
+  // Paid placements: businesses and items together, strongest match first.
+  const sponsored = useMemo(() => {
+    const list: ({ kind: "biz"; p: ProviderSearchResult } | { kind: "item"; p: ProductSearchResult })[] = [
+      ...sponsoredBiz.map((p) => ({ kind: "biz" as const, p })),
+      ...items.filter((p) => p.isSponsored).map((p) => ({ kind: "item" as const, p })),
+    ];
+    return list.sort((a, b) => (b.p.relevanceScore ?? 0) - (a.p.relevanceScore ?? 0));
+  }, [sponsoredBiz, items]);
+
+  // Organic matches, split by kind; whichever kind matches best leads.
+  const matches = useMemo(() => {
+    const organic = items.filter((p) => !p.isSponsored);
+    const lists = {
+      services: organic.filter((p) => p.productType === "service"),
+      products: organic.filter((p) => p.productType !== "service"),
+      providers,
+    };
+    // Header counts match the tabs: every item of that kind, sponsored included.
+    const counts = {
+      services: items.filter((p) => p.productType === "service").length,
+      products: items.filter((p) => p.productType !== "service").length,
+      providers: results.providers?.total ?? providers.length,
+    };
+    const top = Math.max(0, ...[...organic, ...providers].map((x) => x.relevanceScore ?? 0));
+    const floor = top * RELATIVE_FLOOR;
+    return (Object.keys(lists) as MatchKey[])
+      .map((key) => {
+        const all = lists[key] as (ProductSearchResult | ProviderSearchResult)[];
+        const strong = all.filter((x) => (x.relevanceScore ?? 0) >= floor);
+        return { key, count: counts[key], strong, best: strong[0]?.relevanceScore ?? 0 };
+      })
+      .filter((m) => m.strong.length > 0)
+      .sort((a, b) => b.best - a.best);
+  }, [items, providers, results]);
+
+  const viewsRef = useViewReports([sponsored, deals]);
+
   return (
-    <div className="space-y-6">
-      {/* ── Sponsored Section ──────────────────── */}
+    <div ref={viewsRef} className="space-y-6">
+      {/* ── Related categories ── */}
+      {categories.length > 0 && onCategoryTap && (
+        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4">
+          {categories.slice(0, 8).map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onCategoryTap(c.name, c.id)}
+              className="shrink-0 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[12px] font-semibold text-gray-700 dark:text-slate-200 active:scale-95 transition-transform"
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── 1. Sponsored ── */}
       {sponsored.length > 0 && (
-        <section>
+        <section className="-mx-4 px-4 py-3.5 bg-gradient-to-br from-amber-50 via-orange-50/50 to-transparent dark:from-amber-950/30 dark:via-slate-900 dark:to-transparent border-y border-amber-100/80 dark:border-amber-900/30">
           <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-[14px] font-bold text-gray-800 dark:text-white">Sponsored</h3>
-            <span className="text-[9px] font-semibold text-gray-400 bg-gray-100 dark:bg-slate-700 dark:text-slate-400 px-1.5 py-0.5 rounded">AD</span>
+            <span className="text-sm">⚡</span>
+            <h3 className="text-[15px] font-extrabold text-gray-900 dark:text-white">Sponsored</h3>
+            <span className="text-[9px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">AD</span>
+            <span className="ml-auto text-[11px] text-gray-400 dark:text-slate-500 truncate">{`Promoted for “${query}”`}</span>
           </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
-            {sponsored.map((p, i) => (
-              <div key={p.id} className="min-w-[200px] max-w-[200px] flex-shrink-0">
-                <ProviderResultCard provider={p} index={i} />
+          <Rail>
+            {sponsored.map((s, i) => (
+              <div
+                key={`${s.kind}-${s.p.id}`}
+                data-view-kind="sponsored"
+                data-view-id={s.p.sponsoredListingId}
+                className={`shrink-0 ${s.kind === "biz" ? "w-[200px]" : "w-[172px]"}`}
+              >
+                {s.kind === "biz" ? <ProviderResultCard provider={s.p} index={i} /> : <ProductResultCard product={s.p} index={i} />}
               </div>
             ))}
-          </div>
+          </Rail>
         </section>
       )}
 
-      {/* ── Deals & Offers Section ────────────── */}
+      {/* ── 2. Deals & offers ── */}
       {deals.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm">🏷️</span>
-            <h3 className="text-[14px] font-bold text-gray-800 dark:text-white">Deals & Offers</h3>
+            <IonIcon icon={pricetag} className="text-rose-500 text-[15px]" />
+            <h3 className="text-[15px] font-extrabold text-gray-900 dark:text-white">Deals &amp; Offers</h3>
+            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-900/30 dark:text-rose-300 px-2 py-0.5 rounded-full">Limited time</span>
           </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+          <Rail>
             {deals.map((p, i) => (
-              <div key={p.id} className="min-w-[200px] max-w-[200px] flex-shrink-0 relative">
-                <ProviderResultCard provider={p} index={i} />
-                {p.discountValue && (
-                  <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm">
-                    {p.discountType === 'percentage' ? `${p.discountValue}% OFF` : `₹${p.discountValue} OFF`}
-                  </div>
-                )}
+              <div key={p.id} data-view-kind="offer" data-view-id={p.offerId} className="shrink-0">
+                <DealCard p={p} index={i} />
               </div>
             ))}
-          </div>
+          </Rail>
         </section>
       )}
 
-      {/* ── Top Rated Section ─────────────────── */}
+      {/* ── 3. Best matches, strongest kind first ── */}
+      {matches.map((m, idx) => {
+        const meta = MATCH_META[m.key];
+        return (
+          <section key={m.key}>
+            <SectionHeader
+              title={meta.title}
+              icon={meta.icon}
+              count={m.count}
+              badge={idx === 0 && matches.length > 1 ? "Best match" : undefined}
+              onSeeAll={() => dispatch(setActiveTab(meta.tab))}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              {m.strong.slice(0, SECTION_SIZE).map((x, i) =>
+                m.key === "providers" ? (
+                  <ProviderResultCard key={x.id} provider={x as ProviderSearchResult} index={i} />
+                ) : (
+                  <ProductResultCard key={x.id} product={x as ProductSearchResult} index={i} />
+                ),
+              )}
+            </div>
+          </section>
+        );
+      })}
+
+      {/* ── 4. Top rated ── */}
       {topRated.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm">⭐</span>
-            <h3 className="text-[14px] font-bold text-gray-800 dark:text-white">Top Rated</h3>
+            <h3 className="text-[15px] font-extrabold text-gray-900 dark:text-white">Top rated</h3>
           </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+          <Rail>
             {topRated.map((p, i) => (
-              <div key={p.id} className="min-w-[200px] max-w-[200px] flex-shrink-0">
+              <div key={p.id} className="shrink-0 w-[200px]">
                 <ProviderResultCard provider={p} index={i} />
               </div>
             ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Regular Businesses ────────────────── */}
-      {providers.length > 0 && (
-        <section>
-          <SectionHeader
-            title="Businesses"
-            count={results.providers.total}
-            onSeeAll={() => dispatch(setActiveTab("providers"))}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            {providers.slice(0, 4).map((p, i: number) => (
-              <ProviderResultCard key={p.id} provider={p} index={i} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Products & Services ───────────────── */}
-      {products.length > 0 && (
-        <section>
-          <SectionHeader
-            title="Products & Services"
-            count={results.products.total}
-            onSeeAll={() => dispatch(setActiveTab("products"))}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            {products.slice(0, 4).map((p, i: number) => (
-              <ProductResultCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Categories ────────────────────────── */}
-      {categories.length > 0 && (
-        <section>
-          <SectionHeader
-            title="Categories"
-            count={results.categories.total}
-            onSeeAll={() => dispatch(setActiveTab("categories"))}
-          />
-          <div className="space-y-2">
-            {categories.slice(0, 3).map((c, i: number) => (
-              <CategoryResultCard key={c.id} category={c} index={i} onTap={onCategoryTap} />
-            ))}
-          </div>
+          </Rail>
         </section>
       )}
     </div>
@@ -470,19 +610,29 @@ const AllResultsView = ({ results, onCategoryTap }: { results: SearchResponse; o
 
 const SectionHeader = ({
   title,
+  icon,
   count,
+  badge,
   onSeeAll,
 }: {
   title: string;
+  icon: string;
   count: number;
+  badge?: string;
   onSeeAll: () => void;
 }) => (
   <div className="flex items-center justify-between mb-3">
-    <h3 className="text-[14px] font-bold text-gray-800 dark:text-white">
+    <h3 className="flex items-center gap-1.5 text-[15px] font-extrabold text-gray-900 dark:text-white">
+      <span className="text-sm">{icon}</span>
       {title}
-      <span className="text-gray-400 dark:text-slate-500 font-medium ml-1.5 text-[12px]">({count})</span>
+      <span className="text-gray-400 dark:text-slate-500 font-medium text-[12px]">({count})</span>
+      {badge && (
+        <span className="ml-1 text-[9.5px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
+          {badge}
+        </span>
+      )}
     </h3>
-    {count > 4 && (
+    {count > SECTION_SIZE && (
       <button
         onClick={onSeeAll}
         className="text-[12px] font-bold text-amber-500 active:opacity-60 px-2 py-1 rounded-lg active:bg-amber-50 dark:active:bg-amber-900/20 transition-colors"

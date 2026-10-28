@@ -74,6 +74,7 @@ export interface ProviderSearchResult {
   isSponsored?: boolean;
   sponsoredListingId?: string;
   hasActiveOffer?: boolean;
+  offerId?: string;
   offerTitle?: string;
   discountValue?: number;
   discountType?: string;
@@ -92,9 +93,16 @@ export interface ProductSearchResult {
   providerCity: string;
   providerArea: string | null;
   distance: number | null;
+  approximateLocation?: boolean;
   relevanceScore: number;
   isSponsored?: boolean;
   sponsoredListingId?: string;
+  /** The business behind it has a live offer. */
+  hasActiveOffer?: boolean;
+  offerId?: string;
+  offerTitle?: string;
+  discountType?: string;
+  discountValue?: number;
 }
 
 export interface CategorySearchResult {

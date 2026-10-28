@@ -14,11 +14,13 @@ import {
   shieldCheckmarkOutline,
   navigateOutline,
   ribbonOutline,
+  pricetag,
 } from "ionicons/icons";
 import { reportSponsored, type ProviderSearchResult } from "@/services/search.service";
 import { distanceLabel, isApproximate } from "@/utils/distance-label";
 import { businessHref } from "@/utils/share-links";
 import { TopBadge } from "@/app/components/badges/badge-chip";
+import { discountValueLabel } from "@/app/components/offers/offer-ui";
 
 interface Props {
   provider: ProviderSearchResult;
@@ -30,17 +32,23 @@ const ProviderResultCard = ({ provider, index }: Props) => {
 
   const image =
     provider.profilePhotoUrl || provider.bannerImageUrl || "";
+  const sponsored = !!provider.isSponsored;
+  const hasDeal = !!provider.hasActiveOffer && provider.discountValue != null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.3 }}
+      transition={{ delay: Math.min(index, 8) * 0.04, duration: 0.3 }}
       onClick={() => {
         reportSponsored("click", provider.sponsoredListingId, "search_result");
         router.push(businessHref(provider));
       }}
-      className="cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none active:scale-[0.97] transition-transform duration-150"
+      className={`h-full flex flex-col cursor-pointer bg-white dark:bg-slate-800 rounded-2xl overflow-hidden active:scale-[0.97] transition-transform duration-150 ${
+        sponsored
+          ? "border-2 border-amber-200/80 dark:border-amber-700/50 shadow-[0_2px_12px_rgba(245,158,11,0.12)] dark:shadow-none"
+          : "border border-gray-100 dark:border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none"
+      }`}
     >
       {/* Image */}
       <div className="relative h-[140px] overflow-hidden bg-gray-100 dark:bg-slate-700">
@@ -91,7 +99,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
 
           {/* Sponsored (takes the Featured spot) */}
           {provider.isSponsored ? (
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-amber-600 dark:text-amber-400 text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg shadow-sm flex items-center gap-0.5">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg shadow-sm flex items-center gap-0.5">
               <span className="text-[8px]">⚡</span> Sponsored
             </div>
           ) : provider.isFeatured && (
@@ -103,7 +111,7 @@ const ProviderResultCard = ({ provider, index }: Props) => {
       </div>
 
       {/* Info */}
-      <div className="p-3">
+      <div className="p-3 flex-1 flex flex-col">
         <h4 className="text-[13px] font-bold text-gray-900 dark:text-white leading-tight line-clamp-1">
           {provider.brandName}
         </h4>
@@ -142,11 +150,18 @@ const ProviderResultCard = ({ provider, index }: Props) => {
             <span className="truncate font-medium">
               {[provider.area, provider.city].filter(Boolean).join(", ")}
             </span>
-            {distanceLabel(provider) && (
-              <span className="ml-auto flex-shrink-0 text-amber-600 font-semibold">
-                {isApproximate(provider) ? "" : "~"}{distanceLabel(provider)}
+          </div>
+        )}
+
+        {/* A live deal is worth a line of its own */}
+        {hasDeal && (
+          <div className="mt-auto pt-2">
+            <div className="flex items-center gap-1 rounded-lg bg-rose-50 dark:bg-rose-900/25 px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-300">
+              <IonIcon icon={pricetag} className="w-3 h-3 shrink-0" />
+              <span className="truncate">
+                {`${discountValueLabel(provider.discountType, provider.discountValue!)} OFF${provider.offerTitle ? ` · ${provider.offerTitle}` : ""}`}
               </span>
-            )}
+            </div>
           </div>
         )}
       </div>
