@@ -23,7 +23,6 @@ import { LEAD_TIERS } from "@/app/components/leads/lead-insights";
 import { LeadUnlockSheet } from "@/app/components/monetization/lead-unlock-sheet";
 import { useLeadUnlockInfo, useMonetizationConfig } from "@/hooks/useMonetizationConfig";
 import { useUnlockLead } from "@/hooks/useProviderAnalytics";
-import { useLeadWallet, useWalletUnlock } from "@/hooks/useLeadWallet";
 
 const monthYear = (d: string) =>
   new Date(d).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
@@ -248,10 +247,6 @@ function LockedContact({ lead, onUnlocked }: { lead: NonNullable<ChatCustomerPro
     !!info?.isProSubscriber ||
     (info?.subscriptionCreditsRemaining ?? 0) > 0 ||
     (info?.freeRemaining ?? 0) > 0;
-  // Paid from the Lead Wallet in one tap when it covers the price.
-  const { data: wallet } = useLeadWallet(!!config?.flags.leadsMonetizationEnabled);
-  const walletUnlock = useWalletUnlock();
-  const fromWallet = !free && !!wallet?.enabled && wallet.balance >= priceFor(lead.tier);
 
   return (
     <>
@@ -265,19 +260,10 @@ function LockedContact({ lead, onUnlocked }: { lead: NonNullable<ChatCustomerPro
         </div>
         <button
           type="button"
-          disabled={walletUnlock.isPending}
-          onClick={() =>
-            fromWallet ? walletUnlock.mutate([lead.id], { onSuccess: () => onUnlocked() }) : setSheetOpen(true)
-          }
-          className="shrink-0 h-9 px-3.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[12px] font-bold active:scale-95 transition-transform disabled:opacity-60"
+          onClick={() => setSheetOpen(true)}
+          className="shrink-0 h-9 px-3.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[12px] font-bold active:scale-95 transition-transform"
         >
-          {walletUnlock.isPending
-            ? "Getting…"
-            : free
-              ? "Get contact free"
-              : fromWallet
-                ? `Get contact · ₹${priceFor(lead.tier)} · wallet`
-                : `Get contact · ₹${priceFor(lead.tier)}`}
+          {free ? "Get contact free" : `Get contact · ₹${priceFor(lead.tier)}`}
         </button>
       </div>
       {sheetOpen && (
