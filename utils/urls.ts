@@ -141,6 +141,8 @@ export const CHAT_URLS = {
   HEARTBEAT: '/chat/heartbeat',
   PRESENCE: (userId: string) => `/chat/presence/${userId}`,
   CUSTOMER: (id: string) => `/chat/conversations/${id}/customer`,
+  MUTE: (id: string) => `/chat/conversations/${id}/mute`,
+  QUICK_REPLIES: '/chat/quick-replies',
 };
 
 export const ANALYTICS_URLS = {

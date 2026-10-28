@@ -16,6 +16,10 @@ import {
   alertCircleOutline,
   banOutline,
   volumeMuteOutline,
+  volumeHighOutline,
+  addCircleOutline,
+  star,
+  shieldCheckmark,
 } from "ionicons/icons";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { isNativePlatform } from "@/utils/platform";
@@ -40,8 +44,12 @@ import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 import ReportSheet from "./report-sheet";
 import { CustomerProfileSheet } from "./chat/customer-profile-sheet";
+import { FileCard, ProductCard, DealCard, EnquiryCard, ImageViewer } from "./chat/message-cards";
+import { OwnerToolsSheet, QuickReplyChips } from "./chat/owner-chat-tools";
 import { useRouter } from "next/navigation";
-import { businessHref } from "@/utils/share-links";
+import { businessHref, productHref } from "@/utils/share-links";
+import { setConversationMuted, type ChatMessageMetadata } from "@/services/chat.service";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ReportEntityType } from "@/services/report.service";
 import { checkPickedFile } from "@/utils/compress-image";
 
@@ -128,7 +136,10 @@ export default function MessagesPage({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -166,6 +177,50 @@ export default function MessagesPage({
     staleTime: 5 * 60 * 1000,
   });
   const providerPhone: string | null = providerData?.contactNumber ?? null;
+  const isOwnerView = convDetail?.myRole === "provider";
+
+  // "Usually replies within an hour" — what a customer sees about the business.
+  const replyLabel = (mins: number | null | undefined) =>
+    mins == null ? null : mins < 15 ? "replies in minutes" : mins < 60 ? "replies within an hour" : mins < 240 ? "replies in a few hours" : mins < 1440 ? "replies within a day" : null;
+  const trust = isCustomerView ? convDetail?.business ?? null : null;
+
+  /** Cards open what they show; the chat closes so the page is visible. */
+  const openProduct = (m: ChatMessageMetadata) => {
+    if (!m.productId) return;
+    onBack();
+    router.push(productHref({ id: m.productId, slug: m.productSlug, providerSlug: m.providerSlug, providerId: otherProviderId }));
+  };
+  const openDeal = (m: ChatMessageMetadata) => {
+    const id = m.providerId || otherProviderId;
+    if (!id) return;
+    onBack();
+    router.push(businessHref({ id }));
+  };
+
+  /** Share a catalogue item or a live deal as a card (business side). */
+  const sendCard = async (messageType: "product" | "deal", id: string) => {
+    setSendError("");
+    try {
+      await sendMutation.mutateAsync({
+        messageType,
+        metadata: messageType === "product" ? { productId: id } : { offerId: id },
+      });
+    } catch (err) {
+      const apiMsg = isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined;
+      setSendError(apiMsg || "Couldn't send that. Please try again.");
+    }
+  };
+
+  const toggleMute = async () => {
+    if (!conversationId) return;
+    const muted = !convDetail?.isMuted;
+    try {
+      await setConversationMuted(conversationId, muted);
+      queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+    } catch {
+      setSendError("Couldn't change notifications for this chat.");
+    }
+  };
 
   // Flatten paginated messages
   const allMessages = useMemo(() => {
@@ -337,10 +392,14 @@ export default function MessagesPage({
       // Upload then send as image message
       try {
         const { url, storageKey } = await uploadMutation.mutateAsync(attachedFile);
+        const isPhoto = attachedFile.type.startsWith("image/");
         await sendMutation.mutateAsync({
           content: text || undefined,
-          messageType: "image",
-          metadata: { url, storageKey },
+          // A PDF goes as a file card, not a (broken) photo.
+          messageType: isPhoto ? "image" : "file",
+          metadata: isPhoto
+            ? { url, storageKey }
+            : { url, storageKey, fileName: attachedFile.name, size: attachedFile.size },
         });
       } catch (err) {
         if (isNetworkError(err)) {
@@ -513,8 +572,26 @@ export default function MessagesPage({
                 ) : (
                   <span className="text-slate-400 dark:text-slate-500">{formatLastSeen(presenceData?.lastSeenAt ?? null)}</span>
                 )}
-                {convDetail && <span className="text-slate-400 dark:text-slate-500">{" · "}{convDetail.myRole === "provider" ? "View profile" : "View business"}</span>}
+                {convDetail && !trust && <span className="text-slate-400 dark:text-slate-500">{" · "}{convDetail.myRole === "provider" ? "View profile" : "View business"}</span>}
               </p>
+              {/* Why a customer can trust this business: rating, verified, how fast it answers */}
+              {trust && (trust.reviewCount > 0 || trust.verified || replyLabel(trust.replyMinutes)) && (
+                <p className="flex items-center gap-1 text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                  {trust.reviewCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-bold">
+                      <IonIcon icon={star} className="text-[10px]" />
+                      {trust.rating.toFixed(1)}
+                    </span>
+                  )}
+                  {trust.verified && (
+                    <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                      <IonIcon icon={shieldCheckmark} className="text-[10px]" />
+                      Verified
+                    </span>
+                  )}
+                  {replyLabel(trust.replyMinutes) && <span className="truncate">{`· ${replyLabel(trust.replyMinutes)}`}</span>}
+                </p>
+              )}
             </div>
           </button>
 
@@ -565,9 +642,9 @@ export default function MessagesPage({
                           setShowMenu(false);
                           setShowBlockConfirm(true);
                         }},
-                        { icon: volumeMuteOutline, label: "Mute Notifications", color: "text-slate-600", action: () => {
+                        { icon: convDetail?.isMuted ? volumeHighOutline : volumeMuteOutline, label: convDetail?.isMuted ? "Unmute Notifications" : "Mute Notifications", color: "text-slate-600", action: () => {
                           setShowMenu(false);
-                          alert("Notifications muted for this conversation.");
+                          toggleMute();
                         }},
                       ].map((item, idx) => (
                         <button
@@ -676,41 +753,50 @@ export default function MessagesPage({
                   >
                     {/* Image message */}
                     {msg.messageType === "image" && msg.metadata?.url && (
-                      <div className="mb-1.5 -mx-1 -mt-0.5">
+                      <button type="button" onClick={() => setViewerUrl(msg.metadata!.url!)} className="block mb-1.5 -mx-1 -mt-0.5">
                         <img
                           src={msg.metadata.url}
                           alt="Shared image"
                           className="rounded-xl max-w-full max-h-60 object-cover"
                           loading="lazy"
                         />
-                      </div>
+                      </button>
                     )}
 
-                    {/* Enquiry card */}
-                    {msg.messageType === "enquiry" && msg.metadata && (
-                      <div className={`rounded-xl p-2.5 mb-1.5 -mx-0.5 ${isSent ? "bg-white/10" : "bg-amber-50 dark:bg-amber-900/30"}`}>
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">
-                          📋 Product Enquiry
-                        </p>
-                        {msg.metadata.productName && (
-                          <p className={`text-[12px] font-semibold ${isSent ? "text-white" : "text-slate-700 dark:text-slate-200"}`}>
-                            {msg.metadata.productName}
-                          </p>
-                        )}
-                        {msg.metadata.productPrice && (
-                          <p className={`text-[11px] ${isSent ? "text-white/60" : "text-slate-500 dark:text-slate-400"}`}>
-                            {msg.metadata.currency || "₹"}{msg.metadata.productPrice}
-                          </p>
-                        )}
-                      </div>
+                    {/* File, product and deal cards */}
+                    {msg.messageType === "file" && msg.metadata?.url && <FileCard m={msg.metadata} sent={isSent} />}
+                    {msg.messageType === "product" && msg.metadata && (
+                      <ProductCard m={msg.metadata} sent={isSent} onOpen={() => openProduct(msg.metadata!)} />
                     )}
+                    {msg.messageType === "deal" && msg.metadata && <DealCard m={msg.metadata} onOpen={() => openDeal(msg.metadata!)} />}
 
-                    {/* Text content */}
-                    {msg.content && (
-                      <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
-                    )}
+                    {/* Enquiry card: the product they asked about */}
+                    {msg.messageType === "enquiry" && msg.metadata && (() => {
+                      // Older enquiries may lack the id; the chat's own product stands in.
+                      const productId =
+                        msg.metadata.productId ||
+                        (convDetail?.contextType === "product" ? convDetail.contextId ?? undefined : undefined);
+                      return (
+                        <EnquiryCard
+                          m={msg.metadata}
+                          sent={isSent}
+                          onOpen={productId ? () => openProduct({ ...msg.metadata!, productId }) : undefined}
+                        />
+                      );
+                    })()}
+
+                    {/* Text — cards carry their own; a file keeps its caption */}
+                    {msg.messageType === "file"
+                      ? msg.metadata?.caption && (
+                          <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap">{msg.metadata.caption}</p>
+                        )
+                      : msg.messageType !== "product" &&
+                        msg.messageType !== "deal" &&
+                        msg.content && (
+                          <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap">
+                            {msg.content}
+                          </p>
+                        )}
 
                     {/* Timestamp + read receipt */}
                     <div
@@ -785,7 +871,28 @@ export default function MessagesPage({
         className="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 px-3 pt-2"
         style={{ paddingBottom: "max(var(--sab, env(safe-area-inset-bottom)), 10px)" }}
       >
+        {/* One-tap saved replies (business side, before typing) */}
+        {isOwnerView && !messageText && !attachedFile && (
+          <div className="-mx-3">
+            <QuickReplyChips
+              onPick={(t) => {
+                setMessageText(t);
+                inputRef.current?.focus();
+              }}
+            />
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          {isOwnerView && (
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={() => setToolsOpen(true)}
+              aria-label="Send a reply, product or deal"
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-violet-50 dark:active:bg-violet-900/30"
+            >
+              <IonIcon icon={addCircleOutline} className="text-[24px] text-violet-600 dark:text-violet-400" />
+            </motion.button>
+          )}
           <motion.button
             whileTap={{ scale: 0.88 }}
             onClick={handleAttachClick}
@@ -838,6 +945,21 @@ export default function MessagesPage({
           </motion.button>
         </div>
       </div>
+
+      <ImageViewer url={viewerUrl} onClose={() => setViewerUrl(null)} />
+
+      {isOwnerView && (
+        <OwnerToolsSheet
+          open={toolsOpen}
+          onClose={() => setToolsOpen(false)}
+          onInsert={(t) => {
+            setMessageText(t);
+            setTimeout(() => inputRef.current?.focus(), 50);
+          }}
+          onSendProduct={(id) => sendCard("product", id)}
+          onSendDeal={(id) => sendCard("deal", id)}
+        />
+      )}
 
       {conversationId && convDetail?.myRole === "provider" && (
         <CustomerProfileSheet

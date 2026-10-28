@@ -25,7 +25,6 @@ import {
   documentTextOutline,
   informationCircleOutline,
   helpCircleOutline,
-  sparklesOutline,
   mailOutline,
   logOutOutline,
   trashOutline,
@@ -55,7 +54,6 @@ import { useTheme } from "../context/ThemeContext";
 import { LanguageSelector, LanguageMenuButton } from "./language-selector";
 import { type Locale } from "@/i18n/config";
 import { useRouter } from "next/navigation";
-import { resetWelcomeTour } from "@/utils/welcome-tour";
 import { openCustomerTour } from "@/utils/customer-tour";
 import { openBusinessTour } from "@/utils/business-tour";
 import { ROUTE_PATH } from "@/utils/contants";
@@ -705,14 +703,6 @@ const ProfileContent = memo(() => {
           {/* Support */}
           <MenuSection title="Support" tourId="profile-support">
             <MenuRow
-              icon={sparklesOutline}
-              iconColor="text-amber-500"
-              iconBg="bg-amber-50"
-              label="How Tijarah works"
-              sublabel="Watch the 30-second tour again"
-              onClick={() => { resetWelcomeTour(); router.push(ROUTE_PATH.HOME); }}
-            />
-            <MenuRow
               icon={navigateCircleOutline}
               iconColor="text-sky-600"
               iconBg="bg-sky-50"
@@ -1166,14 +1156,6 @@ const ProfileContent = memo(() => {
 
           {/* ── Support Section ──────────────────────────────────── */}
           <MenuSection title="Support" tourId="profile-support">
-            <MenuRow
-              icon={sparklesOutline}
-              iconColor="text-amber-500"
-              iconBg="bg-amber-50"
-              label="How Tijarah works"
-              sublabel="Watch the 30-second tour again"
-              onClick={() => { resetWelcomeTour(); router.push(ROUTE_PATH.HOME); }}
-            />
             <MenuRow
               icon={navigateCircleOutline}
               iconColor="text-sky-600"

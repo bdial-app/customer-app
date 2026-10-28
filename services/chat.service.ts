@@ -30,15 +30,36 @@ export interface ConversationListItem {
 export interface ConversationDetail extends ConversationListItem {
   status: "active" | "archived" | "closed";
   myRole: "customer" | "provider" | null;
+  /** No push notifications for this chat (newer APIs). */
+  isMuted?: boolean;
+  /** Trust line a customer sees about the business (newer APIs). */
+  business?: { verified: boolean; rating: number; reviewCount: number; replyMinutes: number | null } | null;
 }
 
 /** Free-form message metadata; known keys are used by image and enquiry messages. */
 export interface ChatMessageMetadata {
   url?: string;
   storageKey?: string;
+  productId?: string;
+  productSlug?: string;
+  providerSlug?: string;
   productName?: string;
-  productPrice?: string | number;
+  productImage?: string | null;
+  productPrice?: string | number | null;
+  productType?: "product" | "service";
   currency?: string;
+  /** file */
+  fileName?: string;
+  size?: number;
+  caption?: string | null;
+  /** deal */
+  offerId?: string;
+  providerId?: string;
+  title?: string;
+  discountType?: string;
+  discountValue?: number;
+  minOrderAmount?: number | null;
+  endsAt?: string;
   [key: string]: unknown;
 }
 
@@ -48,7 +69,7 @@ export interface ChatMessage {
   senderId: string;
   senderName: string;
   content: string | null;
-  messageType: "text" | "image" | "enquiry" | "system" | "quote_request";
+  messageType: "text" | "image" | "enquiry" | "system" | "quote_request" | "file" | "product" | "deal";
   metadata: ChatMessageMetadata | null;
   status: "sent" | "delivered" | "read";
   createdAt: string;
@@ -142,7 +163,7 @@ export async function sendMessage(
   conversationId: string,
   data: {
     content?: string;
-    messageType?: "text" | "image" | "enquiry" | "quote_request";
+    messageType?: "text" | "image" | "enquiry" | "quote_request" | "file" | "product" | "deal";
     metadata?: Record<string, unknown>;
     clientMessageId?: string;
   }
@@ -211,5 +232,22 @@ export async function archiveConversation(conversationId: string): Promise<{ suc
 
 export async function blockConversation(conversationId: string): Promise<{ success: boolean }> {
   const res = await apiClient.patch(CHAT_URLS.BLOCK(conversationId));
+  return res.data;
+}
+
+// ─── Mute · quick replies ──────────────────────
+
+export async function setConversationMuted(conversationId: string, muted: boolean): Promise<{ muted: boolean }> {
+  const res = await apiClient.patch(CHAT_URLS.MUTE(conversationId), { muted });
+  return res.data;
+}
+
+export async function getQuickReplies(): Promise<{ replies: string[] }> {
+  const res = await apiClient.get(CHAT_URLS.QUICK_REPLIES);
+  return res.data;
+}
+
+export async function saveQuickReplies(replies: string[]): Promise<{ replies: string[] }> {
+  const res = await apiClient.put(CHAT_URLS.QUICK_REPLIES, { replies });
   return res.data;
 }

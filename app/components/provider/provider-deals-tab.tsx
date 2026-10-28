@@ -341,7 +341,12 @@ const ProviderDealsTab = () => {
           </div>
           <div className="grid grid-cols-2 gap-4 mt-3.5">
             <UsageMeter label="Live now" used={activeUsed} max={activeMax} tone="warm" />
-            <UsageMeter label="Created" used={totalUsed} max={totalMax} tone="brand" />
+            {/* With paid deals there's no lifetime cap — what's counted is the free ones */}
+            {tiersOn && freeQuota > 0 ? (
+              <UsageMeter label="Free deals used" used={freeQuota - freeLeft} max={freeQuota} tone="brand" />
+            ) : (
+              <UsageMeter label="Created" used={totalUsed} max={totalMax} tone="brand" />
+            )}
           </div>
 
           {/* Monetization enabled + limit reached: show buy CTA */}

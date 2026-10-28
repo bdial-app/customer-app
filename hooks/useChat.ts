@@ -60,7 +60,7 @@ export function useSendMessage(conversationId: string | null) {
   return useMutation({
     mutationFn: (data: {
       content?: string;
-      messageType?: "text" | "image" | "enquiry" | "quote_request";
+      messageType?: "text" | "image" | "enquiry" | "quote_request" | "file" | "product" | "deal";
       metadata?: Record<string, unknown>;
     }) => {
       const clientMessageId = crypto.randomUUID();
