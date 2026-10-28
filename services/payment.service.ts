@@ -271,6 +271,12 @@ export interface DealCreationInfo {
   isProSubscriber: boolean;
   isGrowthSubscriber: boolean;
   currentPlan: string;
+  freeMaxDays?: number;
+  paidMaxDays?: number;
+  extensionDays?: number;
+  extensionPrice?: number;
+  /** iOS can sell an extension (an Apple product is set up). */
+  extensionOnApple?: boolean;
 }
 
 export interface DealCreationCheckoutResponse {
@@ -297,15 +303,25 @@ export const getDealCreationInfo = async (): Promise<DealCreationInfo> => {
   return data;
 };
 
+/** create: a new 15-day deal · extend: +15 days on a paid deal · upgrade: free deal → 15 days. */
+export interface DealPurchase {
+  purpose?: 'create' | 'extend' | 'upgrade';
+  offerId?: string;
+  /** Buy a 15-day deal even while free deals remain. */
+  tier?: 'paid';
+}
+
 export const createDealCreationCheckout = async (
   voucherCode?: string,
   dealData?: Record<string, unknown>,
   gateway?: 'razorpay' | 'apple',
+  purchase?: DealPurchase,
 ): Promise<DealCreationCheckoutResponse> => {
   const { data } = await apiClient.post(PAYMENT_URLS.DEAL_CREATION_CHECKOUT, {
     voucherCode,
     dealData,
     gateway,
+    ...purchase,
   });
   return data;
 };

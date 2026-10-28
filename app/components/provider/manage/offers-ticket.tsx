@@ -13,6 +13,9 @@ import {
   peopleOutline,
   cartOutline,
   calendarOutline,
+  eyeOutline,
+  handLeftOutline,
+  rocketOutline,
 } from "ionicons/icons";
 import type { ProviderOfferFull } from "@/services/provider.service";
 import { Pill } from "./kit";
@@ -147,11 +150,14 @@ export function OfferTicket({
   index,
   onEdit,
   onDelete,
+  grow,
 }: {
   offer: ProviderOfferFull;
   index: number;
   onEdit: (offer: ProviderOfferFull) => void;
   onDelete: (offer: ProviderOfferFull) => void;
+  /** Upgrade a free deal or extend a paid one, when the owner can. */
+  grow?: { label: string; onClick: () => void; busy?: boolean } | null;
 }) {
   const status = offerStatus(offer);
   const pill = STATUS_PILL[status];
@@ -195,6 +201,7 @@ export function OfferTicket({
               <IonIcon icon={status === "scheduled" ? calendarOutline : timeOutline} className="text-[13px]" />
               {timingLabel(offer)}
             </span>
+            {offer.tier && <TierTag tier={offer.tier} />}
             {offer.minOrderAmount != null && Number(offer.minOrderAmount) > 0 && (
               <Meta icon={cartOutline}>Min ₹{Number(offer.minOrderAmount)}</Meta>
             )}
@@ -205,6 +212,8 @@ export function OfferTicket({
             ) : offer.usageCount > 0 ? (
               <Meta icon={peopleOutline}>{offer.usageCount} used</Meta>
             ) : null}
+            {offer.views != null && offer.views > 0 && <Meta icon={eyeOutline}>{offer.views} saw it</Meta>}
+            {offer.taps != null && offer.taps > 0 && <Meta icon={handLeftOutline}>{offer.taps} tapped</Meta>}
           </div>
         </div>
         <div className="flex items-center border-t border-slate-100 dark:border-slate-800 ml-4">
@@ -219,6 +228,20 @@ export function OfferTicket({
             <IonIcon icon={createOutline} className="text-[16px]" />
             Edit
           </button>
+          {grow && (
+            <button
+              type="button"
+              disabled={grow.busy}
+              onClick={(e) => {
+                e.stopPropagation();
+                grow.onClick();
+              }}
+              className="shrink-0 whitespace-nowrap h-8 my-1.5 mr-1 px-3 rounded-full inline-flex items-center gap-1 text-[12px] font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 shadow-sm shadow-orange-500/20 active:scale-95 transition-transform disabled:opacity-60"
+            >
+              <IonIcon icon={rocketOutline} className="text-[13px]" />
+              {grow.busy ? "Opening…" : grow.label}
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {
@@ -226,14 +249,28 @@ export function OfferTicket({
               onDelete(offer);
             }}
             aria-label={`Delete offer: ${offer.title}`}
-            className="h-11 px-4 inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold text-slate-500 dark:text-slate-400 active:text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/40"
+            className={`h-11 ${grow ? "px-3" : "px-4"} inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold text-slate-500 dark:text-slate-400 active:text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/40`}
           >
             <IonIcon icon={trashOutline} className="text-[16px]" />
-            Delete
+            {/* Icon only when an Extend/upgrade button needs the room */}
+            {!grow && "Delete"}
           </button>
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/** What kind of deal it is: 15-day (bought or from a plan) or free 5-day. */
+function TierTag({ tier }: { tier: "free" | "paid" | "plan" }) {
+  return tier === "free" ? (
+    <span className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+      Free · 5 days
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+      ✦ {tier === "plan" ? "Plan deal" : "15-day deal"} · shown first
+    </span>
   );
 }
 

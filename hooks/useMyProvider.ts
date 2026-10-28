@@ -98,7 +98,7 @@ export const useReplyToReview = () => {
 // ─── Offers / Deals ─────────────────────────────────────────────────
 
 export const MY_OFFERS_KEY = ["my-provider-offers"];
-const OFFER_LIMITS_KEY = ["my-offer-limits"];
+export const OFFER_LIMITS_KEY = ["my-offer-limits"];
 
 export const useMyOffers = () => {
   return useQuery<ProviderOfferFull[]>({

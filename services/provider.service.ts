@@ -553,6 +553,14 @@ export interface ProviderOfferFull {
   usageLimit: number | null;
   createdAt: string;
   updatedAt: string;
+  /** free: up to 5 days · paid: bought, extendable · plan: from a subscription. Missing on older APIs. */
+  tier?: "free" | "paid" | "plan";
+  /** Longest it may run, extensions included; null on deals made before limits. */
+  daysAllowed?: number | null;
+  extensions?: number;
+  /** People who saw it / tapped it in Explore, Deals and search. */
+  views?: number;
+  taps?: number;
 }
 
 export interface CreateOfferPayload {
@@ -565,6 +573,8 @@ export interface CreateOfferPayload {
   startsAt: string;
   endsAt: string;
   usageLimit?: number;
+  /** free: 5-day deal from the free quota · paid: 15-day deal (pay first). */
+  tier?: "free" | "paid";
 }
 
 export type UpdateOfferPayload = Partial<CreateOfferPayload>;
@@ -575,6 +585,15 @@ export interface OfferLimits {
   activeDeals: number;
   maxActiveDeals: number;
   requiresPayment: boolean;
+  currentPlan?: string | null;
+  /** Deal lengths and the extension price (newer APIs). */
+  monetizationEnabled?: boolean;
+  freeQuota?: number;
+  freeRemaining?: number;
+  freeMaxDays?: number;
+  paidMaxDays?: number;
+  extensionDays?: number;
+  extensionPrice?: number;
 }
 
 export const getMyOffers = async (): Promise<ProviderOfferFull[]> => {

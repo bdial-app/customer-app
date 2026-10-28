@@ -26,6 +26,7 @@ import {
   type CreateSponsorshipCheckoutPayload,
   type SubscriptionPlan,
   type MonetizationConfig,
+  type DealPurchase,
 } from '@/services/payment.service';
 import { getSponsorshipPlans, type SponsorshipPlan } from '@/services/provider.service';
 
@@ -57,7 +58,7 @@ interface UsePaymentReturn {
     paymentId?: string;
   }>;
   /** Create a deal (may be free via quota) */
-  purchaseDealCreation: (voucherCode?: string, dealData?: Record<string, unknown>) => Promise<{
+  purchaseDealCreation: (voucherCode?: string, dealData?: Record<string, unknown>, purchase?: DealPurchase) => Promise<{
     requiresPayment: boolean;
     method: string;
     status?: string;
@@ -197,11 +198,11 @@ export function usePayment(): UsePaymentReturn {
 
   // ─── Deal Creation ───
 
-  const purchaseDealCreation = useCallback(async (voucherCode?: string, dealData?: Record<string, unknown>) => {
+  const purchaseDealCreation = useCallback(async (voucherCode?: string, dealData?: Record<string, unknown>, purchase?: DealPurchase) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await createDealCreationCheckout(voucherCode, dealData, isAppleIAP ? 'apple' : 'razorpay');
+      const response = await createDealCreationCheckout(voucherCode, dealData, isAppleIAP ? 'apple' : 'razorpay', purchase);
 
       if (!response.requiresPayment) {
         return {
