@@ -97,6 +97,39 @@ export async function getConversation(id: string): Promise<ConversationDetail> {
   return res.data;
 }
 
+/** The customer a business is chatting with (business side only). */
+export interface ChatCustomerProfile {
+  userId: string;
+  name: string;
+  memberSince: string;
+  lastSeenAt: string | null;
+  verified: boolean;
+  reviewsWritten: number;
+  withYou: {
+    firstContactAt: string | null;
+    conversations: number;
+    askedAbout: { name: string; productId: string | null }[];
+    savedYou: boolean;
+    review: { rating: number; text: string | null; postedAt: string } | null;
+  };
+  lead: {
+    id: string;
+    tier: "hot" | "warm" | "soft" | "cold";
+    score: number;
+    source: string | null;
+    searchQuery: string | null;
+    productsViewed: { id: string; name: string }[];
+    isUnlocked: boolean;
+  } | null;
+  /** Only once this business has unlocked them as a lead. */
+  contact: { phone: string | null; email: string | null; city: string | null; area: string | null } | null;
+}
+
+export async function getChatCustomerProfile(conversationId: string): Promise<ChatCustomerProfile> {
+  const res = await apiClient.get(CHAT_URLS.CUSTOMER(conversationId));
+  return res.data;
+}
+
 export async function getMessages(
   conversationId: string,
   params?: { limit?: number; before?: string }

@@ -140,6 +140,7 @@ export const CHAT_URLS = {
   UNREAD_COUNT: '/chat/unread-count',
   HEARTBEAT: '/chat/heartbeat',
   PRESENCE: (userId: string) => `/chat/presence/${userId}`,
+  CUSTOMER: (id: string) => `/chat/conversations/${id}/customer`,
 };
 
 export const ANALYTICS_URLS = {

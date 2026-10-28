@@ -39,6 +39,9 @@ import { useAppSelector } from "@/hooks/useAppStore";
 import { getProviderById } from "@/services/provider.service";
 import type { ChatMessage } from "@/services/chat.service";
 import ReportSheet from "./report-sheet";
+import { CustomerProfileSheet } from "./chat/customer-profile-sheet";
+import { useRouter } from "next/navigation";
+import { businessHref } from "@/utils/share-links";
 import type { ReportEntityType } from "@/services/report.service";
 import { checkPickedFile } from "@/utils/compress-image";
 
@@ -124,6 +127,8 @@ export default function MessagesPage({
   const [sendError, setSendError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const router = useRouter();
 
   // Data hooks
   const { data: convDetail } = useConversationDetail(conversationId || null);
@@ -475,7 +480,20 @@ export default function MessagesPage({
             <IonIcon icon={arrowBack} className="text-xl text-slate-700 dark:text-slate-300" />
           </motion.button>
 
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          {/* Tap the person: a business sees who the customer is; a customer opens the business page */}
+          <button
+            type="button"
+            onClick={() => {
+              if (convDetail?.myRole === "provider" && convDetail.otherParticipant.role !== "provider") {
+                setProfileOpen(true);
+              } else if (otherProviderId) {
+                onBack();
+                router.push(businessHref({ id: otherProviderId }));
+              }
+            }}
+            aria-label={`View ${displayName}`}
+            className="flex items-center gap-2.5 flex-1 min-w-0 text-left rounded-xl -my-1 py-1 active:bg-slate-50 dark:active:bg-slate-700/50"
+          >
             {avatarUrl ? (
               <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" decoding="async" />
             ) : (
@@ -495,9 +513,10 @@ export default function MessagesPage({
                 ) : (
                   <span className="text-slate-400 dark:text-slate-500">{formatLastSeen(presenceData?.lastSeenAt ?? null)}</span>
                 )}
+                {convDetail && <span className="text-slate-400 dark:text-slate-500">{" · "}{convDetail.myRole === "provider" ? "View profile" : "View business"}</span>}
               </p>
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-1 shrink-0">
             {isCustomerView && providerPhone && (
@@ -819,6 +838,16 @@ export default function MessagesPage({
           </motion.button>
         </div>
       </div>
+
+      {conversationId && convDetail?.myRole === "provider" && (
+        <CustomerProfileSheet
+          conversationId={conversationId}
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          online={!!presenceData?.isOnline}
+          lastSeen={formatLastSeen(presenceData?.lastSeenAt ?? null)}
+        />
+      )}
 
       {/* Report Sheet */}
       {reportEntity && (
