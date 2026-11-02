@@ -318,6 +318,8 @@ const ProfileContent = memo(() => {
   const [isDisablingProvider, setIsDisablingProvider] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
   const canReEnable = cooldownRemaining === null || cooldownRemaining <= 0;
+  // Business deleted: hours until they can list a new one.
+  const [listAgainInHours, setListAgainInHours] = useState(0);
 
   // Slide-page states
   const [activePage, setActivePage] = useState<
@@ -349,6 +351,7 @@ const ProfileContent = memo(() => {
       .then((result) => {
         if (!cancelled) {
           setProviderStatus(result.providerStatus);
+          setListAgainInHours(result.listAgainInHours ?? 0);
           if (result.provider) {
             setProviderInfo({
               id: result.provider.id,
@@ -1072,9 +1075,18 @@ const ProfileContent = memo(() => {
                       Business Deleted
                     </div>
                     <div className="text-red-700 dark:text-red-400 text-xs mt-0.5">
-                      Your business profile has been removed. You can apply
-                      again as a new business.
+                      {listAgainInHours > 0
+                        ? `Your business profile has been removed. You can apply again as a new business in ${listAgainInHours}h.`
+                        : "Your business profile has been removed. You can apply again as a new business."}
                     </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleApply}
+                      disabled={listAgainInHours > 0}
+                      className="mt-3 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl disabled:opacity-50"
+                    >
+                      {listAgainInHours > 0 ? `Apply again in ${listAgainInHours}h` : "Apply Again →"}
+                    </motion.button>
                   </div>
                 </div>
               </div>

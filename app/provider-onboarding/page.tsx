@@ -1659,6 +1659,8 @@ const ProviderOnboardingPage = () => {
   const { data: legalDocs } = useLegalDocuments();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  // Their last business was deleted: hours until they can list a new one.
+  const [listAgainInHours, setListAgainInHours] = useState(0);
   const [docType, setDocType] = useState<DocTypeId>("aadhaar");
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -1830,7 +1832,10 @@ const ProviderOnboardingPage = () => {
     const fetchStatus = async () => {
       try {
         const result = await getMyProviderStatus();
-        if (!cancelled) setProviderStatus(result.providerStatus);
+        if (!cancelled) {
+          setProviderStatus(result.providerStatus);
+          setListAgainInHours(result.listAgainInHours ?? 0);
+        }
       } catch {
         // keep as not_applied
       } finally {
@@ -2171,6 +2176,41 @@ const ProviderOnboardingPage = () => {
         <div className="flex flex-col items-center justify-center min-h-[70vh] gap-3">
           <div className="w-8 h-8 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
           <p className="text-sm text-slate-400">Checking your status...</p>
+        </div>
+      </Page>
+    );
+  }
+
+  // Business deleted, still in the cooldown: say so before they fill in the form.
+  if (providerStatus === "deleted" && listAgainInHours > 0) {
+    return (
+      <Page>
+        <Navbar
+          title="List your business"
+          leftClassName="w-11"
+          left={
+            <Button clear onClick={() => goBack("/")}>
+              <IonIcon icon={arrowBack} className="w-5 h-5" />
+            </Button>
+          }
+        />
+        <div className="flex flex-col items-center px-6 pt-10 gap-6">
+          <div className="p-5 rounded-full border-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+            <IonIcon icon={informationCircleOutline} className="text-5xl text-amber-500" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">You Can Apply Again Soon</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
+              Your last business was removed recently. You can list a new business in {listAgainInHours}h.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => goBack("/")}
+            className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-medium text-sm active:bg-slate-50 dark:active:bg-slate-700 transition-colors"
+          >
+            Go Back
+          </button>
         </div>
       </Page>
     );

@@ -149,6 +149,8 @@ export interface ProviderStatusResponse {
   provider: ProviderData | null;
   verification: ProviderVerification | null;
   preferredMode?: "customer" | "provider";
+  /** Business deleted: hours until they can list a new one (0: now). */
+  listAgainInHours?: number;
 }
 
 export interface UpdateProviderPayload {
