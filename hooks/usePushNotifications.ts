@@ -132,6 +132,9 @@ export function usePushNotifications() {
         onForegroundPush: (notification) => {
           qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
           qc.invalidateQueries({ queryKey: ["notifications"] });
+          // A new message: the chat list and its badge are out of date too.
+          qc.invalidateQueries({ queryKey: ["conversations"] });
+          qc.invalidateQueries({ queryKey: ["unreadCount"] });
 
           if (notification.title) {
             window.dispatchEvent(
@@ -153,6 +156,8 @@ export function usePushNotifications() {
         const unsub = await onForegroundMessage((payload) => {
           qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
           qc.invalidateQueries({ queryKey: ["notifications"] });
+          qc.invalidateQueries({ queryKey: ["conversations"] });
+          qc.invalidateQueries({ queryKey: ["unreadCount"] });
 
           if (payload.notification?.title) {
             window.dispatchEvent(
