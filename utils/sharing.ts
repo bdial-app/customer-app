@@ -56,6 +56,21 @@ export function openDirections(lat: number, lng: number, label?: string) {
   }
 }
 
+/** A link anyone can open to see a point on a map. */
+export const mapsLinkFor = (lat: number, lng: number) =>
+  `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+
+/** Show a point in the phone's maps app (Apple Maps on iPhone, Google elsewhere). */
+export function openMapAt(lat: number, lng: number, label?: string | null) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    const q = label ? `&q=${encodeURIComponent(label)}` : "";
+    window.location.href = `maps://maps.apple.com/?ll=${lat},${lng}${q}`;
+    return;
+  }
+  window.open(mapsLinkFor(lat, lng), "_blank", "noopener,noreferrer");
+}
+
 /**
  * Share content using Capacitor Share plugin on native, Web Share API on web,
  * with clipboard fallback.
