@@ -37,6 +37,15 @@ export interface ConversationDetail extends ConversationListItem {
 }
 
 /** Free-form message metadata; known keys are used by image and enquiry messages. */
+export interface SharedLocation {
+  lat: number;
+  lng: number;
+  label?: string | null;
+  address?: string | null;
+  /** Where it came from: their position, a pin, their business, a saved address. */
+  source?: "current" | "pinned" | "business" | "saved";
+}
+
 export interface ChatMessageMetadata {
   url?: string;
   storageKey?: string;
@@ -60,6 +69,8 @@ export interface ChatMessageMetadata {
   discountValue?: number;
   minOrderAmount?: number | null;
   endsAt?: string;
+  /** A shared location (sent as a text message; its content is the readable fallback). */
+  location?: SharedLocation;
   [key: string]: unknown;
 }
 

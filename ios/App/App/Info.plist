@@ -47,8 +47,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Tijarah needs camera access to take photos for your business profile</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Tijarah needs your location to show nearby services and providers</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tijarah needs your location to show nearby services and providers</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

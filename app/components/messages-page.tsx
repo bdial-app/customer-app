@@ -53,6 +53,14 @@ import { setConversationMuted, type ChatMessageMetadata } from "@/services/chat.
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReportEntityType } from "@/services/report.service";
 import { checkPickedFile } from "@/utils/compress-image";
+import { LocationCard, LocationViewerSheet, ShareLocationSheet } from "./chat/location-share";
+import { AttachSheet, MessageActionsSheet } from "./chat/message-actions";
+import { useLongPress } from "@/hooks/useLongPress";
+import { useMyProvider } from "@/hooks/useMyProvider";
+import { useNotification } from "@/app/context/NotificationContext";
+import { copyToClipboard } from "@/utils/clipboard";
+import { triggerHaptic } from "@/utils/haptics";
+import type { SharedLocation } from "@/services/chat.service";
 
 interface MessagesPageProps {
   onBack: () => void;
@@ -139,6 +147,18 @@ export default function MessagesPage({
   const [profileOpen, setProfileOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [viewLocation, setViewLocation] = useState<SharedLocation | null>(null);
+  // Press and hold a message for its options (copy, and map actions for a location).
+  const [actionMessage, setActionMessage] = useState<ChatMessage | null>(null);
+  const pressed = useRef<ChatMessage | null>(null);
+  const longPress = useLongPress(() => {
+    if (!pressed.current) return;
+    triggerHaptic("medium");
+    setActionMessage(pressed.current);
+  });
+  const { notify } = useNotification();
   const router = useRouter();
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
@@ -180,6 +200,17 @@ export default function MessagesPage({
   });
   const providerPhone: string | null = providerData?.contactNumber ?? null;
   const isOwnerView = convDetail?.myRole === "provider";
+  const { data: myProviderStatus } = useMyProvider();
+  const myShop = isOwnerView ? myProviderStatus?.provider ?? null : null;
+  const businessLocation: SharedLocation | null =
+    myShop && myShop.latitude != null && myShop.longitude != null
+      ? {
+          lat: Number(myShop.latitude),
+          lng: Number(myShop.longitude),
+          label: myShop.brandName,
+          address: [myShop.address, myShop.area, myShop.city].filter(Boolean).join(", ") || null,
+        }
+      : null;
 
   // "Usually replies within an hour" — what a customer sees about the business.
   const replyLabel = (mins: number | null | undefined) =>
@@ -457,6 +488,17 @@ export default function MessagesPage({
 
   // File attachment
   const handleAttachClick = () => fileInputRef.current?.click();
+
+  const copyMessage = async (text: string) => {
+    const ok = await copyToClipboard(text);
+    notify(ok ? { title: "Copied", variant: "success", duration: 1800 } : { title: "Couldn’t copy", subtitle: "Please try again.", variant: "error" });
+  };
+
+  /** A location goes as its own message; the server writes the readable text. */
+  const sendLocation = async (location: SharedLocation) => {
+    setSendError("");
+    await sendMutation.mutateAsync({ messageType: "text", metadata: { location } });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -740,6 +782,15 @@ export default function MessagesPage({
                     initial={{ opacity: 0, y: 6, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.2 }}
+                    {...longPress}
+                    onPointerDown={(e) => {
+                      pressed.current = msg;
+                      longPress.onPointerDown(e);
+                    }}
+                    onContextMenu={(e) => {
+                      pressed.current = msg;
+                      longPress.onContextMenu(e);
+                    }}
                     className={`max-w-[78%] px-3 py-2 ${
                       isSent
                         ? `bg-slate-800 dark:bg-slate-700 text-white ${
@@ -774,6 +825,11 @@ export default function MessagesPage({
                       </button>
                     )}
 
+                    {/* A shared location */}
+                    {msg.metadata?.location && (
+                      <LocationCard loc={msg.metadata.location} sent={isSent} onOpen={() => setViewLocation(msg.metadata!.location!)} />
+                    )}
+
                     {/* File, product and deal cards */}
                     {msg.messageType === "file" && msg.metadata?.url && <FileCard m={msg.metadata} sent={isSent} />}
                     {msg.messageType === "product" && msg.metadata && (
@@ -803,6 +859,7 @@ export default function MessagesPage({
                         )
                       : msg.messageType !== "product" &&
                         msg.messageType !== "deal" &&
+                        !msg.metadata?.location &&
                         msg.content && (
                           <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap">
                             {msg.content}
@@ -906,7 +963,8 @@ export default function MessagesPage({
           )}
           <motion.button
             whileTap={{ scale: 0.88 }}
-            onClick={handleAttachClick}
+            onClick={() => setAttachOpen(true)}
+            aria-label="Send a photo, document or location"
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-0.5 active:bg-slate-100 dark:active:bg-slate-700"
           >
             <IonIcon icon={attachOutline} className="text-[22px] text-slate-400 dark:text-slate-500" />
@@ -958,6 +1016,17 @@ export default function MessagesPage({
       </div>
 
       <ImageViewer url={viewerUrl} onClose={() => setViewerUrl(null)} />
+      <AttachSheet open={attachOpen} onClose={() => setAttachOpen(false)} onPickFile={handleAttachClick} onPickLocation={() => setShareOpen(true)} />
+      {shareOpen && (
+        <ShareLocationSheet open onClose={() => setShareOpen(false)} onSend={sendLocation} business={businessLocation} />
+      )}
+      <LocationViewerSheet loc={viewLocation} onClose={() => setViewLocation(null)} />
+      <MessageActionsSheet
+        message={actionMessage}
+        onClose={() => setActionMessage(null)}
+        onCopy={copyMessage}
+        onOpenLocation={(loc) => setViewLocation(loc)}
+      />
 
       {isOwnerView && (
         <OwnerToolsSheet
