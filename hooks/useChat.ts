@@ -21,6 +21,10 @@ export function useConversations(
     queryFn: () => chatApi.getConversations({ filter, search, limit: 50, role }),
     refetchInterval: 30000, // Fallback polling every 30s
     staleTime: 0,
+    // The app-wide default skips refetching on mount, which left a cached (or
+    // restored-from-disk) list on screen until the next 30s poll — a chat just
+    // started, or one that arrived while away, showed up late.
+    refetchOnMount: "always",
   });
 }
 
@@ -111,6 +115,7 @@ export function useUnreadCount(enabled = true) {
     queryKey: ["unreadCount"],
     queryFn: chatApi.getUnreadCount,
     refetchInterval: 30000,
+    refetchOnMount: "always",
     enabled,
   });
 }

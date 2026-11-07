@@ -64,6 +64,10 @@ export async function restoreQueryCache(queryClient: QueryClient) {
     for (const [keyStr, value] of Object.entries(entry.data)) {
       const queryKey = JSON.parse(keyStr);
       const { data, dataUpdatedAt } = value as { data: unknown; dataUpdatedAt: number };
+      // Restoring can finish after the network already answered: never put an
+      // older copy over a fresher one.
+      const current = queryClient.getQueryState(queryKey);
+      if (current?.data !== undefined && current.dataUpdatedAt >= dataUpdatedAt) continue;
       queryClient.setQueryData(queryKey, data, { updatedAt: dataUpdatedAt });
     }
   } catch {
