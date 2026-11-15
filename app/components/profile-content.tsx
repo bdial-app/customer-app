@@ -96,6 +96,7 @@ import { useInstalledVersion } from "@/hooks/useAppUpdate";
 import { removeItemSync, removeItem } from "@/utils/storage";
 import { checkContent } from "@/utils/content-sanitizer";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
+import { storeReviewUrl } from "@/utils/app-review";
 
 
 /** The `message` from an API error response body, if there is one. */
@@ -301,6 +302,20 @@ const ProfileContent = memo(() => {
     resetProviderState,
   } = useAppContext();
   const router = useRouter();
+
+  /**
+   * Open this app's store page so they can leave a rating.
+   *
+   * Deliberately the store listing, not the in-app review sheet: that sheet
+   * often declines to appear (both stores cap how often it may show), which
+   * would make a tapped row look broken. Google's own guidance says not to
+   * put the in-app flow behind a button for exactly that reason.
+   */
+  const openStoreListing = () => {
+    const url = storeReviewUrl();
+    if (url) window.open(url, "_blank", "noopener");
+  };
+
   const user = useAppSelector((state) => state.auth.user);
   const fcmToken = useAppSelector((state) => state.notification.fcmToken);
   const updateUserMutation = useUpdateUser();
@@ -734,6 +749,14 @@ const ProfileContent = memo(() => {
               iconBg="bg-orange-50"
               label="Report a Bug"
               onClick={() => requireAuth()}
+            />
+            <MenuRow
+              icon={starOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Rate Tijarah"
+              sublabel="Tell others what you think"
+              onClick={() => openStoreListing()}
             />
           </MenuSection>
 
@@ -1198,6 +1221,14 @@ const ProfileContent = memo(() => {
               iconBg="bg-orange-50"
               label="Report a Bug"
               onClick={() => setActivePage("reportBug")}
+            />
+            <MenuRow
+              icon={starOutline}
+              iconColor="text-amber-500"
+              iconBg="bg-amber-50"
+              label="Rate Tijarah"
+              sublabel="Tell others what you think"
+              onClick={() => openStoreListing()}
             />
           </MenuSection>
 

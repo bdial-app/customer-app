@@ -35,6 +35,7 @@ import { trackNavigation } from "@/hooks/useBackNavigation";
 import OfflineBanner from "./components/offline-banner";
 import AppUpdatePrompt from "./components/app-update-prompt";
 import WhatsAppConsentPrompter from "./components/whatsapp-consent-prompter";
+import AppReviewPrompter from "./components/app-review-prompter";
 import LegalGate from "@/app/components/legal/legal-gate";
 import PendingLinkOpener from "./components/pending-link-opener";
 import MaintenanceGate from "./components/maintenance-gate";
@@ -505,6 +506,7 @@ export const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
                   <AppUpdatePrompt />
                   <LegalGate />
                   <WhatsAppConsentPrompter />
+                  <AppReviewPrompter />
                   <AppToast />
                   <PostHogIdentifyBridge />
                   <InappropriateContentHandler />

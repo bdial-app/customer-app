@@ -18,6 +18,7 @@ import { createLeadUnlockCheckout, verifyAppleConsumable, type LeadUnlockRespons
 import { payWithRazorpay } from "@/services/razorpay.service";
 import { purchaseConsumable } from "@/services/iap.service";
 import { getNativePlatform } from "@/utils/platform";
+import { noteValueMoment } from "@/utils/app-review";
 
 export const ANALYTICS_SUMMARY_KEY = ["analytics-summary"];
 export const ANALYTICS_LEADS_KEY = ["analytics-leads"];
@@ -97,6 +98,9 @@ export const useUnlockLead = () => {
         qc.invalidateQueries({ queryKey: ["lead-unlock-info"] });
         // A lead can be bought from its detail screen: show the contact there too.
         qc.invalidateQueries({ queryKey: ["analytics-lead-detail"] });
+        // The app just handed an owner a real customer — the clearest sign it
+        // is working for them, and so the moment worth asking about the store.
+        noteValueMoment("lead");
       }
     },
   });

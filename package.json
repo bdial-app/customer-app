@@ -16,6 +16,7 @@
     "capacitor:update:after": "./scripts/patch-ios-spm.sh"
   },
   "dependencies": {
+    "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor-firebase/app": "^8.2.0",
     "@capacitor-firebase/messaging": "^8.2.0",
     "@capacitor/android": "^8.3.1",

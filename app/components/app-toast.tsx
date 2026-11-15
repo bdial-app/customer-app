@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { useNotification } from "@/app/context/NotificationContext";
+import { noteFriction } from "@/utils/app-review";
 import { AnimatePresence, motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
 type Variant = "success" | "error" | "warning" | "info";
@@ -51,6 +52,15 @@ const VARIANT_CONFIG: Record<Variant, { accent: string; iconBg: string; icon: Re
 export const AppToast = () => {
   const { open, options, dismiss } = useNotification();
   const variant = options?.variant ?? "info";
+
+  // Every error message in the app surfaces here, which makes this the one
+  // place that knows something just went wrong. The store review prompt stays
+  // quiet for a while afterwards — nobody rates an app five stars a minute
+  // after it failed them.
+  React.useEffect(() => {
+    if (open && variant === "error") noteFriction();
+  }, [open, variant]);
+
   const config = VARIANT_CONFIG[variant];
   const y = useMotionValue(0);
   const opacity = useTransform(y, [-60, 0], [0, 1]);
