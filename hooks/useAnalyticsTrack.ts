@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useCallback } from "react";
 import { trackEvent, trackDuration } from "@/utils/analytics-collector";
+import { noteValueMoment } from "@/utils/app-review";
 
 type SourceType = "home_feed" | "explore" | "search" | "direct" | "saved" | "chat" | "product_link";
 
@@ -59,11 +60,23 @@ export function useTrackAction(providerId: string | undefined) {
   );
 
   return {
-    trackChat: () => track("chat_initiated"),
-    trackCall: () => track("call_clicked"),
+    // Reaching a business is the app doing its job, so these double as the
+    // "it worked" signal behind the store review prompt. Calling and chatting
+    // send the person out of the app; the prompt waits for them to come back.
+    trackChat: () => {
+      track("chat_initiated");
+      noteValueMoment("chat");
+    },
+    trackCall: () => {
+      track("call_clicked");
+      noteValueMoment("contact");
+    },
     trackDirection: () => track("direction_clicked"),
     trackShare: () => track("share_clicked"),
-    trackSave: () => track("saved"),
+    trackSave: () => {
+      track("saved");
+      noteValueMoment("save");
+    },
     trackUnsave: () => track("unsaved"),
     trackOfferView: (offerId: string) => track("offer_viewed", offerId),
     trackPhotoView: (photoId?: string) => track("photo_viewed", photoId),

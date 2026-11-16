@@ -16,6 +16,7 @@ export const USER_URLS = {
   RECOMMENDED_CATEGORIES: "/users/me/recommended-categories",
   CATEGORY_PREFERENCES: "/users/me/category-preferences",
   CATEGORY_INTERACTION: "/users/me/category-interaction",
+  APP_REVIEW_ASKED: "/users/me/app-review-asked",
 };
 
 export const CATEGORY_URLS = {
